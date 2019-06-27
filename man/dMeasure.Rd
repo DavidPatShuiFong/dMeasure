@@ -9,7 +9,7 @@
 dMeasure
 }
 \description{
-case-finding in EMR (Best Practice) a
+case-finding in EMR (Best Practice)
 }
 \details{
 dMeasure class
@@ -27,9 +27,12 @@ dMeasure class
 \section{Methods}{
 
 \describe{
-\item{\strong{read_configuration_filepaths} : read (or initiate) YAML/SQL DB filepaths}
-\item{\strong{open_configuration_db} : open SQL configuration database}
-\item{\strong{read_configuration_db} : read SQL configuration database}
+\item{\code{\link{read_configuration_filepaths}} : read (or initiate) YAML/SQL DB filepaths}
+\item{\code{\link{open_configuration_db}} : open SQLite configuration database}
+\item{\code{\link{read_configuration_db}} : read SQLite configuration database}
+\item{\code{\link{open_emr_db}} : open Best Practice database}
+\item{\code{\link{initilaize_emr_tables}} : configure Best Practice datatables}
+\item{\code{\link{update_UserFullConfig}} : create 'full' user configuratio table}
 }
 }
 
