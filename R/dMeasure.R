@@ -6,13 +6,16 @@
 #' @field local_config - in-memory copy of YAML configuration
 #'
 #' @section Methods:
-#' \describe{
+#' \itemize{
 #' \item{\code{\link{read_configuration_filepaths}} : read (or initiate) YAML/SQL DB filepaths}
 #' \item{\code{\link{open_configuration_db}} : open SQLite configuration database}
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
-#' \item{\code{\link{initilaize_emr_tables}} : configure Best Practice datatables}
+#' \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
 #' \item{\code{\link{update_UserFullConfig}} : create 'full' user configuratio table}
+#' \item{\code{\link{update_date}} : change, or read, search date range}
+#' \item{\code{\link{location_list}} : list practice locations/groups}
+#' \item{\code{\link{update_location}} : change, or read, current location}
 #' }
 #'
 #' @examples
@@ -23,11 +26,34 @@
 dMeasure <-
   R6::R6Class("dMeasure",
               public = list()
+              # this is a 'skeleton' class
+              # it is filled in the with the '.public' function
   )
 
+##### function to fill in the class ######################
 .public <- function(...) dMeasure$set("public", ...)
 
 
+##### close and finalize object ##########################
+
+.public("close", function() {
+  # close any open database connections
+  if (!is.null(self$config_db)) {
+    self$config_db$close()
+    self$config_db <- NULL
+  }
+  if (!is.null(self$emr_db)) {
+    self$emr_db$close()
+    self$emr_db <- NULL
+  }
+  invisible(self)
+})
+
+.public("finalize", function() {
+  # object being destroyed/removed
+  # close all open connections
+  self$close()
+})
 
 ##### Configuration file location ########################
 ## fields
@@ -227,7 +253,7 @@ open_configuration_db <-
       if (!(a[[1]] %in% columns)) {
         # if a required variable name is not in the table
         data <- data %>%
-          mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
+          dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
         # use of !! and := to dynamically specify a[[1]] as a column name
         # potentially could use data[,a[[1]]] <- ...
         changed <- TRUE
@@ -243,36 +269,36 @@ open_configuration_db <-
     # check that tables exist in the config file
     # also create new columns (variables) as necessary
     initialize_data_table(config_db, "Server",
-                          list(base::c("id", "integer"),
-                               base::c("Name", "character"),
-                               base::c("Address", "character"),
-                               base::c("Database", "character"),
-                               base::c("UserID", "character"),
-                               base::c("dbPassword", "character")))
+                          list(c("id", "integer"),
+                               c("Name", "character"),
+                               c("Address", "character"),
+                               c("Database", "character"),
+                               c("UserID", "character"),
+                               c("dbPassword", "character")))
     # initialize_data_table will create table and/or ADD 'missing' columns to existing table
 
     initialize_data_table(config_db, "ServerChoice",
-                          list(base::c("id", "integer"),
-                               base::c("Name", "character")))
+                          list(c("id", "integer"),
+                               c("Name", "character")))
     # there should only be (at most) one entry in this table!
     # with id '1', and a 'Name' the same as the chosen entry in table "Server"
 
     initialize_data_table(config_db, "Location",
-                          list(base::c("id", "integer"),
-                               base::c("Name", "character"),
-                               base::c("Description", "character")))
+                          list(c("id", "integer"),
+                               c("Name", "character"),
+                               c("Description", "character")))
 
     initialize_data_table(config_db, "Users",
-                          list(base::c("id", "integer"),
-                               base::c("Fullname", "character"),
-                               base::c("AuthIdentity", "character"),
-                               base::c("Location", "character"),
-                               base::c("Password", "character"),
-                               base::c("Attributes", "character")))
+                          list(c("id", "integer"),
+                               c("Fullname", "character"),
+                               c("AuthIdentity", "character"),
+                               c("Location", "character"),
+                               c("Password", "character"),
+                               c("Attributes", "character")))
 
     initialize_data_table(config_db, "UserRestrictions",
-                          list(base::c("uid", "integer"),
-                               base::c("Restriction", "character")))
+                          list(c("uid", "integer"),
+                               c("Restriction", "character")))
     # list of restrictions for users
     # use of 'uid' rather than 'id'
     # (this relates to the 'Attributes' field in "Users")
@@ -549,4 +575,90 @@ update_UserFullConfig <- function(dMeasure_object,
 
   self$UserFullConfig <- UserFullConfig # update object's copy
   return(UserFullConfig) # and return a copy to caller
+})
+
+##### date variables and location #####################################
+
+## fields
+
+.public("date_a", Sys.Date()) # 'from' date. by default, it is 'today'
+.public("date_b", Sys.Date()) # 'to' date
+.public("location", "All")    # location/group. by default, it is 'All'
+
+## methods
+
+#' Update date
+#'
+#' Sets 'from' and 'to' dates used in subsequent searches
+#'
+#' @param date_from 'From' date. default is current date_from
+#' @param date_to 'To' date. default is current date_to
+#'
+#' @return list(date_a, date_b)
+#'
+#' if date_a is later than date_b, an error is returned
+update_date <- function(dMeasure_object,
+                        date_from = dMeasure_object$date_a,
+                        date_to = dMeasure_object$date_b) {
+  dMeasure_object$update_date(date_from, date_to)
+}
+
+.public("update_date", function(date_from = self$date_a,
+                                date_to = self$date_b) {
+  if (date_from > date_to) {
+    stop("'From' date cannot be later than 'To' date")
+  }
+  self$date_a <- date_from
+  self$date_b <- date_to
+
+  return(list(self$date_a, self$date_b))
+})
+
+#' Show list of locations
+#'
+#' This includes 'All'
+#'
+#' @param dMeasure_object dMeasure R6 object
+#'
+#' @return the list of locations, including 'All'
+location_list <- function(dMeasure_object) {
+  dMeasure_object$location_list()
+}
+
+.public("location_list", function() {
+  locations <- data.frame(Name = "All")
+  if (!is.null(self$PracticeLocations)) {
+    locations <- rbind(locations,
+                       as.data.frame(self$PracticeLocations %>%
+                                       dplyr::select(Name))
+                       ) %>% unlist(use.names = FALSE)
+  }
+  return(locations)
+})
+
+#' Update location
+#'
+#' Location is used in subsequent list of clinicians available
+#'
+#' @param dMeasure_object dMeasure R6 object
+#' @param location any of the practice locations/groups. can also be 'All'
+#'
+#' @return the location (after being updated, if possible)
+#'
+#' returns an error, and does not update the location, if trying to
+#' set to an unavailable location
+update_location <- function(dMeasure_object,
+                            location = dMeasure_object$location) {
+  dMeasure_object$update_location(location)
+}
+
+.public("update_location", function(location = self$location) {
+  locations <- self$location_list()
+  if (!location %in% locations) {
+    stop(paste0("'", location, "' is not in the list of locations."))
+  } else {
+    self$location <- location
+  }
+
+  return(self$location)
 })
