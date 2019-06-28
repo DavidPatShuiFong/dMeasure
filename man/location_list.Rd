@@ -4,10 +4,10 @@
 \alias{location_list}
 \title{Show list of locations}
 \usage{
-location_list(dMeasure_object)
+location_list(dMeasure_obj)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure R6 object}
+\item{dMeasure_obj}{dMeasure R6 object}
 }
 \value{
 the list of locations, including 'All'

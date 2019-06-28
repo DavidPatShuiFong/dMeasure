@@ -4,8 +4,8 @@
 \alias{update_date}
 \title{Update date}
 \usage{
-update_date(dMeasure_object, date_from = dMeasure_object$date_a,
-  date_to = dMeasure_object$date_b)
+update_date(dMeasure_obj, date_from = dMeasure_obj$date_a,
+  date_to = dMeasure_obj$date_b)
 }
 \arguments{
 \item{date_from}{'From' date. default is current date_from}

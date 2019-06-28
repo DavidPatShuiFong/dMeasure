@@ -4,14 +4,12 @@
 \alias{setPassword}
 \title{setPassword}
 \usage{
-setPassword(newpassword, UserConfig, LoggedInUser, config_db)
+setPassword(newpassword, dMeasure_obj, config_db)
 }
 \arguments{
 \item{newpassword}{the new password}
 
-\item{UserConfig}{reactive, the User Configuration table}
-
-\item{LoggedInUser}{reactive, the current user}
+\item{dMeasure_obj}{daily Measure R6 object}
 
 \item{config_db}{R6 object, access to the user configuration database}
 }

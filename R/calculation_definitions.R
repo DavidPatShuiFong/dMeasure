@@ -160,13 +160,11 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
   newtag <- sodium::data_tag(msg, key)
   oldtag <- jsonlite::base64_dec(tag)
 
-  if (newtag == oldtag) {
-    result = TRUE
-  } else {
-    result = FALSE
-  }
+  result <- all(ifelse(newtag == oldtag, TRUE, FALSE))
+  # ifelse is vectorized, and will return a vector of TRUE/FALSE
+  # 'all' checks that that all the elements of the comparison vector are TRUE
 
-  return(newtag == oldtag)
+  return(result)
 }
 
 #' setPassword
@@ -176,29 +174,28 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 #' and the UserConfig database
 #'
 #' @param newpassword the new password
-#' @param UserConfig reactive, the User Configuration table
-#' @param LoggedInUser reactive, the current user
+#' @param dMeasure_obj daily Measure R6 object
 #' @param config_db R6 object, access to the user configuration database
 #'
 #' @return nothing
 #'
-setPassword <- function(newpassword, UserConfig, LoggedInUser, config_db) {
+setPassword <- function(newpassword, dMeasure_obj, config_db) {
   # set the password for the user
 
   newpassword <- simple_tag(newpassword)
   # tagging (hash) defined in calculation_definitions
 
   newUserConfig <-
-    UserConfig() %>%
-    mutate(Password =
-             replace(Password,
-                     LoggedInUser()$Fullname == Fullname,
-                     newpassword))
-  UserConfig(newUserConfig) # replace password with empty string
+    dMeasure_obj$UserConfig %>%
+    dplyr::mutate(Password =
+                    replace(Password,
+                            dMeasure_obj$identified_user$Fullname == Fullname,
+                            newpassword))
+  dMeasure_obj$UserConfig <- newUserConfig # replace password
 
   query <- "UPDATE Users SET Password = ? WHERE id = ?"
   # write to configuration database
-  data_for_sql <- list(newpassword, LoggedInUser()$id[[1]])
+  data_for_sql <- list(newpassword, dMeasure_obj$identified_user$id[[1]])
 
   config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly

@@ -4,11 +4,11 @@
 \alias{update_UserFullConfig}
 \title{update the UserFullConfig}
 \usage{
-update_UserFullConfig(dMeasure_object, db = dMeasure_object$db,
-  UserConfig = dMeasure_object$UserConfig)
+update_UserFullConfig(dMeasure_obj, db = dMeasure_obj$db,
+  UserConfig = dMeasure_obj$UserConfig)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 
 \item{db}{tables in the EMR database}
 

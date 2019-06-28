@@ -74,17 +74,17 @@ dMeasure <-
 #'
 #' finally sets $configuration_file_path to 'real' SQL filepath
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #'
-#' @return nothing, modifies \code{dMeasure_object}
+#' @return nothing, modifies \code{dMeasure_obj}
 #'
 #' @examples
-#' dMeasure_object <- dMeasure$new()
-#' dMeasure_object$read_configuration_filepaths()
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$read_configuration_filepaths()
 #'
-#' read_configuration_filepaths(dMeasure_object)
-read_configuration_filepaths <- function(dMeasure_object) {
-  dMeasure_object$read_configuration_filepaths()
+#' read_configuration_filepaths(dMeasure_obj)
+read_configuration_filepaths <- function(dMeasure_obj) {
+  dMeasure_obj$read_configuration_filepaths()
   invisible()
 }
 
@@ -178,33 +178,34 @@ read_configuration_filepaths <- function(dMeasure_object) {
 #' are present. if a field/column is missing, then
 #' the missing field/column is added.
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #' @param configuration_file_path (location of SQL configuration)
-#' @param config_db the configuration DB object (R6 dbConnection object)
 #'
-#' @return nothing, modifies \code{dMeasure_object}
+#' @return nothing, modifies \code{dMeasure_obj}
 #' both these parameters have defaults, which may have
 #' been set by previous calls
 open_configuration_db <-
-  function(dMeasure_object,
-           configuration_file_path = dMeasure_object$configuration_file_path,
-           config_db = dMeasure_object$config_db) {
-    dMeasure_object$open_configuration_db(configuration_file_path,
-                                          config_db)
+  function(dMeasure_obj,
+           configuration_file_path = dMeasure_obj$configuration_file_path) {
+    dMeasure_obj$open_configuration_db(configuration_file_path)
 }
 
 .public("open_configuration_db", function (
-  configuration_file_path = self$configuration_file_path,
-  config_db = self$config_db) {
+  configuration_file_path = self$configuration_file_path) {
 
-  #
+  # if no configuration filepath is defined, then try to read one
+  if (length(configuration_file_path) == 0) {
+    self$read_configuration_filepaths()
+    configuration_file_path <- self$configuration_file_path
+  }
 
   # on first call, self$config_db could be NULL
-  if (is.null(config_db)) {
+  if (is.null(self$config_db)) {
     self$config_db <- dbConnection::dbConnection$new()
-    config_db <- self$config_db
     # new R6 object which generalizes database connections
   }
+
+  config_db <- self$config_db # for convenience
 
   if (file.exists(configuration_file_path)) {
     # open config database file
@@ -308,14 +309,22 @@ open_configuration_db <-
 
 #' read the SQL configuration database
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #' @param config_db R6 object to open SQL database - default is the internally stored value
-read_configuration_db <- function(dMeasure_object,
-                                  config_db = dMeasure_object$config_db) {
-  dMeasure_object$read_configuration_db(config_db)
+read_configuration_db <- function(dMeasure_obj,
+                                  config_db = dMeasure_obj$config_db) {
+  dMeasure_obj$read_configuration_db(config_db)
 }
 
 .public("read_configuration_db", function(config_db = self$config_db) {
+
+  if (is.null(config_db)) {
+    # if config_db is not yet opened/defined
+    # then try to open configuration database
+    self$open_configuration_db()
+    config_db <- self$config_db
+  }
+
   self$BPdatabase <- config_db$conn() %>%
     dplyr::tbl("Server") %>% dplyr::collect()
   self$BPdatabaseChoice <-
@@ -332,7 +341,104 @@ read_configuration_db <- function(dMeasure_object,
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
   self$UserRestrictions <- config_db$conn() %>%
     dplyr::tbl("UserRestrictions") %>% dplyr::collect()
+
+  self$match_user()
+  # see if 'identified' system user is matched with a configured user
+
   invisible(self)
+})
+
+##### User login ##################################################
+
+## fields
+.public("identified_user", NULL)
+# user information for just the identified user
+.public("authenticated", FALSE)
+# has the current 'identified' user been authenticated yet?
+
+## methods
+
+#' Match user with current 'identified' system user
+#'
+#' Matches 'dMeasure_obj$Userconfig$AuthIdentity' with Sys.info()[["user"]]
+#'
+#' @param dMeasure_obj dMeasure object
+#'
+#' @return self
+match_user <- function(dMeasure_obj) {
+  dMeasure_obj$match_user()
+}
+
+.public("match_user", function() {
+  self$identified_user <-
+    self$UserConfig[self$UserConfig$AuthIdentity == Sys.info()[["user"]],]
+
+  invisible(self)
+})
+
+#' check password against the current identified user
+#'
+#' @param dMeasure_obj dMeasure object
+#' @param password the password
+#'
+#' @return TRUE if password is correct
+#' otherwise stops with error
+user_login <- function(dMeasure_obj, password) {
+  dMeasure_obj$user_login(password)
+}
+
+.public("user_login", function(password) {
+  if (is.null(self$identified_user)) {
+    stop("No user identified!")
+  }
+  if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
+    stop("No password set for currently identified user!")
+  }
+  if (!simple_tag_compare(password, self$identified_user$Password)) {
+    stop("Wrong password")
+  } else {
+    self$authenticated <- TRUE
+  }
+  return(self$authenticated)
+})
+
+#' Set password of currently identified user
+#'
+#' if there is an old password, that must be specified
+#' if there is no old password, then 'oldpassword' does not need to be defined
+#'
+#' @param dMeasure_obj dMeasure object
+#' @param newpassword the new password
+#' @param oldpassword=NULL the old password (if one exists)
+#'
+#' @return TRUE if password is successfully set
+#' otherwise, stops with error
+set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
+  dMeasure_obj$set_password(newpassword, oldpassword)
+}
+
+.public("set_password", function(newpassword, oldpassword = NULL) {
+  if (is.null(self$identified_user)) {
+    stop("No user identified!")
+  }
+
+  if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
+    # no password yet set for currentl identified user, so just accept the 'newpassword'
+    setPassword(newpassword, self$UserConfig, self$identified_user, self$config_db)
+    self$authenticated <- TRUE
+  } else {
+    # there is an old password, which needs to be compared with 'oldpassword'
+    if (!simple_tag_compare(oldpassword, self$identified_user$Password)) {
+      stop("Wrong password")
+    } else {
+      # old password specified correctly
+      setPassword(newpassword, self, self$config_db)
+      self$authenticated <- TRUE
+    }
+  }
+  self$match_user() # re-read 'identified user' configuration, as password has changed
+
+  return(self$authenticated)
 })
 
 ##### Electronic Medical Record (EMR) database configuration ######
@@ -346,20 +452,29 @@ read_configuration_db <- function(dMeasure_object,
 
 #' opens the EMR database
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #' @param BPdatabaseChoice the chosen database from the config_db list
 #' @param emr_db' R6 database object. this might not be initially defined
 #'
 #' if no arguments passed, the defaults are what is stored in
 #' the  object
-open_emr_db <- function(dMeasure_object,
-                        BPdatabaseChoice = dMeasure_object$BPdatabaseChoice,
-                        emr_db = dMeasure_object$emr_db) {
-  dMeasure_object$open_emr_db(BPdatabaseChoice, emr_db)
+open_emr_db <- function(dMeasure_obj,
+                        BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice,
+                        emr_db = dMeasure_obj$emr_db) {
+  dMeasure_obj$open_emr_db(BPdatabaseChoice, emr_db)
 }
 
 .public("open_emr_db",function(BPdatabaseChoice = NULL,
                                emr_db = NULL) {
+
+  if (is.null(self$config_db) || length(a$BPdatabaseChoice) == 0) {
+    # no BPdatabase has been defined, or the current configuration is not valid
+    # try to define the current configuration and open the BP database
+    self$read_configuration_db()
+    BPdatabaseChoice <- self$BPdatabaseChoice
+    emr_db <- self$emr_db
+  }
+
   if (is.null(BPdatabaseChoice)) {
     BPdatabaseChoice = self$BPdatabaseChoice
   }
@@ -416,11 +531,11 @@ open_emr_db <- function(dMeasure_object,
 
 #' initialize the tables of the EMR database
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #' @param emr_db R6 object connecting to EMR database
-initialize_emr_tables <- function(dMeasure_object,
-                                  emr_db = dMeasure_object$emr_db) {
-  dMeasure_object$initialize_emr_tables(emr_db)
+initialize_emr_tables <- function(dMeasure_obj,
+                                  emr_db = dMeasure_obj$emr_db) {
+  dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
 .public("initialize_emr_tables", function(emr_db = self$emr_db) {
@@ -533,16 +648,16 @@ initialize_emr_tables <- function(dMeasure_object,
 #' integrates the UserConfig in the SQLite configuration file
 #' with the user information in the EMR database
 #'
-#' @param dMeasure_object dMeasure object
+#' @param dMeasure_obj dMeasure object
 #' @param db tables in the EMR database
 #' @param UserConfig UserConfig stored in configuration file
 #'
 #' @return UserFullConfig
 #' also updates this object's copy
-update_UserFullConfig <- function(dMeasure_object,
-                                  db = dMeasure_object$db,
-                                  UserConfig = dMeasure_object$UserConfig) {
-  dMeasure_object$update_UserFullConfig(db, UserConfig)
+update_UserFullConfig <- function(dMeasure_obj,
+                                  db = dMeasure_obj$db,
+                                  UserConfig = dMeasure_obj$UserConfig) {
+  dMeasure_obj$update_UserFullConfig(db, UserConfig)
 }
 
 .public("update_UserFullConfig", function (db = NULL,
@@ -597,10 +712,10 @@ update_UserFullConfig <- function(dMeasure_object,
 #' @return list(date_a, date_b)
 #'
 #' if date_a is later than date_b, an error is returned
-update_date <- function(dMeasure_object,
-                        date_from = dMeasure_object$date_a,
-                        date_to = dMeasure_object$date_b) {
-  dMeasure_object$update_date(date_from, date_to)
+update_date <- function(dMeasure_obj,
+                        date_from = dMeasure_obj$date_a,
+                        date_to = dMeasure_obj$date_b) {
+  dMeasure_obj$update_date(date_from, date_to)
 }
 
 .public("update_date", function(date_from = self$date_a,
@@ -618,11 +733,11 @@ update_date <- function(dMeasure_object,
 #'
 #' This includes 'All'
 #'
-#' @param dMeasure_object dMeasure R6 object
+#' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return the list of locations, including 'All'
-location_list <- function(dMeasure_object) {
-  dMeasure_object$location_list()
+location_list <- function(dMeasure_obj) {
+  dMeasure_obj$location_list()
 }
 
 .public("location_list", function() {
@@ -640,16 +755,16 @@ location_list <- function(dMeasure_object) {
 #'
 #' Location is used in subsequent list of clinicians available
 #'
-#' @param dMeasure_object dMeasure R6 object
+#' @param dMeasure_obj dMeasure R6 object
 #' @param location any of the practice locations/groups. can also be 'All'
 #'
 #' @return the location (after being updated, if possible)
 #'
 #' returns an error, and does not update the location, if trying to
 #' set to an unavailable location
-update_location <- function(dMeasure_object,
-                            location = dMeasure_object$location) {
-  dMeasure_object$update_location(location)
+update_location <- function(dMeasure_obj,
+                            location = dMeasure_obj$location) {
+  dMeasure_obj$update_location(location)
 }
 
 .public("update_location", function(location = self$location) {

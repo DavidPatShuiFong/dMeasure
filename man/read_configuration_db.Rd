@@ -4,11 +4,10 @@
 \alias{read_configuration_db}
 \title{read the SQL configuration database}
 \usage{
-read_configuration_db(dMeasure_object,
-  config_db = dMeasure_object$config_db)
+read_configuration_db(dMeasure_obj, config_db = dMeasure_obj$config_db)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 
 \item{config_db}{R6 object to open SQL database - default is the internally stored value}
 }

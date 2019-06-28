@@ -4,13 +4,13 @@
 \alias{read_configuration_filepaths}
 \title{read configuration filepaths}
 \usage{
-read_configuration_filepaths(dMeasure_object)
+read_configuration_filepaths(dMeasure_obj)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 }
 \value{
-nothing, modifies \code{dMeasure_object}
+nothing, modifies \code{dMeasure_obj}
 }
 \description{
 By default, the YAML configuration is either in the working
@@ -25,8 +25,8 @@ existing might contain the 'real' location of the $sql_config_filepath
 finally sets $configuration_file_path to 'real' SQL filepath
 }
 \examples{
-dMeasure_object <- dMeasure$new()
-dMeasure_object$read_configuration_filepaths()
+dMeasure_obj <- dMeasure$new()
+dMeasure_obj$read_configuration_filepaths()
 
-read_configuration_filepaths(dMeasure_object)
+read_configuration_filepaths(dMeasure_obj)
 }

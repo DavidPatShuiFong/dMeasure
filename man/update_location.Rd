@@ -4,10 +4,10 @@
 \alias{update_location}
 \title{Update location}
 \usage{
-update_location(dMeasure_object, location = dMeasure_object$location)
+update_location(dMeasure_obj, location = dMeasure_obj$location)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure R6 object}
+\item{dMeasure_obj}{dMeasure R6 object}
 
 \item{location}{any of the practice locations/groups. can also be 'All'}
 }

@@ -4,10 +4,10 @@
 \alias{initialize_emr_tables}
 \title{initialize the tables of the EMR database}
 \usage{
-initialize_emr_tables(dMeasure_object, emr_db = dMeasure_object$emr_db)
+initialize_emr_tables(dMeasure_obj, emr_db = dMeasure_obj$emr_db)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 
 \item{emr_db}{R6 object connecting to EMR database}
 }

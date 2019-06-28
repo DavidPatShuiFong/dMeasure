@@ -4,12 +4,12 @@
 \alias{open_emr_db}
 \title{opens the EMR database}
 \usage{
-open_emr_db(dMeasure_object,
-  BPdatabaseChoice = dMeasure_object$BPdatabaseChoice,
-  emr_db = dMeasure_object$emr_db)
+open_emr_db(dMeasure_obj,
+  BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice,
+  emr_db = dMeasure_obj$emr_db)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 
 \item{BPdatabaseChoice}{the chosen database from the config_db list}
 

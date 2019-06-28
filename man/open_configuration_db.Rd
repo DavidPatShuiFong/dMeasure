@@ -4,19 +4,16 @@
 \alias{open_configuration_db}
 \title{Open the SQL connection to the configuration from the SQL configuration file}
 \usage{
-open_configuration_db(dMeasure_object,
-  configuration_file_path = dMeasure_object$configuration_file_path,
-  config_db = dMeasure_object$config_db)
+open_configuration_db(dMeasure_obj,
+  configuration_file_path = dMeasure_obj$configuration_file_path)
 }
 \arguments{
-\item{dMeasure_object}{dMeasure object}
+\item{dMeasure_obj}{dMeasure object}
 
 \item{configuration_file_path}{(location of SQL configuration)}
-
-\item{config_db}{the configuration DB object (R6 dbConnection object)}
 }
 \value{
-nothing, modifies \code{dMeasure_object}
+nothing, modifies \code{dMeasure_obj}
 both these parameters have defaults, which may have
 been set by previous calls
 }
