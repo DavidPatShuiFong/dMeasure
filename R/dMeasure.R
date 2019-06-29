@@ -188,7 +188,7 @@ open_configuration_db <-
   function(dMeasure_obj,
            configuration_file_path = dMeasure_obj$configuration_file_path) {
     dMeasure_obj$open_configuration_db(configuration_file_path)
-}
+  }
 
 .public("open_configuration_db", function (
   configuration_file_path = self$configuration_file_path) {
@@ -441,6 +441,103 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   return(self$authenticated)
 })
 
+##### clinician choice list #######################################
+
+## fields
+.public("clinician_choice_list", NULL)
+# available clinicians appointments
+.public("clinicians", NULL)
+
+## constants
+view_restrictions <- list(
+  # if a view restriction is active, then by default users
+  # can only see patients in their own appointment book for
+  # the specified topic
+  # this restriction does not apply if the user has the
+  # 'Global' attribute for the topic in the user's attribute list
+  list(restriction = "GlobalActionView",
+       view_to_hide = list("immunization", "cancerscreen")),
+  list(restriction = "GlobalBillView",
+       view_to_hide = list("billings")),
+  list(restriction = "GlobalCDMView",
+       view_to_hide = list("cdm"))
+)
+
+## methods
+
+#' find available list of clinician appointments to view
+#'
+#' adjusts self$clinician_choice_list
+#' according to 'view_name' (and applicable view restrictions
+#' for the identified authenticated user)
+#' and self$location
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param view_name name of view. default is All i.e. 'no specific view'
+#'
+#' @return the clinician choice list
+clinician_list <- function(dMeasure_obj,
+                           view_name = "All") {
+  dMeasure_obj$clinician_list(view_name)
+}
+
+.public("clinician_list", function(view_name = "All") {
+  if (self$location == 'All') {
+    # note that 'ifelse' only returns result in the
+    # same 'shape' as the comparison statement
+    clinician_list <- self$UserFullConfig$Fullname
+  } else {
+    clinician_list <- subset(UserConfig$Fullname,
+                             sapply(UserConfig$Location,
+                                    function (y) self$location %in% y))
+    # filter clinicians by location choice
+    # it is possible for a clinician to have multiple locations
+    # initially, $Location might include a lot of NA
+  }
+
+  for (restriction in view_restrictions) {
+    # go through list of view restrictions
+    if (restriction$restriction %in% unlist(self$UserRestrictions$Restriction)) {
+      # if the restriction has been activated
+      if (view_name %in% restriction$view_to_hide) {
+        # if the relevant view is being shown
+        if (self$authenticated == FALSE |
+            !(restriction$restriction %in% unlist(self$identified_user$Attributes))) {
+          # if user is not authenticated or
+          # if the current user does not have this 'Global' attribute
+          # then can only view one's own appointments
+          clinician_list <- subset(clinician_list,
+                                   clinician_list == self$identified_user$Fullname)
+        }
+      }
+    }
+  }
+  self$clinician_choice_list <- clinician_list
+  return(clinician_list)
+})
+
+#' chosen clinicians
+#'
+#' clinicians chosen for appointment viewing
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choices="" list of clinicians chosen
+#' @param view_name="All" view
+#'
+#' @return list of clinicians chosen
+#' this will be 'checked' against actual available clinicians ($clinicians_list)
+chosen_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
+  dMeasure_obj$chosen_clinicians(choices, view_name)
+}
+
+.public("chosen_clinicians", function(choices = "", view_name = "All") {
+  choices <- intersect(choices, self$clinician_list(view_name))
+  # can only actually choose clinicians available in chosen view
+
+  self$clinicians <- choices
+  return(choices)
+})
+
 ##### Electronic Medical Record (EMR) database configuration ######
 
 ## fields
@@ -526,6 +623,8 @@ open_emr_db <- function(dMeasure_obj,
   } else {
     # successfully opened database
     self$initialize_emr_tables(emr_db)
+    dummy <- self$update_UserFullConfig() # match UserConfig to EMR user configs
+    dummy <- self$clinician_list() # and list all 'available' clinicians
   }
 })
 
@@ -743,10 +842,11 @@ location_list <- function(dMeasure_obj) {
 .public("location_list", function() {
   locations <- data.frame(Name = "All")
   if (!is.null(self$PracticeLocations)) {
-    locations <- rbind(locations,
-                       as.data.frame(self$PracticeLocations %>%
-                                       dplyr::select(Name))
-                       ) %>% unlist(use.names = FALSE)
+    locations <-
+      rbind(locations,
+            as.data.frame(self$PracticeLocations %>%
+                            dplyr::select(Name))) %>%
+      unlist(use.names = FALSE)
   }
   return(locations)
 })
