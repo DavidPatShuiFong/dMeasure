@@ -32,7 +32,7 @@ dMeasure <-
 
 ##### function to fill in the class ######################
 .public <- function(...) dMeasure$set("public", ...)
-
+.developer <- function(...) dMeasure$set("public", ...)
 
 ##### close and finalize object ##########################
 
@@ -46,6 +46,8 @@ dMeasure <-
     self$emr_db$close()
     self$emr_db <- NULL
   }
+  self$authenticated = FALSE
+
   invisible(self)
 })
 
@@ -445,8 +447,9 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 
 ## fields
 .public("clinician_choice_list", NULL)
-# available clinicians appointments
+ # available clinicians appointments
 .public("clinicians", NULL)
+ # chosen clinician list
 
 ## constants
 view_restrictions <- list(
@@ -519,6 +522,7 @@ clinician_list <- function(dMeasure_obj,
 #' chosen clinicians
 #'
 #' clinicians chosen for appointment viewing
+#' modifies self$clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param choices="" list of clinicians chosen

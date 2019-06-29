@@ -4,12 +4,14 @@
 \alias{chosen_clinicians}
 \title{chosen clinicians}
 \usage{
-chosen_clinicians(dMeasure_obj, choices, view_name = "All")
+chosen_clinicians(dMeasure_obj, choices = "", view_name = "All")
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{choices}{list of clinicians chosen}
+\item{choices=""}{list of clinicians chosen}
+
+\item{view_name="All"}{view}
 }
 \value{
 list of clinicians chosen
@@ -17,4 +19,5 @@ this will be 'checked' against actual available clinicians ($clinicians_list)
 }
 \description{
 clinicians chosen for appointment viewing
+modifies self$clinicians
 }
