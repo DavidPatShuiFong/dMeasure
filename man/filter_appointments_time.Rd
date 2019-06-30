@@ -4,8 +4,8 @@
 \alias{filter_appointments_time}
 \title{List of appointments with 'human (and R)' readable time-of-day}
 \usage{
-filter_appointments_time(dMeasure_obj, date_from = NULL,
-  date_to = NULL, clinicians = NULL, lazy = FALSE)
+filter_appointments_time(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

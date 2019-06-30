@@ -13,7 +13,7 @@ open_emr_db(dMeasure_obj,
 
 \item{BPdatabaseChoice}{the chosen database from the config_db list}
 
-\item{emr_db'}{R6 database object. this might not be initially defined
+\item{emr_db}{R6 database object. this might not be initially defined
 
 if no arguments passed, the defaults are what is stored in
 the  object}

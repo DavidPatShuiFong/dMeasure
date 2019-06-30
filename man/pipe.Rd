@@ -2,9 +2,12 @@
 % Please edit documentation in R/utils_pipe.R
 \name{\%>\%}
 \alias{\%>\%}
-\title{Pipe operator}
+\alias{\%>>\%}
+\title{Pipe operator magrittr}
 \usage{
 lhs \%>\% rhs
+
+lhs \%>>\% rhs
 }
 \description{
 See \code{magrittr::\link[magrittr]{\%>\%}} for details.

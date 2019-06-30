@@ -28,6 +28,47 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   return(period)
 }
 
+interval <- function(date_a, date_b) {
+  # calculate period between date_a and date_b by 'unit'
+  # date_a and date_b can be lists
+  # returns $year, $month, $day
+  # can return 'negative' numbers
+  # returns NA if either of date_a or date_b is NA
+
+  interval <- list()
+
+  interval$year <- mapply(function(x, y)
+    ifelse(!is.na(min(x, y)),
+           (length(seq.Date(min(x, y), max(x, y), by = "year")) - 1) *
+             ifelse(y > x, 1, -1),
+           NA),
+    # note that seq.Date can't handle 'negative' periods
+    date_a, date_b)
+
+  interval$month <- mapply(function(x, y, z)
+    ifelse(!is.na(min(x, y)),
+           (length(seq.Date(tail(seq.Date(min(x, y), length.out = abs(z) + 1, by = "year"), 1),
+                            # 'reduces' difference between dates by 'year' difference
+                            max(x,y), by = "month")) -1 ) *
+             ifelse(y > x, 1, -1),
+    NA),
+    date_a, date_b, interval$year)
+
+  interval$day <- mapply(function(x, y, z, zz)
+    ifelse(!is.na(min(x, y)),
+           (length(seq.Date(tail(seq.Date(tail(seq.Date(min(x, y),
+                                                        length.out = abs(z) + 1,
+                                                        by = "year"), 1),
+                                          length.out = abs(zz) + 1, by = "month"), 1),
+                            # 'reduces' difference between dates by 'year' difference
+                            max(x,y), by = "day")) -1 ) *
+             ifelse(y > x, 1, -1),
+           NA),
+    date_a, date_b, interval$year, interval$month)
+
+  return(interval)
+}
+
 hrmin <- function(t) {
   # converts seconds to a 'time' starting from midnight
   # t : value in seconds

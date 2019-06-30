@@ -555,7 +555,7 @@ chosen_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param BPdatabaseChoice the chosen database from the config_db list
-#' @param emr_db' R6 database object. this might not be initially defined
+#' @param emr_db R6 database object. this might not be initially defined
 #'
 #' if no arguments passed, the defaults are what is stored in
 #' the  object

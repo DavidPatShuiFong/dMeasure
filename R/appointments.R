@@ -32,29 +32,32 @@ NULL
 #'
 #' @return list of appointments
 filter_appointments <- function(dMeasure_obj,
-                                date_from = NULL,
-                                date_to = NULL,
-                                clinicians = NULL) {
+                                date_from = NA,
+                                date_to = NA,
+                                clinicians = NA) {
   dMeasure_obj$filter_appointments(date_from, date_to, clinicians)
 }
 
-.public("filter_appointments", function(date_from = NULL,
-                                        date_to = NULL,
-                                        clinicians = NULL) {
+.public("filter_appointments", function(date_from = NA,
+                                        date_to = NA,
+                                        clinicians = NA) {
 
-  if (is.null(date_from)) {
+  if (is.na(date_from)) {
     date_from <- self$date_a
   }
-  if (is.null(date_to)) {
+  if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.null(clinicians)) {
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
   }
 
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.null(clinicians) || length(clinicians) == 0) {
+  if (is.na(clinicians) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
     self$appointments_filtered <- self$db$appointments %>%
@@ -81,29 +84,29 @@ filter_appointments <- function(dMeasure_obj,
 #'
 #' @return list of appointments
 filter_appointments_time <- function(dMeasure_obj,
-                                     date_from = NULL, date_to = NULL,
-                                     clinicians = NULL,
+                                     date_from = NA, date_to = NA,
+                                     clinicians = NA,
                                      lazy = FALSE) {
   dMeasure_obj$filter_appointments_time(date_from, date_to, clinicians)
 }
 
-.public("filter_appointments_time", function(date_from = NULL,
-                                             date_to = NULL,
-                                             clinicians = NULL,
+.public("filter_appointments_time", function(date_from = NA,
+                                             date_to = NA,
+                                             clinicians = NA,
                                              lazy = FALSE) {
 
-  if (is.null(date_from)) {
+  if (is.na(date_from)) {
     date_from <- self$date_a
   }
-  if (is.null(date_to)) {
+  if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.null(clinicians)) {
+  if (length(clinicians) == 1 && is.na(clinicians)) {
     clinicians <- self$clinicians
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.null(clinicians) || length(clinicians) == 0) {
+  if (is.na(clinicians) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
 
@@ -135,29 +138,29 @@ filter_appointments_time <- function(dMeasure_obj,
 #'
 #' @return list of appointments
 list_appointments <- function(dMeasure_obj,
-                              date_from = NULL, date_to = NULL,
-                              clinicians = NULL,
+                              date_from = NA, date_to = NA,
+                              clinicians = NA,
                               lazy = FALSE) {
   dMeasure_obj$list_appointments(date_from, date_to, clinicians)
 }
 
-.public("list_appointments", function(date_from = NULL,
-                                      date_to = NULL,
-                                      clinicians = NULL,
+.public("list_appointments", function(date_from = NA,
+                                      date_to = NA,
+                                      clinicians = NA,
                                       lazy = FALSE) {
 
-  if (is.null(date_from)) {
+  if (is.na(date_from)) {
     date_from <- self$date_a
   }
-  if (is.null(date_to)) {
+  if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.null(clinicians)) {
+  if (is.na(clinicians)) {
     clinicians <- self$clinicians
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.null(clinicians) || length(clinicians) == 0) {
+  if (is.na(clinicians) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
 
@@ -198,23 +201,23 @@ list_appointments <- function(dMeasure_obj,
 # collects ALL billings for patients who have displayed appointments
 # used by billings view, and CDM billings view
 billed_appointments <- function(dMeasure_obj,
-                                date_from = NULL, date_to = NULL,
-                                clinicians = NULL,
+                                date_from = NA, date_to = NA,
+                                clinicians = NA,
                                 lazy = FALSE) {
   dMeasure_obj$billed_appointments(dMeasure_obj, date_from, date_to, clinicians, lazy)
 }
 
-.public("billed_appointments", function(date_from = NULL,
-                                        date_to = NULL,
-                                        clinicians = NULL,
+.public("billed_appointments", function(date_from = NA,
+                                        date_to = NA,
+                                        clinicians = NA,
                                         lazy = FALSE) {
-  if (is.null(date_from)) {
+  if (is.na(date_from)) {
     date_from <- self$date_a
   }
-  if (is.null(date_to)) {
+  if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.null(clinicians)) {
+  if (is.na(clinicians)) {
     clinicians <- self$clinicians
   }
 
