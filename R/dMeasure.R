@@ -7,7 +7,7 @@
 #'
 #' @section Methods:
 #' \itemize{
-#' \item{\code{\link{read_configuration_filepaths}} : read (or initiate) YAML/SQL DB filepaths}
+#' \item{\code{\link{configuration_filepath}} : read (or initiate) YAML/SQL DB filepaths}
 #' \item{\code{\link{open_configuration_db}} : open SQLite configuration database}
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
@@ -32,6 +32,8 @@ dMeasure <-
 
 ##### function to fill in the class ######################
 .public <- function(...) dMeasure$set("public", ...)
+.private <- function(...) dMeasure$set("private", ...)
+.active <- function(...) dMeasure$set("active", ...)
 .developer <- function(...) dMeasure$set("public", ...)
 
 ##### close and finalize object ##########################
@@ -60,9 +62,11 @@ dMeasure <-
 ##### Configuration file location ########################
 ## fields
 
-.public("yaml_config_filepath", NULL)
-.public("sql_config_filepath", NULL)
-.public("local_config", NULL)
+.public("yaml_config_filepath", character())
+.public("sql_config_filepath", character())
+.public("local_config", character())
+
+## active fields
 
 #' read configuration filepaths
 #'
@@ -74,56 +78,69 @@ dMeasure <-
 #' it will read the YAML configuration filepath, which if already
 #' existing might contain the 'real' location of the $sql_config_filepath
 #'
-#' finally sets $configuration_file_path to 'real' SQL filepath
+#' returns the SQL filepath
 #'
-#' @param dMeasure_obj dMeasure object
+#' @name configuration_file_path
 #'
-#' @return nothing, modifies \code{dMeasure_obj}
+#' @return SQL filepath
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
-#' dMeasure_obj$read_configuration_filepaths()
-#'
-#' read_configuration_filepaths(dMeasure_obj)
-read_configuration_filepaths <- function(dMeasure_obj) {
-  dMeasure_obj$read_configuration_filepaths()
-  invisible()
-}
+#' dMeasure_obj$configuration_file_path # read filepath
+#' dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
+#'  # sets filepath
+.active("configuration_file_path", function (filepath) {
 
-# methods
-.public("read_configuration_filepaths", function () {
-  if (grepl("Program Files", normalizePath(R.home()))) {
-    # this is a system-wide install
-    self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
-    self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
-    # store in user's home directory
-  } else {
-    # this is a 'local' user install, not a system-wide install
-    # e.g. C:/Users/MyName/AppData/Programs/...
-    # as opposed to 'C:/Program Files/...'
-    self$yaml_config_filepath <- "./DailyMeasure_cfg.yaml"
-    self$sql_config_filepath <- "./DailyMeasure_cfg.sqlite"
-    # this file can be stored in the AppData folder, out of sight of the user
-  }
+  self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
+  # the location the of the '.yaml' configuration file
+  # always in the user's home directory
+  if (!missing(filepath)) {
+    # the 'new' configuration filepath is being set
+    self$close() # close any open database connections
+    self$sql_config_filepath <- filepath # set the new config filepath
 
-  if (configr::is.yaml.file(self$yaml_config_filepath)) {
-    # if config file exists and is a YAML-type file
-    self$local_config <- configr::read.config(self$yaml_config_filepath)
-    # config in local location
-  } else {
-    # local config file does not exist. possibly first-run
     self$local_config <- list()
     self$local_config$config_file <- self$sql_config_filepath
-    # main configuration file, could be set to 'common location'
-    # write the (minimalist) local config file
+    # main configuration file, could (potentially) be set to 'common location'
+  } else {
+    # no configuration filepath has been provided
+    # read the old configuration filepath, or create one
+    if (configr::is.yaml.file(self$yaml_config_filepath)) {
+      # if config file exists and is a YAML-type file
+      self$local_config <- configr::read.config(self$yaml_config_filepath)
+      self$sql_config_filepath <- self$local_config$config_file
+      # config in local location
+    } else {
+      # local config file does not exist. possibly first-run
+      if (grepl("Program Files", normalizePath(R.home()))) {
+        # this is a system-wide install
+        self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+        # store in user's home directory
+      } else {
+        # this is a 'local' user install, not a system-wide install
+        # e.g. C:/Users/MyName/AppData/Programs/...
+        # as opposed to 'C:/Program Files/...'
+        self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
+        # this file can be stored in the AppData folder, out of sight of the user
+      }
+      self$local_config <- list()
+      self$local_config$config_file <- self$sql_config_filepath
+      # main configuration file, could (potentially) be set to 'common location'
+    }
+  }
+
+  # write the (minimalist) local config file
+  if (!configr::is.yaml.file(self$yaml_config_filepath) | !missing(filepath)) {
+    # either there is no .YAML configuration file,
+    # or the .sqlite filepath has been changed
     configr::write.config(
       self$local_config,
       file.path = self$yaml_config_filepath,
       write.type = "yaml"
     )
   }
-  self$configuration_file_path <- self$local_config$config_file
-  invisible(self)
+
+  return(self$sql_config_filepath)
 })
 
 
@@ -133,7 +150,6 @@ read_configuration_filepaths <- function(dMeasure_obj) {
 .public("config_db", NULL)
 # later dbConnection::dbConnection$new() connection to database
 # using either DBI or pool
-.public("configuration_file_path", character())
 .public("BPdatabase", data.frame(id = integer(),
                                  Name = character(),
                                  Address = character(),
@@ -141,7 +157,7 @@ read_configuration_filepaths <- function(dMeasure_obj) {
                                  UserID = character(),
                                  dbPassword = character(),
                                  stringsAsFactors = FALSE))
-.public("BPdatabaseChoice", character())
+.private(".BPdatabaseChoice", character())
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
 .public("PracticeLocations", data.frame(id = integer(),
@@ -167,6 +183,46 @@ read_configuration_filepaths <- function(dMeasure_obj) {
 #  for the 'non-specified' action
 # use 'uid' rather than 'id', because 'id' is
 # later used to identify the restrictions...
+
+## 'active' fields
+
+#' choose (or read) database choice
+#'
+#' this must be one of 'None' or one of the defined databases
+#'
+#' @name BPdatabaseChoice
+#'
+#' @return the current database choice
+#'
+#' @examples
+#' dMeasure_obj$BPdatabaseChoice # returns the current choice
+#' dMeasure_obj$BPdatabaseChoice <- "None" # sets database to none
+.active("BPdatabaseChoice", function(choice) {
+  if (missing(choice)) {
+    private$.BPdatabaseChoice
+  } else {
+    if (!(choice %in% c("None", self$BPdatabase$Name))) {
+      stop(paste0("Database choice must be one of ",
+                  paste0("'", self$BPdatabase$Name, "'", collapse = ", "),
+                  " or 'None'."))
+    }
+
+    private$.BPdatabaseChoice <- choice
+
+    if (nrow(self$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
+             dplyr::filter(id ==1) %>% dplyr::collect())) {
+      # already an entry in the ServerChoice table
+      query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
+      data_for_sql <- as.list.data.frame(c(private$.BPdatabaseChoice, 1))
+    } else {
+      # create a new entry
+      query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
+    }
+
+    self$config_db$dbSendQuery(query, data_for_sql)
+  }
+})
 
 ## methods
 
@@ -197,7 +253,6 @@ open_configuration_db <-
 
   # if no configuration filepath is defined, then try to read one
   if (length(configuration_file_path) == 0) {
-    self$read_configuration_filepaths()
     configuration_file_path <- self$configuration_file_path
   }
 
@@ -447,9 +502,9 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 
 ## fields
 .public("clinician_choice_list", NULL)
- # available clinicians appointments
+# available clinicians appointments
 .public("clinicians", NULL)
- # chosen clinician list
+# chosen clinician list
 
 ## constants
 view_restrictions <- list(
