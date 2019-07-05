@@ -188,7 +188,10 @@ dMeasure <-
 
 #' choose (or read) database choice
 #'
-#' this must be one of 'None' or one of the defined databases
+#' This must be one of 'None' or one of the defined databases.
+#' Tries to open the databse. If fails, will be set to 'None'.
+#'
+#' (Stored in private$.BPdatabaseChoice)
 #'
 #' @name BPdatabaseChoice
 #'
@@ -207,7 +210,51 @@ dMeasure <-
                   " or 'None'."))
     }
 
+    # close existing database connection
+    # safe to call $close() if no database is open
+    self$emr_db$close()
+
+    if (choice == "None") {
+      # do nothing
+    } else if (!is.null(choice)) {
+      server <- self$BPdatabase %>%
+        dplyr::filter(Name == choice) %>%
+        dplyr::collect()
+      print("Opening EMR database")
+      self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
+                          server = server$Address, database = server$Database,
+                          uid = server$UserID, pwd = simple_decode(server$dbPassword))
+    }
+
+    if (is.null(self$emr_db$conn()) || !DBI::dbIsValid(self$emr_db$conn())) {
+      # || 'short-circuits' the evaluation, so if not an environment,
+      # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
+
+      # either database not opened, or has just been closed
+      self$db$users <- NULL
+      self$db$patients <- NULL
+      self$db$investigations <- NULL
+      self$db$appointments <- NULL
+      self$db$immunizations <- NULL
+      self$db$preventive_health <- NULL
+      self$db$correspondenceIn <- NULL
+      self$db$reportValues <- NULL
+      self$db$services <- NULL
+      self$db$history <- NULL
+      self$clinician_choice_list <- NULL
+      choice <- "None" # set choice of database to 'None'
+    } else {
+      # successfully opened database
+      # set choice of database to attempted choice
+      self$initialize_emr_tables() # initialize data tables
+      dummy <- self$update_UserFullConfig() # match UserConfig to EMR user configs
+      dummy <- self$clinician_list() # and list all 'available' clinicians
+    }
+
     private$.BPdatabaseChoice <- choice
+    # the same as 'choice' initially was, if database successfully opened
+    # otherwise will be 'None'. (also should return 'None' if tried to open 'None')
+
 
     if (nrow(self$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
              dplyr::filter(id ==1) %>% dplyr::collect())) {
@@ -610,81 +657,43 @@ chosen_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param BPdatabaseChoice the chosen database from the config_db list
-#' @param emr_db R6 database object. this might not be initially defined
+#'
+#' @return BPdatabaseChoice the same as the chosen database if successfully opened
+#'  otherwise returns "None"
 #'
 #' if no arguments passed, the defaults are what is stored in
 #' the  object
 open_emr_db <- function(dMeasure_obj,
-                        BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice,
-                        emr_db = dMeasure_obj$emr_db) {
-  dMeasure_obj$open_emr_db(BPdatabaseChoice, emr_db)
+                        BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
+  dMeasure_obj$open_emr_db(BPdatabaseChoice)
 }
 
-.public("open_emr_db",function(BPdatabaseChoice = NULL,
-                               emr_db = NULL) {
+.public("open_emr_db",function(BPdatabaseChoice = NULL) {
 
-  if (is.null(self$config_db) || length(a$BPdatabaseChoice) == 0) {
+  if (is.null(self$emr_db)) {
+    self$emr_db <- dbConnection::dbConnection$new()
+    # on first run, self$emr_db may be NULL
+  }
+
+  if (is.null(self$config_db) || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
-    self$read_configuration_db()
-    BPdatabaseChoice <- self$BPdatabaseChoice
-    emr_db <- self$emr_db
+    self$read_configuration_db() # this will also try to open the database
   }
 
   if (is.null(BPdatabaseChoice)) {
-    BPdatabaseChoice = self$BPdatabaseChoice
-  }
-  if (is.null(emr_db)) {
-    emr_db = self$emr_db
+    BPdatabaseChoice <- self$BPdatabaseChoice
   }
 
   print(paste("ChosenServerName:", BPdatabaseChoice))
 
-  if (is.null(emr_db)) {
-    self$emr_db <- dbConnection::dbConnection$new()
-    emr_db <- self$emr_db
-    # on first run, self$emr_db may be NULL
-  }
-  # close existing database connection
-  # safe to call $close() if no database is open
-  emr_db$close()
-
-  if (BPdatabaseChoice == "None") {
-    # do nothing
-  } else if (!is.null(BPdatabaseChoice)) {
-    server <- self$BPdatabase %>%
-      dplyr::filter(Name == BPdatabaseChoice) %>%
-      dplyr::collect()
-    print("Opening EMR database")
-    emr_db$connect(odbc::odbc(), driver = "SQL Server",
-                   server = server$Address, database = server$Database,
-                   uid = server$UserID, pwd = simple_decode(server$dbPassword))
+  if (BPdatabaseChoice != self$BPdatabaseChoice) {
+    # if specified choice is not the same as the current choice
+    self$BPdatabaseChoice <- BPdatabaseChoice
+    # this 'active' field will automatically try to open the selected database
   }
 
-  if (is.null(emr_db$conn()) || !DBI::dbIsValid(emr_db$conn())) {
-    # || 'short-circuits' the evaluation, so if not an environment,
-    # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
-
-    # either database not opened, or has just been closed
-    self$db$users <- NULL
-    self$db$patients <- NULL
-    self$db$investigations <- NULL
-    self$db$appointments <- NULL
-    self$db$immunizations <- NULL
-    self$db$preventive_health <- NULL
-    self$db$correspondenceIn <- NULL
-    self$db$reportValues <- NULL
-    self$db$services <- NULL
-    self$db$history <- NULL
-    self$clinician_choice_list <- NULL
-    self$BPdatabaseChoice <- "None" # set choice of database to 'None'
-
-  } else {
-    # successfully opened database
-    self$initialize_emr_tables(emr_db)
-    dummy <- self$update_UserFullConfig() # match UserConfig to EMR user configs
-    dummy <- self$clinician_list() # and list all 'available' clinicians
-  }
+  return(self$BPdatabaseChoice)
 })
 
 #' initialize the tables of the EMR database

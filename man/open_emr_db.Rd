@@ -5,18 +5,19 @@
 \title{opens the EMR database}
 \usage{
 open_emr_db(dMeasure_obj,
-  BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice,
-  emr_db = dMeasure_obj$emr_db)
+  BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}
 
 \item{BPdatabaseChoice}{the chosen database from the config_db list}
-
-\item{emr_db}{R6 database object. this might not be initially defined
+}
+\value{
+BPdatabaseChoice the same as the chosen database if successfully opened
+ otherwise returns "None"
 
 if no arguments passed, the defaults are what is stored in
-the  object}
+the  object
 }
 \description{
 opens the EMR database

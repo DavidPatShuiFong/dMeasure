@@ -1,4 +1,5 @@
 ##### Bowel cancer screening ###########################################
+#' CancerScreen - bowel cancer
 #'
 #' @include dMeasure.R
 #' @include appointments.R

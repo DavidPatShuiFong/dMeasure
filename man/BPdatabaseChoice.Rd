@@ -7,7 +7,11 @@
 the current database choice
 }
 \description{
-this must be one of 'None' or one of the defined databases
+This must be one of 'None' or one of the defined databases.
+Tries to open the databse. If fails, will be set to 'None'.
+}
+\details{
+(Stored in private$.BPdatabaseChoice)
 }
 \examples{
 dMeasure_obj$BPdatabaseChoice # returns the current choice
