@@ -9,7 +9,7 @@ password.reset(dMeasure_obj, user, newpassword = "")
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{user}{Full name of user}
+\item{user}{Full name of user (not the current identified user)}
 
 \item{newpassword}{the new password ("" empty string by default)
 

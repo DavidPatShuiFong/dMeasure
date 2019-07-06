@@ -514,6 +514,29 @@ user_login <- function(dMeasure_obj, password) {
   return(self$authenticated)
 })
 
+#' Logout current identified user
+#'
+#' @param dMeasure_obj dMeasure object
+#' @param password the password
+#'
+#' @return authentication status
+#'  error (stop) if no identified user
+#'  warning if not authenticated (logged in)
+user_logout <- function(dMeasure_obj) {
+  dMeasure_obj$user_logout()
+}
+
+.public("user_logout", function() {
+  if (is.null(self$identified_user)) {
+    stop("No user identified!")
+  }
+  if (self$authenticated == FALSE) {
+    warning("Current user was not authenticated prior to logout.")
+  }
+  self$authenticated <- TRUE
+  return(self$authenticated)
+})
+
 #' Set password of currently identified user
 #'
 #' if there is an old password, that must be specified
