@@ -1,5 +1,6 @@
 #' Appointment list fields and methods
 #'
+#' @name appointments
 #' @title dMeasureAppointments class appointment lists
 #'
 #' @include dMeasure.R

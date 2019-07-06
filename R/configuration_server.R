@@ -1,6 +1,7 @@
 ##### Configuration - server ###########################################
 #' Configuration - server
 #'
+#' @name configuration_server
 #' @include dMeasure.R
 #' needs access to dMeasure and methods and fields
 #' @include calculation_definitions.R
@@ -12,11 +13,11 @@ NULL
 #' insert a new server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description $Name, $Address, $Database, $UserID, $dbPassword
+#' @param description list object : $Name, $Address, $Database, $UserID, $dbPassword
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
-server.insert <- function(description) {
+server.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$server.insert(description)
 }
 
@@ -30,7 +31,7 @@ server.insert <- function(description) {
              stringi::stri_length(description$Database) == 0 |
              stringi::stri_length(description$UserID) == 0 |
              stringi::stri_length(description$dbPassword) == 0) {
-    stop("All entries must be described")
+    stop("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword) must be described")
   } else {
     newid <- max(c(as.data.frame(self$BPdatabase)$id, 0)) + 1
     # initially, self$BPdatabase$id might be an empty set, so need to append a '0'
@@ -50,20 +51,21 @@ server.insert <- function(description) {
 
     self$BPdatabase <- rbind(self$BPdatabase, description)
     # update the dataframe in memory
-    return(self$BPdatabase)
+    return(self$BPdatabase %>>%
+             dplyr::select(-dbPassword))
   }
 })
 
 #' server.update
 #'
-#' change (update) a server descriptioin
+#' change (update) a server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description $id, $Name, $Address, $Database, $UserID, $dbPassword
+#' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
-server.update <- function(description) {
+server.update <- function(dMeasure_obj, description) {
   dMeasure_obj$server.update(description)
 }
 
@@ -76,14 +78,12 @@ server.update <- function(description) {
     stop("New server name cannot be the same as existing names, or 'None'")
   } else if (toupper(description$Name) == toupper(self$BPdatabaseChoice)) {
     stop(paste0("Cannot edit '", description$Name, "', currently in use!"))
-  } else if (toupper(description$Name == "NONE")) {
-    stop("New server name cannot be 'None'!")
   } else if (stringi::stri_length(description$Name) == 0 |
              stringi::stri_length(description$Address) == 0 |
              stringi::stri_length(description$Database) == 0 |
              stringi::stri_length(description$UserID) == 0 |
              stringi::stri_length(description$dbPassword) == 0) {
-    stop("All entries must be described")
+    stop("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword) must be described")
   } else {
     description$dbPassword <- simple_encode(description$dbPassword)
     # immediately encode password.
@@ -100,21 +100,22 @@ server.update <- function(description) {
 
     self$BPdatabase <- rbind(self$BPdatabase[-(id = description$id),], description)
     # store new values in copy of settings in memory
-    return(self$BPdatabase)
+    return(self$BPdatabase %>>%
+             dplyr::select(-dbPassword))
   }
 })
 
 
-#' servers.delete
+#' server.delete
 #'
-#' remove a server descriptioin
+#' remove a server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description $Name
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
-server.delete <- function(description) {
+server.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$server.delete(description)
 }
 
@@ -140,5 +141,42 @@ server.delete <- function(description) {
       self$BPdatabase <- self$BPdatabase[-c(id = id),]
     }
   }
-  return(self$BPdatabase)
+  return(self$BPdatabase %>>%
+           dplyr::select(-dbPassword))
+})
+
+#' server.list
+#'
+#' List server description. does not include passwords!
+#' If 'ServerAdmin' restriction is set, only 'ServerAdmin'
+#' users can see the server list with this method.
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return dataframe - full list of database descriptions
+#'  can also return error (stop) if description is invalid
+server.list <- function(dMeasure_obj) {
+  dMeasure_obj$server.list()
+}
+
+.public("server.list", function() {
+  # list server descriptions
+
+
+  if ("ServerAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
+    # only some users allowed to see/change server settings
+    if ("ServerAdmin" %in% unlist(self$identified_user$Attributes) &
+        self$authenticated == TRUE) {
+      description <- self$BPdatabase %>>%
+        dplyr::select(-c(dbPassword))
+    } else {
+      # this user is not authorized to access the server list
+      stop("'ServerAdmin' permission required to view server list.")
+    }
+  } else {
+    # no 'ServerAdmin' attribute required
+    description <- self$BPdatabase %>>%
+      dplyr::select(-dbPassword)
+  }
+  return(description)
 })

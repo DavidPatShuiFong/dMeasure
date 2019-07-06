@@ -477,6 +477,14 @@ match_user <- function(dMeasure_obj) {
   self$identified_user <-
     self$UserConfig[self$UserConfig$AuthIdentity == Sys.info()[["user"]],]
 
+  if ("RequirePasswords" %in% unlist(self$UserRestrictions$Restriction)) {
+    # password not yet entered, so not yet authenticated
+    self$authenticated <- FALSE
+  } else {
+    # no password required, current user attributes are 'authenticated' by Sys.info()
+    self$authenticated <- TRUE
+  }
+
   invisible(self)
 })
 

@@ -1,6 +1,7 @@
 ##### Bowel cancer screening ###########################################
 #' CancerScreen - bowel cancer
 #'
+#' @name cancerscreen_bowel
 #' @include dMeasure.R
 #' @include appointments.R
 #' needs access to dMeasure and appointments functions and variables

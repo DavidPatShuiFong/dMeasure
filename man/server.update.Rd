@@ -4,17 +4,17 @@
 \alias{server.update}
 \title{server.update}
 \usage{
-server.update(description)
+server.update(dMeasure_obj, description)
 }
 \arguments{
-\item{description}{$id, $Name, $Address, $Database, $UserID, $dbPassword}
-
 \item{dMeasure_obj}{dMeasure R6 object}
+
+\item{description}{list $id, $Name, $Address, $Database, $UserID, $dbPassword}
 }
 \value{
 dataframe - full list of database descriptions
  can also return error (stop) if description is invalid
 }
 \description{
-change (update) a server descriptioin
+change (update) a server description
 }

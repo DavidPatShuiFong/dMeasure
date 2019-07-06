@@ -1,1 +1,64 @@
 (C) 2019 David Fong. All rights reserved
+
+"dMeasure" is written by David Fong.
+YEAR: 2019
+COPYRIGHT HOLDER: Dr David Pat Shui Fong
+Proprietary. All rights reserved.
+
+
+All OTHER software modified, included or bundled with this "DailyMeasure" is freely
+available for distribution under various licenses. Not all of these licenses are
+'open source' licenses, and there may be restrictions on modification, re-use or sale.
+
+Details of these licenses, and copies of those licenses, follow below.
+Some software modified, included or bundled contain licensing details which
+are described in separate files in the "LICENSEdetails" folder.
+
+
+
+MIT License
+===========
+
+dplyr
+https://dplyr.tidyverse.org/
+
+tidyr
+https://tidyr.tidyverse.org/
+
+dbplyr
+https://dbplyr.tidyverse.org/
+
+odbc
+https://cran.r-project.org/web/packages/odbc
+
+configr
+https://cran.r-project.org/web/packages/configr/
+
+jsonlite
+https://github.com/jeroen/jsonlite/
+
+magrittr
+https://magrittr.tidyverse.org/
+
+pipeR
+https://github.com/renkun-ken/pipeR
+
+sodium
+https://cran.r-project.org/web/packages/sodium
+
+fomantic-UI
+a modified version of fomantic-UI is used
+https://github.com/fomantic/Fomantic-U
+(fomantic-UI, in turn, is a fork of semantic-UI)
+
+R6
+https://github.com/r-lib/R6
+
+dbConnection
+https://github.com/DavidPatShuiFong/dbConnection
+
+BSD-3
+=====
+
+stringi
+https://github.com/gagolews/stringi

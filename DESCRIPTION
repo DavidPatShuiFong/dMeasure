@@ -18,7 +18,8 @@ Imports:
     dbConnection,
     configr,
     sodium,
-    R6
+    R6,
+    stringi
 RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'
@@ -26,5 +27,6 @@ Collate:
     'dMeasure.R'
     'appointments.R'
     'CancerScreen_bowelcancer.R'
+    'configuration_location.R'
     'configuration_server.R'
     'utils_pipe.R'

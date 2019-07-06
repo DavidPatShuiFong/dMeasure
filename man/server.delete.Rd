@@ -2,19 +2,19 @@
 % Please edit documentation in R/configuration_server.R
 \name{server.delete}
 \alias{server.delete}
-\title{servers.delete}
+\title{server.delete}
 \usage{
-server.delete(description)
+server.delete(dMeasure_obj, description)
 }
 \arguments{
-\item{description}{$Name}
-
 \item{dMeasure_obj}{dMeasure R6 object}
+
+\item{description}{$Name}
 }
 \value{
 dataframe - full list of database descriptions
  can also return error (stop) if description is invalid
 }
 \description{
-remove a server descriptioin
+remove a server description
 }
