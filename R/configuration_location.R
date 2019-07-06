@@ -23,6 +23,12 @@ location.insert <- function(dMeasure_obj, description) {
 
 .public("location.insert", function(description) {
   # insert a practice location
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to view or edit location list.")))
+
   if (length(grep(toupper(description$Name),
                   toupper(as.data.frame(self$PracticeLocations %>>%
                                         dplyr::select(Name)))
@@ -68,6 +74,11 @@ location.update <- function(dMeasure_obj, description) {
 
 .public("location.update", function(description) {
   # change (update) a practice location
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to view or edit location list.")))
 
   olddescription <- self$PracticeLocations %>>%
     dplyr::filter(id == description$id) %>>% dplyr::collect()
@@ -119,6 +130,10 @@ location.delete <- function(dMeasure_obj, description) {
 .public("location.delete", function(description) {
   # delete a practice location
 
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to view or edit location list.")))
 
   if (description$Name %in% self$UserConfig$Location) {
     stop(paste0("Cannot remove '", description$Name,
@@ -160,5 +175,49 @@ location.list <- function(dMeasure_obj) {
 }
 
 .public("location.list", function() {
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to view or edit location list.")))
+
   return(self$PracticeLocations)
+})
+
+#' location.permission
+#'
+#' Does the current user have location access permission?
+#'
+#' Can only be 'false' if $UserRestrictions$Restriction contains
+#' 'UserAdmin'
+#'
+#' if 'UserAdmin' in the $UserRestrictions, then a user needs
+#' to be identified and 'authenticated'. Authentication requires
+#' identification (via Sys.info()$user), and might also require
+#' a password
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return TRUE or FALSE
+#'  additionally returns a warning if permission is FALSE
+location.permission <- function(dMeasure_obj) {
+  dMeasure_obj$location.permission()
+}
+
+.public("location.permission", function() {
+  if ("UserAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
+    # only some users allowed to see/change server settings
+    if ("UserAdmin" %in% unlist(self$identified_user$Attributes) &
+        self$authenticated == TRUE) {
+      permission <- TRUE
+    } else {
+      # this user is not authorized to access the locations list
+      permission <- FALSE
+      warning("No 'UserAdmin' attribute for this user.")
+    }
+  } else {
+    # no 'UserAdmin' attribute required
+    permission <- TRUE
+  }
+  return(permission)
 })

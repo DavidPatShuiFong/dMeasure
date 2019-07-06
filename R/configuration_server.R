@@ -22,6 +22,12 @@ server.insert <- function(dMeasure_obj, description) {
 }
 
 .public("server.insert", function(description) {
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'ServerAdmin' permission required to modify server list.")))
+
   if (toupper(description$Name) %in% toupper(append(self$BPdatabase$Name, "None"))) {
     # if the proposed server is the same as one that already exists
     # (ignoring case)
@@ -70,6 +76,11 @@ server.update <- function(dMeasure_obj, description) {
 }
 
 .public("server.update", function(description) {
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'ServerAdmin' permission required to modify server list.")))
 
   if (toupper(description$Name) %in%
       toupper(append(self$BPdatabase[-(id = description$id),]$Name, "None"))) {
@@ -122,6 +133,11 @@ server.delete <- function(dMeasure_obj, description) {
 .public("server.delete", function(description) {
   # delete a server description
 
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'ServerAdmin' permission required to modify server list.")))
+
   if (toupper(description$Name) == toupper(self$BPdatabaseChoice)) {
     stop(paste0("Cannot remove '", description$Name, "', currently in use!"))
   } else {
@@ -162,21 +178,54 @@ server.list <- function(dMeasure_obj) {
 .public("server.list", function() {
   # list server descriptions
 
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'ServerAdmin' permission required to view server list.")))
 
+  if (permission) {
+    description <- self$BPdatabase %>>%
+      dplyr::select(-dbPassword)}
+  else {
+    description <- c("")
+  }
+  return(description)
+})
+
+#' server.permission
+#'
+#' Does the current user have server access permission?
+#'
+#' Can only be 'false' if $UserRestrictions$Restriction contains
+#' 'ServerAdmin'
+#'
+#' if 'ServerAdmin' in the $UserRestrictions, then a user needs
+#' to be identified and 'authenticated'. Authentication requires
+#' identification (via Sys.info()$user), and might also require
+#' a password
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return TRUE or FALSE
+#'  additionally returns a warning if permission is FALSE
+server.permission <- function(dMeasure_obj) {
+  dMeasure_obj$server.permission()
+}
+
+.public("server.permission", function() {
   if ("ServerAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("ServerAdmin" %in% unlist(self$identified_user$Attributes) &
         self$authenticated == TRUE) {
-      description <- self$BPdatabase %>>%
-        dplyr::select(-c(dbPassword))
+      permission <- TRUE
     } else {
       # this user is not authorized to access the server list
-      stop("'ServerAdmin' permission required to view server list.")
+      permission <- FALSE
+      warning("No 'ServerAdmin' attribute for this user.")
     }
   } else {
     # no 'ServerAdmin' attribute required
-    description <- self$BPdatabase %>>%
-      dplyr::select(-dbPassword)
+   permission <- TRUE
   }
-  return(description)
+  return(permission)
 })
