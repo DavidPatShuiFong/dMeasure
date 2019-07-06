@@ -24,7 +24,7 @@ location.insert <- function(dMeasure_obj, description) {
 .public("location.insert", function(description) {
   # insert a practice location
 
-  tryCatch(permission <- self$server.permission(),
+  tryCatch(permission <- self$location.permission(),
            warning = function(w)
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
@@ -75,7 +75,7 @@ location.update <- function(dMeasure_obj, description) {
 .public("location.update", function(description) {
   # change (update) a practice location
 
-  tryCatch(permission <- self$server.permission(),
+  tryCatch(permission <- self$location.permission(),
            warning = function(w)
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
@@ -130,7 +130,7 @@ location.delete <- function(dMeasure_obj, description) {
 .public("location.delete", function(description) {
   # delete a practice location
 
-  tryCatch(permission <- self$server.permission(),
+  tryCatch(permission <- self$location.permission(),
            warning = function(w)
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
@@ -176,7 +176,7 @@ location.list <- function(dMeasure_obj) {
 
 .public("location.list", function() {
 
-  tryCatch(permission <- self$server.permission(),
+  tryCatch(permission <- self$location.permission(),
            warning = function(w)
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))

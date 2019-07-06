@@ -29,4 +29,5 @@ Collate:
     'CancerScreen_bowelcancer.R'
     'configuration_location.R'
     'configuration_server.R'
+    'configuration_user.R'
     'utils_pipe.R'

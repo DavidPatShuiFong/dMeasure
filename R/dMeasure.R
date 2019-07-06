@@ -534,6 +534,10 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     stop("No user identified!")
   }
 
+  if (stringi::stri_length(newpassword) < 6) {
+    stop("Password must be at least six (6) characters long")
+  }
+
   if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
     # no password yet set for currentl identified user, so just accept the 'newpassword'
     setPassword(newpassword, self$UserConfig, self$identified_user, self$config_db)
