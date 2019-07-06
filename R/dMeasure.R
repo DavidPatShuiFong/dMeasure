@@ -12,7 +12,6 @@
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
 #' \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
-#' \item{\code{\link{update_UserFullConfig}} : create 'full' user configuratio table}
 #' \item{\code{\link{update_date}} : change, or read, search date range}
 #' \item{\code{\link{location_list}} : list practice locations/groups}
 #' \item{\code{\link{update_location}} : change, or read, current location}
@@ -247,7 +246,6 @@ dMeasure <-
       # successfully opened database
       # set choice of database to attempted choice
       self$initialize_emr_tables() # initialize data tables
-      dummy <- self$update_UserFullConfig() # match UserConfig to EMR user configs
       dummy <- self$clinician_list() # and list all 'available' clinicians
     }
 
@@ -838,45 +836,26 @@ initialize_emr_tables <- function(dMeasure_obj,
 ##### other variables and methods #################
 
 ## fields
-.public("UserFullConfig", NULL)
-# contains user names attached to configuration information
-# contains ALL user names
-# UserConfig() contains just names who have been configured
-
-## methods
-
-#' update the UserFullConfig
+#' UserfullConfig
 #'
 #' integrates the UserConfig in the SQLite configuration file
 #' with the user information in the EMR database
 #'
-#' @param dMeasure_obj dMeasure object
-#' @param db tables in the EMR database
-#' @param UserConfig UserConfig stored in configuration file
+#' contains user names attached to configuration information
+#' contains ALL user names
+#' $UserConfig() contains just names who have been configured
 #'
-#' @return UserFullConfig
-#' also updates this object's copy
-update_UserFullConfig <- function(dMeasure_obj,
-                                  db = dMeasure_obj$db,
-                                  UserConfig = dMeasure_obj$UserConfig) {
-  dMeasure_obj$update_UserFullConfig(db, UserConfig)
-}
-
-.public("update_UserFullConfig", function (db = NULL,
-                                           UserConfig = NULL) {
-  if (is.null(db)) {
-    db <- self$db
-    # the default
-  }
-  if (is.null(UserConfig)) {
-    UserConfig <- self$UserConfig
-    # the default
+#' @name UserFullConfig
+#'
+.active("UserFullConfig", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$UserFullConfig`", call. = FALSE)
   }
 
-  if (is.null(db$users)) {
+  if (is.null(self$db$users)) {
     UserFullConfig <- NULL
   } else {
-    UserFullConfig <- db$users %>% dplyr::collect() %>%
+    UserFullConfig <- self$db$users %>% dplyr::collect() %>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
@@ -886,12 +865,10 @@ update_UserFullConfig <- function(dMeasure_obj,
       dplyr::mutate(Fullname =
                       paste(Title, Firstname, Surname, sep = ' ')) %>%
       # include 'Fullname'
-      dplyr::left_join(UserConfig, by = 'Fullname')
+      dplyr::left_join(self$UserConfig, by = 'Fullname')
     # add user details including practice locations
   }
-
-  self$UserFullConfig <- UserFullConfig # update object's copy
-  return(UserFullConfig) # and return a copy to caller
+  return(UserFullConfig)
 })
 
 ##### date variables and location #####################################
@@ -972,7 +949,7 @@ update_location <- function(dMeasure_obj,
 
 .public("update_location", function(location = self$location) {
   locations <- self$location_list()
-  if (!location %in% locations) {
+  if (!(location %in% locations)) {
     stop(paste0("'", location, "' is not in the list of locations."))
   } else {
     self$location <- location

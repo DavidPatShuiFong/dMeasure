@@ -32,7 +32,6 @@ dMeasure class
 \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 \item{\code{\link{open_emr_db}} : open Best Practice database}
 \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
-\item{\code{\link{update_UserFullConfig}} : create 'full' user configuratio table}
 \item{\code{\link{update_date}} : change, or read, search date range}
 \item{\code{\link{location_list}} : list practice locations/groups}
 \item{\code{\link{update_location}} : change, or read, current location}

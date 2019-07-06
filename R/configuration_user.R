@@ -325,7 +325,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
                                    # any passwords are set?
                                    # this code to concatenate strings, NA or not, was found on StackOverflow
                                    # by 'Joe' https://stackoverflow.com/questions/13673894/suppress-nas-in-paste)
-  )
+    )
 
   # returns state. same as the 'changed to' state, if it is permissible
   # e.g. it isn't permissible to set ServerAdmin/UserAdmin to 'TRUE' if
@@ -356,6 +356,128 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   }
 
   return(newstate)
+})
+
+#' userconfig.insert
+#'
+#' add user configuration
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
+#'
+#' @return $UserConfig
+userconfig.insert <- function(dMeasure_obj, description) {
+  dMeasure_obj$userconfig.insert(description)
+}
+
+.public("userconfig.insert", function(description, row) {
+  # adding a new user configuration
+
+  tryCatch(permission <- self$useradmin.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to change user configuration")))
+
+  if (!is.null(description$password)) {
+    description$password <- simple_encode(description$password)
+    # immediately encode password if it was provided
+  }
+
+  # create empty entries for description, if necessary
+  for (x in c("AuthIdentity", "Location", "Attributes", "Password")) {
+    if (is.null(description[[x]])) {
+      description[[x]] <- ""
+      # if named field not present, add empty string
+      # note the assignment out of scope
+    }
+  }
+
+  if (description$Fullname %in% self$UserConfig$Fullname) {
+    # if the proposed new name is the same as one that is configured elsewhere
+    stop("This user is already configured")
+  } else if (!(description$Fullname %in% self$UserFullConfig$Fullname)) {
+    stop(paste0("'", description$Fullname, "' is not a known user name."))
+  } else if (length(setdiff(union(description$Location, self$location_list()),
+                            self$location_list())) > 0) {
+    # if there is an location being set which is not in self$location_list()
+    stop(paste0("'",
+                paste(setdiff(union(description$Location, self$location_list()),
+                              self$location_list()), collapse = ", "),
+                "', not recognized locations/groups."))
+  } else if (length(setdiff(union(description$Attributes, user_attribute_types),
+                            user_attribute_types)) > 0) {
+    # if there is an attribute being set which is not in user_attribute_types
+    stop(paste0("'",
+                paste(setdiff(union(description$Attributes, user_attribute_types),
+                              user_attribute_types), collapse = ", "),
+                "', not recognized user attribute types."))
+  } else {
+    newid <- max(self$UserConfig$id, 0) + 1
+    # initially, UserConfig()$id might be an empty set, so need to append a '0'
+    description$id <- newid
+
+    query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
+    data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
+                         # $Location and $Attribute could both have multiple (or no) entries
+                         lo = paste0(description$Location, "", collapse = ";"),
+                         at = paste0(description$Attributes, "", collapse = ";"))
+
+    self$config_db$dbSendQuery(query, data_for_sql)
+    # if the connection is a pool, can't send write query (a statement) directly
+    # so use the object's method
+
+    browser()
+
+    self$UserConfig <- rbind(self$UserConfig,
+                             description) # update the dataframe in memory
+
+    return(self$UserConfig)
+  }
+})
+
+.public("userconfig.delete", function(description) {
+  # delete a user configuration
+
+  UserConfigRow <- self$UserConfig %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>%
+    tail(1) # in case there is more than one match, remove the last one
+
+  if (nrow(UserConfigRow) == 0) {
+    stop(paste0("'", description$Fullname, "' not a configured user."))
+  }
+
+  proposed_UserConfig <- self$UserConfig %>>%
+    dplyr::filter(Fullname != description$Fullname)
+
+  # is restrictions have been placed on who can modify the server or user configuration
+  # then at least one user must have the restricted attribute
+  if ("ServerAdmin" %in% self$UserRestrictions$Restriction) {
+    if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
+                                    dplyr::select(Attributes), use.names = FALSE))) {
+      # modified data would no longer have anyone with ServerAdmin attribute
+      stop("Only 'ServerAdmin' users can change server settings.
+             At least one user must have the 'ServerAdmin' attribute!")
+    }
+  }
+  if ("UserAdmin" %in% self$UserRestrictions$Restriction) {
+    if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
+                                  dplyr::select(Attributes), use.names = FALSE))) {
+      # modified data would no longer have anyone with UserAdmin attribute
+      stop("Only 'UserAdmin' users can change user permissions.
+             At least one user must have the 'UserAdmin' attribute!")
+    }
+  }
+
+  query <- "DELETE FROM Users WHERE id = ?"
+  data_for_sql <- as.list.data.frame(UserConfigRow$id)
+
+  self$config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+
+  self$UserConfig <- proposed_UserConfig
+
+  return(self$UserConfig)
 })
 
 #' userrestriction.list
