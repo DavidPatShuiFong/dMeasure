@@ -665,11 +665,11 @@ clinician_list <- function(dMeasure_obj,
 #'
 #' @return list of clinicians chosen
 #' this will be 'checked' against actual available clinicians ($clinicians_list)
-chosen_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
-  dMeasure_obj$chosen_clinicians(choices, view_name)
+choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
+  dMeasure_obj$choose_clinicians(choices, view_name)
 }
 
-.public("chosen_clinicians", function(choices = "", view_name = "All") {
+.public("choose_clinicians", function(choices = "", view_name = "All") {
   choices <- intersect(choices, self$clinician_list(view_name))
   # can only actually choose clinicians available in chosen view
 

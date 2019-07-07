@@ -29,6 +29,7 @@ Collate:
     'conditions.R'
     'CDM.R'
     'CancerScreen_bowelcancer.R'
+    'Immunization.R'
     'billings.R'
     'configuration_location.R'
     'configuration_server.R'
