@@ -58,7 +58,7 @@ filter_appointments <- function(dMeasure_obj,
 
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.na(clinicians) || length(clinicians) == 0) {
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
     self$appointments_filtered <- self$db$appointments %>%
@@ -107,7 +107,7 @@ filter_appointments_time <- function(dMeasure_obj,
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.na(clinicians) || length(clinicians) == 0) {
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
 
@@ -156,12 +156,12 @@ list_appointments <- function(dMeasure_obj,
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.na(clinicians)) {
+  if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (is.na(clinicians) || length(clinicians) == 0) {
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
 
@@ -218,7 +218,7 @@ billed_appointments <- function(dMeasure_obj,
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
-  if (is.na(clinicians)) {
+  if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
   }
 

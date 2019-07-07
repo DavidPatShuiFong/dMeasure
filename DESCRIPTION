@@ -27,6 +27,7 @@ Collate:
     'dMeasure.R'
     'appointments.R'
     'CancerScreen_bowelcancer.R'
+    'billings.R'
     'configuration_location.R'
     'configuration_server.R'
     'configuration_user.R'

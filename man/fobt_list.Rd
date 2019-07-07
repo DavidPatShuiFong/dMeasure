@@ -28,8 +28,6 @@ list of appointments (with patient details)
   TestDate (date object) - date and
   TestName - description of the most recent bowel cancer screening test (if any)
   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
-
-  unlike the original version of this function, no HTML
 }
 \description{
 Bowel cancer screening list

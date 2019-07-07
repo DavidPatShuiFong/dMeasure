@@ -31,7 +31,6 @@ NULL
 #'   TestName - description of the most recent bowel cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
-#'   unlike the original version of this function, no HTML
 fobt_list <- function(dMeasure_obj, appointments_list = NA, emr_db = NA,
                       action = TRUE, screentag = FALSE, screentag_print = FALSE) {
 
