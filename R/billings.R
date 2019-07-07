@@ -5,6 +5,7 @@
 #' @name billings
 #'
 #' @include dMeasure.R
+#' @include appointments.R
 #' @include fomantic_definitions_tags.R
 NULL
 

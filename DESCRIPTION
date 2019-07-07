@@ -26,6 +26,8 @@ Collate:
     'calculation_definitions.R'
     'dMeasure.R'
     'appointments.R'
+    'conditions.R'
+    'CDM.R'
     'CancerScreen_bowelcancer.R'
     'billings.R'
     'configuration_location.R'

@@ -12,12 +12,18 @@ NULL
 ## Fields
 .public("appointments_filtered", NULL)
 # filtered by chosen dates and clinicians
+
 .public("appointments_filtered_time", NULL)
 # times in more R (and visually) friendly format
+# requires appointments_filtered
+
 .public("appointments_list", NULL)
 # add date of birth to appointments list
+# requires appointments_filtered_time
+
 .public("appointments_billings", NULL)
 # appointment list with billings
+# requires appointments_list
 
 ## Methods
 
