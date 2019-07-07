@@ -358,14 +358,102 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   return(newstate)
 })
 
+.private("validate.userconfig.description", function(description) {
+  # validate Fullname, Location and Attributes
+  # returns TRUE if validates
+  #  returns error (stop) if fales to validate
+
+  if (!(description$Fullname %in% self$UserFullConfig$Fullname)) {
+    # does this user name exist at all?
+    stop(paste0("'",
+                description$Fullname,
+                "' is not a recognized user name."))
+  }
+
+  if (length(setdiff(description$Location[[1]],
+                     # note that 'setdiff' is assymetrical
+                     # need to pick first element of list (which is itself a list)
+                     c("", (self$PracticeLocations %>>% dplyr::collect())$Name))) > 0) {
+    # if there is an location being set which is not in self$location_list(), or ""
+    stop(paste0("'",
+                paste(setdiff(description$Location[[1]],
+                              c("", (self$PracticeLocations %>>% dplyr::collect())$Name)),
+                      collapse = ", "),
+                "', not recognized location(s)/group(s)."))
+  }
+
+  if (length(setdiff(description$Attributes[[1]],
+                     c(user_attribute_types, ""))) > 0) {
+    # if there is an attribute being set which is not in user_attribute_types, or ""
+    stop(paste0("'",
+                paste(setdiff(description$Attributes[[1]],
+                              c(user_attribute_types, "")), collapse = ", "),
+                "', not recognized user attribute type(s)."))
+  }
+
+  return(TRUE)
+
+})
+
+.private("validate.proposed.userconfig", function(proposed_UserConfig) {
+  # check whether proposed userconfig satisfied some requirements
+  # e.g. if a restriciton has been placed, then at least one user might need
+  #  an attribute to 'override' that restriction
+  #
+  # @return TRUE if passed
+  #  otherwise will return an error
+
+  # if restrictions have been placed on who can modify the server or user configuration
+  # then at least one user must have the restricted attribute
+  if ("ServerAdmin" %in% self$UserRestrictions$Restriction) {
+    if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
+                                    dplyr::select(Attributes), use.names = FALSE))) {
+      # modified data would no longer have anyone with ServerAdmin attribute
+      stop("Only 'ServerAdmin' users can change server settings.
+             At least one user must have the 'ServerAdmin' attribute!")
+    }
+  }
+
+  if ("UserAdmin" %in% self$UserRestrictions$Restriction) {
+    if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
+                                  dplyr::select(Attributes), use.names = FALSE))) {
+      # modified data would no longer have anyone with UserAdmin attribute
+      stop("Only 'UserAdmin' users can change user permissions.
+             At least one user must have the 'UserAdmin' attribute!")
+    }
+  }
+
+  return(TRUE)
+
+})
+
 #' userconfig.insert
 #'
 #' add user configuration
+#'
+#' if setting multiple attributes or locations, need to set the attribute
+#' as a list e.g.
+#'
+#' list(Fullname = "Mrs. Diabetes Educator",
+#'   Location = list(c("Jemena", "Lakeside")))
+#'
+#' note that the list does not need to enclose with I(),
+#' since 'as_tibble' is used for translation.
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
 #'
 #' @return $UserConfig
+#'
+#' @examples
+#'
+#'  dMeasure_obj <- dMeasure::dMeasure$new()
+#'  dMeasure_obj$open_emr_db()
+#'  dMeasure_obj$userconfig.insert(
+#'    list(Fullname = "Mrs. Diabetes Educator",
+#'         Location = list(c("Jemena", "Lakeside")),
+#'         Attributes = list(c("UserAdmin", "ServerAdmin")))
+#'
 userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
 }
@@ -388,55 +476,173 @@ userconfig.insert <- function(dMeasure_obj, description) {
     if (is.null(description[[x]])) {
       description[[x]] <- ""
       # if named field not present, add empty string
-      # note the assignment out of scope
     }
   }
 
   if (description$Fullname %in% self$UserConfig$Fullname) {
     # if the proposed new name is the same as one that is configured elsewhere
     stop("This user is already configured")
-  } else if (!(description$Fullname %in% self$UserFullConfig$Fullname)) {
-    stop(paste0("'", description$Fullname, "' is not a known user name."))
-  } else if (length(setdiff(union(description$Location, self$location_list()),
-                            self$location_list())) > 0) {
-    # if there is an location being set which is not in self$location_list()
-    stop(paste0("'",
-                paste(setdiff(union(description$Location, self$location_list()),
-                              self$location_list()), collapse = ", "),
-                "', not recognized locations/groups."))
-  } else if (length(setdiff(union(description$Attributes, user_attribute_types),
-                            user_attribute_types)) > 0) {
-    # if there is an attribute being set which is not in user_attribute_types
-    stop(paste0("'",
-                paste(setdiff(union(description$Attributes, user_attribute_types),
-                              user_attribute_types), collapse = ", "),
-                "', not recognized user attribute types."))
-  } else {
-    newid <- max(self$UserConfig$id, 0) + 1
-    # initially, UserConfig()$id might be an empty set, so need to append a '0'
-    description$id <- newid
-
-    query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
-    data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
-                         # $Location and $Attribute could both have multiple (or no) entries
-                         lo = paste0(description$Location, "", collapse = ";"),
-                         at = paste0(description$Attributes, "", collapse = ";"))
-
-    self$config_db$dbSendQuery(query, data_for_sql)
-    # if the connection is a pool, can't send write query (a statement) directly
-    # so use the object's method
-
-    browser()
-
-    self$UserConfig <- rbind(self$UserConfig,
-                             description) # update the dataframe in memory
-
-    return(self$UserConfig)
   }
+
+  tryCatch({private$validate.userconfig.description(description)},
+           # find invalid Location or Attribute descriptions
+           error = function(e) {
+             print(paste("Error in description validation : ", e[[1]]))
+             stop("Unable to insert this user description")})
+
+  newid <- max(self$UserConfig$id, 0) + 1
+  # initially, UserConfig()$id might be an empty set, so need to append a '0'
+  description$id <- newid
+
+  query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
+  data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
+                       # $Location and $Attribute could both have multiple (or no) entries
+                       lo = paste0(description$Location, "", collapse = ";"),
+                       at = paste0(description$Attributes, "", collapse = ";"))
+
+  self$config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+
+  self$UserConfig <- rbind(self$UserConfig,
+                           tibble::as_tibble(description))
+  # update the dataframe in memory
+  # as_tibble allows the use of lists in a field without I()
+  #
+  # for example, to set two locations, with tibble can use
+  #  list(Fullname = "Mrs. Diabetes Educator",
+  #    Location = list(c("Jemena", "Lakeside")))
+  #
+  # with data.frame need to enclose the list with I()
+  #  list(Fullname = "Mrs. Diabetes Educator",
+  #    Location = I(list(c("Jemena", "Lakeside"))))
+
+  return(self$UserConfig)
+
 })
+
+#' userconfig.update
+#'
+#' update user configuration
+#'
+#' if setting multiple attributes or locations, need to set the attribute
+#' as a list e.g.
+#'
+#' list(Fullname = "Mrs. Diabetes Educator",
+#'   Location = list(c("Jemena", "Lakeside")))
+#'
+#' note that the list does not need to enclose with I(),
+#' since 'as_tibble' is used for translation.
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
+#'
+#' @return $UserConfig
+#'
+#' @examples
+#'
+#'  dMeasure_obj <- dMeasure::dMeasure$new()
+#'  dMeasure_obj$open_emr_db()
+#'  dMeasure_obj$userconfig.update(
+#'    list(Fullname = "Mrs. Diabetes Educator",
+#'         Location = list(c("Jemena", "Lakeside")),
+#'         Attributes = list(c("UserAdmin", "ServerAdmin")))
+#'
+userconfig.update <- function(dMeasure_obj, description) {
+  dMeasure_obj$userconfig.update(description)
+}
+
+.public("userconfig.update", function (description) {
+  # change (update) a user configuration
+
+  tryCatch(permission <- self$useradmin.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to change user configuration")))
+
+  if (!is.null(description$password)) {
+    description$password <- simple_encode(description$password)
+    # immediately encode password if it was provided
+  }
+
+  if (!(description$Fullname %in% self$UserConfig$Fullname)) {
+    # if the proposed configuration to change is not actually configured
+    stop("This user is not configured")
+  }
+
+  old_description <- self$UserConfig %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>%
+    tail(1) # in case there is more than one match, remove the last one
+  # the 'old' configuration
+  description$id <- old_description$id # need to copy the id
+
+  # copy entries from existing description, as necessary
+  for (x in c("AuthIdentity", "Location", "Attributes", "Password")) {
+    if (is.null(description[[x]])) {
+      description[[x]] <- old_description[[x]]
+    }
+  }
+
+  tryCatch({private$validate.userconfig.description(description)},
+           # find invalid Location or Attribute descriptions
+           error = function(e) {
+             print(paste("Error in description validation : ", e[[1]]))
+             stop("Unable to insert this user description")})
+
+  proposed_UserConfig <- self$UserConfig %>>%
+    dplyr::filter(Fullname != description$Fullname) %>>%
+    rbind(tibble::as_tibble(description))
+
+  # this is the proposed user configuration
+
+  tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
+           error = function(e) {
+             paste0("Error in change in attributes :", e[[1]])
+             stop("Cannot delete this user configuration.")
+           })
+  # is restrictions have been placed on who can modify the server or user configuration
+  # then at least one user must have the restricted attribute
+
+  query <- "UPDATE Users SET Fullname = ?, AuthIdentity = ?, Location = ?, Attributes = ? WHERE id = ?"
+  data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
+                            paste0(description$Location[[1]], "", collapse = ";"),
+                            paste0(description$Attributes[[1]], "", collapse = ";"),
+                            description$id))
+  # note extra "" within paste0 is required in the case of empty data
+
+  self$config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+
+  self$UserConfig <- proposed_UserConfig
+
+  return(self$UserConfig)
+
+})
+
+#' userconfig.delete
+#'
+#' delete user configuration
+#'
+#' will not delete user configuration if that user is the only holder
+#' of an attribute which is restricted, but essential for operation
+#' e.g. ServerAdmin
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param description list $Fullname
+#'
+#' @return $UserConfig
+userconfig.delete <- function(dMeasure_obj, description) {
+  dMeasure_obj$userconfig.delete(description)
+}
 
 .public("userconfig.delete", function(description) {
   # delete a user configuration
+
+  tryCatch(permission <- self$useradmin.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to change/delete user configuration.")))
 
   UserConfigRow <- self$UserConfig %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
@@ -449,24 +655,15 @@ userconfig.insert <- function(dMeasure_obj, description) {
   proposed_UserConfig <- self$UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname)
 
+  # this is the proposed user configuration
+
+  tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
+           error = function(e) {
+             paste("Error in change in attributes :", e[[1]])
+             stop("Cannot delete this user configuration.")
+           })
   # is restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
-  if ("ServerAdmin" %in% self$UserRestrictions$Restriction) {
-    if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
-                                    dplyr::select(Attributes), use.names = FALSE))) {
-      # modified data would no longer have anyone with ServerAdmin attribute
-      stop("Only 'ServerAdmin' users can change server settings.
-             At least one user must have the 'ServerAdmin' attribute!")
-    }
-  }
-  if ("UserAdmin" %in% self$UserRestrictions$Restriction) {
-    if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
-                                  dplyr::select(Attributes), use.names = FALSE))) {
-      # modified data would no longer have anyone with UserAdmin attribute
-      stop("Only 'UserAdmin' users can change user permissions.
-             At least one user must have the 'UserAdmin' attribute!")
-    }
-  }
 
   query <- "DELETE FROM Users WHERE id = ?"
   data_for_sql <- as.list.data.frame(UserConfigRow$id)
@@ -476,6 +673,26 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # so use the object's method
 
   self$UserConfig <- proposed_UserConfig
+
+  return(self$UserConfig)
+})
+
+#' userconfig.list
+#'
+#' list user configuration
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return $UserConfig
+userconfig.list <- function(dMeasure_obj) {
+  dMeasure_obj$userconfig.list()
+}
+
+.public("userconfig.list", function() {
+  tryCatch(permission <- self$useradmin.permission(),
+           warning = function(w)
+             stop(paste(w,
+                        "'UserAdmin' permission required to view user configurations.")))
 
   return(self$UserConfig)
 })
