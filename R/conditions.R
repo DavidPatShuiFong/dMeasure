@@ -270,9 +270,11 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
 
   appointments %>>% dplyr::collect() %>>%
     dplyr::inner_join(self$db$observations %>>%
-                        dplyr::filter(DATACODE == 9), # this is BMI. also in DATANAME, but different spellings/cases
+                        dplyr::filter(DATACODE == 9),
+                      # this is BMI. also in DATANAME, but different spellings/cases
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter(OBSDATE <= AppointmentDate) %>>% # observation done before the appointment time
+    dplyr::filter(as.Date(OBSDATE) <= as.Date(AppointmentDate)) %>>%
+    # observation done before the appointment time
     dplyr::group_by(InternalID, AppointmentDate, AppointmentTime) %>>%
     dplyr::slice(which.max(OBSDATE)) %>>% # choose the observation with the most recent observation date
     # unfortunately, as the code stands, this generates a vector which is not appointment date specific
@@ -382,7 +384,8 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::inner_join(self$db$pregnancies %>>%
                         dplyr::filter(is.null(ENDDATE)),
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter((EDCBYDATE > AppointmentDate) & (EDCBYDATE < (AppointmentDate+months(9)))) %>>%
+    dplyr::filter((as.Date(EDCBYDATE) > as.Date(AppointmentDate)) &
+                    (as.Date(EDCBYDATE) < as.Date(AppointmentDate+280))) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
