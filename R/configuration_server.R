@@ -213,7 +213,7 @@ server.permission <- function(dMeasure_obj) {
 }
 
 .public("server.permission", function() {
-  if ("ServerAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
+  if ("ServerAdmin" %in% unlist(private$UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("ServerAdmin" %in% unlist(self$identified_user$Attributes) &
         self$authenticated == TRUE) {
@@ -225,7 +225,7 @@ server.permission <- function(dMeasure_obj) {
     }
   } else {
     # no 'ServerAdmin' attribute required
-   permission <- TRUE
+    permission <- TRUE
   }
   return(permission)
 })

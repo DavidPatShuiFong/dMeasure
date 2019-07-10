@@ -31,7 +31,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
              stop(paste(w,
                         "'UserAdmin' permission required to reset/edit other passwords.")))
 
-  if (!(user %in% self$UserConfig$Fullname)) {
+  if (!(user %in% private$UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")
   }
 
@@ -52,14 +52,14 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
   }
   # encode the password, if not an empty string
 
-  self$UserConfig <-
-    self$UserConfig %>>%
+  private$UserConfig <-
+    private$UserConfig %>>%
     dplyr::mutate(Password = replace(Password,
                                      Fullname == user,
                                      newpassword))
   # replace password with empty string
 
-  UserRow <- self$UserConfig %>>%
+  UserRow <- private$UserConfig %>>%
     dplyr::filter(Fullname == user)
   # just select the user for whom we are removing the password
 
@@ -67,7 +67,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
   # write to configuration database
   data_for_sql <- list(newpassword, UserRow$id[[1]])
 
-  self$config_db$dbSendQuery(query, data_for_sql)
+  private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
 
@@ -282,7 +282,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     # update UserRestrictions database
     # this is manually called when (one) restriction is added or removed
     # so only has to find 'one' row of difference between the 'new' list and the 'old' list
-    originalRestrictions <- self$config_db$conn() %>>%
+    originalRestrictions <- private$config_db$conn() %>>%
       dplyr::tbl("UserRestrictions") %>>%
       dplyr::collect()
     newRestrictions <- self$UserRestrictions
@@ -293,7 +293,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       query <- "INSERT INTO UserRestrictions (uid, Restriction) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(new_row$uid, new_row$Restriction))
 
-      self$config_db$dbSendQuery(query, data_for_sql)
+      private$config_db$dbSendQuery(query, data_for_sql)
       # if the connection is a pool, can't send write query (a statement) directly
       # so use the object's method
     } else {
@@ -303,7 +303,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
         query <- "DELETE FROM UserRestrictions WHERE uid = ?"
         data_for_sql <- as.list.data.frame(c(deleted_row$uid))
 
-        self$config_db$dbSendQuery(query, data_for_sql)
+        private$config_db$dbSendQuery(query, data_for_sql)
         # if the connection is a pool, can't send write query (a statement) directly
         # so use the object's method
       }
@@ -314,10 +314,10 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   newstate <-
     restrictionLocal$callback[[1]](state,
-                                   self$UserConfig$Attributes %>>%
+                                   private$UserConfig$Attributes %>>%
                                      unlist(use.names = FALSE),
                                    # list of attributes in use
-                                   (nchar(apply(cbind(unlist(self$UserConfig$Password,
+                                   (nchar(apply(cbind(unlist(private$UserConfig$Password,
                                                              use.names = FALSE)),
                                                 1,
                                                 function(x)
@@ -373,11 +373,11 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   if (length(setdiff(description$Location[[1]],
                      # note that 'setdiff' is assymetrical
                      # need to pick first element of list (which is itself a list)
-                     c("", (self$PracticeLocations %>>% dplyr::collect())$Name))) > 0) {
+                     c("", (private$PracticeLocations %>>% dplyr::collect())$Name))) > 0) {
     # if there is an location being set which is not in self$location_list(), or ""
     stop(paste0("'",
                 paste(setdiff(description$Location[[1]],
-                              c("", (self$PracticeLocations %>>% dplyr::collect())$Name)),
+                              c("", (private$PracticeLocations %>>% dplyr::collect())$Name)),
                       collapse = ", "),
                 "', not recognized location(s)/group(s)."))
   }
@@ -479,7 +479,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
     }
   }
 
-  if (description$Fullname %in% self$UserConfig$Fullname) {
+  if (description$Fullname %in% private$UserConfig$Fullname) {
     # if the proposed new name is the same as one that is configured elsewhere
     stop("This user is already configured")
   }
@@ -490,7 +490,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
              print(paste("Error in description validation : ", e[[1]]))
              stop("Unable to insert this user description")})
 
-  newid <- max(self$UserConfig$id, 0) + 1
+  newid <- max(private$UserConfig$id, 0) + 1
   # initially, UserConfig()$id might be an empty set, so need to append a '0'
   description$id <- newid
 
@@ -500,12 +500,12 @@ userconfig.insert <- function(dMeasure_obj, description) {
                        lo = paste0(description$Location, "", collapse = ";"),
                        at = paste0(description$Attributes, "", collapse = ";"))
 
-  self$config_db$dbSendQuery(query, data_for_sql)
+  private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
 
-  self$UserConfig <- rbind(self$UserConfig,
-                           tibble::as_tibble(description))
+  private$UserConfig <- rbind(private$UserConfig,
+                              tibble::as_tibble(description))
   # update the dataframe in memory
   # as_tibble allows the use of lists in a field without I()
   #
@@ -517,7 +517,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   #  list(Fullname = "Mrs. Diabetes Educator",
   #    Location = I(list(c("Jemena", "Lakeside"))))
 
-  return(self$UserConfig)
+  return(private$UserConfig)
 
 })
 
@@ -565,12 +565,12 @@ userconfig.update <- function(dMeasure_obj, description) {
     # immediately encode password if it was provided
   }
 
-  if (!(description$Fullname %in% self$UserConfig$Fullname)) {
+  if (!(description$Fullname %in% private$UserConfig$Fullname)) {
     # if the proposed configuration to change is not actually configured
     stop("This user is not configured")
   }
 
-  old_description <- self$UserConfig %>>%
+  old_description <- private$UserConfig %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
   # the 'old' configuration
@@ -589,7 +589,7 @@ userconfig.update <- function(dMeasure_obj, description) {
              print(paste("Error in description validation : ", e[[1]]))
              stop("Unable to insert this user description")})
 
-  proposed_UserConfig <- self$UserConfig %>>%
+  proposed_UserConfig <- private$UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
@@ -610,13 +610,13 @@ userconfig.update <- function(dMeasure_obj, description) {
                             description$id))
   # note extra "" within paste0 is required in the case of empty data
 
-  self$config_db$dbSendQuery(query, data_for_sql)
+  private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
 
-  self$UserConfig <- proposed_UserConfig
+  private$UserConfig <- proposed_UserConfig
 
-  return(self$UserConfig)
+  return(private$UserConfig)
 
 })
 
@@ -644,7 +644,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to change/delete user configuration.")))
 
-  UserConfigRow <- self$UserConfig %>>%
+  UserConfigRow <- private$UserConfig %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
 
@@ -652,7 +652,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
     stop(paste0("'", description$Fullname, "' not a configured user."))
   }
 
-  proposed_UserConfig <- self$UserConfig %>>%
+  proposed_UserConfig <- private$UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname)
 
   # this is the proposed user configuration
@@ -668,13 +668,13 @@ userconfig.delete <- function(dMeasure_obj, description) {
   query <- "DELETE FROM Users WHERE id = ?"
   data_for_sql <- as.list.data.frame(UserConfigRow$id)
 
-  self$config_db$dbSendQuery(query, data_for_sql)
+  private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
 
-  self$UserConfig <- proposed_UserConfig
+  private$UserConfig <- proposed_UserConfig
 
-  return(self$UserConfig)
+  return(private$UserConfig)
 })
 
 #' userconfig.list
@@ -694,7 +694,7 @@ userconfig.list <- function(dMeasure_obj) {
              stop(paste(w,
                         "'UserAdmin' permission required to view user configurations.")))
 
-  return(self$UserConfig)
+  return(private$UserConfig)
 })
 
 #' userrestriction.list

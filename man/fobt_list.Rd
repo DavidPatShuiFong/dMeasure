@@ -4,23 +4,31 @@
 \alias{fobt_list}
 \title{Bowel cancer screening list}
 \usage{
-fobt_list(dMeasure_obj, appointments_list = NA, emr_db = NA,
-  action = TRUE, screentag = FALSE, screentag_print = FALSE)
+fobt_list(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, appointments_list = NULL, lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
+\item{date_from}{from date range (default self$date_a)}
+
+\item{date_to}{to date range (default self$date_b)}
+
+\item{clinicians}{list of clinicians (default self$clinicians)}
+
 \item{appointments_list}{dataframe, list of appointments to search
+(as opposed to using self$appointments_list)
 needs Age (presumably at time of appointment),
       InternalID (the EMR's identification code fo the patient)}
 
-\item{emr_db}{R6 object, accesss to Best Practice (EMR) database}
+\item{lazy}{= FALSE recalculate an appointment list}
 
-\item{action=TRUE}{includes 'OutOfDate' field}
+\item{action}{= FALSE includes 'OutOfDate' field}
 
-\item{screentag=FALSE}{optionally add a fomantic/semantic HTML description of 'action'}
+\item{screentag}{= FALSE optionally add a fomantic/semantic HTML description of 'action'}
 
-\item{screentag_print=FALSE}{optionally add a 'printable' description of 'action'}
+\item{screentag_print}{= TRUE optionally add a 'printable' description of 'action'}
 }
 \value{
 list of appointments (with patient details)

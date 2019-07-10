@@ -28,7 +28,7 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 
   # Returns vector of InternalID of patients who have diabetes
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% diabetes_codes),
                       by = c('InternalID'), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -58,7 +58,7 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 
   # Returns vector of InternalID of patients who have diabetes
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% asthma_codes),
                       by = c('InternalID'), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -89,7 +89,7 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
   # returns vector of InternalID of patients who are
   # Aboriginal or Torres Strait Islander as recorded in patient into
   appointments %>>%
-    dplyr::inner_join(self$db$patients %>>%
+    dplyr::inner_join(private$db$patients %>>%
                         dplyr::filter(Ethnicity %in% atsi_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -128,7 +128,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   # returns vector of InternalID of patients who
   # have a recorded malignancy
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% malignancy_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -148,7 +148,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% hiv_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -168,7 +168,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% haemoglobinopathy_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -188,7 +188,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% asplenic_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -209,7 +209,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% transplant_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -232,7 +232,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% transplant_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -252,7 +252,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% trisomy21_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -269,7 +269,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>% dplyr::collect() %>>%
-    dplyr::inner_join(self$db$observations %>>%
+    dplyr::inner_join(private$db$observations %>>%
                         dplyr::filter(DATACODE == 9),
                       # this is BMI. also in DATANAME, but different spellings/cases
                       by = "InternalID", copy = TRUE) %>>%
@@ -299,7 +299,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% cld_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -321,7 +321,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% neuro_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -342,7 +342,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% cld_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -364,7 +364,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>%
-    dplyr::inner_join(self$db$history %>>%
+    dplyr::inner_join(private$db$history %>>%
                         dplyr::filter(ConditionID %in% crf_codes),
                       by = c("InternalID"), copy = TRUE) %>>%
     dplyr::pull(InternalID) %>>%
@@ -381,7 +381,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>% dplyr::collect() %>>%
-    dplyr::inner_join(self$db$pregnancies %>>%
+    dplyr::inner_join(private$db$pregnancies %>>%
                         dplyr::filter(is.null(ENDDATE)),
                       by = "InternalID", copy = TRUE) %>>%
     dplyr::filter((as.Date(EDCBYDATE) > as.Date(AppointmentDate)) &

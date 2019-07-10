@@ -12,9 +12,9 @@
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
 #' \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
-#' \item{\code{\link{update_date}} : change, or read, search date range}
+#' \item{\code{\link{choose_date}} : change, or read, search date range}
 #' \item{\code{\link{location_list}} : list practice locations/groups}
-#' \item{\code{\link{update_location}} : change, or read, current location}
+#' \item{\code{\link{choose_location}} : change, or read, current location}
 #' }
 #'
 #' @examples
@@ -33,19 +33,18 @@ dMeasure <-
 .public <- function(...) dMeasure$set("public", ...)
 .private <- function(...) dMeasure$set("private", ...)
 .active <- function(...) dMeasure$set("active", ...)
-.developer <- function(...) dMeasure$set("public", ...)
 
 ##### close and finalize object ##########################
 
 .public("close", function() {
   # close any open database connections
-  if (!is.null(self$config_db)) {
-    self$config_db$close()
-    self$config_db <- NULL
+  if (!is.null(private$config_db)) {
+    private$config_db$close()
+    private$config_db <- NULL
   }
-  if (!is.null(self$emr_db)) {
-    self$emr_db$close()
-    self$emr_db <- NULL
+  if (!is.null(private$emr_db)) {
+    private$emr_db$close()
+    private$emr_db <- NULL
   }
   self$authenticated = FALSE
 
@@ -63,7 +62,7 @@ dMeasure <-
 
 .public("yaml_config_filepath", character())
 .public("sql_config_filepath", character())
-.public("local_config", character())
+.private("local_config", character())
 
 ## active fields
 
@@ -98,16 +97,16 @@ dMeasure <-
     self$close() # close any open database connections
     self$sql_config_filepath <- filepath # set the new config filepath
 
-    self$local_config <- list()
-    self$local_config$config_file <- self$sql_config_filepath
+    private$local_config <- list()
+    private$local_config$config_file <- self$sql_config_filepath
     # main configuration file, could (potentially) be set to 'common location'
   } else {
     # no configuration filepath has been provided
     # read the old configuration filepath, or create one
     if (configr::is.yaml.file(self$yaml_config_filepath)) {
       # if config file exists and is a YAML-type file
-      self$local_config <- configr::read.config(self$yaml_config_filepath)
-      self$sql_config_filepath <- self$local_config$config_file
+      private$local_config <- configr::read.config(self$yaml_config_filepath)
+      self$sql_config_filepath <- private$local_config$config_file
       # config in local location
     } else {
       # local config file does not exist. possibly first-run
@@ -122,8 +121,8 @@ dMeasure <-
         self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
         # this file can be stored in the AppData folder, out of sight of the user
       }
-      self$local_config <- list()
-      self$local_config$config_file <- self$sql_config_filepath
+      private$local_config <- list()
+      private$local_config$config_file <- self$sql_config_filepath
       # main configuration file, could (potentially) be set to 'common location'
     }
   }
@@ -133,7 +132,7 @@ dMeasure <-
     # either there is no .YAML configuration file,
     # or the .sqlite filepath has been changed
     configr::write.config(
-      self$local_config,
+      private$local_config,
       file.path = self$yaml_config_filepath,
       write.type = "yaml"
     )
@@ -146,36 +145,36 @@ dMeasure <-
 ##### Configuration details - databases, locations, users ###########
 
 ## Fields
-.public("config_db", NULL)
+.private("config_db", NULL)
 # later dbConnection::dbConnection$new() connection to database
 # using either DBI or pool
-.public("BPdatabase", data.frame(id = integer(),
-                                 Name = character(),
-                                 Address = character(),
-                                 Database = character(),
-                                 UserID = character(),
-                                 dbPassword = character(),
-                                 stringsAsFactors = FALSE))
+.private("BPdatabase", data.frame(id = integer(),
+                                  Name = character(),
+                                  Address = character(),
+                                  Database = character(),
+                                  UserID = character(),
+                                  dbPassword = character(),
+                                  stringsAsFactors = FALSE))
 .private(".BPdatabaseChoice", character())
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
-.public("PracticeLocations", data.frame(id = integer(),
-                                        Name = character(),
-                                        Description = character(),
-                                        stringsAsFactors = FALSE))
+.private("PracticeLocations", data.frame(id = integer(),
+                                         Name = character(),
+                                         Description = character(),
+                                         stringsAsFactors = FALSE))
 # id needed for editing this dataframe later
 # need default value for practice location filter
 # interface initialization
-.public("UserConfig", data.frame(id = integer(),
-                                 Fullname = character(), AuthIdentity = character(),
-                                 Location = character(),
-                                 Attributes = character(),
-                                 Password = character(),
-                                 stringsAsFactors = FALSE))
+.private("UserConfig", data.frame(id = integer(),
+                                  Fullname = character(), AuthIdentity = character(),
+                                  Location = character(),
+                                  Attributes = character(),
+                                  Password = character(),
+                                  stringsAsFactors = FALSE))
 
-.public("UserRestrictions", data.frame(uid = integer(),
-                                       Restriction = character(),
-                                       stringsAsFactors = FALSE))
+.private("UserRestrictions", data.frame(uid = integer(),
+                                        Restriction = character(),
+                                        stringsAsFactors = FALSE))
 # this lists the 'enabled' restrictions,
 #  relevant to the 'Attributes' field of 'UserConfig'
 # without the restriction, all users have the 'permission'
@@ -203,43 +202,43 @@ dMeasure <-
   if (missing(choice)) {
     private$.BPdatabaseChoice
   } else {
-    if (!(choice %in% c("None", self$BPdatabase$Name))) {
+    if (!(choice %in% c("None", private$BPdatabase$Name))) {
       stop(paste0("Database choice must be one of ",
-                  paste0("'", self$BPdatabase$Name, "'", collapse = ", "),
+                  paste0("'", private$BPdatabase$Name, "'", collapse = ", "),
                   " or 'None'."))
     }
 
     # close existing database connection
     # safe to call $close() if no database is open
-    self$emr_db$close()
+    private$emr_db$close()
 
     if (choice == "None") {
       # do nothing
     } else if (!is.null(choice)) {
-      server <- self$BPdatabase %>%
+      server <- private$BPdatabase %>%
         dplyr::filter(Name == choice) %>%
         dplyr::collect()
       print("Opening EMR database")
-      self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
-                          server = server$Address, database = server$Database,
-                          uid = server$UserID, pwd = simple_decode(server$dbPassword))
+      private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
+                             server = server$Address, database = server$Database,
+                             uid = server$UserID, pwd = simple_decode(server$dbPassword))
     }
 
-    if (is.null(self$emr_db$conn()) || !DBI::dbIsValid(self$emr_db$conn())) {
+    if (is.null(private$emr_db$conn()) || !DBI::dbIsValid(private$emr_db$conn())) {
       # || 'short-circuits' the evaluation, so if not an environment,
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
       # either database not opened, or has just been closed
-      self$db$users <- NULL
-      self$db$patients <- NULL
-      self$db$investigations <- NULL
-      self$db$appointments <- NULL
-      self$db$immunizations <- NULL
-      self$db$preventive_health <- NULL
-      self$db$correspondenceIn <- NULL
-      self$db$reportValues <- NULL
-      self$db$services <- NULL
-      self$db$history <- NULL
+      private$db$users <- NULL
+      private$db$patients <- NULL
+      private$db$investigations <- NULL
+      private$db$appointments <- NULL
+      private$db$immunizations <- NULL
+      private$db$preventive_health <- NULL
+      private$db$correspondenceIn <- NULL
+      private$db$reportValues <- NULL
+      private$db$services <- NULL
+      private$db$history <- NULL
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
@@ -254,7 +253,7 @@ dMeasure <-
     # otherwise will be 'None'. (also should return 'None' if tried to open 'None')
 
 
-    if (nrow(self$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
+    if (nrow(private$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
              dplyr::filter(id ==1) %>% dplyr::collect())) {
       # already an entry in the ServerChoice table
       query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
@@ -265,7 +264,7 @@ dMeasure <-
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
     }
 
-    self$config_db$dbSendQuery(query, data_for_sql)
+    private$config_db$dbSendQuery(query, data_for_sql)
   }
 })
 
@@ -301,13 +300,13 @@ open_configuration_db <-
     configuration_file_path <- self$configuration_file_path
   }
 
-  # on first call, self$config_db could be NULL
-  if (is.null(self$config_db)) {
-    self$config_db <- dbConnection::dbConnection$new()
+  # on first call, private$config_db could be NULL
+  if (is.null(private$config_db)) {
+    private$config_db <- dbConnection::dbConnection$new()
     # new R6 object which generalizes database connections
   }
 
-  config_db <- self$config_db # for convenience
+  config_db <- private$config_db # for convenience
 
   if (file.exists(configuration_file_path)) {
     # open config database file
@@ -368,7 +367,7 @@ open_configuration_db <-
   }
 
 
-  if (!is.null(self$config_db$conn())) {
+  if (!is.null(private$config_db$conn())) {
     # check that tables exist in the config file
     # also create new columns (variables) as necessary
     initialize_data_table(config_db, "Server",
@@ -418,30 +417,30 @@ read_configuration_db <- function(dMeasure_obj,
   dMeasure_obj$read_configuration_db(config_db)
 }
 
-.public("read_configuration_db", function(config_db = self$config_db) {
+.public("read_configuration_db", function(config_db = private$config_db) {
 
   if (is.null(config_db)) {
     # if config_db is not yet opened/defined
     # then try to open configuration database
     self$open_configuration_db()
-    config_db <- self$config_db
+    config_db <- private$config_db
   }
 
-  self$BPdatabase <- config_db$conn() %>%
+  private$BPdatabase <- config_db$conn() %>%
     dplyr::tbl("Server") %>% dplyr::collect()
   self$BPdatabaseChoice <-
     (config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
        dplyr::filter(id == 1) %>% dplyr::select("Name") %>%
        dplyr::collect())[[1]]
-  self$PracticeLocations <- config_db$conn() %>%
+  private$PracticeLocations <- config_db$conn() %>%
     dplyr::tbl("Location")
-  self$UserConfig <- config_db$conn() %>%
+  private$UserConfig <- config_db$conn() %>%
     dplyr::tbl("Users") %>%
     # in UserConfig, there can be multiple Locations/Attributes per user
     dplyr::collect() %>%
     dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
-  self$UserRestrictions <- config_db$conn() %>%
+  private$UserRestrictions <- config_db$conn() %>%
     dplyr::tbl("UserRestrictions") %>% dplyr::collect()
 
   self$match_user()
@@ -473,9 +472,9 @@ match_user <- function(dMeasure_obj) {
 
 .public("match_user", function() {
   self$identified_user <-
-    self$UserConfig[self$UserConfig$AuthIdentity == Sys.info()[["user"]],]
+    private$UserConfig[private$UserConfig$AuthIdentity == Sys.info()[["user"]],]
 
-  if ("RequirePasswords" %in% unlist(self$UserRestrictions$Restriction)) {
+  if ("RequirePasswords" %in% unlist(private$UserRestrictions$Restriction)) {
     # password not yet entered, so not yet authenticated
     self$authenticated <- FALSE
   } else {
@@ -561,7 +560,7 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 
   if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
     # no password yet set for currentl identified user, so just accept the 'newpassword'
-    setPassword(newpassword, self$UserConfig, self$identified_user, self$config_db)
+    setPassword(newpassword, private$UserConfig, self$identified_user, private$config_db)
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
@@ -569,7 +568,7 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
       stop("Wrong password")
     } else {
       # old password specified correctly
-      setPassword(newpassword, self, self$config_db)
+      setPassword(newpassword, self, private$config_db)
       self$authenticated <- TRUE
     }
   }
@@ -635,7 +634,7 @@ clinician_list <- function(dMeasure_obj,
 
   for (restriction in view_restrictions) {
     # go through list of view restrictions
-    if (restriction$restriction %in% unlist(self$UserRestrictions$Restriction)) {
+    if (restriction$restriction %in% unlist(private$UserRestrictions$Restriction)) {
       # if the restriction has been activated
       if (view_name %in% restriction$view_to_hide) {
         # if the relevant view is being shown
@@ -680,8 +679,8 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 ##### Electronic Medical Record (EMR) database configuration ######
 
 ## fields
-.public("emr_db", NULL) # later will be R6 object containing database object
-.public("db", list(dbversion = 0)) # later will be the EMR databases.
+.private("emr_db", NULL) # later will be R6 object containing database object
+.private("db", list(dbversion = 0)) # later will be the EMR databases.
 # $dbversion is number of EMR database openings
 
 ## methods
@@ -703,12 +702,12 @@ open_emr_db <- function(dMeasure_obj,
 
 .public("open_emr_db",function(BPdatabaseChoice = NULL) {
 
-  if (is.null(self$emr_db)) {
-    self$emr_db <- dbConnection::dbConnection$new()
-    # on first run, self$emr_db may be NULL
+  if (is.null(private$emr_db)) {
+    private$emr_db <- dbConnection::dbConnection$new()
+    # on first run, private$emr_db may be NULL
   }
 
-  if (is.null(self$config_db) || length(self$BPdatabaseChoice) == 0) {
+  if (is.null(private$config_db) || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
     self$read_configuration_db() # this will also try to open the database
@@ -738,11 +737,11 @@ initialize_emr_tables <- function(dMeasure_obj,
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
-.public("initialize_emr_tables", function(emr_db = self$emr_db) {
+.public("initialize_emr_tables", function(emr_db = private$emr_db) {
 
   print("Re-initializing databases")
 
-  self$db$users <- emr_db$conn() %>%
+  private$db$users <- emr_db$conn() %>%
     # this is a function! a collect() is later called prior to mutate/join,
     # (as a result is no longer a 'lazy eval') and cannot be evaluated just once.
     # output - Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
@@ -750,10 +749,10 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(c('UserID', 'Surname', 'Firstname',
                     'LocationName', 'Title', 'ProviderNo'))
 
-  self$db$patients <- emr_db$conn() %>%
+  private$db$patients <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
 
-  self$db$investigations <- emr_db$conn() %>%
+  private$db$investigations <- emr_db$conn() %>%
     # output - InternalID, Collected (Date), TestName
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>%
     dplyr::select(c('InternalID', 'Collected', 'TestName'))
@@ -763,74 +762,74 @@ initialize_emr_tables <- function(dMeasure_obj,
   # also can handle the History table. need to
   # 'Select' out just a few columns.
 
-  self$db$appointments <- emr_db$conn() %>%
+  private$db$appointments <- emr_db$conn() %>%
     # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Appointments')) %>%
     dplyr::select(c('Patient', 'InternalID',
                     'AppointmentDate', 'AppointmentTime',
                     'Provider', 'Status'))
 
-  self$db$immunizations <- emr_db$conn() %>%
+  private$db$immunizations <- emr_db$conn() %>%
     # InternalID, GivenDate, VaccineName, VaccineID
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>%
     dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
 
-  self$db$vaccine_disease <- emr_db$conn() %>%
+  private$db$vaccine_disease <- emr_db$conn() %>%
     # vaccineIDs linked to diseases
     # e.g. diseasecode 7+30 are for influenza vaccines
     dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
-  self$db$preventive_health <- emr_db$conn() %>%
+  private$db$preventive_health <- emr_db$conn() %>%
     # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
     dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'ITEMID')
 
-  self$db$correspondenceIn <- emr_db$conn() %>%
+  private$db$correspondenceIn <- emr_db$conn() %>%
     # InternalID, CorrespondenceDate, Subject, Detail
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
     dplyr::select('InternalID', 'CorrespondenceDate', 'Subject', 'Detail')
 
-  self$db$reportValues <- emr_db$conn() %>%
+  private$db$reportValues <- emr_db$conn() %>%
     # InternalID, ReportDate, ResultName, LoincCode
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>%
     dplyr::select('InternalID', 'ReportDate', 'ResultName', 'LoincCode')
 
-  self$db$services <- emr_db$conn() %>%
+  private$db$services <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
 
-  self$db$history <- emr_db$conn() %>%
+  private$db$history <- emr_db$conn() %>%
     # InternalID, Year, Condition, ConditionID, Status
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_History')) %>%
     dplyr::select('InternalID', 'Year',
                   'Condition', 'ConditionID', 'Status')
 
-  self$db$observations <- emr_db$conn() %>%
+  private$db$observations <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'DATANAME',
                   'DATACODE', 'DATAVALUE', 'OBSDATE')
 
-  self$db$currentrx <- emr_db$conn() %>%
+  private$db$currentrx <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'PRODUCTID',
                   'DRUGNAME', 'RXSTATUS')
   # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
 
-  self$db$obgyndetail <- emr_db$conn() %>%
+  private$db$obgyndetail <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema("dbo", "OBSGYNDETAIL")) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'NOMINALLMP',
                   'LASTPAPDATE', 'LASTPAPRESULT', 'BREASTFEEDING',
                   'MammogramStatus', 'LastMammogramDate', 'MammogramResult')
 
-  self$db$pregnancies <- emr_db$conn() %>%
+  private$db$pregnancies <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema("dbo", "PREGNANCIES")) %>%
     dplyr::select('InternalID' = 'INTERNALID', 'EDCBYDATE',
                   'ACTUALLMP', 'NOMINALLMP', 'ENDDATE')
 
-  self$db$dbversion <- self$db$dbversion + 1
-  print(paste("dbversion:", self$db$dbversion))
+  private$db$dbversion <- private$db$dbversion + 1
+  print(paste("dbversion:", private$db$dbversion))
 })
 
 ##### other variables and methods #################
@@ -852,10 +851,10 @@ initialize_emr_tables <- function(dMeasure_obj,
     stop("Can't set `$UserFullConfig`", call. = FALSE)
   }
 
-  if (is.null(self$db$users)) {
+  if (is.null(private$db$users)) {
     UserFullConfig <- NULL
   } else {
-    UserFullConfig <- self$db$users %>% dplyr::collect() %>%
+    UserFullConfig <- private$db$users %>% dplyr::collect() %>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
@@ -865,7 +864,7 @@ initialize_emr_tables <- function(dMeasure_obj,
       dplyr::mutate(Fullname =
                       paste(Title, Firstname, Surname, sep = ' ')) %>%
       # include 'Fullname'
-      dplyr::left_join(self$UserConfig, by = 'Fullname')
+      dplyr::left_join(private$UserConfig, by = 'Fullname')
     # add user details including practice locations
   }
   return(UserFullConfig)
@@ -881,7 +880,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 
 ## methods
 
-#' Update date
+#' Choose date
 #'
 #' Sets 'from' and 'to' dates used in subsequent searches
 #'
@@ -891,13 +890,13 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' @return list(date_a, date_b)
 #'
 #' if date_a is later than date_b, an error is returned
-update_date <- function(dMeasure_obj,
+choose_date <- function(dMeasure_obj,
                         date_from = dMeasure_obj$date_a,
                         date_to = dMeasure_obj$date_b) {
-  dMeasure_obj$update_date(date_from, date_to)
+  dMeasure_obj$choose_date(date_from, date_to)
 }
 
-.public("update_date", function(date_from = self$date_a,
+.public("choose_date", function(date_from = self$date_a,
                                 date_to = self$date_b) {
   if (date_from > date_to) {
     stop("'From' date cannot be later than 'To' date")
@@ -921,17 +920,17 @@ location_list <- function(dMeasure_obj) {
 
 .public("location_list", function() {
   locations <- data.frame(Name = "All")
-  if (!is.null(self$PracticeLocations)) {
+  if (!is.null(private$PracticeLocations)) {
     locations <-
       rbind(locations,
-            as.data.frame(self$PracticeLocations %>%
+            as.data.frame(private$PracticeLocations %>%
                             dplyr::select(Name))) %>%
       unlist(use.names = FALSE)
   }
   return(locations)
 })
 
-#' Update location
+#' Choose location
 #'
 #' Location is used in subsequent list of clinicians available
 #'
@@ -942,12 +941,12 @@ location_list <- function(dMeasure_obj) {
 #'
 #' returns an error, and does not update the location, if trying to
 #' set to an unavailable location
-update_location <- function(dMeasure_obj,
+choose_location <- function(dMeasure_obj,
                             location = dMeasure_obj$location) {
-  dMeasure_obj$update_location(location)
+  dMeasure_obj$choose_location(location)
 }
 
-.public("update_location", function(location = self$location) {
+.public("choose_location", function(location = self$location) {
   locations <- self$location_list()
   if (!(location %in% locations)) {
     stop(paste0("'", location, "' is not in the list of locations."))

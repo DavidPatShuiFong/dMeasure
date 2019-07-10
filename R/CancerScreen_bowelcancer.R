@@ -17,13 +17,17 @@ NULL
 #' Bowel cancer screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
+#' @param date_from from date range (default self$date_a)
+#' @param date_to to date range (default self$date_b)
+#' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list dataframe, list of appointments to search
+#'  (as opposed to using self$appointments_list)
 #'  needs Age (presumably at time of appointment),
 #'        InternalID (the EMR's identification code fo the patient)
-#' @param emr_db R6 object, accesss to Best Practice (EMR) database
-#' @param action=TRUE includes 'OutOfDate' field
-#' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print=FALSE optionally add a 'printable' description of 'action'
+#' @param lazy = FALSE recalculate an appointment list
+#' @param action = FALSE includes 'OutOfDate' field
+#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
@@ -31,25 +35,44 @@ NULL
 #'   TestName - description of the most recent bowel cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
-fobt_list <- function(dMeasure_obj, appointments_list = NA, emr_db = NA,
-                      action = TRUE, screentag = FALSE, screentag_print = FALSE) {
+fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+                      appointments_list = NULL,
+                      lazy = FALSE,
+                      action = FALSE, screentag = FALSE, screentag_print = TRUE) {
 
-  dMeasure$fobt_list(appointments_list, emr_db, action, screentag, screentag_print)
+  dMeasure$fobt_list(date_from, date_to, clinicians,
+                     appointments_list,
+                     lazy, action, screentag, screentag_print)
 }
 
-.public("fobt_list", function(appointments_list = NA, emr_db = NA,
-                              action = TRUE, screentag = FALSE, screentag_print = FALSE) {
+.public("fobt_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                              appointments_list = NULL,
+                              lazy = FALSE,
+                              action = FALSE, screentag = FALSE, screentag_print = TRUE) {
 
-  if (is.na(appointments_list)) {
-    appointments_list <- self$appointments_list
-    # if no default provided
+  if (is.na(date_from)) {
+    date_from <- self$date_a
   }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (all(is.na(clinicians))) {
+    clinicians <- self$clinicians
+  }
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    stop("Choose at least one clinicians\'s appointment to view")
+  }
+
+  if (is.null(appointments_list) & !lazy) {
+    self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
+    # if not 'lazy' evaluation, then re-calculate self$appointments_billings
+    # (that is automatically done by calling the $billed_appointments method)
+  }
+
   if (is.null(appointments_list)) {
-    stop("No appointments provided in search list. Perhaps $list_appointments() first?")
-  }
-  if (is.na(emr_db)) {
-    emr_db <- self$emr_db
-    # if no default provided
+    appointments_list <- self$appointments_list
   }
 
   ### a lot of definitions
@@ -91,27 +114,27 @@ fobt_list <- function(dMeasure_obj, appointments_list = NA, emr_db = NA,
   screen_fobt_ix <- screen_fobt_list %>>%
     dplyr::left_join(
       dplyr::bind_rows(dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(emr_db$conn(),
+                                         DBI::dbGetQuery(private$emr_db$conn(),
                                                          fobt_investigation_query) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = Collected),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(emr_db$conn(),
+                                         DBI::dbGetQuery(private$emr_db$conn(),
                                                          fobt_letter_subject_query) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = CorrespondenceDate,
                                                          TestName = Subject),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(emr_db$conn(),
+                                         DBI::dbGetQuery(private$emr_db$conn(),
                                                          fobt_letter_detail_query) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = CorrespondenceDate,
                                                          TestName = Detail),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(emr_db$conn(),
+                                         DBI::dbGetQuery(private$emr_db$conn(),
                                                          fobt_result_query) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = ReportDate,
@@ -148,7 +171,7 @@ fobt_list <- function(dMeasure_obj, appointments_list = NA, emr_db = NA,
                         trimws(TestName),
                         colour = c('red', 'yellow', 'green')[OutOfDateTest],
                         popuphtml = paste0("<h4>Date : ", TestDate, "</h4>"))
-                    )
+      )
 
     return_selection <- c(return_selection, "screentag")
   }
@@ -165,7 +188,7 @@ fobt_list <- function(dMeasure_obj, appointments_list = NA, emr_db = NA,
                                             ""))
       )
 
-      return_selection <- c(return_selection, "screentag_print")
+    return_selection <- c(return_selection, "screentag_print")
   }
 
   screen_fobt_ix <- screen_fobt_ix %>>%

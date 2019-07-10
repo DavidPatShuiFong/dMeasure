@@ -67,7 +67,7 @@ filter_appointments <- function(dMeasure_obj,
   if (all(is.na(clinicians)) || length(clinicians) == 0) {
     stop("Choose at least one clinicians\'s appointment to view")
   } else {
-    self$appointments_filtered <- self$db$appointments %>%
+    self$appointments_filtered <- private$db$appointments %>%
       dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>%
       dplyr::filter(Provider %in% clinicians)
     # a database filter on an empty list after %in% will result in an error message
@@ -179,7 +179,7 @@ list_appointments <- function(dMeasure_obj,
 
     self$appointments_list <-
       self$appointments_filtered_time %>%
-      dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>%
+      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>%
       # need patients database to access date-of-birth
       dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
                       'AppointmentTime', 'Provider', 'DOB')) %>%
@@ -246,7 +246,7 @@ billed_appointments <- function(dMeasure_obj,
 
     self$appointments_billings <-
       self$appointments_list %>%
-      dplyr::left_join(self$db$services, by = "InternalID", copy=TRUE) %>%
+      dplyr::left_join(private$db$services, by = "InternalID", copy=TRUE) %>%
       dplyr::collect() %>%
       dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
   }
