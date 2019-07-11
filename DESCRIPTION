@@ -20,6 +20,8 @@ Imports:
     sodium,
     R6,
     stringi
+Suggests:
+    shiny
 RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'

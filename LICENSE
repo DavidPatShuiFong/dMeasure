@@ -60,8 +60,18 @@ https://github.com/DavidPatShuiFong/dbConnection
 tibble
 https://tibble.tidyverse.org/
 
+
 BSD-3
 =====
 
 stringi
 https://github.com/gagolews/stringi
+
+
+
+GPL-3
+=====
+
+shiny (optional 'suggests' package)
+https://github.com/rstudio/shiny
+licensing details in LICENSE.shiny

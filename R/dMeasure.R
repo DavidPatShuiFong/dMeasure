@@ -7,7 +7,7 @@
 #'
 #' @section Methods:
 #' \itemize{
-#' \item{\code{\link{configuration_filepath}} : read (or initiate) YAML/SQL DB filepaths}
+#' \item{\code{\link{configuration_file_path}} : read (or initiate) YAML/SQL DB filepaths}
 #' \item{\code{\link{open_configuration_db}} : open SQLite configuration database}
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
@@ -24,7 +24,17 @@
 #' @export
 dMeasure <-
   R6::R6Class("dMeasure",
-              public = list()
+              public = list(
+                configuration_file_pathR = NULL,
+                initialize = function() {
+                  if (requireNamespace("shiny", quietly = TRUE)) {
+                    # set reactive version only if shiny is available
+                    # note that this is for reading (from programs calling this object) only!
+                    # to set this path, need to use self$configuration_file_path
+                    self$configuration_file_pathR <- shiny::reactiveVal(NULL)
+                  }
+                }
+              )
               # this is a 'skeleton' class
               # it is filled in the with the '.public' function
   )
@@ -138,9 +148,13 @@ dMeasure <-
     )
   }
 
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$configuration_file_pathR(self$sql_config_filepath)
+  }
+
   return(self$sql_config_filepath)
 })
-
 
 ##### Configuration details - databases, locations, users ###########
 
@@ -172,9 +186,16 @@ dMeasure <-
                                   Password = character(),
                                   stringsAsFactors = FALSE))
 
-.private("UserRestrictions", data.frame(uid = integer(),
-                                        Restriction = character(),
-                                        stringsAsFactors = FALSE))
+.private(".UserRestrictions", data.frame(uid = integer(),
+                                         Restriction = character(),
+                                         stringsAsFactors = FALSE))
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # a 'public reactive' version if shiny is available
+  # not required for 'console' usage
+  .public("UserRestrictions", shiny::reactiveVal(data.frame(uid = integer(),
+                                                            Restriction = character(),
+                                                            stringsAsFactors = FALSE)))
+}
 # this lists the 'enabled' restrictions,
 #  relevant to the 'Attributes' field of 'UserConfig'
 # without the restriction, all users have the 'permission'
@@ -200,7 +221,7 @@ dMeasure <-
 #' dMeasure_obj$BPdatabaseChoice <- "None" # sets database to none
 .active("BPdatabaseChoice", function(choice) {
   if (missing(choice)) {
-    private$.BPdatabaseChoice
+    return(private$.BPdatabaseChoice)
   } else {
     if (!(choice %in% c("None", private$BPdatabase$Name))) {
       stop(paste0("Database choice must be one of ",
@@ -228,7 +249,7 @@ dMeasure <-
       # || 'short-circuits' the evaluation, so if not an environment,
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
-      # either database not opened, or has just been closed
+      # either database not opened, or has just been closed, including set to 'None'
       private$db$users <- NULL
       private$db$patients <- NULL
       private$db$investigations <- NULL
@@ -250,8 +271,7 @@ dMeasure <-
 
     private$.BPdatabaseChoice <- choice
     # the same as 'choice' initially was, if database successfully opened
-    # otherwise will be 'None'. (also should return 'None' if tried to open 'None')
-
+    # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
 
     if (nrow(private$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
              dplyr::filter(id ==1) %>% dplyr::collect())) {
@@ -263,8 +283,12 @@ dMeasure <-
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
     }
-
     private$config_db$dbSendQuery(query, data_for_sql)
+    # write to SQLite configuration database
+
+    return(private$.BPdatabaseChoice)
+    # same name as the requested database if successful
+    # 'None' if not successful, or if 'None' was chosen
   }
 })
 
@@ -440,8 +464,9 @@ read_configuration_db <- function(dMeasure_obj,
     dplyr::collect() %>%
     dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
-  private$UserRestrictions <- config_db$conn() %>%
+  private$.UserRestrictions <- config_db$conn() %>%
     dplyr::tbl("UserRestrictions") %>% dplyr::collect()
+  self$UserRestrictions(private.$UserRestrictions)
 
   self$match_user()
   # see if 'identified' system user is matched with a configured user
@@ -586,7 +611,7 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 # chosen clinician list
 
 ## constants
-view_restrictions <- list(
+.public("view_restrictions", list(
   # if a view restriction is active, then by default users
   # can only see patients in their own appointment book for
   # the specified topic
@@ -598,7 +623,7 @@ view_restrictions <- list(
        view_to_hide = list("billings")),
   list(restriction = "GlobalCDMView",
        view_to_hide = list("cdm"))
-)
+))
 
 ## methods
 
@@ -632,7 +657,7 @@ clinician_list <- function(dMeasure_obj,
     # initially, $Location might include a lot of NA
   }
 
-  for (restriction in view_restrictions) {
+  for (restriction in public$view_restrictions) {
     # go through list of view restrictions
     if (restriction$restriction %in% unlist(private$UserRestrictions$Restriction)) {
       # if the restriction has been activated
@@ -681,7 +706,13 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 ## fields
 .private("emr_db", NULL) # later will be R6 object containing database object
 .private("db", list(dbversion = 0)) # later will be the EMR databases.
-# $dbversion is number of EMR database openings
+# $db$dbversion is number of EMR database openings
+# there is also a 'public reactive' version if shiny is available
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # if shiny is available for reactive values
+  # (this is not necessary for 'console' operation)
+  .public("dbversion", shiny::reactiveVal(0))
+}
 
 ## methods
 
@@ -830,6 +861,9 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   private$db$dbversion <- private$db$dbversion + 1
   print(paste("dbversion:", private$db$dbversion))
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    self$dbversion(private$db$dbversion)
+  }
 })
 
 ##### other variables and methods #################
@@ -927,8 +961,17 @@ location_list <- function(dMeasure_obj) {
                             dplyr::select(Name))) %>%
       unlist(use.names = FALSE)
   }
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$location_listR(self$location_list)
+  }
+
   return(locations)
 })
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # set reactive version, only if shiny is available
+  .public("location_listR", shiny::reactiveVal(data.frame(Name = "All")))
+}
 
 #' Choose location
 #'

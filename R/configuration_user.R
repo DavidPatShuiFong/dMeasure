@@ -285,7 +285,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     originalRestrictions <- private$config_db$conn() %>>%
       dplyr::tbl("UserRestrictions") %>>%
       dplyr::collect()
-    newRestrictions <- self$UserRestrictions
+    newRestrictions <- private$.UserRestrictions
 
     new_row <- dplyr::anti_join(newRestrictions, originalRestrictions, by = "uid")
     if (nrow(new_row) > 0) {
@@ -336,11 +336,15 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   } else {
     # state returned is the same as the attempted change
     if (state == TRUE) {
-      self$UserRestrictions <-
+      private$.UserRestrictions <-
         dplyr::bind_rows(self$UserRestrictions,
-                         data.frame(uid = max(self$UserRestrictions$uid, 0) + 1,
+                         data.frame(uid = max(private$.UserRestrictions$uid, 0) + 1,
                                     Restriction = restriction,
                                     stringsAsFactors = FALSE))
+      if (requireNamespace("shiny", quietly = TRUE)) {
+        # only if reactive environments available, make public
+        self$UserRestrictions(private$.UserRestrictions)
+      }
       # add entry to datatable of UserRestrictions
       # add one to maximum UID (at least zero), and add restriction to new row
       # note that this table in the database uses 'uid' rather than 'id'
@@ -348,9 +352,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       update_UserRestrictions_database()
     } else {
       # remove entry in datatable of UserRestrictions
-      self$UserRestrictions <-
-        dplyr::filter(self$UserRestrictions,
-                      self$UserRestrictions$Restriction != restriction)
+      private$.UserRestrictions <-
+        dplyr::filter(private$.UserRestrictions,
+                      private$.UserRestrictions$Restriction != restriction)
+      if (requireNamespace("shiny", quietly = TRUE)) {
+        # only if reactive environments available, make public
+        self$UserRestrictions(private$.UserRestrictions)
+      }
       update_UserRestrictions_database()
     }
   }
@@ -405,7 +413,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   # if restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
-  if ("ServerAdmin" %in% self$UserRestrictions$Restriction) {
+  if ("ServerAdmin" %in% private$.UserRestrictions$Restriction) {
     if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
                                     dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with ServerAdmin attribute
@@ -414,7 +422,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     }
   }
 
-  if ("UserAdmin" %in% self$UserRestrictions$Restriction) {
+  if ("UserAdmin" %in% private$.UserRestrictions$Restriction) {
     if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
                                   dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with UserAdmin attribute
@@ -709,7 +717,7 @@ userrestriction.list <- function(dMeasure_obj) {
 }
 
 .public("userrestriction.list", function() {
-  self$UserRestrictions$Restriction
+  private$.UserRestrictions$Restriction
 })
 
 #' useradmin.permission
@@ -733,7 +741,7 @@ useradmin.permission <- function(dMeasure_obj) {
 }
 
 .public("useradmin.permission", function() {
-  if ("UserAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
+  if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% unlist(self$identified_user$Attributes) &
         self$authenticated == TRUE) {

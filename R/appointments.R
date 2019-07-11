@@ -12,18 +12,46 @@ NULL
 ## Fields
 .public("appointments_filtered", NULL)
 # filtered by chosen dates and clinicians
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # reactive version, only if shiny is available
+  # not required for 'console' version
+  .public("appointments_filteredR",
+          shiny::reactiveVal(NULL))
+}
 
 .public("appointments_filtered_time", NULL)
 # times in more R (and visually) friendly format
 # requires appointments_filtered
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # reactive version, only if shiny is available
+  # not required for 'console' version
+  .public("appointments_filtered_timeR",
+          shiny::reactiveVal(NULL))
+}
+
 
 .public("appointments_list", NULL)
 # add date of birth to appointments list
 # requires appointments_filtered_time
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # reactive version, only if shiny is available
+  # not required for 'console' version
+  .public("appointments_listR",
+          shiny::reactiveVal(NULL))
+}
 
 .public("appointments_billings", NULL)
 # appointment list with billings
+# collects ALL billings for patients who have displayed appointments
+# used by billings view, and CDM billings view
 # requires appointments_list
+if (requireNamespace("shiny", quietly = TRUE)) {
+  # reactive version, only if shiny is available
+  # not required for 'console' version
+  .public("appointments_billingsR",
+          shiny::reactiveVal(NULL))
+}
+
 
 ## Methods
 
@@ -75,6 +103,12 @@ filter_appointments <- function(dMeasure_obj,
     # this reactive is not "collect()"ed because it is joined to other
     # filtered database lists prior to 'collection'
   }
+
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$appointments_filteredR(self$appointments_filtered)
+  }
+
   return(self$appointments_filtered)
 })
 
@@ -130,6 +164,12 @@ filter_appointments_time <- function(dMeasure_obj,
                     AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
       dplyr::arrange(AppointmentDate, AppointmentTime)
   }
+
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$appointments_filtered_timeR(self$appointments_filtered_time)
+  }
+
   return(self$appointments_filtered_time)
 })
 
@@ -187,6 +227,12 @@ list_appointments <- function(dMeasure_obj,
       dplyr::mutate(Age = calc_age(DOB, AppointmentDate))
 
   }
+
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$appointments_listR(self$appointments_list)
+  }
+
   return(self$appointments_list)
 })
 
@@ -249,6 +295,11 @@ billed_appointments <- function(dMeasure_obj,
       dplyr::left_join(private$db$services, by = "InternalID", copy=TRUE) %>%
       dplyr::collect() %>%
       dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
+  }
+
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # set reactive version, only if shiny is available
+    self$appointments_billingsR(self$appointments_billings)
   }
 
   return(self$appointments_billings)
