@@ -27,7 +27,7 @@ dMeasure class
 \section{Methods}{
 
 \itemize{
-\item{\code{\link{configuration_filepath}} : read (or initiate) YAML/SQL DB filepaths}
+\item{\code{\link{configuration_file_path}} : read (or initiate) YAML/SQL DB filepaths}
 \item{\code{\link{open_configuration_db}} : open SQLite configuration database}
 \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 \item{\code{\link{open_emr_db}} : open Best Practice database}

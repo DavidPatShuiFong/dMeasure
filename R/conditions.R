@@ -394,11 +394,13 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     # just needs $InternalID
   }
 
+  intid <- appointments %>>% dplyr::pull(InternalID)
+
   appointments %>>% dplyr::collect() %>>%
     dplyr::inner_join(private$db$pregnancies %>>%
-                        dplyr::filter(is.null(ENDDATE)),
-                      # this is BMI. also in DATANAME, but different spellings/cases
+                        dplyr::filter(InternalID %in% intid),
                       by = "InternalID", copy = TRUE) %>>%
+    dplyr::filter(is.null(ENDDATE) | as.Date(ENDDATE) > as.Date(AppointmentDate)) %>>%
     dplyr::filter((as.Date(EDCBYDATE) > as.Date(AppointmentDate)) &
                     (as.Date(EDCBYDATE) < as.Date(AppointmentDate+280))) %>>%
     dplyr::pull(InternalID) %>>%

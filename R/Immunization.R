@@ -405,7 +405,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                        format(GivenDate, "%Y") == format(AppointmentDate, "%Y"),
                        # this compares dates
                        # https://stackoverflow.com/questions/36568070/extract-year-from-date
-                       " ", " (DUE) ")),
+                       " ", " (DUE)")),
                      " (", Reason, ")"
                    )) # ?vax given this year
           ))
@@ -503,8 +503,12 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%
       # gathers vaccination notifications on the same appointment into a single row
-      dplyr::summarise(vaxtag = paste(vaxtag, collapse = ""),
-                       vaxtag_print = paste(vaxtag_print, collapse = ", ")) %>>%
+                      {if (vaxtag)
+                      {dplyr::summarise(., vaxtag = paste(vaxtag, collapse = ""))}
+                        else {.}} %>>%
+                        {if (vaxtag_print)
+                        {dplyr::summarise(., vaxtag_print = paste(vaxtag_print, collapse = ", "))}
+                          else {.}} %>>%
       dplyr::ungroup()
   }
 

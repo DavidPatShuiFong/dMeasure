@@ -25,13 +25,18 @@
 dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
-                configuration_file_pathR = NULL,
-                initialize = function() {
+                initialize = function () {
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
                     # to set this path, need to use self$configuration_file_path
-                    self$configuration_file_pathR <- shiny::reactiveVal(NULL)
+                    if (length(reactive_fields$name) > 0) { # only if any .reactive() defined
+                      for (i in 1:length(reactive_fields$name)) {
+                        self[[reactive_fields$name[[i]]]] <- shiny::reactiveVal(
+                          eval(reactive_fields$value[[i]]) # could 'quote' the value
+                        )
+                      }
+                    }
                   }
                 }
               )
@@ -43,6 +48,18 @@ dMeasure <-
 .public <- function(...) dMeasure$set("public", ...)
 .private <- function(...) dMeasure$set("private", ...)
 .active <- function(...) dMeasure$set("active", ...)
+reactive_fields <- list(name = NULL, value = NULL)
+.reactive <- function(name, value) {
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # only if reactive environment is possible (using shiny)
+    dMeasure$set("public", name, NULL)
+    reactive_fields$name <<- c(reactive_fields$name, name)
+    reactive_fields$value <<- c(reactive_fields$value, value)
+    # $value cannot hold NULL! (even quoted)
+    # need to use NA instead
+    # append to list to be initialized as reactiveVal during self$initialize
+  }
+}
 
 ##### close and finalize object ##########################
 
@@ -155,6 +172,7 @@ dMeasure <-
 
   return(self$sql_config_filepath)
 })
+.reactive("configuration_file_pathR", quote(NA))
 
 ##### Configuration details - databases, locations, users ###########
 
@@ -189,13 +207,11 @@ dMeasure <-
 .private(".UserRestrictions", data.frame(uid = integer(),
                                          Restriction = character(),
                                          stringsAsFactors = FALSE))
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # a 'public reactive' version if shiny is available
-  # not required for 'console' usage
-  .public("UserRestrictions", shiny::reactiveVal(data.frame(uid = integer(),
-                                                            Restriction = character(),
-                                                            stringsAsFactors = FALSE)))
-}
+
+.reactive("UserRestrictions", quote(data.frame(uid = integer(),
+                                               Restriction = character(),
+                                               stringsAsFactors = FALSE)))
+
 # this lists the 'enabled' restrictions,
 #  relevant to the 'Attributes' field of 'UserConfig'
 # without the restriction, all users have the 'permission'
@@ -466,7 +482,7 @@ read_configuration_db <- function(dMeasure_obj,
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
   private$.UserRestrictions <- config_db$conn() %>%
     dplyr::tbl("UserRestrictions") %>% dplyr::collect()
-  self$UserRestrictions(private.$UserRestrictions)
+  self$UserRestrictions(private$.UserRestrictions)
 
   self$match_user()
   # see if 'identified' system user is matched with a configured user
@@ -657,7 +673,7 @@ clinician_list <- function(dMeasure_obj,
     # initially, $Location might include a lot of NA
   }
 
-  for (restriction in public$view_restrictions) {
+  for (restriction in self$view_restrictions) {
     # go through list of view restrictions
     if (restriction$restriction %in% unlist(private$UserRestrictions$Restriction)) {
       # if the restriction has been activated
@@ -708,11 +724,7 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 .private("db", list(dbversion = 0)) # later will be the EMR databases.
 # $db$dbversion is number of EMR database openings
 # there is also a 'public reactive' version if shiny is available
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # if shiny is available for reactive values
-  # (this is not necessary for 'console' operation)
-  .public("dbversion", shiny::reactiveVal(0))
-}
+.reactive("dbversion", 0)
 
 ## methods
 
@@ -968,10 +980,7 @@ location_list <- function(dMeasure_obj) {
 
   return(locations)
 })
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # set reactive version, only if shiny is available
-  .public("location_listR", shiny::reactiveVal(data.frame(Name = "All")))
-}
+.reactive("location_listR", quote(data.frame(Name = "All")))
 
 #' Choose location
 #'

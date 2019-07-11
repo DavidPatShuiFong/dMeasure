@@ -12,46 +12,25 @@ NULL
 ## Fields
 .public("appointments_filtered", NULL)
 # filtered by chosen dates and clinicians
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # reactive version, only if shiny is available
-  # not required for 'console' version
-  .public("appointments_filteredR",
-          shiny::reactiveVal(NULL))
-}
+.reactive("appointments_filteredR", quote(NA))
 
 .public("appointments_filtered_time", NULL)
 # times in more R (and visually) friendly format
 # requires appointments_filtered
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # reactive version, only if shiny is available
-  # not required for 'console' version
-  .public("appointments_filtered_timeR",
-          shiny::reactiveVal(NULL))
-}
+.reactive("appointments_filtered_timeR", quote(NA))
 
 
 .public("appointments_list", NULL)
 # add date of birth to appointments list
 # requires appointments_filtered_time
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # reactive version, only if shiny is available
-  # not required for 'console' version
-  .public("appointments_listR",
-          shiny::reactiveVal(NULL))
-}
+.reactive("appointments_listR", quote(NA))
 
 .public("appointments_billings", NULL)
 # appointment list with billings
 # collects ALL billings for patients who have displayed appointments
 # used by billings view, and CDM billings view
 # requires appointments_list
-if (requireNamespace("shiny", quietly = TRUE)) {
-  # reactive version, only if shiny is available
-  # not required for 'console' version
-  .public("appointments_billingsR",
-          shiny::reactiveVal(NULL))
-}
-
+.reactive("appointments_billingsR", quote(NA))
 
 ## Methods
 
