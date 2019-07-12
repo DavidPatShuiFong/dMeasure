@@ -48,16 +48,18 @@ dMeasure <-
 .public <- function(...) dMeasure$set("public", ...)
 .private <- function(...) dMeasure$set("private", ...)
 .active <- function(...) dMeasure$set("active", ...)
+
 reactive_fields <- list(name = NULL, value = NULL)
+# this will progressively hold definitions of reactive fields
 .reactive <- function(name, value) {
   if (requireNamespace("shiny", quietly = TRUE)) {
     # only if reactive environment is possible (using shiny)
     dMeasure$set("public", name, NULL)
     reactive_fields$name <<- c(reactive_fields$name, name)
-    reactive_fields$value <<- c(reactive_fields$value, value)
-    # $value cannot hold NULL! (even quoted)
-    # need to use NA instead
-    # append to list to be initialized as reactiveVal during self$initialize
+    reactive_fields$value <<- c(reactive_fields$value, list(value))
+    # $value is listed so it can hold NULL!
+    # to be initialized as reactiveVal during self$initialize
+    # $value will be 'eval()' during initialization, so can be quote()'d
   }
 }
 
@@ -172,7 +174,7 @@ reactive_fields <- list(name = NULL, value = NULL)
 
   return(self$sql_config_filepath)
 })
-.reactive("configuration_file_pathR", quote(NA))
+.reactive("configuration_file_pathR", NULL)
 
 ##### Configuration details - databases, locations, users ###########
 
@@ -493,7 +495,7 @@ read_configuration_db <- function(dMeasure_obj,
 ##### User login ##################################################
 
 ## fields
-.public("identified_user", NULL)
+.private(".identified_user", NULL)
 # user information for just the identified user
 .public("authenticated", FALSE)
 # has the current 'identified' user been authenticated yet?
@@ -512,8 +514,14 @@ match_user <- function(dMeasure_obj) {
 }
 
 .public("match_user", function() {
-  self$identified_user <-
+  private$.identified_user <-
     private$UserConfig[private$UserConfig$AuthIdentity == Sys.info()[["user"]],]
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    self$identified_user(private$.identified_user %>>%
+                           dplyr::select(Fullname, AuthIdentity, Location, Attributes))
+    # set reactive version if reactive (shiny) environment available
+    # does not include password
+  }
 
   if ("RequirePasswords" %in% unlist(private$UserRestrictions$Restriction)) {
     # password not yet entered, so not yet authenticated
@@ -525,6 +533,7 @@ match_user <- function(dMeasure_obj) {
 
   invisible(self)
 })
+.reactive("identified_user", NULL)
 
 #' check password against the current identified user
 #'
@@ -538,18 +547,38 @@ user_login <- function(dMeasure_obj, password) {
 }
 
 .public("user_login", function(password) {
-  if (is.null(self$identified_user)) {
+  if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
-  if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
+  if (self$empty_password()) {
     stop("No password set for currently identified user!")
   }
-  if (!simple_tag_compare(password, self$identified_user$Password)) {
+  if (!simple_tag_compare(password, private$.identified_user$Password)) {
     stop("Wrong password")
   } else {
     self$authenticated <- TRUE
   }
   return(self$authenticated)
+})
+
+#' is password for the current identified user available?
+#'
+#' returns TRUE if password is not set (NA) or empty
+#'
+#' @param dMeasure_obj dMeasure object
+#'
+#' @return TRUE if password is not available
+empty_password <- function(dMeasure_obj) {
+  dMeasure_obj$empty_password()
+}
+.public("empty_password", function() {
+  # returns true if password for identified user is not defined, or empty
+  # this is used by Dailymeasure to prompt for a password to be set
+  empty = FALSE
+  if (is.na(private$.identified_user$Password) || nchar(private$.identified_user$Password) == 0) {
+    empty = TRUE
+  }
+  return(empty)
 })
 
 #' Logout current identified user
@@ -565,7 +594,7 @@ user_logout <- function(dMeasure_obj) {
 }
 
 .public("user_logout", function() {
-  if (is.null(self$identified_user)) {
+  if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
   if (self$authenticated == FALSE) {
@@ -591,7 +620,7 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 }
 
 .public("set_password", function(newpassword, oldpassword = NULL) {
-  if (is.null(self$identified_user)) {
+  if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
 
@@ -599,13 +628,13 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     stop("Password must be at least six (6) characters long")
   }
 
-  if (is.na(self$identified_user$Password) || nchar(self$identified_user$Password) == 0) {
+  if (self$empty_password()) {
     # no password yet set for currentl identified user, so just accept the 'newpassword'
-    setPassword(newpassword, private$UserConfig, self$identified_user, private$config_db)
+    setPassword(newpassword, private$UserConfig, private$.identified_user, private$config_db)
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
-    if (!simple_tag_compare(oldpassword, self$identified_user$Password)) {
+    if (!simple_tag_compare(oldpassword, private$.identified_user$Password)) {
       stop("Wrong password")
     } else {
       # old password specified correctly
@@ -680,12 +709,12 @@ clinician_list <- function(dMeasure_obj,
       if (view_name %in% restriction$view_to_hide) {
         # if the relevant view is being shown
         if (self$authenticated == FALSE |
-            !(restriction$restriction %in% unlist(self$identified_user$Attributes))) {
+            !(restriction$restriction %in% unlist(private$.identified_user$Attributes))) {
           # if user is not authenticated or
           # if the current user does not have this 'Global' attribute
           # then can only view one's own appointments
           clinician_list <- subset(clinician_list,
-                                   clinician_list == self$identified_user$Fullname)
+                                   clinician_list == private$.identified_user$Fullname)
         }
       }
     }

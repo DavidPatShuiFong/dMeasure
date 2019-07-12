@@ -35,7 +35,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
     stop("Only configured users can have a password reset!")
   }
 
-  if (user == self$identified_user$Fullname) {
+  if (user == private$.identified_user$Fullname) {
     stop("Can't remove/reset your own password!")
   }
 
@@ -743,7 +743,7 @@ useradmin.permission <- function(dMeasure_obj) {
 .public("useradmin.permission", function() {
   if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
-    if ("UserAdmin" %in% unlist(self$identified_user$Attributes) &
+    if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
         self$authenticated == TRUE) {
       permission <- TRUE
     } else {

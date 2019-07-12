@@ -207,7 +207,7 @@ location.permission <- function(dMeasure_obj) {
 .public("location.permission", function() {
   if ("UserAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
-    if ("UserAdmin" %in% unlist(self$identified_user$Attributes) &
+    if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
         self$authenticated == TRUE) {
       permission <- TRUE
     } else {
