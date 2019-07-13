@@ -221,8 +221,8 @@ server.list <- function(dMeasure_obj) {
 
   tryCatch(permission <- self$server.permission(),
            warning = function(w)
-             stop(paste(w,
-                        "'ServerAdmin' permission required to view server list.")))
+             warning(paste(w,
+                           "'ServerAdmin' permission required to view server list.")))
 
   if (permission) {
     description <- private$BPdatabase %>>%

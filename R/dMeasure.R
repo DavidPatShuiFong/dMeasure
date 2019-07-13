@@ -62,6 +62,13 @@ reactive_fields <- list(name = NULL, value = NULL)
     # $value will be 'eval()' during initialization, so can be quote()'d
   }
 }
+.private("set_reactive", function(value, reactive) {
+  # reactive (if shiny/reactive environment is available) is set to 'value'
+  # reactive is passed by reference
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    self[[reactive]](value)
+  }
+})
 
 ##### close and finalize object ##########################
 
@@ -538,118 +545,6 @@ match_user <- function(dMeasure_obj) {
   invisible(self)
 })
 .reactive("identified_user", NULL)
-
-#' check password against the current identified user
-#'
-#' @param dMeasure_obj dMeasure object
-#' @param password the password
-#'
-#' @return TRUE if password is correct
-#' otherwise stops with error
-user_login <- function(dMeasure_obj, password) {
-  dMeasure_obj$user_login(password)
-}
-
-.public("user_login", function(password) {
-  if (is.null(private$.identified_user)) {
-    stop("No user identified!")
-  }
-  if (self$empty_password()) {
-    stop("No password set for currently identified user!")
-  }
-  if (!simple_tag_compare(password, private$.identified_user$Password)) {
-    stop("Wrong password")
-  } else {
-    self$authenticated <- TRUE
-  }
-  return(self$authenticated)
-})
-
-#' is password for the current identified user available?
-#'
-#' returns TRUE if password is not set (NA) or empty
-#'
-#' @param dMeasure_obj dMeasure object
-#'
-#' @return TRUE if password is not available
-empty_password <- function(dMeasure_obj) {
-  dMeasure_obj$empty_password()
-}
-.public("empty_password", function() {
-  # returns true if password for identified user is not defined, or empty
-  # this is used by Dailymeasure to prompt for a password to be set
-  empty = FALSE
-  if (is.na(private$.identified_user$Password) || nchar(private$.identified_user$Password) == 0) {
-    empty = TRUE
-  }
-  return(empty)
-})
-
-#' Logout current identified user
-#'
-#' @param dMeasure_obj dMeasure object
-#' @param password the password
-#'
-#' @return authentication status
-#'  error (stop) if no identified user
-#'  warning if not authenticated (logged in)
-user_logout <- function(dMeasure_obj) {
-  dMeasure_obj$user_logout()
-}
-
-.public("user_logout", function() {
-  if (is.null(private$.identified_user)) {
-    stop("No user identified!")
-  }
-  if (self$authenticated == FALSE) {
-    warning("Current user was not authenticated prior to logout.")
-  }
-  self$authenticated <- TRUE
-  return(self$authenticated)
-})
-
-#' Set password of currently identified user
-#'
-#' if there is an old password, that must be specified
-#' if there is no old password, then 'oldpassword' does not need to be defined
-#'
-#' @param dMeasure_obj dMeasure object
-#' @param newpassword the new password
-#' @param oldpassword=NULL the old password (if one exists)
-#'
-#' @return TRUE if password is successfully set
-#' otherwise, stops with error
-set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
-  dMeasure_obj$set_password(newpassword, oldpassword)
-}
-
-.public("set_password", function(newpassword, oldpassword = NULL) {
-  if (is.null(private$.identified_user)) {
-    stop("No user identified!")
-  }
-
-  if (stringi::stri_length(newpassword) < 6) {
-    stop("Password must be at least six (6) characters long")
-  }
-
-  if (self$empty_password()) {
-    # no password yet set for currentl identified user, so just accept the 'newpassword'
-    setPassword(newpassword, private$UserConfig, private$.identified_user, private$config_db)
-    self$authenticated <- TRUE
-  } else {
-    # there is an old password, which needs to be compared with 'oldpassword'
-    if (!simple_tag_compare(oldpassword, private$.identified_user$Password)) {
-      stop("Wrong password")
-    } else {
-      # old password specified correctly
-      setPassword(newpassword, self, private$config_db)
-      self$authenticated <- TRUE
-    }
-  }
-  self$match_user() # re-read 'identified user' configuration, as password has changed
-
-  return(self$authenticated)
-})
 
 ##### clinician choice list #######################################
 
