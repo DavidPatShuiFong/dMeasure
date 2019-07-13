@@ -30,7 +30,7 @@ location.insert <- function(dMeasure_obj, description) {
                         "'UserAdmin' permission required to view or edit location list.")))
 
   if (length(grep(toupper(description$Name),
-                  toupper(as.data.frame(self$PracticeLocations %>>%
+                  toupper(as.data.frame(private$PracticeLocations %>>%
                                         dplyr::select(Name)))
                   ))) {
     # if the proposed new name is the same as one that already exists
@@ -40,7 +40,7 @@ location.insert <- function(dMeasure_obj, description) {
     stop("New practice location name cannot be 'empty'!")
   } else {
 
-    newid <- max(c(as.data.frame(self$PracticeLocations)$id, 0)) + 1
+    newid <- max(c(as.data.frame(private$PracticeLocations)$id, 0)) + 1
     # initially, PracticeLocations$id might be an empty set
     # so need to append a '0'
     descriptionid <- newid
@@ -48,14 +48,14 @@ location.insert <- function(dMeasure_obj, description) {
     query <- "INSERT INTO Location (id, Name, Description) VALUES (?, ?, ?)"
     data_for_sql <- as.list.data.frame(c(newid, description$Name, description$Description))
 
-    self$config_db$dbSendQuery(query, data_for_sql)
+    private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
 
-    # self$PracticeLocations is 'lazy' evaluated directly from SQLite,
+    # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
 
-    return(self$PracticeLocations)
+    return(private$PracticeLocations)
   }
 })
 
@@ -80,13 +80,13 @@ location.update <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  olddescription <- self$PracticeLocations %>>%
+  olddescription <- private$PracticeLocations %>>%
     dplyr::filter(id == description$id) %>>% dplyr::collect()
   # the description before modificatioin
 
 
   if (length(grep(toupper(description$Name),
-                  toupper(as.data.frame(self$PracticeLocations %>>%
+                  toupper(as.data.frame(private$PracticeLocations %>>%
                                         dplyr::filter(id != description$id))$Name)
   ))) {
     # if the proposed new name is the same as one that already exists
@@ -94,7 +94,7 @@ location.update <- function(dMeasure_obj, description) {
     stop("New practice location name cannot be the same as existing names, or 'None'")
   } else if (is.null(description$Name)){
     stop("New practice location name cannot be 'empty'!")
-  } else if ((olddescription$Name %in% self$UserConfig$Location) &
+  } else if ((olddescription$Name %in% private$UserConfig$Location) &
              (olddescription$Name != description$Name)) {
     stop(paste0("Cannot change the name of '", olddescription$Name,
                 "', this location is assigned to a user."))
@@ -103,14 +103,14 @@ location.update <- function(dMeasure_obj, description) {
     data_for_sql <- as.list.data.frame(c(description$Name, description$Description,
                                          description$id))
 
-    self$config_db$dbSendQuery(query, data_for_sql)
+    private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
 
-    # self$PracticeLocations is 'lazy' evaluated directly from SQLite,
+    # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
 
-    return(self$PracticeLocations)
+    return(private$PracticeLocations)
   }
 })
 
@@ -135,11 +135,11 @@ location.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  if (description$Name %in% self$UserConfig$Location) {
+  if (description$Name %in% private$UserConfig$Location) {
     stop(paste0("Cannot remove '", description$Name,
                 "', this location is assigned to a user."))
   } else {
-    description$id <- self$PracticeLocations %>>%
+    description$id <- private$PracticeLocations %>>%
       dplyr::filter(Name == description$Name) %>>%
       dplyr::select(id) %>>%
       dplyr::collect() %>>%
@@ -156,11 +156,11 @@ location.delete <- function(dMeasure_obj, description) {
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
 
-    # self$PracticeLocations is 'lazy' evaluated directly from SQLite,
+    # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
 
   }
-  return(self$PracticeLocations)
+  return(private$PracticeLocations)
 })
 
 #' location.list
@@ -181,7 +181,7 @@ location.list <- function(dMeasure_obj) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  return(self$PracticeLocations)
+  return(private$PracticeLocations)
 })
 
 #' location.permission
@@ -205,7 +205,7 @@ location.permission <- function(dMeasure_obj) {
 }
 
 .public("location.permission", function() {
-  if ("UserAdmin" %in% unlist(self$UserRestrictions$Restriction)) {
+  if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
         self$authenticated == TRUE) {

@@ -28,10 +28,16 @@ server.insert <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'ServerAdmin' permission required to modify server list.")))
 
-  if (toupper(description$Name) %in% toupper(append(self$BPdatabase$Name, "None"))) {
+  if (toupper(description$Name) %in% toupper(append(private$BPdatabase$Name, "None"))) {
     # if the proposed server is the same as one that already exists
     # (ignoring case)
     stop("New server name cannot be the same as existing names, or 'None'")
+  } else if (is.null(description$Name) |
+             is.null(description$Address) |
+             is.null(description$Database) |
+             is.null(description$UserID) |
+             is.null(description$dbPassword)) {
+    stop("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword) must be described")
   } else if (stringi::stri_length(description$Name) == 0 |
              stringi::stri_length(description$Address) == 0 |
              stringi::stri_length(description$Database) == 0 |
@@ -39,8 +45,8 @@ server.insert <- function(dMeasure_obj, description) {
              stringi::stri_length(description$dbPassword) == 0) {
     stop("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword) must be described")
   } else {
-    newid <- max(c(as.data.frame(self$BPdatabase)$id, 0)) + 1
-    # initially, self$BPdatabase$id might be an empty set, so need to append a '0'
+    newid <- max(c(as.data.frame(private$BPdatabase)$id, 0)) + 1
+    # initially, private$BPdatabase$id might be an empty set, so need to append a '0'
     description$id <- newid
     description$dbPassword <- simple_encode(description$dbPassword)
     # immediately encode password.
@@ -51,13 +57,14 @@ server.insert <- function(dMeasure_obj, description) {
                                          description$Database, description$UserID,
                                          description$dbPassword))
 
-    self$config_db$dbSendQuery(query, data_for_sql)
+    private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
 
-    self$BPdatabase <- rbind(self$BPdatabase, description)
+    private$BPdatabase <- rbind(private$BPdatabase, description,
+                                stringsAsFactors = FALSE)
     # update the dataframe in memory
-    return(self$BPdatabase %>>%
+    return(private$BPdatabase %>>%
              dplyr::select(-dbPassword))
   }
 })
@@ -65,6 +72,7 @@ server.insert <- function(dMeasure_obj, description) {
 #' server.update
 #'
 #' change (update) a server description
+#' the server to change is specified by $id
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
@@ -82,38 +90,72 @@ server.update <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'ServerAdmin' permission required to modify server list.")))
 
-  if (toupper(description$Name) %in%
-      toupper(append(self$BPdatabase[-(id = description$id),]$Name, "None"))) {
-    # if the proposed server is the same as one that already exists
-    # (ignoring case, and removing the 'id' which is specified in the description)
-    stop("New server name cannot be the same as existing names, or 'None'")
-  } else if (toupper(description$Name) == toupper(self$BPdatabaseChoice)) {
-    stop(paste0("Cannot edit '", description$Name, "', currently in use!"))
-  } else if (stringi::stri_length(description$Name) == 0 |
-             stringi::stri_length(description$Address) == 0 |
-             stringi::stri_length(description$Database) == 0 |
-             stringi::stri_length(description$UserID) == 0 |
-             stringi::stri_length(description$dbPassword) == 0) {
-    stop("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword) must be described")
+  if (is.null(description$id)) {
+    stop("Server to change is to be identified by $id")
+  }
+  if (!description$id %in% (private$BPdatabase %>>% dplyr::pull(id))) {
+    stop(paste("No server definition with id = ", description$id), "!", sep = "")
+  }
+  if (self$BPdatabaseChoice != "None") { # only if there is a chosen database
+    if (private$BPdatabase %>>% dplyr::filter(Name == self$BPdatabaseChoice) %>>%
+        dplyr::pull(id) == description$id) {
+      stop(paste("Cannot update server definition id = ", description$id,
+                 ", currently in use!"))
+    }
+  }
+
+  # if definition is not provided, then 'fill it in' from the current definition
+  if (is.null(description$Name)) {
+    description$Name <- private$BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(Name)
+  } else {
+    if (toupper(description$Name) %in%
+        toupper(append(private$BPdatabase[-(id = description$id),]$Name, "None"))) {
+      # if the proposed server is the same as one that already exists
+      # (ignoring case, and removing the 'id' which is specified in the description)
+      stop("New server name cannot be the same as existing names, or 'None'")
+    }
+  }
+  if (is.null(description$Address)) {
+    description$Address <- private$BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(Address)
+  }
+  if (is.null(description$Database)) {
+    description$Database <- private$BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(Database)
+  }
+  if (is.null(description$UserID)) {
+    description$UserID <- private$BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(UserID)
+  }
+  if (is.null(description$dbPassword)) {
+    description$dbPassword <- private$BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(dbPassword)
   } else {
     description$dbPassword <- simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
-
-    query <- "UPDATE Server SET Name = ?, Address = ?, Database = ?, UserID = ?, dbPassword = ? WHERE id = ?"
-    data_for_sql <- as.list.data.frame(c(description$Name, description$Address,
-                                         description$Database, description$UserID,
-                                         description$dbPassword, description$id))
-
-    self$config_db$dbSendQuery(query, data_for_sql)
-    # if the connection is a pool, can't send write query (a statement) directly
-    # so use the object's method
-
-    self$BPdatabase <- rbind(self$BPdatabase[-(id = description$id),], description)
-    # store new values in copy of settings in memory
-    return(self$BPdatabase %>>%
-             dplyr::select(-dbPassword))
   }
+
+  query <- "UPDATE Server SET Name = ?, Address = ?, Database = ?, UserID = ?, dbPassword = ? WHERE id = ?"
+  data_for_sql <- as.list.data.frame(c(description$Name, description$Address,
+                                       description$Database, description$UserID,
+                                       description$dbPassword, description$id))
+
+  private$config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+
+  private$BPdatabase <- rbind(private$BPdatabase[-(id = description$id),], description,
+                              stringsAsFactors = FALSE)
+  # store new values in copy of settings in memory
+  return(private$BPdatabase %>>%
+           dplyr::select(-dbPassword))
 })
 
 
@@ -122,7 +164,7 @@ server.update <- function(dMeasure_obj, description) {
 #' remove a server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description $Name
+#' @param description $id
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
@@ -138,26 +180,25 @@ server.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'ServerAdmin' permission required to modify server list.")))
 
-  if (toupper(description$Name) == toupper(self$BPdatabaseChoice)) {
-    stop(paste0("Cannot remove '", description$Name, "', currently in use!"))
-  } else {
-    id <- self$BPdatabase[self$BPdatabase$Name == description$Name,]$id
-
-    if(length(id) == 0) { # $Name was not found
-      stop(paste0("Cannot remove '", description$Name, "', not defined!"))
-    } else {
-      # remove from config SQLite database
-      query <- "DELETE FROM Server WHERE id = ?"
-      data_for_sql <- as.list.data.frame(c(id))
-
-      self$config_db$dbSendQuery(query, data_for_sql)
-      # if the connection is a pool, can't send write query (a statement) directly
-      # so use the object's method
-
-      self$BPdatabase <- self$BPdatabase[-c(id = id),]
-    }
+  name <- private$BPdatabase[private$BPdatabase$id == description$id,]$Name
+  if (length(name) == 0) { # id not found
+    stop(paste0("Cannot remove id = '", description$id, "', not defined!"))
   }
-  return(self$BPdatabase %>>%
+  if (toupper(name) == toupper(self$BPdatabaseChoice)) {
+    stop(paste0("Cannot remove '", name, "', currently in use!"))
+  }
+
+  # remove from config SQLite database
+  query <- "DELETE FROM Server WHERE id = ?"
+  data_for_sql <- as.list.data.frame(c(description$id))
+
+  private$config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+
+  private$BPdatabase <- private$BPdatabase[-c(id = description$id),]
+
+  return(private$BPdatabase %>>%
            dplyr::select(-dbPassword))
 })
 
@@ -184,7 +225,7 @@ server.list <- function(dMeasure_obj) {
                         "'ServerAdmin' permission required to view server list.")))
 
   if (permission) {
-    description <- self$BPdatabase %>>%
+    description <- private$BPdatabase %>>%
       dplyr::select(-dbPassword)}
   else {
     description <- c("")

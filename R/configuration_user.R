@@ -337,7 +337,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     # state returned is the same as the attempted change
     if (state == TRUE) {
       private$.UserRestrictions <-
-        dplyr::bind_rows(self$UserRestrictions,
+        dplyr::bind_rows(private$.UserRestrictions,
                          data.frame(uid = max(private$.UserRestrictions$uid, 0) + 1,
                                     Restriction = restriction,
                                     stringsAsFactors = FALSE))

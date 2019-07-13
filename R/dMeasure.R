@@ -242,6 +242,7 @@ reactive_fields <- list(name = NULL, value = NULL)
     return(private$.BPdatabaseChoice)
   } else {
     if (!(choice %in% c("None", private$BPdatabase$Name))) {
+      browser()
       stop(paste0("Database choice must be one of ",
                   paste0("'", private$BPdatabase$Name, "'", collapse = ", "),
                   " or 'None'."))
