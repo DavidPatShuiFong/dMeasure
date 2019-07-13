@@ -20,7 +20,6 @@ NULL
 location.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$location.insert(description)
 }
-
 .public("location.insert", function(description) {
   # insert a practice location
 

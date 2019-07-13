@@ -475,8 +475,11 @@ read_configuration_db <- function(dMeasure_obj,
     (config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
        dplyr::filter(id == 1) %>% dplyr::select("Name") %>%
        dplyr::collect())[[1]]
+
   private$PracticeLocations <- config_db$conn() %>%
     dplyr::tbl("Location")
+  self$location_list() # will refresh the reactive location_listR if available
+
   private$UserConfig <- config_db$conn() %>%
     dplyr::tbl("Users") %>%
     # in UserConfig, there can be multiple Locations/Attributes per user

@@ -114,28 +114,32 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
   screen_fobt_ix <- screen_fobt_list %>>%
     dplyr::left_join(
       dplyr::bind_rows(dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(private$emr_db$conn(),
-                                                         fobt_investigation_query) %>>%
+                                         private$emr_db$dbGetQuery(
+                                           fobt_investigation_query
+                                         ) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = Collected),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(private$emr_db$conn(),
-                                                         fobt_letter_subject_query) %>>%
+                                         private$emr_db$dbGetQuery(
+                                           fobt_letter_subject_query
+                                         ) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = CorrespondenceDate,
                                                          TestName = Subject),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(private$emr_db$conn(),
-                                                         fobt_letter_detail_query) %>>%
+                                         private$emr_db$dbGetQuery(
+                                           fobt_letter_detail_query
+                                         ) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = CorrespondenceDate,
                                                          TestName = Detail),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         DBI::dbGetQuery(private$emr_db$conn(),
-                                                         fobt_result_query) %>>%
+                                         private$emr_db$dbGetQuery(
+                                           fobt_result_query
+                                         ) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = ReportDate,
                                                          TestName = ResultName),
