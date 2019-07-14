@@ -83,10 +83,9 @@ filter_appointments <- function(dMeasure_obj,
     # filtered database lists prior to 'collection'
   }
 
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # set reactive version, only if shiny is available
-    self$appointments_filteredR(self$appointments_filtered)
-  }
+  private$set_reactive(self$appointments_filteredR, self$appointments_filtered)
+  # copy to reactive
+  # $set_reactive only does this if reactive environment is available)
 
   return(self$appointments_filtered)
 })
@@ -144,10 +143,9 @@ filter_appointments_time <- function(dMeasure_obj,
       dplyr::arrange(AppointmentDate, AppointmentTime)
   }
 
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # set reactive version, only if shiny is available
-    self$appointments_filtered_timeR(self$appointments_filtered_time)
-  }
+  # set reactive version, only if shiny is available
+  private$set_reactive(self$appointments_filtered_timeR,
+                       self$appointments_filtered_time)
 
   return(self$appointments_filtered_time)
 })
@@ -207,10 +205,8 @@ list_appointments <- function(dMeasure_obj,
 
   }
 
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # set reactive version, only if shiny is available
-    self$appointments_listR(self$appointments_list)
-  }
+  # set reactive version, only if shiny is available
+  private$set_reactive(self$appointments_listR, self$appointments_list)
 
   return(self$appointments_list)
 })
@@ -276,10 +272,9 @@ billed_appointments <- function(dMeasure_obj,
       dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
   }
 
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # set reactive version, only if shiny is available
-    self$appointments_billingsR(self$appointments_billings)
-  }
+  # set reactive version, only if shiny is available
+  private$set_reactive(self$appointments_billingsR,
+                       self$appointments_billings)
 
   return(self$appointments_billings)
 })

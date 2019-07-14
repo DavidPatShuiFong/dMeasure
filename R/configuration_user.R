@@ -19,7 +19,7 @@ NULL
 #                     potential CDM actions in "other" people's appointment books
 #  RequirePasswords - identified users need to use password to be 'authenticated'
 
-restrictionTypes <- list(
+.public("restrictionTypes", list(
   list(
     id = "ServerAdmin", label = "Server Administrator",
     Description = "Only ServerAdmin users can change database server settings",
@@ -176,14 +176,15 @@ restrictionTypes <- list(
       return(list(state = newstate, error = error, warn = warn))
     }
   )
-)
+))
 
-restrictionTypes_df <- data.frame(Reduce(rbind, restrictionTypes))
+.public("restrictionTypes_df", data.frame(Reduce(rbind, self$restrictionTypes)))
 # converts the list to a dataframe
-restrictionTypes_id <- unlist(restrictionTypes_df$id,
-                              use.names = FALSE)
-user_attribute_types <- unlist(dplyr::filter(restrictionTypes_df, userAttribute == TRUE)$id,
-                               use.names = FALSE)
+.public("restrictionTypes_id", unlist(self$restrictionTypes_df$id,
+                                      use.names = FALSE))
+.public("user_attribute_types", unlist(dplyr::filter(self$restrictionTypes_df,
+                                                     userAttribute == TRUE)$id,
+                                       use.names = FALSE))
 # user attribute types is defined in restrictionTypes. only those with userAttribute TRUE
 
 #' userrestriction.change
@@ -208,7 +209,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
              stop(paste(w,
                         "'UserAdmin' permission required to change user restrictions")))
 
-  if (!restriction %in% restrictionTypes_id) {
+  if (!restriction %in% self$restrictionTypes_id) {
     stop("That restriction is not recognized.")
   }
 
@@ -244,7 +245,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     }
   }
 
-  restrictionLocal <- restrictionTypes_df %>>% dplyr::filter(id == restriction)
+  restrictionLocal <- self$restrictionTypes_df %>>% dplyr::filter(id == restriction)
 
   newstate <-
     restrictionLocal$callback[[1]](state,
@@ -257,9 +258,9 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
                                                 function(x)
                                                   paste(x[!is.na(x)], collapse = ""))) > 0)
                                    # any passwords are set?
-                                   # this code to concatenate strings, NA or not, was found on StackOverflow
-                                   # by 'Joe' https://stackoverflow.com/questions/13673894/suppress-nas-in-paste)
     )
+  # the code to concatenate strings, NA or not, was found on StackOverflow
+  # by 'Joe' https://stackoverflow.com/questions/13673894/suppress-nas-in-paste)
 
   # returns state. same as the 'changed to' state, if it is permissible
   # e.g. it isn't permissible to set ServerAdmin/UserAdmin to 'TRUE' if
@@ -275,10 +276,8 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
                          data.frame(uid = max(private$.UserRestrictions$uid, 0) + 1,
                                     Restriction = restriction,
                                     stringsAsFactors = FALSE))
-      if (requireNamespace("shiny", quietly = TRUE)) {
-        # only if reactive environments available, make public
-        self$UserRestrictions(private$.UserRestrictions)
-      }
+      # only if reactive environments available, make public
+      private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
       # add entry to datatable of UserRestrictions
       # add one to maximum UID (at least zero), and add restriction to new row
       # note that this table in the database uses 'uid' rather than 'id'
@@ -289,10 +288,9 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       private$.UserRestrictions <-
         dplyr::filter(private$.UserRestrictions,
                       private$.UserRestrictions$Restriction != restriction)
-      if (requireNamespace("shiny", quietly = TRUE)) {
-        # only if reactive environments available, make public
-        self$UserRestrictions(private$.UserRestrictions)
-      }
+      # only if reactive environments available, make public
+      private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
+
       update_UserRestrictions_database()
     }
   }
