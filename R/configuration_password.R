@@ -77,6 +77,39 @@ user_logout <- function(dMeasure_obj) {
   return(self$authenticated)
 })
 
+.private("change_password", function(name, newpassword) {
+  # change password of named 'name' (Fullname) user to 'newpassword'
+
+  if (!newpassword == "") {
+    # only encode password if it isn't a reset ("")
+    newpassword <- simple_encode(newpassword)
+  }
+  # encode the password, if not an empty string
+  # tagging (hash) defined in calculation_definitions
+
+  private$.UserConfig <-
+    private$.UserConfig %>>%
+    dplyr::mutate(Password =
+                    replace(Password,
+                            name == Fullname,
+                            newpassword))
+  # replace password
+
+  id <- private$.UserConfig %>>%
+    dplyr::filter(Fullname == name) %>>%
+    pull(id)
+
+  query <- "UPDATE Users SET Password = ? WHERE id = ?"
+  # write to configuration database
+  data_for_sql <- list(newpassword, id)
+
+  config_db$dbSendQuery(query, data_for_sql)
+  # if the connection is a pool, can't send write query (a statement) directly
+  # so use the object's method
+  private$trigger(self$config_db_trigR) # send a trigger signal
+
+})
+
 #' Set password of currently identified user
 #'
 #' if there is an old password, that must be specified
@@ -102,8 +135,10 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   }
 
   if (self$empty_password()) {
-    # no password yet set for currentl identified user, so just accept the 'newpassword'
-    setPassword(newpassword, private$UserConfig, private$.identified_user, private$config_db)
+    # no password yet set for currently identified user,
+    # so just accept the 'newpassword'
+    private$change_password(private$.identified_user$Fullname, newpassword)
+    # change private$.UserConfig and SQLite configuration database
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
@@ -111,7 +146,8 @@ set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
       stop("Old password incorrect")
     } else {
       # old password specified correctly
-      setPassword(newpassword, self, private$config_db)
+      private$change_password(private$.identified_user$Fullname, newpassword)
+      # change private$.UserConfig and SQLite configuration database
       self$authenticated <- TRUE
     }
   }
@@ -143,7 +179,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
              stop(paste(w,
                         "'UserAdmin' permission required to reset/edit other passwords.")))
 
-  if (!(user %in% private$UserConfig$Fullname)) {
+  if (!(user %in% private$.UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")
   }
 
@@ -158,30 +194,8 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
     }
   }
 
-  if (!newpassword == "") {
-    # only encode password if it isn't a reset ("")
-    newpassword <- simple_encode(newpassword)
-  }
-  # encode the password, if not an empty string
-
-  private$UserConfig <-
-    private$UserConfig %>>%
-    dplyr::mutate(Password = replace(Password,
-                                     Fullname == user,
-                                     newpassword))
-  # replace password with empty string
-
-  UserRow <- private$UserConfig %>>%
-    dplyr::filter(Fullname == user)
-  # just select the user for whom we are removing the password
-
-  query <- "UPDATE Users SET Password = ? WHERE id = ?"
-  # write to configuration database
-  data_for_sql <- list(newpassword, UserRow$id[[1]])
-
-  private$config_db$dbSendQuery(query, data_for_sql)
-  # if the connection is a pool, can't send write query (a statement) directly
-  # so use the object's method
+  private$change_password(user, newpassword)
+  # change private$.UserConfig and SQLite configuration database
 
   invisible(self)
 })

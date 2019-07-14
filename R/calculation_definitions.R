@@ -223,38 +223,3 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 
   return(result)
 }
-
-#' setPassword
-#'
-#' sets password for user
-#' Adjusts both the 'in-memory' data (UserConfig)
-#' and the UserConfig database
-#'
-#' @param newpassword the new password
-#' @param dMeasure_obj daily Measure R6 object
-#' @param config_db R6 object, access to the user configuration database
-#'
-#' @return nothing
-#'
-setPassword <- function(newpassword, dMeasure_obj, config_db) {
-  # set the password for the user
-
-  newpassword <- simple_tag(newpassword)
-  # tagging (hash) defined in calculation_definitions
-
-  newUserConfig <-
-    dMeasure_obj$UserConfig %>%
-    dplyr::mutate(Password =
-                    replace(Password,
-                            dMeasure_obj$identified_user$Fullname == Fullname,
-                            newpassword))
-  dMeasure_obj$UserConfig <- newUserConfig # replace password
-
-  query <- "UPDATE Users SET Password = ? WHERE id = ?"
-  # write to configuration database
-  data_for_sql <- list(newpassword, dMeasure_obj$identified_user$id[[1]])
-
-  config_db$dbSendQuery(query, data_for_sql)
-  # if the connection is a pool, can't send write query (a statement) directly
-  # so use the object's method
-}

@@ -231,6 +231,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       private$config_db$dbSendQuery(query, data_for_sql)
       # if the connection is a pool, can't send write query (a statement) directly
       # so use the object's method
+      private$trigger(self$config_db_trigR) # send a trigger signal
     } else {
       deleted_row <- dplyr::anti_join(originalRestrictions, newRestrictions, by = "uid")
       if (nrow(deleted_row) > 0) {
@@ -241,6 +242,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
         private$config_db$dbSendQuery(query, data_for_sql)
         # if the connection is a pool, can't send write query (a statement) directly
         # so use the object's method
+        private$trigger(self$config_db_trigR) # send a trigger signal
       }
     }
   }
@@ -249,10 +251,10 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   newstate <-
     restrictionLocal$callback[[1]](state,
-                                   private$UserConfig$Attributes %>>%
+                                   private$.UserConfig$Attributes %>>%
                                      unlist(use.names = FALSE),
                                    # list of attributes in use
-                                   (nchar(apply(cbind(unlist(private$UserConfig$Password,
+                                   (nchar(apply(cbind(unlist(private$.UserConfig$Password,
                                                              use.names = FALSE)),
                                                 1,
                                                 function(x)
@@ -313,11 +315,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   if (length(setdiff(description$Location[[1]],
                      # note that 'setdiff' is assymetrical
                      # need to pick first element of list (which is itself a list)
-                     c("", (private$PracticeLocations %>>% dplyr::collect())$Name))) > 0) {
-    # if there is an location being set which is not in self$location_list(), or ""
+                     c("", (private$PracticeLocations %>>%
+                            dplyr::collect())$Name))) > 0) {
+    # if there is an location being set which is not in self$location_list, or ""
     stop(paste0("'",
                 paste(setdiff(description$Location[[1]],
-                              c("", (private$PracticeLocations %>>% dplyr::collect())$Name)),
+                              c("", (private$PracticeLocations %>>%
+                                       dplyr::collect())$Name)),
                       collapse = ", "),
                 "', not recognized location(s)/group(s)."))
   }
@@ -419,7 +423,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
     }
   }
 
-  if (description$Fullname %in% private$UserConfig$Fullname) {
+  if (description$Fullname %in% private$.UserConfig$Fullname) {
     # if the proposed new name is the same as one that is configured elsewhere
     stop("This user is already configured")
   }
@@ -430,8 +434,8 @@ userconfig.insert <- function(dMeasure_obj, description) {
              print(paste("Error in description validation : ", e[[1]]))
              stop("Unable to insert this user description")})
 
-  newid <- max(private$UserConfig$id, 0) + 1
-  # initially, UserConfig()$id might be an empty set, so need to append a '0'
+  newid <- max(private$.UserConfig$id, 0) + 1
+  # initially, $.UserConfig$id might be an empty set, so need to append a '0'
   description$id <- newid
 
   query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
@@ -443,9 +447,10 @@ userconfig.insert <- function(dMeasure_obj, description) {
   private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
+  private$trigger(self$config_db_trigR) # send a trigger signal
 
-  private$UserConfig <- rbind(private$UserConfig,
-                              tibble::as_tibble(description))
+  private$.UserConfig <- rbind(private$.UserConfig,
+                               tibble::as_tibble(description))
   # update the dataframe in memory
   # as_tibble allows the use of lists in a field without I()
   #
@@ -457,7 +462,9 @@ userconfig.insert <- function(dMeasure_obj, description) {
   #  list(Fullname = "Mrs. Diabetes Educator",
   #    Location = I(list(c("Jemena", "Lakeside"))))
 
-  return(private$UserConfig)
+  # calculating self$UserConfig will 'auto-calculate'
+  # self$UserConfig and also $UserConfigR (if reactive/shiny available)
+  return(self$UserConfig)
 
 })
 
@@ -479,7 +486,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
 #'
-#' @return $UserConfig
+#' @return self$UserConfig
 #'
 #' @examples
 #'
@@ -508,12 +515,12 @@ userconfig.update <- function(dMeasure_obj, description) {
     # immediately encode password if it was provided
   }
 
-  if (!(description$Fullname %in% private$UserConfig$Fullname)) {
+  if (!(description$Fullname %in% private$.UserConfig$Fullname)) {
     # if the proposed configuration to change is not actually configured
     stop("This user is not configured")
   }
 
-  old_description <- private$UserConfig %>>%
+  old_description <- private$.UserConfig %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
   # the 'old' configuration
@@ -532,7 +539,7 @@ userconfig.update <- function(dMeasure_obj, description) {
              print(paste("Error in description validation : ", e[[1]]))
              stop("Unable to update this user description")})
 
-  proposed_UserConfig <- private$UserConfig %>>%
+  proposed_UserConfig <- private$.UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
@@ -557,11 +564,13 @@ userconfig.update <- function(dMeasure_obj, description) {
   private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
+  private$trigger(self$config_db_trigR) # send a trigger signal
 
-  private$UserConfig <- proposed_UserConfig
+  private$.UserConfig <- proposed_UserConfig
 
-  return(private$UserConfig)
-
+  # calculating self$UserConfig will 'auto-calculate'
+  # self$UserConfig and also $UserConfigR (if reactive/shiny available)
+  return(self$UserConfig)
 })
 
 #' userconfig.delete
@@ -575,7 +584,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname
 #'
-#' @return $UserConfig
+#' @return self$UserConfig
 userconfig.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.delete(description)
 }
@@ -588,7 +597,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to change/delete user configuration.")))
 
-  UserConfigRow <- private$UserConfig %>>%
+  UserConfigRow <- private$.UserConfig %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
 
@@ -596,7 +605,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
     stop(paste0("'", description$Fullname, "' not a configured user."))
   }
 
-  proposed_UserConfig <- private$UserConfig %>>%
+  proposed_UserConfig <- private$.UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname)
 
   # this is the proposed user configuration
@@ -615,10 +624,13 @@ userconfig.delete <- function(dMeasure_obj, description) {
   private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
+  private$trigger(self$config_db_trigR) # send a trigger signal
 
-  private$UserConfig <- proposed_UserConfig
+  private$.UserConfig <- proposed_UserConfig
 
-  return(private$UserConfig)
+  # calculating self$UserConfig will 'auto-calculate'
+  # self$UserConfig and also $UserConfigR (if reactive/shiny available)
+  return(self$UserConfig)
 })
 
 #' userconfig.list
@@ -636,9 +648,10 @@ userconfig.list <- function(dMeasure_obj) {
   tryCatch(permission <- self$useradmin.permission(),
            warning = function(w)
              stop(paste(w,
-                        "'UserAdmin' permission required to view user configurations.")))
+                        "'UserAdmin' permission required",
+                        "to view user configurations.")))
 
-  return(private$UserConfig)
+  return(private$.UserConfig)
 })
 
 #' userrestriction.list

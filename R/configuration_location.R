@@ -50,10 +50,14 @@ location.insert <- function(dMeasure_obj, description) {
     private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
+    private$trigger(self$config_db_trigR) # send a trigger signal
 
     # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
 
+    invisible(self$location_list) # will also trigger change in $location_listR
+    # don't need to explicitly set private$PracticeLocations, since it
+    # it is calculated automatically upon database change
     return(private$PracticeLocations)
   }
 })
@@ -93,7 +97,7 @@ location.update <- function(dMeasure_obj, description) {
     stop("New practice location name cannot be the same as existing names, or 'None'")
   } else if (is.null(description$Name)){
     stop("New practice location name cannot be 'empty'!")
-  } else if ((olddescription$Name %in% private$UserConfig$Location) &
+  } else if ((olddescription$Name %in% private$.UserConfig$Location) &
              (olddescription$Name != description$Name)) {
     stop(paste0("Cannot change the name of '", olddescription$Name,
                 "', this location is assigned to a user."))
@@ -105,10 +109,12 @@ location.update <- function(dMeasure_obj, description) {
     private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
+    private$trigger(self$config_db_trigR) # send a trigger signal
 
+    invisible(self$location_list) # will also trigger change in $location_listR
+    # don't need to explicitly set private$PracticeLocations, since
     # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
-
     return(private$PracticeLocations)
   }
 })
@@ -134,7 +140,7 @@ location.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  if (description$Name %in% private$UserConfig$Location) {
+  if (description$Name %in% private$.UserConfig$Location) {
     stop(paste0("Cannot remove '", description$Name,
                 "', this location is assigned to a user."))
   } else {
@@ -151,14 +157,16 @@ location.delete <- function(dMeasure_obj, description) {
     query <- "DELETE FROM Location WHERE id = ?"
     data_for_sql <- as.list.data.frame(c(description$id))
 
-    config_db$dbSendQuery(query, data_for_sql)
+    private$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
-
-    # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
-    # so does not need to be modified manually
+    private$trigger(self$config_db_trigR) # send a trigger signal
 
   }
+  invisible(self$location_list) # will also trigger change in $location_listR
+  # don't need to explicitly set private$PracticeLocations, since
+  # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
+  # so does not need to be modified manually
   return(private$PracticeLocations)
 })
 

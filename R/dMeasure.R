@@ -69,6 +69,11 @@ reactive_fields <- list(name = NULL, value = NULL)
     self[[reactive]](value)
   }
 })
+.private("trigger", function(reactive) {
+  # toggles a reactive between (usually) 0 and 1
+  self[[reactive]](1 - self[[reactive]]())
+})
+
 
 ##### close and finalize object ##########################
 
@@ -186,13 +191,45 @@ reactive_fields <- list(name = NULL, value = NULL)
 .private("config_db", NULL)
 # later dbConnection::dbConnection$new() connection to database
 # using either DBI or pool
-.private("BPdatabase", data.frame(id = integer(),
+.reactive("config_db_trigR", 0)
+# $config_db_trigR will trigger (0/1) with each configuration
+# database change
+
+.private(".BPdatabase", data.frame(id = integer(),
                                   Name = character(),
                                   Address = character(),
                                   Database = character(),
                                   UserID = character(),
                                   dbPassword = character(),
                                   stringsAsFactors = FALSE))
+.active("BPdatabase", function(value) {
+  if (!missing(value)) {
+    stop("cannot be set, $BPdatabase is read-only")
+  } else {
+    if (self$server.permission()) {
+      private$set_reactive("self$BPdatabaseR", private$.BPdatabase)
+      return(private$.BPdatabase)
+      # this identified user has permission
+      # to read the database configuration
+    } else {
+      return(NULL)
+    }
+  }
+})
+.reactive("BPdatabaseR", quote(data.frame(id = integer(),
+                                          Name = character(),
+                                          Address = character(),
+                                          Database = character(),
+                                          UserID = character(),
+                                          dbPassword = character(),
+                                          stringsAsFactors = FALSE)))
+.active("BPdatabaseNames", function(value) {
+  if (!missing(value)) {
+    stop("cannot set, $BPdatabaseNames is read-only!")
+  } else {
+    private$.BPdatabase %>>% dplyr::pull(Name)
+  }
+})
 .private(".BPdatabaseChoice", character())
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
@@ -203,12 +240,23 @@ reactive_fields <- list(name = NULL, value = NULL)
 # id needed for editing this dataframe later
 # need default value for practice location filter
 # interface initialization
-.private("UserConfig", data.frame(id = integer(),
-                                  Fullname = character(), AuthIdentity = character(),
-                                  Location = character(),
-                                  Attributes = character(),
-                                  Password = character(),
-                                  stringsAsFactors = FALSE))
+.private(".UserConfig", data.frame(id = integer(),
+                                   Fullname = character(), AuthIdentity = character(),
+                                   Location = character(),
+                                   Attributes = character(),
+                                   Password = character(),
+                                   stringsAsFactors = FALSE))
+.active("UserConfig", function(value) {
+  if (!missing(choice)) {
+    stop("self$UserConfig is read-only!")
+  } else {
+    userconfig <- private$.UserConfig %>>%
+      dplyr::select(-Password) # same as $.UserConfig, except the password
+
+    private$set_reactive(UserConfigR, userconfig) # set reactive version
+    return(userconfig)
+  }
+})
 .reactive("UserConfigR", NULL)
 
 .private(".UserRestrictions", data.frame(uid = integer(),
@@ -233,6 +281,9 @@ reactive_fields <- list(name = NULL, value = NULL)
 #' This must be one of 'None' or one of the defined databases.
 #' Tries to open the databse. If fails, will be set to 'None'.
 #'
+#' Sets $BPdatabasechoiceR reactive, if shiny/reactive
+#' environment available
+#'
 #' (Stored in private$.BPdatabaseChoice)
 #'
 #' @name BPdatabaseChoice
@@ -246,10 +297,10 @@ reactive_fields <- list(name = NULL, value = NULL)
   if (missing(choice)) {
     return(private$.BPdatabaseChoice)
   } else {
-    if (!(choice %in% c("None", private$BPdatabase$Name))) {
+    if (!(choice %in% c("None", private$.BPdatabase$Name))) {
       browser()
       stop(paste0("Database choice must be one of ",
-                  paste0("'", private$BPdatabase$Name, "'", collapse = ", "),
+                  paste0("'", private$.BPdatabase$Name, "'", collapse = ", "),
                   " or 'None'."))
     }
 
@@ -260,8 +311,8 @@ reactive_fields <- list(name = NULL, value = NULL)
     if (choice == "None") {
       # do nothing
     } else if (!is.null(choice)) {
-      server <- private$BPdatabase %>%
-        dplyr::filter(Name == choice) %>%
+      server <- private$.BPdatabase %>>%
+        dplyr::filter(Name == choice) %>>%
         dplyr::collect()
       print("Opening EMR database")
       private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
@@ -297,8 +348,8 @@ reactive_fields <- list(name = NULL, value = NULL)
     # the same as 'choice' initially was, if database successfully opened
     # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
 
-    if (nrow(private$config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
-             dplyr::filter(id ==1) %>% dplyr::collect())) {
+    if (nrow(private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+             dplyr::filter(id ==1) %>>% dplyr::collect())) {
       # already an entry in the ServerChoice table
       query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
       data_for_sql <- as.list.data.frame(c(private$.BPdatabaseChoice, 1))
@@ -309,12 +360,16 @@ reactive_fields <- list(name = NULL, value = NULL)
     }
     private$config_db$dbSendQuery(query, data_for_sql)
     # write to SQLite configuration database
+    private$trigger(self$config_db_trigR) # send a trigger signal
 
+    private$set_reactive(self$BPdatabaseChoiceR, choice)
+    # set reactive, if reactive environment available
     return(private$.BPdatabaseChoice)
     # same name as the requested database if successful
     # 'None' if not successful, or if 'None' was chosen
   }
 })
+.reactive("BPdatabaseChoiceR", NULL) # reactive version
 
 ## methods
 
@@ -382,13 +437,13 @@ open_configuration_db <-
     #
     # returns - nothing
 
-    tablenames <- config_db$conn() %>% DBI::dbListTables()
+    tablenames <- config_db$conn() %>>% DBI::dbListTables()
 
     if (tablename %in% tablenames) {
       # if table exists in config_db database
-      columns <- config_db$conn() %>% dplyr::tbl(tablename) %>% colnames()
+      columns <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% colnames()
       # list of column (variable) names
-      data <- config_db$conn() %>% dplyr::tbl(tablename) %>% dplyr::collect()
+      data <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% dplyr::collect()
       # get a copy of the table's data
     } else {
       # table does not exist, needs to be created
@@ -402,7 +457,7 @@ open_configuration_db <-
     for (a in variable_list) {
       if (!(a[[1]] %in% columns)) {
         # if a required variable name is not in the table
-        data <- data %>%
+        data <- data %>>%
           dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
         # use of !! and := to dynamically specify a[[1]] as a column name
         # potentially could use data[,a[[1]]] <- ...
@@ -474,34 +529,35 @@ read_configuration_db <- function(dMeasure_obj,
     config_db <- private$config_db
   }
 
-  private$BPdatabase <- config_db$conn() %>%
-    dplyr::tbl("Server") %>% dplyr::collect()
+  private$.BPdatabase <- config_db$conn() %>>%
+    dplyr::tbl("Server") %>>% dplyr::collect()
   self$BPdatabaseChoice <-
-    (config_db$conn() %>% dplyr::tbl("ServerChoice") %>%
-       dplyr::filter(id == 1) %>% dplyr::select("Name") %>%
+    (config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+       dplyr::filter(id == 1) %>>% dplyr::select("Name") %>>%
        dplyr::collect())[[1]]
 
-  private$PracticeLocations <- config_db$conn() %>%
+  private$PracticeLocations <- config_db$conn() %>>%
     dplyr::tbl("Location")
-  invisible(self$location_list())
+  invisible(self$location_list)
   # $location_list() will refresh the reactive location_listR if available
 
-  private$UserConfig <- config_db$conn() %>%
-    dplyr::tbl("Users") %>%
-    # in UserConfig, there can be multiple Locations/Attributes per user
-    dplyr::collect() %>%
+  private$.UserConfig <- config_db$conn() %>>%
+    dplyr::tbl("Users") %>>%
+    # in .UserConfig, there can be multiple Locations/Attributes per user
+    dplyr::collect() %>>%
     dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
-  self$set_reactive(UserConfigR,
-                    private$UserConfig %>>% dplyr::select(-Password))
-  # don't include password in reactive version
+  invisible(self$UserConfig) # this will also set $userConfigR reactive version
 
-  private$.UserRestrictions <- config_db$conn() %>%
-    dplyr::tbl("UserRestrictions") %>% dplyr::collect()
+  private$.UserRestrictions <- config_db$conn() %>>%
+    dplyr::tbl("UserRestrictions") %>>% dplyr::collect()
   self$UserRestrictions(private$.UserRestrictions)
 
   self$match_user()
   # see if 'identified' system user is matched with a configured user
+
+  private$trigger(self$config_db_trigR)
+  # notification of configuration database change
 
   invisible(self)
 })
@@ -518,7 +574,7 @@ read_configuration_db <- function(dMeasure_obj,
 
 #' Match user with current 'identified' system user
 #'
-#' Matches 'dMeasure_obj$Userconfig$AuthIdentity' with Sys.info()[["user"]]
+#' Matches 'dMeasure_obj$.UserConfig$AuthIdentity' with Sys.info()[["user"]]
 #'
 #' @param dMeasure_obj dMeasure object
 #'
@@ -529,11 +585,11 @@ match_user <- function(dMeasure_obj) {
 
 .public("match_user", function() {
   private$.identified_user <-
-    private$UserConfig[private$UserConfig$AuthIdentity == Sys.info()[["user"]],]
+    private$.UserConfig[private$.UserConfig$AuthIdentity == Sys.info()[["user"]],]
   private$set_reactive(self$identified_user,
                        private$.identified_user %>>%
                          dplyr::select(Fullname, AuthIdentity, Location, Attributes)
-                       )
+  )
   # set reactive version if reactive (shiny) environment available
   # does not include password
 
@@ -596,12 +652,14 @@ clinician_list <- function(dMeasure_obj,
     # same 'shape' as the comparison statement
     clinician_list <- self$UserFullConfig$Fullname
   } else {
-    clinician_list <- subset(UserConfig$Fullname,
-                             sapply(UserConfig$Location,
+    clinician_list <- subset(private$.UserConfig$Fullname,
+                             sapply(private$.UserConfig$Location,
                                     function (y) self$location %in% y))
     # filter clinicians by location choice
     # it is possible for a clinician to have multiple locations
     # initially, $Location might include a lot of NA
+    #
+    # if filtered, then only configured users can be in the list
   }
 
   for (restriction in self$view_restrictions) {
@@ -715,23 +773,23 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   print("Re-initializing databases")
 
-  private$db$users <- emr_db$conn() %>%
+  private$db$users <- emr_db$conn() %>>%
     # this is a function! a collect() is later called prior to mutate/join,
     # (as a result is no longer a 'lazy eval') and cannot be evaluated just once.
     # output - Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Users')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Users')) %>>%
     dplyr::select(c('UserID', 'Surname', 'Firstname',
                     'LocationName', 'Title', 'ProviderNo'))
-  self$set_reactive(UserConfigR,
-                    private$UserConfig %>>% dplyr::select(-Password))
-  # does not include password in reactive version
+  invisible(self$UserConfig)
+  # will also set $UserConfigR reactive
+  # does not include password in public/reactive
 
-  private$db$patients <- emr_db$conn() %>%
+  private$db$patients <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
 
-  private$db$investigations <- emr_db$conn() %>%
+  private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>>%
     dplyr::select(c('InternalID', 'Collected', 'TestName'))
   # as of Jan/2019, the odbc engine for MSSQL can't handle the
   # full ('Select *') Investigations table
@@ -739,75 +797,75 @@ initialize_emr_tables <- function(dMeasure_obj,
   # also can handle the History table. need to
   # 'Select' out just a few columns.
 
-  private$db$appointments <- emr_db$conn() %>%
+  private$db$appointments <- emr_db$conn() %>>%
     # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Appointments')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Appointments')) %>>%
     dplyr::select(c('Patient', 'InternalID',
                     'AppointmentDate', 'AppointmentTime',
                     'Provider', 'Status'))
 
-  private$db$immunizations <- emr_db$conn() %>%
+  private$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>>%
     dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
 
-  private$db$vaccine_disease <- emr_db$conn() %>%
+  private$db$vaccine_disease <- emr_db$conn() %>>%
     # vaccineIDs linked to diseases
     # e.g. diseasecode 7+30 are for influenza vaccines
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
-  private$db$preventive_health <- emr_db$conn() %>%
+  private$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
-    dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ITEMID')
 
-  private$db$correspondenceIn <- emr_db$conn() %>%
+  private$db$correspondenceIn <- emr_db$conn() %>>%
     # InternalID, CorrespondenceDate, Subject, Detail
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>>%
     dplyr::select('InternalID', 'CorrespondenceDate', 'Subject', 'Detail')
 
-  private$db$reportValues <- emr_db$conn() %>%
+  private$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select('InternalID', 'ReportDate', 'ResultName', 'LoincCode')
 
-  private$db$services <- emr_db$conn() %>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>%
+  private$db$services <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
 
-  private$db$history <- emr_db$conn() %>%
+  private$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_History')) %>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_History')) %>>%
     dplyr::select('InternalID', 'Year',
                   'Condition', 'ConditionID', 'Status')
 
-  private$db$observations <- emr_db$conn() %>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>%
+  private$db$observations <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'DATANAME',
                   'DATACODE', 'DATAVALUE', 'OBSDATE')
 
-  private$db$currentrx <- emr_db$conn() %>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>%
+  private$db$currentrx <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'PRODUCTID',
                   'DRUGNAME', 'RXSTATUS')
   # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
 
-  private$db$obgyndetail <- emr_db$conn() %>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "OBSGYNDETAIL")) %>%
+  private$db$obgyndetail <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "OBSGYNDETAIL")) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'NOMINALLMP',
                   'LASTPAPDATE', 'LASTPAPRESULT', 'BREASTFEEDING',
                   'MammogramStatus', 'LastMammogramDate', 'MammogramResult')
 
-  private$db$pregnancies <- emr_db$conn() %>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "PREGNANCIES")) %>%
+  private$db$pregnancies <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PREGNANCIES")) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'EDCBYDATE',
                   'ACTUALLMP', 'NOMINALLMP', 'ENDDATE')
 
   private$db$dbversion <- private$db$dbversion + 1
   print(paste("dbversion:", private$db$dbversion))
-  self$set_reactive(self$dbversion, private$db$dbversion)
+  private$set_reactive(self$dbversion, private$db$dbversion)
 })
 
 ##### other variables and methods #################
@@ -823,7 +881,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' Contains user names attached to configuration information.
 #' Contains ALL user names. Does NOT contain passwords.
 #'
-#' By contrast, private$UserConfig() contains just names
+#' By contrast, private$.UserConfig() contains just names
 #' who have been configured (in SQLite), including passwords
 #'
 #' @name UserFullConfig
@@ -835,21 +893,21 @@ initialize_emr_tables <- function(dMeasure_obj,
   }
 
   if (is.null(private$db$users)) {
-    UserFullConfig <- private$UserConfig %>%
+    UserFullConfig <- private$.UserConfig %>>%
       dplyr::select(-Password)
-    # just the UserConfig except the passwords
+    # just the .UserConfig except the passwords
   } else {
-    UserFullConfig <- private$db$users %>% dplyr::collect() %>%
+    UserFullConfig <- private$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
       dplyr::mutate(Title = trimws(Title),
                     Firstname = trimws(Firstname),
-                    Surname = trimws(Surname)) %>%
+                    Surname = trimws(Surname)) %>>%
       dplyr::mutate(Fullname =
-                      paste(Title, Firstname, Surname, sep = ' ')) %>%
+                      paste(Title, Firstname, Surname, sep = ' ')) %>>%
       # include 'Fullname'
-      dplyr::left_join(private$UserConfig, by = 'Fullname') %>%
+      dplyr::left_join(private$.UserConfig, by = 'Fullname') %>>%
       # add user details including practice locations
       dplyr::select(-Password) # removes the password field
   }
@@ -905,21 +963,25 @@ location_list <- function(dMeasure_obj) {
   dMeasure_obj$location_list()
 }
 
-.public("location_list", function() {
-  locations <- data.frame(Name = "All")
-  if (!is.null(private$PracticeLocations)) {
-    locations <-
-      rbind(locations,
-            as.data.frame(private$PracticeLocations %>%
-                            dplyr::select(Name))) %>%
-      unlist(use.names = FALSE)
-  }
-  # set reactive version, only if shiny is available
-  self$set_reactive(self$location_listR, self$location_list)
+.active("location_list", function(value) {
+  if (missing(value)) {
+    stop("$location_list is read-only!")
+  } else {
+    locations <- data.frame(Name = "All")
+    if (!is.null(private$PracticeLocations)) {
+      locations <-
+        rbind(locations,
+              as.data.frame(private$PracticeLocations %>>%
+                              dplyr::select(Name))) %>>%
+        unlist(use.names = FALSE)
+    }
+    # set reactive version, only if shiny is available
+    private$set_reactive(self$location_listR, locations)
 
-  return(locations)
+    return(locations)
+  }
 })
-.reactive("location_listR", quote(data.frame(Name = "All")))
+.reactive("location_listR", quote("All"))
 
 #' Choose location
 #'
@@ -938,7 +1000,7 @@ choose_location <- function(dMeasure_obj,
 }
 
 .public("choose_location", function(location = self$location) {
-  locations <- self$location_list()
+  locations <- self$location_list
   if (!(location %in% locations)) {
     stop(paste0("'", location, "' is not in the list of locations."))
   } else {
