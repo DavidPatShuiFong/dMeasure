@@ -209,6 +209,7 @@ reactive_fields <- list(name = NULL, value = NULL)
                                   Attributes = character(),
                                   Password = character(),
                                   stringsAsFactors = FALSE))
+.reactive("UserConfigR", NULL)
 
 .private(".UserRestrictions", data.frame(uid = integer(),
                                          Restriction = character(),
@@ -482,7 +483,8 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$PracticeLocations <- config_db$conn() %>%
     dplyr::tbl("Location")
-  self$location_list() # will refresh the reactive location_listR if available
+  invisible(self$location_list())
+  # $location_list() will refresh the reactive location_listR if available
 
   private$UserConfig <- config_db$conn() %>%
     dplyr::tbl("Users") %>%
@@ -490,8 +492,9 @@ read_configuration_db <- function(dMeasure_obj,
     dplyr::collect() %>%
     dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                   Attributes = stringi::stri_split(Attributes, regex = ";"))
-  invisible(self$UserFullConfig) # defines $UserFullConfig
-  # will also define $UserFullConfigR
+  self$set_reactive(UserConfigR,
+                    private$UserConfig %>>% dplyr::select(-Password))
+  # don't include password in reactive version
 
   private$.UserRestrictions <- config_db$conn() %>%
     dplyr::tbl("UserRestrictions") %>% dplyr::collect()
@@ -719,7 +722,9 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Users')) %>%
     dplyr::select(c('UserID', 'Surname', 'Firstname',
                     'LocationName', 'Title', 'ProviderNo'))
-  invisible(self$UserFullConfig) # re-defines $UserFullConfig and $UserFullConfigR
+  self$set_reactive(UserConfigR,
+                    private$UserConfig %>>% dplyr::select(-Password))
+  # does not include password in reactive version
 
   private$db$patients <- emr_db$conn() %>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
@@ -802,9 +807,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   private$db$dbversion <- private$db$dbversion + 1
   print(paste("dbversion:", private$db$dbversion))
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    self$dbversion(private$db$dbversion)
-  }
+  self$set_reactive(self$dbversion, private$db$dbversion)
 })
 
 ##### other variables and methods #################
@@ -822,9 +825,6 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' By contrast, private$UserConfig() contains just names
 #' who have been configured (in SQLite), including passwords
-#'
-#' Reading from $UserFullConfig will, if a shiny environment
-#' is available, always set $UserFullConfigR
 #'
 #' @name UserFullConfig
 #'
@@ -853,12 +853,9 @@ initialize_emr_tables <- function(dMeasure_obj,
       # add user details including practice locations
       dplyr::select(-Password) # removes the password field
   }
-  private$set_reactive(UserFullConfigR, UserFullConfig)
-  # copy to reactive, if shiny environment available
 
   return(UserFullConfig)
 })
-.reactive("UserFullConfigR", NULL)
 
 ##### date variables and location #####################################
 
@@ -917,10 +914,8 @@ location_list <- function(dMeasure_obj) {
                             dplyr::select(Name))) %>%
       unlist(use.names = FALSE)
   }
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # set reactive version, only if shiny is available
-    self$location_listR(self$location_list)
-  }
+  # set reactive version, only if shiny is available
+  self$set_reactive(self$location_listR, self$location_list)
 
   return(locations)
 })

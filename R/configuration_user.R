@@ -337,7 +337,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
 .private("validate.proposed.userconfig", function(proposed_UserConfig) {
   # check whether proposed userconfig satisfied some requirements
-  # e.g. if a restriciton has been placed, then at least one user might need
+  # e.g. if a restriction has been placed, then at least one user might need
   #  an attribute to 'override' that restriction
   #
   # @return TRUE if passed
@@ -398,7 +398,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
 }
 
-.public("userconfig.insert", function(description, row) {
+.public("userconfig.insert", function(description) {
   # adding a new user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
@@ -474,6 +474,8 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #' note that the list does not need to enclose with I(),
 #' since 'as_tibble' is used for translation.
 #'
+#' The description to update is defined by $Fullname
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
 #'
@@ -497,8 +499,9 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   tryCatch(permission <- self$useradmin.permission(),
            warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to change user configuration")))
+             stop(paste(
+               w,
+               "'UserAdmin' permission required to change user configuration")))
 
   if (!is.null(description$password)) {
     description$password <- simple_encode(description$password)
@@ -527,7 +530,7 @@ userconfig.update <- function(dMeasure_obj, description) {
            # find invalid Location or Attribute descriptions
            error = function(e) {
              print(paste("Error in description validation : ", e[[1]]))
-             stop("Unable to insert this user description")})
+             stop("Unable to update this user description")})
 
   proposed_UserConfig <- private$UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
@@ -538,12 +541,13 @@ userconfig.update <- function(dMeasure_obj, description) {
   tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
            error = function(e) {
              paste0("Error in change in attributes :", e[[1]])
-             stop("Cannot delete this user configuration.")
+             stop("Unable to update this user configuration.")
            })
-  # is restrictions have been placed on who can modify the server or user configuration
+  # if restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
 
-  query <- "UPDATE Users SET Fullname = ?, AuthIdentity = ?, Location = ?, Attributes = ? WHERE id = ?"
+  query <- paste("UPDATE Users SET Fullname = ?, AuthIdentity = ?, ",
+                 "Location = ?, Attributes = ? WHERE id = ?", sep = "")
   data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
                             paste0(description$Location[[1]], "", collapse = ";"),
                             paste0(description$Attributes[[1]], "", collapse = ";"),
