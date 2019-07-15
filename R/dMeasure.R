@@ -26,6 +26,12 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
+                  if (length(public_init_fields$name) > 0) { # only if any .reactive() defined
+                    for (i in 1:length(public_init_fields$name)) {
+                      self[[public_init_fields$name[[i]]]] <-
+                        eval(public_init_fields$value[[i]]) # could 'quote' the value
+                    }
+                  }
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
@@ -48,6 +54,16 @@ dMeasure <-
 .public <- function(...) dMeasure$set("public", ...)
 .private <- function(...) dMeasure$set("private", ...)
 .active <- function(...) dMeasure$set("active", ...)
+
+public_init_fields <- list(name = NULL, value = NULL)
+.public_init <- function(name, value) {
+  dMeasure$set("public", name, NULL)
+  public_init_fields$name <<- c(public_init_fields$name, name)
+  public_init_fields$value <<- c(public_init_fields$value, value)
+  # to be initialized during self$initialize
+  # e.g. references another field's value
+  # $value will be 'eval()' during initialization, so can be quote()'d
+}
 
 reactive_fields <- list(name = NULL, value = NULL)
 # this will progressively hold definitions of reactive fields

@@ -19,11 +19,8 @@ NULL
 #                     potential CDM actions in "other" people's appointment books
 #  RequirePasswords - identified users need to use password to be 'authenticated'
 
-.active("restrictionTypes", function(value) {
-  if (!missing(value)) {
-    stop("Can't set, $restrictionTypes is read-only!")
-  }
-  return(list(
+.public_init("restrictionTypes", quote(
+  list(
     list(
       id = "ServerAdmin", label = "Server Administrator",
       Description = "Only ServerAdmin users can change database server settings",
@@ -181,30 +178,21 @@ NULL
       }
     )
   ))
-})
+)
 
-.active("restrictionTypes_df", function(value) {
-  if (!missing(value)) {
-    stop("Can't set, restrictionTypes_df is read-only!")
-  }
-  return(data.frame(Reduce(rbind, self$restrictionTypes)))
-})
+
+.public_init("restrictionTypes_df",
+             quote(data.frame(Reduce(rbind, self$restrictionTypes))))
+
 # converts the list to a dataframe
-.active("restrictionTypes_id", function(value) {
-  if (!missing(value)) {
-    stop("Can't set, restrictionTypes_id is read-only!")
-    }
-  return(unlist(self$restrictionTypes_df$id,
-                use.names = FALSE))
-})
-.active("user_attribute_types", function(value) {
-  if (!missing(value)) {
-    stop("Can't set, user_attribute_types is read-only!")
-  }
-  return(unlist(dplyr::filter(self$restrictionTypes_df,
-                              userAttribute == TRUE)$id,
-                use.names = FALSE))
-})
+.public_init("restrictionTypes_id",
+             quote(unlist(self$restrictionTypes_df$id,
+                          use.names = FALSE)))
+
+.public_init("user_attribute_types",
+             quote(unlist(dplyr::filter(self$restrictionTypes_df,
+                                        userAttribute == TRUE)$id,
+                          use.names = FALSE)))
 
 # user attribute types is defined in restrictionTypes. only those with userAttribute TRUE
 

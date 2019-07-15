@@ -20,7 +20,11 @@ NULL
 .reactive("appointments_filtered_timeR", quote(NA))
 
 
-.public("appointments_list", NULL)
+.public("appointments_list", data.frame(Patient = character(), InternalID = integer(),
+                                        AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
+                                        AppointmentTime = character(), Provider = character(),
+                                        DOB = as.Date(integer(0), origin = "1970-01-01", Age = numeric()))
+        )
 # add date of birth to appointments list
 # requires appointments_filtered_time
 .reactive("appointments_listR", quote(NA))
