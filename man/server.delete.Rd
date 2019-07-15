@@ -9,7 +9,7 @@ server.delete(dMeasure_obj, description)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{description}{$Name}
+\item{description}{$id}
 }
 \value{
 dataframe - full list of database descriptions

@@ -2,13 +2,17 @@
 % Please edit documentation in R/dMeasure.R
 \name{UserFullConfig}
 \alias{UserFullConfig}
-\title{UserfullConfig}
+\title{UserFullConfig}
 \description{
-integrates the UserConfig in the SQLite configuration file
+Integrates the UserConfig in the SQLite configuration file
 with the user information in the EMR database
+(if the clinical database is not open, then only SQLite
+information is returned)
 }
 \details{
-contains user names attached to configuration information
-contains ALL user names
-$UserConfig() contains just names who have been configured
+Contains user names attached to configuration information.
+Contains ALL user names. Does NOT contain passwords.
+
+By contrast, private$.UserConfig() contains just names
+who have been configured (in SQLite), including passwords
 }

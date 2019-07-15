@@ -79,32 +79,32 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
   ##### bowel cancer (FOBT) definitions ######
 
   bowel_cancer_screen_terms <-
-    c("(VALUES('%FOB%'), ('%OCCULT%'), ('%FAECAL HUMAN HAEMOGLOBIN%'),
-      ('%OCB NATIONAL SCREENING%'), ('%FHB%'), ('%FAECAL BLOOD%'),
-      ('%FAECAL IMMUNOCHEMICAL TEST%'), ('%FAECAL HAEMOGLOBIN%'),
-      ('%COLONOSCOPY%'), ('%COLONOSCOPE%')) AS tests(fobtnames)")
+    c(paste("(VALUES('%FOB%'), ('%OCCULT%'), ('%FAECAL HUMAN HAEMOGLOBIN%'),",
+            "('%OCB NATIONAL SCREENING%'), ('%FHB%'), ('%FAECAL BLOOD%'),",
+            "('%FAECAL IMMUNOCHEMICAL TEST%'), ('%FAECAL HAEMOGLOBIN%'),",
+            "('%COLONOSCOPY%'), ('%COLONOSCOPE%')) AS tests(fobtnames)"))
 
   fobt_investigation_query <-
-    paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations
-          INNER JOIN', bowel_cancer_screen_terms,
+    paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations',
+          'INNER JOIN', bowel_cancer_screen_terms,
           'ON TestName LIKE tests.fobtnames')
   # SQL code to find investigations which could be bowel cancer screening items
 
   fobt_letter_subject_query <-
-    paste('SELECT InternalID, CorrespondenceDate, Subject FROM dbo.BPS_CorrespondenceIn
-          INNER JOIN', bowel_cancer_screen_terms,
+    paste('SELECT InternalID, CorrespondenceDate, Subject FROM dbo.BPS_CorrespondenceIn',
+          'INNER JOIN', bowel_cancer_screen_terms,
           'ON Subject LIKE tests.fobtnames')
 
   fobt_letter_detail_query <-
-    paste('SELECT InternalID, CorrespondenceDate, Detail FROM dbo.BPS_CorrespondenceIn
-          INNER JOIN', bowel_cancer_screen_terms,
+    paste('SELECT InternalID, CorrespondenceDate, Detail FROM dbo.BPS_CorrespondenceIn',
+          'INNER JOIN', bowel_cancer_screen_terms,
           'ON Detail LIKE tests.fobtnames')
 
   fobt_result_query <-
-    paste("SELECT InternalID, ReportDate, ResultName FROM dbo.BPS_ReportValues
-          WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',
-          '12503-9','12504-7','27401-9','27925-7','27926-5',
-          '57905-2','56490-6','56491-4','29771-3')")
+    paste("SELECT InternalID, ReportDate, ResultName FROM dbo.BPS_ReportValues",
+          "WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',",
+          "'12503-9','12504-7','27401-9','27925-7','27926-5',",
+          "'57905-2','56490-6','56491-4','29771-3')")
 
   ##### search proper #####################
 
@@ -183,13 +183,14 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
   if (screentag_print) {
     screen_fobt_ix <- screen_fobt_ix %>>%
       dplyr::mutate(screentag_print =
-                      paste0(trimws(TestName), # the Testname in BP can have huge whitespace!
-                             dplyr::case_when(OutOfDateTest == 1 ~ " (Never Done) ",
-                                              OutOfDateTest == 2 ~ " (OVERDUE) ",
-                                              OutOfDateTest == 3 ~ " "),
-                             dplyr::if_else(OutOfDateTest != 1,
-                                            paste0("(Date:", TestDate, ")"),
-                                            ""))
+                      trimws(paste0(trimws(TestName),
+                                    # the Testname in BP can have huge whitespace!
+                                    dplyr::case_when(OutOfDateTest == 1 ~ " (Never Done) ",
+                                                     OutOfDateTest == 2 ~ " (OVERDUE) ",
+                                                     OutOfDateTest == 3 ~ " "),
+                                    dplyr::if_else(OutOfDateTest != 1,
+                                                   paste0("(Date:", TestDate, ")"),
+                                                   "")))
       )
 
     return_selection <- c(return_selection, "screentag_print")

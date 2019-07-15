@@ -62,16 +62,16 @@ reactive_fields <- list(name = NULL, value = NULL)
     # $value will be 'eval()' during initialization, so can be quote()'d
   }
 }
-.private("set_reactive", function(reactive, value) {
+.private("set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
-  # reactive is passed by reference
+  # myreactive is passed by reference
   if (requireNamespace("shiny", quietly = TRUE)) {
-    self[[reactive]](value)
+    myreactive(value)
   }
 })
-.private("trigger", function(reactive) {
+.private("trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
-  self[[reactive]](1 - self[[reactive]]())
+  myreactive(1 - shiny::isolate(myreactive()))
 })
 
 
@@ -196,18 +196,18 @@ reactive_fields <- list(name = NULL, value = NULL)
 # database change
 
 .private(".BPdatabase", data.frame(id = integer(),
-                                  Name = character(),
-                                  Address = character(),
-                                  Database = character(),
-                                  UserID = character(),
-                                  dbPassword = character(),
-                                  stringsAsFactors = FALSE))
+                                   Name = character(),
+                                   Address = character(),
+                                   Database = character(),
+                                   UserID = character(),
+                                   dbPassword = character(),
+                                   stringsAsFactors = FALSE))
 .active("BPdatabase", function(value) {
   if (!missing(value)) {
     stop("cannot be set, $BPdatabase is read-only")
   } else {
     if (self$server.permission()) {
-      private$set_reactive("self$BPdatabaseR", private$.BPdatabase)
+      private$set_reactive(self$BPdatabaseR, private$.BPdatabase)
       return(private$.BPdatabase)
       # this identified user has permission
       # to read the database configuration
@@ -247,15 +247,15 @@ reactive_fields <- list(name = NULL, value = NULL)
                                    Password = character(),
                                    stringsAsFactors = FALSE))
 .active("UserConfig", function(value) {
-  if (!missing(choice)) {
+  if (!missing(value)) {
     stop("self$UserConfig is read-only!")
-  } else {
-    userconfig <- private$.UserConfig %>>%
-      dplyr::select(-Password) # same as $.UserConfig, except the password
-
-    private$set_reactive(UserConfigR, userconfig) # set reactive version
-    return(userconfig)
   }
+
+  userconfig <- private$.UserConfig %>>%
+    dplyr::select(-Password) # same as $.UserConfig, except the password
+
+  private$set_reactive(self$UserConfigR, userconfig) # set reactive version
+  return(userconfig)
 })
 .reactive("UserConfigR", NULL)
 
@@ -964,22 +964,22 @@ location_list <- function(dMeasure_obj) {
 }
 
 .active("location_list", function(value) {
-  if (missing(value)) {
+  if (!missing(value)) {
     stop("$location_list is read-only!")
-  } else {
-    locations <- data.frame(Name = "All")
-    if (!is.null(private$PracticeLocations)) {
-      locations <-
-        rbind(locations,
-              as.data.frame(private$PracticeLocations %>>%
-                              dplyr::select(Name))) %>>%
-        unlist(use.names = FALSE)
-    }
-    # set reactive version, only if shiny is available
-    private$set_reactive(self$location_listR, locations)
-
-    return(locations)
   }
+  locations <- data.frame(Name = "All")
+  if (!is.null(private$PracticeLocations)) {
+    locations <-
+      rbind(locations,
+            as.data.frame(private$PracticeLocations %>>%
+                            dplyr::select(Name))) %>>%
+      unlist(use.names = FALSE)
+  }
+  # set reactive version, only if shiny is available
+  private$set_reactive(self$location_listR, locations)
+
+  return(locations)
+
 })
 .reactive("location_listR", quote("All"))
 

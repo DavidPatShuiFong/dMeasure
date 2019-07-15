@@ -11,6 +11,9 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
 
+  period <- as.numeric(period)
+  # if not converted, could return an empty list, instead of empty numeric
+
   return(period)
 }
 
@@ -24,6 +27,9 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
       ifelse(y > x, 1, -1),
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
+
+  period <- as.numeric(period)
+  # if not converted, could return an empty list, instead of empty numeric
 
   return(period)
 }
@@ -51,6 +57,7 @@ interval <- function(date_a, date_b, unit = "none") {
            NA),
     # note that seq.Date can't handle 'negative' periods
     date_a, date_b)
+  interval$year <- as.numeric(interval$year) # if empty, converts from empty list to numeric(0)
 
   interval$month <- mapply(function(x, y, z)
     ifelse(!is.na(min(x, y)),
@@ -62,6 +69,7 @@ interval <- function(date_a, date_b, unit = "none") {
               ifelse(y > x, 1, -1)),
            NA),
     date_a, date_b, interval$year)
+  interval$month <- as.numeric(interval$month)
 
   interval$day <- mapply(function(x, y, z, zz)
     ifelse(!is.na(min(x, y)),
@@ -76,8 +84,9 @@ interval <- function(date_a, date_b, unit = "none") {
               ifelse(y > x, 1, -1)),
            NA),
     date_a, date_b, interval$year, interval$month)
+  interval$day <- as.numeric(interval$day)
 
-  if (unit == "month") {
+  if (unit == "month" & length(date_a)>0) {
     interval$month <- interval$month + interval$year*12
     interval$year <- replicate(length(interval$month), 0)
   }

@@ -34,6 +34,7 @@ Collate:
     'Immunization.R'
     'billings.R'
     'configuration_location.R'
+    'configuration_password.R'
     'configuration_server.R'
     'configuration_user.R'
     'utils_pipe.R'

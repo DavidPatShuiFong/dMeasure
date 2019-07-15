@@ -12,7 +12,7 @@ userconfig.delete(dMeasure_obj, description)
 \item{description}{list $Fullname}
 }
 \value{
-$UserConfig
+self$UserConfig
 }
 \description{
 delete user configuration

@@ -17,4 +17,5 @@ dataframe - full list of database descriptions
 }
 \description{
 change (update) a server description
+the server to change is specified by $id
 }

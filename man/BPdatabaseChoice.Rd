@@ -11,6 +11,9 @@ This must be one of 'None' or one of the defined databases.
 Tries to open the databse. If fails, will be set to 'None'.
 }
 \details{
+Sets $BPdatabasechoiceR reactive, if shiny/reactive
+environment available
+
 (Stored in private$.BPdatabaseChoice)
 }
 \examples{

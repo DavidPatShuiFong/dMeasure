@@ -13,5 +13,5 @@ match_user(dMeasure_obj)
 self
 }
 \description{
-Matches 'dMeasure_obj$Userconfig$AuthIdentity' with Sys.info()[["user"]]
+Matches 'dMeasure_obj$.UserConfig$AuthIdentity' with Sys.info()[["user"]]
 }

@@ -12,7 +12,7 @@ userconfig.update(dMeasure_obj, description)
 \item{description}{list $Fullname, $AuthIdentity, $Location, $Attributes}
 }
 \value{
-$UserConfig
+self$UserConfig
 }
 \description{
 update user configuration
@@ -26,6 +26,8 @@ list(Fullname = "Mrs. Diabetes Educator",
 
 note that the list does not need to enclose with I(),
 since 'as_tibble' is used for translation.
+
+The description to update is defined by $Fullname
 }
 \examples{
 

@@ -187,12 +187,13 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
     }
     if (screentag_print) {
       gpmprv <- gpmprv %>>%
-        dplyr::mutate(mbstag_print = paste0("GPMP R/V", " ", # printable version of information
-                                            dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
-                                                    paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
-                                                    dplyr::if_else(interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
-                                                            paste0("(", ServiceDate, ")"),
-                                                            paste0("(", ServiceDate, ") Overdue")))))
+        dplyr::mutate(mbstag_print =
+                        paste0("GPMP R/V", " ", # printable version of information
+                               dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
+                                              paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
+                                              dplyr::if_else(interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
+                                                             paste0("(", ServiceDate, ")"),
+                                                             paste0("(", ServiceDate, ") Overdue")))))
     }
 
   } else {
