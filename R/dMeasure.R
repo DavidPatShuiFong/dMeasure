@@ -93,6 +93,9 @@ reactive_fields <- list(name = NULL, value = NULL)
 
 .public("close", function() {
   # close any open database connections
+  if (!is.null(private$.identified_user)) {
+    self$user_logout()
+  }
   if (!is.null(private$config_db)) {
     private$config_db$close()
     private$config_db <- NULL
@@ -271,7 +274,10 @@ reactive_fields <- list(name = NULL, value = NULL)
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
-.reactive("UserConfigR", NULL)
+.reactive("UserConfigR", quote(data.frame(id = numeric(), Fullname = character(),
+                                          AuthIdentity = character(),
+                                          Location = character(),
+                                          Attributes = character())))
 
 .private(".UserRestrictions", data.frame(uid = integer(),
                                          Restriction = character(),
@@ -990,14 +996,18 @@ location_list <- function(dMeasure_obj) {
                             dplyr::select(Name))) %>>%
       unlist(use.names = FALSE)
   }
-  # set reactive version, only if shiny is available
+  # set reactive versions, only if shiny is available
   private$set_reactive(self$location_listR, locations)
+  private$set_reactive(self$PracticeLocationsR,
+                       as.data.frame(private$PracticeLocations))
 
   return(locations)
 
 })
 .reactive("location_listR", quote("All"))
-
+.reactive("PracticeLocationsR", quote(data.frame(id = numeric(),
+                                                 Name = character(),
+                                                 Description = character())))
 #' Choose location
 #'
 #' Location is used in subsequent list of clinicians available

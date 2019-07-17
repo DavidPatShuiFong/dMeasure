@@ -19,166 +19,179 @@ NULL
 #                     potential CDM actions in "other" people's appointment books
 #  RequirePasswords - identified users need to use password to be 'authenticated'
 
-.public_init("restrictionTypes", quote(
-  list(
+#' returns list of the restriction types
+#'
+#' no paramters
+#'
+#' @return a list
+#'
+#' @export
+restrictionTypes_list <- function() {
+  return(
     list(
-      id = "ServerAdmin", label = "Server Administrator",
-      Description = "Only ServerAdmin users can change database server settings",
-      userAttribute = TRUE,
-      # is this actually a userattribute
-      callback = function (state, AttributeList, anyPassword) {
-        # these callbacks have no immediate access to the parent environment
-        # only called if state is changed from the old state
-        # @param state          : attempted new state
-        # @param AttributeList  : current list of user attributes in use
-        # @param anyPassword    : any passwords TRUE or FALSE
-        #
-        # @return list (state, error, warn)  : returns 'state', if permissible
-        #                                       error$message and error$title
-        #                                       warn$message and warn$title
-        #
-        # note that this function does not change UserRestrictions()
-        # changing UserRestrictions() is the responsibility of the calling function
-        newstate = state # note, can't use "<-" as operator in subsequent data.frame(Reduce(...))
-        error = list() # will hold $message and $title if set
-        warn = list() # will hold $message and $title if set
+      list(
+        id = "ServerAdmin", label = "Server Administrator",
+        Description = "Only ServerAdmin users can change database server settings",
+        userAttribute = TRUE,
+        # is this actually a userattribute
+        callback = function (state, AttributeList, anyPassword) {
+          # these callbacks have no immediate access to the parent environment
+          # only called if state is changed from the old state
+          # @param state          : attempted new state
+          # @param AttributeList  : current list of user attributes in use
+          # @param anyPassword    : any passwords TRUE or FALSE
+          #
+          # @return list (state, error, warn)  : returns 'state', if permissible
+          #                                       error$message and error$title
+          #                                       warn$message and warn$title
+          #
+          # note that this function does not change UserRestrictions()
+          # changing UserRestrictions() is the responsibility of the calling function
+          newstate = state # note, can't use "<-" as operator in subsequent data.frame(Reduce(...))
+          error = list() # will hold $message and $title if set
+          warn = list() # will hold $message and $title if set
 
-        if (state == TRUE) {
-          # if trying to turn on ServerAdmin restriction
-          if (!("ServerAdmin" %in% AttributeList)) {
-            # no user is listed as having ServerAdmin attribute!
-            # if this restriction is established, no one can edit the server
-            # (though this could be worked around by changing user settings)
-            error$message =
-              "At least one user must have 'ServerAdmin' attribute to enable 'ServerAdmin' restriction."
-            error$title =  "Can't enable 'ServerAdmin' restriction"
-            newstate = FALSE
+          if (state == TRUE) {
+            # if trying to turn on ServerAdmin restriction
+            if (!("ServerAdmin" %in% AttributeList)) {
+              # no user is listed as having ServerAdmin attribute!
+              # if this restriction is established, no one can edit the server
+              # (though this could be worked around by changing user settings)
+              error$message =
+                "At least one user must have 'ServerAdmin' attribute to enable 'ServerAdmin' restriction."
+              error$title =  "Can't enable 'ServerAdmin' restriction"
+              newstate = FALSE
+            } else {
+              newstate = TRUE
+              # allow ServerAdmin to be restricted
+            }
           } else {
-            newstate = TRUE
-            # allow ServerAdmin to be restricted
+            # turning off ServerAdmin restriction
+            warn$message =
+              "Without this restriction, anyone can edit and change Best Practice database settings!"
+            warn$title = "Disabling 'ServerAdmin' restriction"
           }
-        } else {
-          # turning off ServerAdmin restriction
-          warn$message =
-            "Without this restriction, anyone can edit and change Best Practice database settings!"
-          warn$title = "Disabling 'ServerAdmin' restriction"
+          return(list(state = newstate, error = error, warn = warn))
         }
-        return(list(state = newstate, error = error, warn = warn))
-      }
-    ),
-    list(
-      id = "UserAdmin", label = "User Administrator",
-      Description = "Only UserAdmin users can change user permissions",
-      userAttribute = TRUE,
-      callback = function (state, AttributeList, anyPassword) {
-        # these callbacks have no immediate access to the parent environment
-        # only called if state is changed from the old state
-        # @param state          : attempted new state
-        # @param AttributeList  : current list of user attributes in use
-        # @param anyPassword    : any passwords TRUE or FALSE
-        #
-        # @return list (state, error, warn)  : returns 'state', if permissible
-        #                                       error$message and error$title
-        #                                       warn$message and warn$title
-        #
-        # note that this function does not change UserRestrictions()
-        # changing UserRestrictions() is the responsibility of the calling function
-        newstate = state
-        error = list() # will hold $message and $title if set
-        warn = list() # will hold $message and $title if set
+      ),
+      list(
+        id = "UserAdmin", label = "User Administrator",
+        Description = "Only UserAdmin users can change user permissions",
+        userAttribute = TRUE,
+        callback = function (state, AttributeList, anyPassword) {
+          # these callbacks have no immediate access to the parent environment
+          # only called if state is changed from the old state
+          # @param state          : attempted new state
+          # @param AttributeList  : current list of user attributes in use
+          # @param anyPassword    : any passwords TRUE or FALSE
+          #
+          # @return list (state, error, warn)  : returns 'state', if permissible
+          #                                       error$message and error$title
+          #                                       warn$message and warn$title
+          #
+          # note that this function does not change UserRestrictions()
+          # changing UserRestrictions() is the responsibility of the calling function
+          newstate = state
+          error = list() # will hold $message and $title if set
+          warn = list() # will hold $message and $title if set
 
-        if (state == TRUE) {
-          # if trying to turn on ServerAdmin restriction
-          if (!("UserAdmin" %in% AttributeList)) {
-            # no user is listed as having UserAdmin attribute!
-            # if this restriction is established, no one can edit the user settings
-            error$message =
-              "A least one user must have 'UserAdmin' attribute to enable the 'UserAdmin' restriction."
-            error$title = "Can't enable 'UserAdmin' restriction"
-            newstate = FALSE
+          if (state == TRUE) {
+            # if trying to turn on ServerAdmin restriction
+            if (!("UserAdmin" %in% AttributeList)) {
+              # no user is listed as having UserAdmin attribute!
+              # if this restriction is established, no one can edit the user settings
+              error$message =
+                "A least one user must have 'UserAdmin' attribute to enable the 'UserAdmin' restriction."
+              error$title = "Can't enable 'UserAdmin' restriction"
+              newstate = FALSE
+            } else {
+              newstate = TRUE
+              # allow UserAdmin to be restricted
+            }
           } else {
-            newstate = TRUE
-            # allow UserAdmin to be restricted
+            warn$message =
+              "Without this restriction, anyone can edit and change user permission settings!"
+            warn$title = "Disabling 'UserAdmin' restriction"
           }
-        } else {
-          warn$message =
-            "Without this restriction, anyone can edit and change user permission settings!"
-          warn$title = "Disabling 'UserAdmin' restriction"
+          return(list(state = newstate, error = error, warn = warn))
         }
-        return(list(state = newstate, error = error, warn = warn))
-      }
-    ),
-    list(
-      id = "GlobalActionView", label = "Global Action View",
-      Description = "GlobalActionView users can view actions in 'other' appointment lists",
-      userAttribute = TRUE,
-      callback = function (state, AttributeList, anyPassword) {
-        # this can always be set/unset
-        return(state)}
-    ),
-    list(
-      id = "GlobalBillView", label = "Global Bill View",
-      Description = "GlobalBillView users can view billing status in 'other' appointment lists",
-      userAttribute = TRUE,
-      callback = function (state, AttributeList, anyPassword) {
-        # this can always be set/unset
-        return(state)
-      }
-    ),
-    list(
-      id = "GlobalCDMView", label = "Global CDM View",
-      Description = "GlobalCDMView users can view CDM status in 'other' appointment lists",
-      userAttribute = TRUE,
-      callback = function (state, AttributeList, anyPassword) {
-        # this can always be set/unset
-        return(state)
-      }
-    ),
-    list(
-      id = "RequirePasswords", label = "Require Passwords",
-      Description = "Password required from all users",
-      userAttribute = FALSE,
-      # 'RequirePasswords' is not actually a user attribute
-      callback = function (state, AttributeList, anyPassword) {
-        # these callbacks have no immediate access to the parent environment
-        # only called if state is changed from the old state
-        # @param state          : attempted new state
-        # @param AttributeList  : current list of user attributes in use
-        # @param anyPassword    : any passwords TRUE or FALSE
-        #
-        # @return list (state, error, warn)  : returns 'state', if permissible
-        #                                       error$message and error$title
-        #                                       warn$message and warn$title
-        #
-        # note that this function does not change UserRestrictions()
-        # changing UserRestrictions() is the responsibility of the calling function
-        newstate = state
-        error = list() # will hold $message and $title if set
-        warn = list() # will hold $message and $title if set
+      ),
+      list(
+        id = "GlobalActionView", label = "Global Action View",
+        Description = "GlobalActionView users can view actions in 'other' appointment lists",
+        userAttribute = TRUE,
+        callback = function (state, AttributeList, anyPassword) {
+          # this can always be set/unset
+          return(state)}
+      ),
+      list(
+        id = "GlobalBillView", label = "Global Bill View",
+        Description = "GlobalBillView users can view billing status in 'other' appointment lists",
+        userAttribute = TRUE,
+        callback = function (state, AttributeList, anyPassword) {
+          # this can always be set/unset
+          return(state)
+        }
+      ),
+      list(
+        id = "GlobalCDMView", label = "Global CDM View",
+        Description = "GlobalCDMView users can view CDM status in 'other' appointment lists",
+        userAttribute = TRUE,
+        callback = function (state, AttributeList, anyPassword) {
+          # this can always be set/unset
+          return(state)
+        }
+      ),
+      list(
+        id = "RequirePasswords", label = "Require Passwords",
+        Description = "Password required from all users",
+        userAttribute = FALSE,
+        # 'RequirePasswords' is not actually a user attribute
+        callback = function (state, AttributeList, anyPassword) {
+          # these callbacks have no immediate access to the parent environment
+          # only called if state is changed from the old state
+          # @param state          : attempted new state
+          # @param AttributeList  : current list of user attributes in use
+          # @param anyPassword    : any passwords TRUE or FALSE
+          #
+          # @return list (state, error, warn)  : returns 'state', if permissible
+          #                                       error$message and error$title
+          #                                       warn$message and warn$title
+          #
+          # note that this function does not change UserRestrictions()
+          # changing UserRestrictions() is the responsibility of the calling function
+          newstate = state
+          error = list() # will hold $message and $title if set
+          warn = list() # will hold $message and $title if set
 
-        if (state == TRUE) {
-          # if trying to turn on RequirePasswords restriction
-          if (anyPassword == FALSE) {
-            # no user is listed as having a password!
-            # if this restriction is established, no one will be able to log in
-            error$message =
-              "A least one user must have a password to enable the 'Require Passwords' restriction."
-            error$title = "Can't enable 'Require Passwords' restriction"
-            newstate = FALSE
+          if (state == TRUE) {
+            # if trying to turn on RequirePasswords restriction
+            if (anyPassword == FALSE) {
+              # no user is listed as having a password!
+              # if this restriction is established, no one will be able to log in
+              error$message =
+                "A least one user must have a password to enable the 'Require Passwords' restriction."
+              error$title = "Can't enable 'Require Passwords' restriction"
+              newstate = FALSE
+            } else {
+              newstate = TRUE
+              # allow RequirePassword
+            }
           } else {
-            newstate = TRUE
-            # allow RequirePassword
+            warn$message =
+              "Without this restriction, users do not require passwords"
+            warn$title = "Disabling 'Require Passwords' restriction"
           }
-        } else {
-          warn$message =
-            "Without this restriction, users do not require passwords"
-          warn$title = "Disabling 'Require Passwords' restriction"
+          return(list(state = newstate, error = error, warn = warn))
         }
-        return(list(state = newstate, error = error, warn = warn))
-      }
+      )
     )
-  ))
-)
+  )
+}
+
+.public_init("restrictionTypes", quote(
+  dMeasure::restrictionTypes_list()
+))
 
 
 .public_init("restrictionTypes_df",

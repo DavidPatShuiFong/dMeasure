@@ -3,5 +3,6 @@
 export("%>%")
 export("%>>%")
 export(dMeasure)
+export(restrictionTypes_list)
 importFrom(magrittr,"%>%")
 importFrom(pipeR,"%>>%")
