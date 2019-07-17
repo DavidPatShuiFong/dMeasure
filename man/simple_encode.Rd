@@ -4,9 +4,11 @@
 \alias{simple_encode}
 \title{Simple encoder}
 \usage{
-simple_encode(msg, key = NULL, nonce = NULL)
+simple_encode(dMeasure_obj, msg, key = NULL, nonce = NULL)
 }
 \arguments{
+\item{dMeasure_obj}{dMeasure R6 object}
+
 \item{msg}{the text to encode}
 
 \item{key}{the cipher, which can be set manually, otherwise will read from env}

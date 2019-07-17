@@ -19,8 +19,6 @@
 #'
 #' @examples
 #'
-#' @include calculation_definitions.R
-#'
 #' @export
 dMeasure <-
   R6::R6Class("dMeasure",
@@ -333,7 +331,8 @@ reactive_fields <- list(name = NULL, value = NULL)
       print("Opening EMR database")
       private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
                              server = server$Address, database = server$Database,
-                             uid = server$UserID, pwd = simple_decode(server$dbPassword))
+                             uid = server$UserID,
+                             pwd = self$simple_decode(server$dbPassword))
     }
 
     if (is.null(private$emr_db$conn()) || !DBI::dbIsValid(private$emr_db$conn())) {

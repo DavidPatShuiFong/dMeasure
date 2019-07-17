@@ -155,7 +155,7 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
     dplyr::mutate(OutOfDateTest =
                     dplyr::case_when(is.na(TestDate) ~ 1,
                                      # if no date (no detected test)
-                                     interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
+                                     self$interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
                                      # if old (2 years or more)
                                      TRUE ~ 3)) %>>%   # if up-to-date
     tidyr::replace_na(list(TestName = 'FOBT'))

@@ -226,7 +226,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                   Reason = "Age 65 years or greater")
 
   l5 <- appointments_list %>>%
-    dplyr::mutate(AgeInMonths = calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 60) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Age 6 months to 4 years inclusive") %>>%
@@ -234,7 +234,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   lprematurity <- appointments_list %>>%
     # pre-term infants
-    dplyr::mutate(AgeInMonths = calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 24) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$history %>>% dplyr::filter(ConditionID == 2973) %>>%
@@ -316,15 +316,19 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   lchildaspirin <- appointments_list %>>%
     # children aged 6 months to 10 years on long-term aspirin
     # risk of Reye's syndrome after influenza infection
-    dplyr::mutate(AgeInMonths = calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths <= 131) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$currentrx %>>%
                        dplyr::filter(RXSTATUS == 1 & PRODUCTID %in%
-                                       c(99,8489,222,522,534,12254,545,546,547,549,548,550,554,551,552,553,555,
-                                         8726,11362,540,8060,8062,8061,8063,8064,541,8304,560,559,558,562,563,8071,
-                                         710,13262,1131,1148,11361,11327,1612,1613,1614,1619,11360,1917,16891,2328,
-                                         2340,2341,2342,2345,2344,11326,14681,2523,3531,16877,6827,6918,12519,
+                                       c(99,8489,222,522,534,12254,545,546,547,549,
+                                         548,550,554,551,552,553,555,
+                                         8726,11362,540,8060,8062,8061,8063,8064,541,
+                                         8304,560,559,558,562,563,8071,
+                                         710,13262,1131,1148,11361,11327,1612,1613,1614,
+                                         1619,11360,1917,16891,2328,
+                                         2340,2341,2342,2345,2344,11326,14681,2523,3531,
+                                         16877,6827,6918,12519,
                                          7651,7704)) %>>%
                        # RXSTATUS == 1 (long-term medication), many aspirin productIDs!
                        dplyr::pull(InternalID))

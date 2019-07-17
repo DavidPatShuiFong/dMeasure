@@ -4,9 +4,11 @@
 \alias{simple_tag}
 \title{Simple tagger}
 \usage{
-simple_tag(msg, key = NULL)
+simple_tag(dMeasure_obj, msg, key = NULL)
 }
 \arguments{
+\item{dMeasure_obj}{dMeasure R6 object}
+
 \item{msg}{the text to decode}
 
 \item{key}{the cipher, which can be set manually, otherwise will read from env}

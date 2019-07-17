@@ -162,7 +162,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
       dplyr::ungroup() %>>%
       # (one) item with latest servicedate
       dplyr::filter((MBSName == "GPMP R/V") |
-                      interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3)
+                      self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3)
     # minimum 3-month gap since claiming previous GPMP/TCA,
     # or most recent claim is a GPMP R/V
 
@@ -175,7 +175,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                                        dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
                                                       'red',
                                                       # no GPMP R/V since the last GPMP/TCA
-                                                      dplyr::if_else(interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
+                                                      dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
                                                                      # GPMP R/V. Less than or more than 3 months?
                                                                      'green',
                                                                      'yellow')),
@@ -191,7 +191,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                         paste0("GPMP R/V", " ", # printable version of information
                                dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
                                               paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
-                                              dplyr::if_else(interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
+                                              dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
                                                              paste0("(", ServiceDate, ")"),
                                                              paste0("(", ServiceDate, ") Overdue")))))
     }
@@ -222,7 +222,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                                        'red',
                                        # invalid date is '-Inf', means item not claimed yet
                                        dplyr::if_else(
-                                         interval(ServiceDate, AppointmentDate)$year < 1,
+                                         self$interval(ServiceDate, AppointmentDate)$year < 1,
                                          'green',
                                          'yellow')),
                                    popuphtml =
@@ -239,7 +239,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                                      '',
                                      paste0(" (", ServiceDate, ")",
                                             dplyr::if_else(
-                                              interval(ServiceDate, AppointmentDate)$year < 1,
+                                              self$interval(ServiceDate, AppointmentDate)$year < 1,
                                               "",
                                               " Overdue")))))
   }

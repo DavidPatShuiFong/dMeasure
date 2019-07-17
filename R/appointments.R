@@ -142,7 +142,7 @@ filter_appointments_time <- function(dMeasure_obj,
     self$appointments_filtered_time <-
       self$appointments_filtered %>%
       dplyr::collect() %>% # force read of database required before mutations
-      dplyr::mutate(AppointmentTime = hrmin(AppointmentTime),
+      dplyr::mutate(AppointmentTime = self$hrmin(AppointmentTime),
                     AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
       dplyr::arrange(AppointmentDate, AppointmentTime)
   }
@@ -205,7 +205,7 @@ list_appointments <- function(dMeasure_obj,
       dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
                       'AppointmentTime', 'Provider', 'DOB')) %>%
       dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
-      dplyr::mutate(Age = calc_age(DOB, AppointmentDate))
+      dplyr::mutate(Age = self$calc_age(DOB, AppointmentDate))
 
   }
 
