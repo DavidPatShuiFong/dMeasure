@@ -10,31 +10,43 @@ NULL
 ##### Appointments_filtered #########################################
 
 ## Fields
-.public("appointments_filtered", NULL)
+.public("appointments_filtered", data.frame(Patient = character(), InternalID = integer(),
+                                            AppointmentDate = as.Date(integer(0),
+                                                                      origin = "1970-01-01"),
+                                            AppointmentTime = character(),
+                                            Provider = character(), Status = character()))
 # filtered by chosen dates and clinicians
-.reactive("appointments_filteredR", quote(NA))
 
-.public("appointments_filtered_time", NULL)
+.public("appointments_filtered_time", data.frame(Patient = character(), InternalID = integer(),
+                                                 AppointmentDate = as.Date(integer(0),
+                                                                           origin = "1970-01-01"),
+                                                 AppointmentTime = character(),
+                                                 Provider = character(), Status = character()))
 # times in more R (and visually) friendly format
 # requires appointments_filtered
-.reactive("appointments_filtered_timeR", quote(NA))
-
 
 .public("appointments_list", data.frame(Patient = character(), InternalID = integer(),
                                         AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
                                         AppointmentTime = character(), Provider = character(),
-                                        DOB = as.Date(integer(0), origin = "1970-01-01", Age = numeric()))
+                                        DOB = as.Date(integer(0), origin = "1970-01-01"),
+                                        Age = numeric())
         )
 # add date of birth to appointments list
 # requires appointments_filtered_time
-.reactive("appointments_listR", quote(NA))
 
-.public("appointments_billings", NULL)
+.public("appointments_billings", data.frame(Patient = character(), InternalID = integer(),
+                                            AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
+                                            AppointmentTime = character(), Provider = character(),
+                                            DOB = as.Date(integer(0), origin = "1970-01-01"),
+                                            Age = numeric(),
+                                            ServiceDate = as.Date(integer(0), origin = "1970-01-01"),
+                                            MBSItem = integer(), Description = character())
+        )
+
 # appointment list with billings
 # collects ALL billings for patients who have displayed appointments
 # used by billings view, and CDM billings view
 # requires appointments_list
-.reactive("appointments_billingsR", quote(NA))
 
 ## Methods
 
@@ -76,23 +88,33 @@ filter_appointments <- function(dMeasure_obj,
   # no additional clinician filtering based on privileges or user restrictions
 
   if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  } else {
-    self$appointments_filtered <- private$db$appointments %>%
-      dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>%
-      dplyr::filter(Provider %in% clinicians)
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    self$appointments_filtered <- private$db$appointments %>>%
+      dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
+      dplyr::filter(Provider %in% clinicians) %>>%
+      dplyr::mutate(Status = trimws(Status)) # get rid of redundant whitespace
     # a database filter on an empty list after %in% will result in an error message
     #
     # this reactive is not "collect()"ed because it is joined to other
     # filtered database lists prior to 'collection'
   }
 
-  private$set_reactive(self$appointments_filteredR, self$appointments_filtered)
-  # copy to reactive
-  # $set_reactive only does this if reactive environment is available)
-
   return(self$appointments_filtered)
 })
+.reactive_event("appointments_filteredR",
+          quote(
+            shiny::eventReactive(
+              c(self$date_aR(), self$date_bR(), self$cliniciansR()), {
+                # update if reactive version of $date_a Rdate_b
+                # or $clinicians are updated.
+                self$filter_appointments()
+                # re-calculates the appointments
+              })
+          ))
 
 #' List of appointments with 'human (and R)' readable time-of-day
 #'
@@ -130,9 +152,11 @@ filter_appointments_time <- function(dMeasure_obj,
   # no additional clinician filtering based on privileges or user restrictions
 
   if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  } else {
+    clinicians <- c("")
+  }
 
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
     if (!lazy) {
       self$filter_appointments(date_from, date_to, clinicians)
       # if not 'lazy' evaluation, then re-calculate self$appointments_filtered
@@ -147,12 +171,19 @@ filter_appointments_time <- function(dMeasure_obj,
       dplyr::arrange(AppointmentDate, AppointmentTime)
   }
 
-  # set reactive version, only if shiny is available
-  private$set_reactive(self$appointments_filtered_timeR,
-                       self$appointments_filtered_time)
-
   return(self$appointments_filtered_time)
 })
+.reactive_event("appointments_filtered_timeR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$appointments_filteredR()), {
+                      # update if reactive version of $appointments_filtered
+                      # is updated
+                      self$filter_appointments_time(lazy = TRUE)
+                      # re-calculates, but don't need to re-calculate
+                      # $appointments_filtered
+                    })
+                ))
 
 #' List of appointments with date of birth
 #'
@@ -189,9 +220,11 @@ list_appointments <- function(dMeasure_obj,
   # no additional clinician filtering based on privileges or user restrictions
 
   if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  } else {
+    clinicians <- c("")
+  }
 
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
     if (!lazy) {
       self$filter_appointments_time(date_from, date_to, clinicians, lazy = FALSE)
       # if not 'lazy' evaluation, then re-calculate self$appointments_filtered_time
@@ -208,12 +241,19 @@ list_appointments <- function(dMeasure_obj,
       dplyr::mutate(Age = self$calc_age(DOB, AppointmentDate))
 
   }
-
-  # set reactive version, only if shiny is available
-  private$set_reactive(self$appointments_listR, self$appointments_list)
-
   return(self$appointments_list)
 })
+.reactive_event("appointments_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$appointments_filtered_timeR()), {
+                      # update if reactive version of $appointments_filtered_time
+                      # is updated
+                      self$list_appointments(lazy = TRUE)
+                      # re-calculates, but don't need to re-calculate
+                      # $appointments_filtered_time
+                    })
+                ))
 
 #' List of appointments with billings
 #'
@@ -260,9 +300,11 @@ billed_appointments <- function(dMeasure_obj,
   # user does not have 'GlobalBillView' attribute
 
   if (is.null(clinicians) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  } else {
+    clinicians <- c("")
+  }
 
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
     if (!lazy) {
       self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
       # if not 'lazy' evaluation, then re-calculate self$appointments_list
@@ -275,10 +317,16 @@ billed_appointments <- function(dMeasure_obj,
       dplyr::collect() %>%
       dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
   }
-
-  # set reactive version, only if shiny is available
-  private$set_reactive(self$appointments_billingsR,
-                       self$appointments_billings)
-
   return(self$appointments_billings)
 })
+.reactive_event("appointments_billingsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$appointments_listR()), {
+                      # update if reactive version of $appointments_list
+                      # is updated
+                      self$billed_appointments(lazy = TRUE)
+                      # re-calculates, but don't need to re-calculate
+                      # $appointments_list
+                    })
+                ))

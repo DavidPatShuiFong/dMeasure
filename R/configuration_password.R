@@ -48,7 +48,9 @@ empty_password <- function(dMeasure_obj) {
   # returns true if password for identified user is not defined, or empty
   # this is used by Dailymeasure to prompt for a password to be set
   empty = FALSE
-  if (is.na(private$.identified_user$Password) || nchar(private$.identified_user$Password) == 0) {
+  if (is.null(private$.identified_user$Password) || # NULL
+      length(private$.identified_user$Password) == 0 || # integer(0)
+      nchar(private$.identified_user$Password) == 0) { # empty string
     empty = TRUE
   }
   return(empty)
@@ -67,13 +69,13 @@ user_logout <- function(dMeasure_obj) {
 }
 
 .public("user_logout", function() {
-  if (is.null(private$.identified_user)) {
-    stop("No user identified!")
+  if (is.null(private$.identified_user) ||
+      nrow(private$.identified_user) == 0) {
+    # no identified user
+  } else if (self$authenticated == FALSE) {
+    # user not authetnicated
   }
-  if (self$authenticated == FALSE) {
-    warning("Current user was not authenticated prior to logout.")
-  }
-  self$authenticated <- TRUE
+  self$authenticated <- FALSE
   return(self$authenticated)
 })
 

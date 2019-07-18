@@ -24,21 +24,33 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
-                  if (length(public_init_fields$name) > 0) { # only if any .reactive() defined
+                  if (length(public_init_fields$name) > 0) { # only if any defined
                     for (i in 1:length(public_init_fields$name)) {
                       self[[public_init_fields$name[[i]]]] <-
                         eval(public_init_fields$value[[i]]) # could 'quote' the value
                     }
                   }
+                  if (length(private_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(private_init_fields$name)) {
+                      private[[private_init_fields$name[[i]]]] <-
+                        eval(private_init_fields$value[[i]]) # could 'quote' the value
+                    }
+                  }
+
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
-                    # to set this path, need to use self$configuration_file_path
                     if (length(reactive_fields$name) > 0) { # only if any .reactive() defined
                       for (i in 1:length(reactive_fields$name)) {
                         self[[reactive_fields$name[[i]]]] <- shiny::reactiveVal(
                           eval(reactive_fields$value[[i]]) # could 'quote' the value
                         )
+                      }
+                    }
+                    if (length(reactive_event$name) > 0) { # only if any .reactive() defined
+                      for (i in 1:length(reactive_event$name)) {
+                        self[[reactive_event$name[[i]]]] <-
+                          eval(reactive_event$value[[i]]) # could 'quote' the value
                       }
                     }
                   }
@@ -58,6 +70,16 @@ public_init_fields <- list(name = NULL, value = NULL)
   dMeasure$set("public", name, NULL)
   public_init_fields$name <<- c(public_init_fields$name, name)
   public_init_fields$value <<- c(public_init_fields$value, value)
+  # to be initialized during self$initialize
+  # e.g. references another field's value
+  # $value will be 'eval()' during initialization, so can be quote()'d
+}
+
+private_init_fields <- list(name = NULL, value = NULL)
+.private_init <- function(name, value) {
+  dMeasure$set("private", name, NULL)
+  private_init_fields$name <<- c(private_init_fields$name, name)
+  private_init_fields$value <<- c(private_init_fields$value, value)
   # to be initialized during self$initialize
   # e.g. references another field's value
   # $value will be 'eval()' during initialization, so can be quote()'d
@@ -88,6 +110,20 @@ reactive_fields <- list(name = NULL, value = NULL)
   myreactive(1 - shiny::isolate(myreactive()))
 })
 
+reactive_event <- list(name = NULL, value = NULL)
+# this will progressively hold definitions of reactive fields
+.reactive_event <- function(name, value) {
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    # only if reactive environment is possible (using shiny)
+    dMeasure$set("public", name, NULL)
+    reactive_event$name <<- c(reactive_event$name, name)
+    reactive_event$value <<- c(reactive_event$value, list(value))
+    # $value is listed so it can hold NULL!
+    # to be initialized as reactiveVal during self$initialize
+    # $value will be 'eval()' during initialization, so can be quote()'d
+  }
+}
+
 
 ##### close and finalize object ##########################
 
@@ -96,13 +132,11 @@ reactive_fields <- list(name = NULL, value = NULL)
   if (!is.null(private$.identified_user)) {
     self$user_logout()
   }
-  if (!is.null(private$config_db)) {
+  if (private$config_db$is_open()) {
     private$config_db$close()
-    private$config_db <- NULL
   }
-  if (!is.null(private$emr_db)) {
+  if (private$emr_db$is_open()) {
     private$emr_db$close()
-    private$emr_db <- NULL
   }
   self$authenticated = FALSE
 
@@ -205,8 +239,8 @@ reactive_fields <- list(name = NULL, value = NULL)
 ##### Configuration details - databases, locations, users ###########
 
 ## Fields
-.private("config_db", NULL)
-# later dbConnection::dbConnection$new() connection to database
+.private_init("config_db", quote(dbConnection::dbConnection$new()))
+# R6 connection to database
 # using either DBI or pool
 .reactive("config_db_trigR", 0)
 # $config_db_trigR will trigger (0/1) with each configuration
@@ -247,7 +281,7 @@ reactive_fields <- list(name = NULL, value = NULL)
     private$.BPdatabase %>>% dplyr::pull(Name)
   }
 })
-.private(".BPdatabaseChoice", character())
+.private(".BPdatabaseChoice", "None")
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
 .private("PracticeLocations", data.frame(id = integer(),
@@ -318,7 +352,6 @@ reactive_fields <- list(name = NULL, value = NULL)
     return(private$.BPdatabaseChoice)
   } else {
     if (!(choice %in% c("None", private$.BPdatabase$Name))) {
-      browser()
       stop(paste0("Database choice must be one of ",
                   paste0("'", private$.BPdatabase$Name, "'", collapse = ", "),
                   " or 'None'."))
@@ -326,6 +359,13 @@ reactive_fields <- list(name = NULL, value = NULL)
 
     # close existing database connection
     # safe to call $close() if no database is open
+
+    if (choice == private$.BPdatabaseChoice) {
+      # do nothing
+      return(private$.BPdatabaseChoice)
+    }
+    # the chosen database is not the current database,
+    # so close the current database
     private$emr_db$close()
 
     if (choice == "None") {
@@ -341,7 +381,7 @@ reactive_fields <- list(name = NULL, value = NULL)
                              pwd = self$simple_decode(server$dbPassword))
     }
 
-    if (is.null(private$emr_db$conn()) || !DBI::dbIsValid(private$emr_db$conn())) {
+    if (!private$emr_db$is_open() || !DBI::dbIsValid(private$emr_db$conn())) {
       # || 'short-circuits' the evaluation, so if not an environment,
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
@@ -362,12 +402,13 @@ reactive_fields <- list(name = NULL, value = NULL)
       # successfully opened database
       # set choice of database to attempted choice
       self$initialize_emr_tables() # initialize data tables
-      dummy <- self$clinician_list() # and list all 'available' clinicians
+      invisible(self$clinician_list()) # and list all 'available' clinicians
     }
 
     private$.BPdatabaseChoice <- choice
     # the same as 'choice' initially was, if database successfully opened
     # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
+    invisible(self$BPdatabase) # will also set $BPdatabaseR
 
     if (nrow(private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
              dplyr::filter(id ==1) %>>% dplyr::collect())) {
@@ -422,12 +463,6 @@ open_configuration_db <-
   # if no configuration filepath is defined, then try to read one
   if (length(configuration_file_path) == 0) {
     configuration_file_path <- self$configuration_file_path
-  }
-
-  # on first call, private$config_db could be NULL
-  if (is.null(private$config_db)) {
-    private$config_db <- dbConnection::dbConnection$new()
-    # new R6 object which generalizes database connections
   }
 
   config_db <- private$config_db # for convenience
@@ -543,7 +578,7 @@ read_configuration_db <- function(dMeasure_obj,
 
 .public("read_configuration_db", function(config_db = private$config_db) {
 
-  if (is.null(config_db)) {
+  if (!config_db$is_open()) {
     # if config_db is not yet opened/defined
     # then try to open configuration database
     self$open_configuration_db()
@@ -552,6 +587,7 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$.BPdatabase <- config_db$conn() %>>%
     dplyr::tbl("Server") %>>% dplyr::collect()
+  invisible(self$BPdatabase) # will also set $BPdatabaseR
   self$BPdatabaseChoice <-
     (config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
        dplyr::filter(id == 1) %>>% dplyr::select("Name") %>>%
@@ -586,7 +622,9 @@ read_configuration_db <- function(dMeasure_obj,
 ##### User login ##################################################
 
 ## fields
-.private(".identified_user", NULL)
+.private(".identified_user", data.frame(id = integer(), Fullname = character(),
+                                        AuthIdentity = character(), Location = character(),
+                                        Password = character(), Attributes = character()))
 # user information for just the identified user
 .public("authenticated", FALSE)
 # has the current 'identified' user been authenticated yet?
@@ -614,7 +652,7 @@ match_user <- function(dMeasure_obj) {
   # set reactive version if reactive (shiny) environment available
   # does not include password
 
-  if ("RequirePasswords" %in% unlist(private$UserRestrictions$Restriction)) {
+  if ("RequirePasswords" %in% unlist(private$.UserRestrictions$Restriction)) {
     # password not yet entered, so not yet authenticated
     self$authenticated <- FALSE
   } else {
@@ -685,7 +723,7 @@ clinician_list <- function(dMeasure_obj,
 
   for (restriction in self$view_restrictions) {
     # go through list of view restrictions
-    if (restriction$restriction %in% unlist(private$UserRestrictions$Restriction)) {
+    if (restriction$restriction %in% unlist(private$.UserRestrictions$Restriction)) {
       # if the restriction has been activated
       if (view_name %in% restriction$view_to_hide) {
         # if the relevant view is being shown
@@ -724,13 +762,17 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
   # can only actually choose clinicians available in chosen view
 
   self$clinicians <- choices
+  private$set_reactive(self$cliniciansR, self$clinicians)
+
   return(choices)
 })
+.reactive("cliniciansR", quote(self$clinicians))
 
 ##### Electronic Medical Record (EMR) database configuration ######
 
 ## fields
-.private("emr_db", NULL) # later will be R6 object containing database object
+.private_init("emr_db", quote(dbConnection::dbConnection$new()))
+# R6 object containing database object
 .private("db", list(dbversion = 0)) # later will be the EMR databases.
 # $db$dbversion is number of EMR database openings
 # there is also a 'public reactive' version if shiny is available
@@ -755,15 +797,12 @@ open_emr_db <- function(dMeasure_obj,
 
 .public("open_emr_db",function(BPdatabaseChoice = NULL) {
 
-  if (is.null(private$emr_db)) {
-    private$emr_db <- dbConnection::dbConnection$new()
-    # on first run, private$emr_db may be NULL
-  }
-
-  if (is.null(private$config_db) || length(self$BPdatabaseChoice) == 0) {
+  if (!private$config_db$is_open() || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
-    self$read_configuration_db() # this will also try to open the database
+    self$read_configuration_db()
+    # $read_configuration_db will set up $emr_db if necessary,
+    # and will also try to open the database
   }
 
   if (is.null(BPdatabaseChoice)) {
@@ -970,9 +1009,13 @@ choose_date <- function(dMeasure_obj,
   self$date_a <- date_from
   self$date_b <- date_to
 
+  private$set_reactive(self$date_aR, self$date_a)
+  private$set_reactive(self$date_bR, self$date_b)
+
   return(list(self$date_a, self$date_b))
 })
-
+.reactive("date_aR", quote(self$date_a))
+.reactive("date_bR", quote(self$date_b))
 #' Show list of locations
 #'
 #' This includes 'All'
@@ -988,12 +1031,13 @@ location_list <- function(dMeasure_obj) {
   if (!missing(value)) {
     stop("$location_list is read-only!")
   }
-  locations <- data.frame(Name = "All")
+  locations <- data.frame(Name = "All", stringsAsFactors = FALSE)
   if (!is.null(private$PracticeLocations)) {
     locations <-
       rbind(locations,
             as.data.frame(private$PracticeLocations %>>%
                             dplyr::select(Name))) %>>%
+      dplyr::mutate(Name = trimws(Name)) %>>% # remove whitespace
       unlist(use.names = FALSE)
   }
   # set reactive versions, only if shiny is available

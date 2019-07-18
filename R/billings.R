@@ -45,10 +45,6 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  }
-
   if (!lazy) {
     self$billed_appointments(date_from, date_to, clinicians, lazy = FALSE)
     # if not 'lazy' evaluation, then re-calculate self$appointments_billings

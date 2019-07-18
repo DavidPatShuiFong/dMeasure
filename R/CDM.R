@@ -124,136 +124,152 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
   # no additional clinician filtering based on privileges or user restrictions
 
   if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
+    clinicians <- c("") # dplyr::filter cannot handle empty list()
   }
 
-  if (!lazy) {
-    self$billed_appointments(date_from, date_to, clinicians, lazy = FALSE)
-    # if not 'lazy' evaluation, then re-calculate self$appointments_billings
-    # (that is automatically done by calling the $billed_appointments method)
-  }
-
-  appointments <- self$appointments_billings %>>%
-    dplyr::filter(MBSItem %in% cdm_item$code) %>>%
-    # only chronic disease management items
-    dplyr::filter(ServiceDate <= AppointmentDate) %>>%
-    # only items billed before the appointment day
-    dplyr::select(InternalID, AppointmentDate, AppointmentTime, Provider,
-                  ServiceDate, MBSItem, Description) %>>%
-    dplyr::mutate(MBSName = cdm_item$name[match(MBSItem, cdm_item$code)])
-
-  if ("GPMP R/V" %in% cdm_chosen) {
-    gpmprv <- appointments %>>%
-      # GPMP R/V tags.
-      # unlike other items, this is on a 3 month schedule, and can follow
-      # an item 'other' than itself (e.g. it can follow a GPMP or TCA)
-      #
-      # only show if a GPMP R/V is due (greater than three months since gpmp or tca or gpmp r/v)
-      # or if GPMP R/V is the most recent of gpmp/tca/gpmp r/v
-      #
-      # green if 'up-to-date' (GPMP R/V is the most recent, and less than 3/months)
-      # yellow if 'done, but old' (GPMP R/V is the most recent, and more than 3/months)
-      # red if 'not done' (GPMP/TCA most recent, and more than three)
-      dplyr::filter(MBSName %in% c("GPMP", "TCA", "GPMP R/V")) %>>%
-      # r/v only applies if gpmp/tca or r/v already claimed
-      dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
-      # group by appointment
-      dplyr::slice(which.max(ServiceDate)) %>>%
-      dplyr::ungroup() %>>%
-      # (one) item with latest servicedate
-      dplyr::filter((MBSName == "GPMP R/V") |
-                      self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3)
-    # minimum 3-month gap since claiming previous GPMP/TCA,
-    # or most recent claim is a GPMP R/V
-
-    # add screentags as necessary
+  if (!private$emr_db$is_open()) {
+    # EMR database is not open
+    # create empty data-frame to return
+    appointments <- data.frame(InternalID = integer(),
+                               AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
+                               AppointmentTime = character(), Provider = character())
     if (screentag) {
-      gpmprv <- gpmprv %>>%
+      appointments <- cbind(appointments, data.frame(cdm = character()))
+      }
+    if (screentag_print) {
+      appointments <- cbind(appointments, data.frame(cdm_print = character()))
+      }
+  } else {
+    # only if EMR database is open
+
+    if (!lazy) {
+      self$billed_appointments(date_from, date_to, clinicians, lazy = FALSE)
+      # if not 'lazy' evaluation, then re-calculate self$appointments_billings
+      # (that is automatically done by calling the $billed_appointments method)
+    }
+
+    appointments <- self$appointments_billings %>>%
+      dplyr::filter(MBSItem %in% cdm_item$code) %>>%
+      # only chronic disease management items
+      dplyr::filter(ServiceDate <= AppointmentDate) %>>%
+      # only items billed before the appointment day
+      dplyr::select(InternalID, AppointmentDate, AppointmentTime, Provider,
+                    ServiceDate, MBSItem, Description) %>>%
+      dplyr::mutate(MBSName = cdm_item$name[match(MBSItem, cdm_item$code)])
+
+    if ("GPMP R/V" %in% cdm_chosen) {
+      gpmprv <- appointments %>>%
+        # GPMP R/V tags.
+        # unlike other items, this is on a 3 month schedule, and can follow
+        # an item 'other' than itself (e.g. it can follow a GPMP or TCA)
+        #
+        # only show if a GPMP R/V is due (greater than three months since gpmp or tca or gpmp r/v)
+        # or if GPMP R/V is the most recent of gpmp/tca/gpmp r/v
+        #
+        # green if 'up-to-date' (GPMP R/V is the most recent, and less than 3/months)
+        # yellow if 'done, but old' (GPMP R/V is the most recent, and more than 3/months)
+        # red if 'not done' (GPMP/TCA most recent, and more than three)
+        dplyr::filter(MBSName %in% c("GPMP", "TCA", "GPMP R/V")) %>>%
+        # r/v only applies if gpmp/tca or r/v already claimed
+        dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
+        # group by appointment
+        dplyr::slice(which.max(ServiceDate)) %>>%
+        dplyr::ungroup() %>>%
+        # (one) item with latest servicedate
+        dplyr::filter((MBSName == "GPMP R/V") |
+                        self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3)
+      # minimum 3-month gap since claiming previous GPMP/TCA,
+      # or most recent claim is a GPMP R/V
+
+      # add screentags as necessary
+      if (screentag) {
+        gpmprv <- gpmprv %>>%
+          dplyr::mutate(mbstag =
+                          semantic_tag("GPMP R/V", # semantic/fomantic buttons
+                                       colour =
+                                         dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
+                                                        'red',
+                                                        # no GPMP R/V since the last GPMP/TCA
+                                                        dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
+                                                                       # GPMP R/V. Less than or more than 3 months?
+                                                                       'green',
+                                                                       'yellow')),
+                                       popuphtml =
+                                         paste0("<h4>Date : ", ServiceDate,
+                                                "</h4><h6>Item : ", MBSItem,
+                                                "</h6><p><font size=\'+0\'>", Description, "</p>")))
+
+      }
+      if (screentag_print) {
+        gpmprv <- gpmprv %>>%
+          dplyr::mutate(mbstag_print =
+                          paste0("GPMP R/V", " ", # printable version of information
+                                 dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
+                                                paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
+                                                dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
+                                                               paste0("(", ServiceDate, ")"),
+                                                               paste0("(", ServiceDate, ") Overdue")))))
+      }
+
+    } else {
+      gpmprv <- NULL
+    }
+
+    appointments <- appointments %>>%
+      dplyr::filter(!(MBSName == "GPMP R/V")) %>>% # GPMP R/V will be added back in as a 'tagged' version
+      rbind(self$diabetes_list_cdm) %>>%
+      rbind(self$asthma_list_cdm) %>>%
+      rbind(self$aha75_list_cdm) %>>%
+      dplyr::filter(MBSName %in% cdm_chosen) %>>%
+      dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider, MBSName) %>>%
+      # group by patient, apppointment and CDM type (name)
+      dplyr::filter(ServiceDate == max(ServiceDate, na.rm = TRUE)) %>>%
+      # only keep most recent service
+      dplyr::ungroup()
+
+    if (screentag) {
+      appointments <- appointments %>>%
         dplyr::mutate(mbstag =
-                        semantic_tag("GPMP R/V", # semantic/fomantic buttons
+                        semantic_tag(MBSName, # semantic/fomantic buttons
                                      colour =
-                                       dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
-                                                      'red',
-                                                      # no GPMP R/V since the last GPMP/TCA
-                                                      dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
-                                                                     # GPMP R/V. Less than or more than 3 months?
-                                                                     'green',
-                                                                     'yellow')),
+                                       dplyr::if_else(
+                                         ServiceDate == -Inf,
+                                         'red',
+                                         # invalid date is '-Inf', means item not claimed yet
+                                         dplyr::if_else(
+                                           self$interval(ServiceDate, AppointmentDate)$year < 1,
+                                           'green',
+                                           'yellow')),
                                      popuphtml =
                                        paste0("<h4>Date : ", ServiceDate,
                                               "</h4><h6>Item : ", MBSItem,
                                               "</h6><p><font size=\'+0\'>", Description, "</p>")))
-
     }
+
     if (screentag_print) {
-      gpmprv <- gpmprv %>>%
-        dplyr::mutate(mbstag_print =
-                        paste0("GPMP R/V", " ", # printable version of information
-                               dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
-                                              paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
-                                              dplyr::if_else(self$interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
-                                                             paste0("(", ServiceDate, ")"),
-                                                             paste0("(", ServiceDate, ") Overdue")))))
+      appointments <- appointments %>>%
+        dplyr::mutate(mbstag_print = paste0(MBSName, # printable version of information
+                                            dplyr::if_else(
+                                              ServiceDate == -Inf,
+                                              '',
+                                              paste0(" (", ServiceDate, ")",
+                                                     dplyr::if_else(
+                                                       self$interval(ServiceDate, AppointmentDate)$year < 1,
+                                                       "",
+                                                       " Overdue")))))
     }
 
-  } else {
-    gpmprv <- NULL
-  }
-
-  appointments <- appointments %>>%
-    dplyr::filter(!(MBSName == "GPMP R/V")) %>>% # GPMP R/V will be added back in as a 'tagged' version
-    rbind(self$diabetes_list_cdm) %>>%
-    rbind(self$asthma_list_cdm) %>>%
-    rbind(self$aha75_list_cdm) %>>%
-    dplyr::filter(MBSName %in% cdm_chosen) %>>%
-    dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider, MBSName) %>>%
-    # group by patient, apppointment and CDM type (name)
-    dplyr::filter(ServiceDate == max(ServiceDate, na.rm = TRUE)) %>>%
-    # only keep most recent service
-    dplyr::ungroup()
-
-  if (screentag) {
     appointments <- appointments %>>%
-      dplyr::mutate(mbstag =
-                      semantic_tag(MBSName, # semantic/fomantic buttons
-                                   colour =
-                                     dplyr::if_else(
-                                       ServiceDate == -Inf,
-                                       'red',
-                                       # invalid date is '-Inf', means item not claimed yet
-                                       dplyr::if_else(
-                                         self$interval(ServiceDate, AppointmentDate)$year < 1,
-                                         'green',
-                                         'yellow')),
-                                   popuphtml =
-                                     paste0("<h4>Date : ", ServiceDate,
-                                            "</h4><h6>Item : ", MBSItem,
-                                            "</h6><p><font size=\'+0\'>", Description, "</p>")))
+      rbind(gpmprv) %>>% # add in GPMP reviews
+      dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
+      # gathers item numbers on the same day into a single row
+      {if (screentag) {dplyr::summarise(., cdm = paste(mbstag, collapse = ""))}
+        else {.}} %>>%
+      {if (screentag_print) {dplyr::summarise(., cdm_print =
+                                                paste(mbstag_print, collapse = ", "))}
+        else {.}} %>>%
+      dplyr::ungroup()
   }
-
-  if (screentag_print) {
-    appointments <- appointments %>>%
-      dplyr::mutate(mbstag_print = paste0(MBSName, # printable version of information
-                                   dplyr::if_else(
-                                     ServiceDate == -Inf,
-                                     '',
-                                     paste0(" (", ServiceDate, ")",
-                                            dplyr::if_else(
-                                              self$interval(ServiceDate, AppointmentDate)$year < 1,
-                                              "",
-                                              " Overdue")))))
-  }
-
-  appointments <- appointments %>>%
-    rbind(gpmprv) %>>% # add in GPMP reviews
-    dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
-    # gathers item numbers on the same day into a single row
-    {if (screentag) {dplyr::summarise(., cdm = paste(mbstag, collapse = ""))}
-      else {.}} %>>%
-    {if (screentag_print) {dplyr::summarise(., cdm_print =
-                                              paste(mbstag_print, collapse = ", "))}
-      else {.}} %>>%
-    dplyr::ungroup()
 
   return(appointments)
 })
