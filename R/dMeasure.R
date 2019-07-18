@@ -308,7 +308,7 @@ reactive_event <- list(name = NULL, value = NULL)
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
-.reactive("UserConfigR", quote(data.frame(id = numeric(), Fullname = character(),
+.reactive("UserConfigR", quote(data.frame(id = integer(), Fullname = character(),
                                           AuthIdentity = character(),
                                           Location = character(),
                                           Attributes = character())))
@@ -588,10 +588,6 @@ read_configuration_db <- function(dMeasure_obj,
   private$.BPdatabase <- config_db$conn() %>>%
     dplyr::tbl("Server") %>>% dplyr::collect()
   invisible(self$BPdatabase) # will also set $BPdatabaseR
-  self$BPdatabaseChoice <-
-    (config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-       dplyr::filter(id == 1) %>>% dplyr::select("Name") %>>%
-       dplyr::collect())[[1]]
 
   private$PracticeLocations <- config_db$conn() %>>%
     dplyr::tbl("Location")
@@ -618,6 +614,19 @@ read_configuration_db <- function(dMeasure_obj,
 
   invisible(self)
 })
+.public("BPdatabaseChoice_new", function() {
+  if (private$config_db$is_open()) {
+    # config database is open
+    new <- (private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+              dplyr::filter(id == 1) %>>% dplyr::select("Name") %>>%
+              dplyr::collect())[[1]]
+  } else {
+    # config database is not open
+    new <- self$BPdatabaseChoice # the current choice
+  }
+  return(new)
+})
+
 
 ##### User login ##################################################
 
@@ -801,12 +810,12 @@ open_emr_db <- function(dMeasure_obj,
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
     self$read_configuration_db()
-    # $read_configuration_db will set up $emr_db if necessary,
-    # and will also try to open the database
   }
 
   if (is.null(BPdatabaseChoice)) {
-    BPdatabaseChoice <- self$BPdatabaseChoice
+    BPdatabaseChoice <- self$BPdatabaseChoice_new()
+    # read the SQLite configuration file (if open)
+    # otherwise will just be the same as self$BPdatabaseChoice
   }
 
   print(paste("ChosenServerName:", BPdatabaseChoice))

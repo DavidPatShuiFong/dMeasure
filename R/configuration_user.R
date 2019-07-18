@@ -122,7 +122,7 @@ restrictionTypes_list <- function() {
         userAttribute = TRUE,
         callback = function (state, AttributeList, anyPassword) {
           # this can always be set/unset
-          return(state)}
+          return(list(state = state, error = list(), warn = list()))}
       ),
       list(
         id = "GlobalBillView", label = "Global Bill View",
@@ -130,7 +130,7 @@ restrictionTypes_list <- function() {
         userAttribute = TRUE,
         callback = function (state, AttributeList, anyPassword) {
           # this can always be set/unset
-          return(state)
+          return(list(state = state, error = list(), warn = list()))
         }
       ),
       list(
@@ -139,7 +139,7 @@ restrictionTypes_list <- function() {
         userAttribute = TRUE,
         callback = function (state, AttributeList, anyPassword) {
           # this can always be set/unset
-          return(state)
+          return(list(state = state, error = list(), warn = list()))
         }
       ),
       list(
@@ -349,11 +349,11 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   }
 
   if (length(setdiff(description$Attributes[[1]],
-                     c(user_attribute_types, ""))) > 0) {
+                     c(self$user_attribute_types, ""))) > 0) {
     # if there is an attribute being set which is not in user_attribute_types, or ""
     stop(paste0("'",
                 paste(setdiff(description$Attributes[[1]],
-                              c(user_attribute_types, "")), collapse = ", "),
+                              c(self$user_attribute_types, "")), collapse = ", "),
                 "', not recognized user attribute type(s)."))
   }
 
@@ -453,8 +453,9 @@ userconfig.insert <- function(dMeasure_obj, description) {
   tryCatch({private$validate.userconfig.description(description)},
            # find invalid Location or Attribute descriptions
            error = function(e) {
-             print(paste("Error in description validation : ", e[[1]]))
-             stop("Unable to insert this user description")})
+             print()
+             stop(paste("Error in description validation : ", e[[1]],
+                        "Unable to insert this user description"))})
 
   newid <- max(private$.UserConfig$id, 0) + 1
   # initially, $.UserConfig$id might be an empty set, so need to append a '0'
@@ -558,8 +559,9 @@ userconfig.update <- function(dMeasure_obj, description) {
   tryCatch({private$validate.userconfig.description(description)},
            # find invalid Location or Attribute descriptions
            error = function(e) {
-             print(paste("Error in description validation : ", e[[1]]))
-             stop("Unable to update this user description")})
+             stop(paste("Error in description validation :", e[[1]],
+                        "- Unable to update this user description"))
+             })
 
   proposed_UserConfig <- private$.UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
@@ -569,8 +571,8 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
            error = function(e) {
-             paste0("Error in change in attributes :", e[[1]])
-             stop("Unable to update this user configuration.")
+             stop(paste("Error in change in attributes :", e[[1]],
+                        "Unable to update this user configuration."))
            })
   # if restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
