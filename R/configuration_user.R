@@ -269,19 +269,24 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     }
   }
 
-  restrictionLocal <- self$restrictionTypes_df %>>% dplyr::filter(id == restriction)
+  restrictionLocal <- self$restrictionTypes_df %>>%
+    dplyr::filter(id == restriction)
 
   newstate <-
-    restrictionLocal$callback[[1]](state,
-                                   private$.UserConfig$Attributes %>>%
-                                     unlist(use.names = FALSE),
-                                   # list of attributes in use
-                                   (nchar(apply(cbind(unlist(private$.UserConfig$Password,
-                                                             use.names = FALSE)),
-                                                1,
-                                                function(x)
-                                                  paste(x[!is.na(x)], collapse = ""))) > 0)
-                                   # any passwords are set?
+    restrictionLocal$callback[[1]](
+      state,
+      private$.UserConfig$Attributes %>>%
+        unlist(use.names = FALSE),
+      # list of attributes in use
+      (nchar(paste(apply(cbind(unlist(private$.UserConfig$Password,
+                                      use.names = FALSE)),
+                         1,
+                         function(x)
+                           paste(x[!is.na(x)],
+                                 collapse = "")),
+                   collapse = "")
+             ) > 0)
+      # any passwords are set?
     )
   # the code to concatenate strings, NA or not, was found on StackOverflow
   # by 'Joe' https://stackoverflow.com/questions/13673894/suppress-nas-in-paste)

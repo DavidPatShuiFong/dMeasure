@@ -133,8 +133,17 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     stop("No user identified!")
   }
 
-  if (stringi::stri_length(newpassword) < 6) {
-    stop("Password must be at least six (6) characters long")
+  if (stringi::stri_length(newpassword) < 6 &
+      stringi::stri_length(newpassword) != 0 &
+      !("RequirePasswords" %in% self$userrestriction.list())) {
+    # passwords not actually required
+    stop("Password must be at least six (6) characters long, or empty.")
+  }
+
+  if (stringi::stri_length(newpassword) < 6 &
+      ("RequirePasswords" %in% self$userrestriction.list())) {
+    # passwords required
+    stop("Password must be at least six (6) characters long, and passwords are required.")
   }
 
   if (self$empty_password()) {
