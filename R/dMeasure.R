@@ -526,7 +526,7 @@ open_configuration_db <-
   }
 
 
-  if (!is.null(private$config_db$conn())) {
+  if (!is.null(config_db$conn())) {
     # check that tables exist in the config file
     # also create new columns (variables) as necessary
     initialize_data_table(config_db, "Server",
@@ -543,6 +543,14 @@ open_configuration_db <-
                                c("Name", "character")))
     # there should only be (at most) one entry in this table!
     # with id '1', and a 'Name' the same as the chosen entry in table "Server"
+    if (length(config_db$conn() %>>%
+               dplyr::tbl("ServerChoice") %>>%
+               dplyr::filter(id == 1) %>>%
+               dplyr::pull(Name)) == 0) { # empty table
+      query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c(1, "None"))
+      config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+    }
 
     initialize_data_table(config_db, "Location",
                           list(c("id", "integer"),
@@ -617,9 +625,8 @@ read_configuration_db <- function(dMeasure_obj,
 .public("BPdatabaseChoice_new", function() {
   if (private$config_db$is_open()) {
     # config database is open
-    new <- (private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-              dplyr::filter(id == 1) %>>% dplyr::select("Name") %>>%
-              dplyr::collect())[[1]]
+    new <- private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+      dplyr::filter(id == 1) %>>% dplyr::pull(Name)
   } else {
     # config database is not open
     new <- self$BPdatabaseChoice # the current choice
@@ -1051,13 +1058,16 @@ location_list <- function(dMeasure_obj) {
   }
   # set reactive versions, only if shiny is available
   private$set_reactive(self$location_listR, locations)
+  private$set_reactive(self$location_groupR, locations[!locations %in% "All"])
+  # exclude "All" in $locations_groupR
   private$set_reactive(self$PracticeLocationsR,
                        as.data.frame(private$PracticeLocations))
 
   return(locations)
 
 })
-.reactive("location_listR", quote("All"))
+.reactive("location_listR", quote("All")) # includes 'All'
+.reactive("location_groupR", quote("")) # does not include 'All'
 .reactive("PracticeLocationsR", quote(data.frame(id = numeric(),
                                                  Name = character(),
                                                  Description = character())))

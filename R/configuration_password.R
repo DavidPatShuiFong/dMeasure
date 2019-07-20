@@ -49,6 +49,7 @@ empty_password <- function(dMeasure_obj) {
   # this is used by Dailymeasure to prompt for a password to be set
   empty = FALSE
   if (is.null(private$.identified_user$Password) || # NULL
+      is.na(private$.identified_user$Password) || # NA
       length(private$.identified_user$Password) == 0 || # integer(0)
       nchar(private$.identified_user$Password) == 0) { # empty string
     empty = TRUE
@@ -84,10 +85,10 @@ user_logout <- function(dMeasure_obj) {
 
   if (!newpassword == "") {
     # only encode password if it isn't a reset ("")
-    newpassword <- self$simple_encode(newpassword)
+    newpassword <- self$simple_tag(newpassword)
   }
-  # encode the password, if not an empty string
-  # tagging (hash) defined in calculation_definitions
+  # encode (actually 'tag') the password, if not an empty string
+  # tagging (hash) defined in calculation_definitions.R
 
   private$.UserConfig <-
     private$.UserConfig %>>%
@@ -99,13 +100,13 @@ user_logout <- function(dMeasure_obj) {
 
   id <- private$.UserConfig %>>%
     dplyr::filter(Fullname == name) %>>%
-    pull(id)
+    dplyr::pull(id)
 
   query <- "UPDATE Users SET Password = ? WHERE id = ?"
   # write to configuration database
   data_for_sql <- list(newpassword, id)
 
-  config_db$dbSendQuery(query, data_for_sql)
+  private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
@@ -123,11 +124,11 @@ user_logout <- function(dMeasure_obj) {
 #'
 #' @return TRUE if password is successfully set
 #' otherwise, stops with error
-set_password <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
-  dMeasure_obj$set_password(newpassword, oldpassword)
+password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
+  dMeasure_obj$password.set(newpassword, oldpassword)
 }
 
-.public("set_password", function(newpassword, oldpassword = NULL) {
+.public("password.set", function(newpassword, oldpassword = NULL) {
   if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
@@ -183,6 +184,10 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
 
   if (!(user %in% private$.UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")
+  }
+
+  if (length(private$.identified_user$Fullname) == 0) {
+    stop("You are not logged in as an identified user.")
   }
 
   if (user == private$.identified_user$Fullname) {
