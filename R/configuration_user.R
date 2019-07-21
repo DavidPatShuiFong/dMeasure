@@ -402,14 +402,15 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'
 #' add user configuration
 #'
-#' if setting multiple attributes or locations, need to set the attribute
+#' if setting multiple attributes or locations, preferable to set the attribute
 #' as a list e.g.
 #'
 #' list(Fullname = "Mrs. Diabetes Educator",
 #'   Location = list(c("Jemena", "Lakeside")))
 #'
 #' note that the list does not need to enclose with I(),
-#' since 'as_tibble' is used for translation.
+#' since 'as_tibble' is used for translation. If attributes or location is
+#' not a list, userconfig.insert will turn them into a list
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
@@ -455,10 +456,19 @@ userconfig.insert <- function(dMeasure_obj, description) {
     stop("This user is already configured")
   }
 
+  if (!is.list(description$Location)) {
+    # this makes it easier for rbind/tibble later, if $Attributes is a vector
+    description$Location <- list(description$Location)
+  }
+
+  if (!is.list(description$Attributes)) {
+    # this makes it easier for rbind/tibble later, if $Attributes is a vector
+    description$Attributes <- list(description$Attributes)
+  }
+
   tryCatch({private$validate.userconfig.description(description)},
            # find invalid Location or Attribute descriptions
            error = function(e) {
-             print()
              stop(paste("Error in description validation : ", e[[1]],
                         "Unable to insert this user description"))})
 
@@ -469,8 +479,11 @@ userconfig.insert <- function(dMeasure_obj, description) {
   query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
   data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
                        # $Location and $Attribute could both have multiple (or no) entries
-                       lo = paste0(description$Location, "", collapse = ";"),
-                       at = paste0(description$Attributes, "", collapse = ";"))
+                       lo = paste0(description$Location[[1]], "", collapse = ";"),
+                       at = paste0(description$Attributes[[1]], "", collapse = ";"))
+  # [[1]] 'de-lists' $Location and $Attributes, which prevents some strange
+  # behaviour which *sometimes* results in a string being created in the form
+  # of 'c("ServerAdmin", "UserAdmin")'
 
   private$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
@@ -500,14 +513,15 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'
 #' update user configuration
 #'
-#' if setting multiple attributes or locations, need to set the attribute
-#' as a list e.g.
+#' if setting multiple attributes or locations, preferably set the attribute
+#' or locations as a list e.g.
 #'
 #' list(Fullname = "Mrs. Diabetes Educator",
 #'   Location = list(c("Jemena", "Lakeside")))
 #'
 #' note that the list does not need to enclose with I(),
-#' since 'as_tibble' is used for translation.
+#' since 'as_tibble' is used for translation. If attributes or location is
+#' not a list, userconfig.insert will turn them into a list
 #'
 #' The description to update is defined by $Fullname
 #'
@@ -561,6 +575,16 @@ userconfig.update <- function(dMeasure_obj, description) {
     }
   }
 
+  if (!is.list(description$Location)) {
+    # this makes it easier for rbind/tibble later, if $Attributes is a vector
+    description$Location <- list(description$Location)
+  }
+
+  if (!is.list(description$Attributes)) {
+    # this makes it easier for rbind/tibble later, if $Attributes is a vector
+    description$Attributes <- list(description$Attributes)
+  }
+
   tryCatch({private$validate.userconfig.description(description)},
            # find invalid Location or Attribute descriptions
            error = function(e) {
@@ -585,8 +609,8 @@ userconfig.update <- function(dMeasure_obj, description) {
   query <- paste("UPDATE Users SET Fullname = ?, AuthIdentity = ?, ",
                  "Location = ?, Attributes = ? WHERE id = ?", sep = "")
   data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
-                            paste0(description$Location[[1]], "", collapse = ";"),
-                            paste0(description$Attributes[[1]], "", collapse = ";"),
+                            paste0(unlist(description$Location[[1]]), "", collapse = ";"),
+                            paste0(unlist(description$Attributes[[1]]), "", collapse = ";"),
                             description$id))
   # note extra "" within paste0 is required in the case of empty data
 

@@ -134,6 +134,13 @@ reactive_event <- list(name = NULL, value = NULL)
   }
   if (private$config_db$is_open()) {
     private$config_db$close()
+
+    # empty the configuration fields
+    private$.BPdatabase <- private$BPdatabase[0,]
+    private$.BPdatabaseChoice <- "None"
+    private$PracticeLocations <- private$PracticeLocation[0,]
+    private$.UserConfig <- private$.UserConfig[0,]
+    private$.UserRestrictions <- private$.UserRestrictions[0,]
   }
   if (private$emr_db$is_open()) {
     private$emr_db$close()
