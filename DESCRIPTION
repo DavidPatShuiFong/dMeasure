@@ -12,6 +12,8 @@ LazyData: true
 Imports:
     dplyr,
     dbplyr,
+    odbc,
+    RSQLite,
     tidyr,
     magrittr,
     pipeR,

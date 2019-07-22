@@ -67,7 +67,14 @@ BSD-3
 stringi
 https://github.com/gagolews/stringi
 
+GNU Lesser General Public License v3 (LGPL v3)
+==============================================
 
+RSQLite
+https://rsqlite.r-dbi.org/
+
+DBI
+https://cran.r-project.org/web/packages/DBI/
 
 GPL-3
 =====
