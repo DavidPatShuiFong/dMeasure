@@ -144,6 +144,17 @@ reactive_event <- list(name = NULL, value = NULL)
   }
   if (private$emr_db$is_open()) {
     private$emr_db$close()
+    private$db$users <- NULL
+    private$db$patients <- NULL
+    private$db$investigations <- NULL
+    private$db$appointments <- NULL
+    private$db$immunizations <- NULL
+    private$db$preventive_health <- NULL
+    private$db$correspondenceIn <- NULL
+    private$db$reportValues <- NULL
+    private$db$services <- NULL
+    private$db$history <- NULL
+    self$clinician_choice_list <- NULL
   }
   self$authenticated = FALSE
 
@@ -603,6 +614,8 @@ read_configuration_db <- function(dMeasure_obj,
   private$.BPdatabase <- config_db$conn() %>>%
     dplyr::tbl("Server") %>>% dplyr::collect()
   invisible(self$BPdatabase) # will also set $BPdatabaseR
+  invisible(self$BPdatabaseChoice_new)
+  # reads the database choice, but does not yet open that choice
 
   private$PracticeLocations <- config_db$conn() %>>%
     dplyr::tbl("Location")
