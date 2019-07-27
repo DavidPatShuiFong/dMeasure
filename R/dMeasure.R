@@ -1015,8 +1015,8 @@ initialize_emr_tables <- function(dMeasure_obj,
 
 ## fields
 
-.public_init("date_a", quote(Sys.Date())) # 'from' date. by default, it is 'today'
-.public_init("date_b", quote(Sys.Date())) # 'to' date
+.public("date_a", Sys.Date()) # 'from' date. by default, it is 'today'
+.public("date_b", Sys.Date()) # 'to' date
 .public("location", "All")    # location/group. by default, it is 'All'
 
 ## methods

@@ -18,15 +18,14 @@ $UserConfig
 add user configuration
 }
 \details{
-if setting multiple attributes or locations, preferable to set the attribute
+if setting multiple attributes or locations, need to set the attribute
 as a list e.g.
 
 list(Fullname = "Mrs. Diabetes Educator",
   Location = list(c("Jemena", "Lakeside")))
 
 note that the list does not need to enclose with I(),
-since 'as_tibble' is used for translation. If attributes or location is
-not a list, userconfig.insert will turn them into a list
+since 'as_tibble' is used for translation.
 }
 \examples{
 
