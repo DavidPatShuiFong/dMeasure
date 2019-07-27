@@ -133,6 +133,9 @@ reactive_event <- list(name = NULL, value = NULL)
     self$user_logout()
   }
   if (private$config_db$is_open()) {
+    if (private$config_db$keep_log) { # if currently logging
+      private$config_db$close_log_db() # close logging database
+    }
     private$config_db$close()
 
     # empty the configuration fields
@@ -143,6 +146,9 @@ reactive_event <- list(name = NULL, value = NULL)
     private$.UserRestrictions <- private$.UserRestrictions[0,]
   }
   if (private$emr_db$is_open()) {
+    if (private$emr_db$keep_log) { # if currently logging
+      private$emr_db$close_log_db() # close logging database
+    }
     private$emr_db$close()
     private$db$users <- NULL
     private$db$patients <- NULL
@@ -554,7 +560,8 @@ open_configuration_db <-
                                c("Database", "character"),
                                c("UserID", "character"),
                                c("dbPassword", "character")))
-    # initialize_data_table will create table and/or ADD 'missing' columns to existing table
+    # initialize_data_table will create table and/or
+    # ADD 'missing' columns to existing table
 
     initialize_data_table(config_db, "ServerChoice",
                           list(c("id", "integer"),
@@ -568,6 +575,24 @@ open_configuration_db <-
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, "None"))
       config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+    }
+
+    initialize_data_table(config_db, "LogSettings",
+                          list(c("id", "integer"), # will always be '1'
+                               c("Log", "integer"),
+                               c("Filename", "character")))
+    # Log = true (1) if logging, or false (0) if not
+    # Filename = SQLite log file
+    # there should only be (at most) one entry in this table!
+    # with id '1', and a 'Log' set to 0/1 (FALSE/TRUE), and
+    # perhaps a filename
+    if (length(config_db$conn() %>>%
+               dplyr::tbl("LogSettings") %>>%
+               dplyr::filter(id == 1) %>>%
+               dplyr::pull(Log)) == 0) { # empty table})
+      query <- "INSERT INTO LogSettings (id, Log, Filename) VALUES (?, ?, ?)"
+      data_for_sql <- as.list.data.frame(c(1, as.numeric(FALSE), ""))
+      config_db$dbSendQuery(query, data_for_sql) # starts as 'FALSE'
     }
 
     initialize_data_table(config_db, "Location",
@@ -616,6 +641,11 @@ read_configuration_db <- function(dMeasure_obj,
   invisible(self$BPdatabase) # will also set $BPdatabaseR
   invisible(self$BPdatabaseChoice_new)
   # reads the database choice, but does not yet open that choice
+
+  invisible(self$LogFile)
+  invisible(self$Log) # will also set $LogR
+  # self$Log will also call self$Logfile to read the filename of the SQLite
+  # because if $Log is TRUE, then will immediate try to open the logfile
 
   private$PracticeLocations <- config_db$conn() %>>%
     dplyr::tbl("Location")
