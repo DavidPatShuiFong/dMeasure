@@ -423,6 +423,11 @@ reactive_event <- list(name = NULL, value = NULL)
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
+      if (self$Log) {
+        log_id <- private$config_db$write_log_db(
+          query = "opened EMR database",
+          data = choice)
+        }
       # successfully opened database
       # set choice of database to attempted choice
       self$initialize_emr_tables() # initialize data tables
