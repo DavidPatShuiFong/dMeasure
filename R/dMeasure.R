@@ -134,6 +134,8 @@ reactive_event <- list(name = NULL, value = NULL)
   }
   if (private$config_db$is_open()) {
     if (private$config_db$keep_log) { # if currently logging
+      log_id <- private$config_db$write_log_db(
+        query = "Closing databases")
       private$config_db$close_log_db() # close logging database
     }
     private$config_db$close()
@@ -440,17 +442,24 @@ reactive_event <- list(name = NULL, value = NULL)
     invisible(self$BPdatabase) # will also set $BPdatabaseR
 
     if (nrow(private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-             dplyr::filter(id ==1) %>>% dplyr::collect())) {
-      # already an entry in the ServerChoice table
-      query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
-      data_for_sql <- as.list.data.frame(c(private$.BPdatabaseChoice, 1))
-    } else {
+             dplyr::filter(id == 1) %>>% dplyr::collect()) == 0) {
       # create a new entry
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
+      private$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
     }
-    private$config_db$dbSendQuery(query, data_for_sql)
-    # write to SQLite configuration database
+
+    if ((private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+         dplyr::filter(id == 1) %>>%
+         dplyr::pull(Name)) != private$.BPdatabaseChoice) {
+      # if new choice is not recorded in current configuration database
+      # already an entry in the ServerChoice table
+      query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
+      data_for_sql <- as.list.data.frame(c(private$.BPdatabaseChoice, 1))
+      private$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
     private$trigger(self$config_db_trigR) # send a trigger signal
 
     private$set_reactive(self$BPdatabaseChoiceR, choice)
