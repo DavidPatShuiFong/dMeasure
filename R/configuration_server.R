@@ -287,6 +287,14 @@ server.permission <- function(dMeasure_obj) {
   # if no @param setting, then returns whether
   #  currently logging or not
 
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read/change logging status."))
+             return(NULL)
+             })
+
   if (!private$config_db$is_open()) {
     warning("Unable to read or set logging status. Configuration database is not open")
     return(NULL)
@@ -365,6 +373,14 @@ server.permission <- function(dMeasure_obj) {
   #
   # if no @param filename, then returns current log filename
 
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read/change logging parameters."))
+             return(NULL)
+           })
+
   if (!private$config_db$is_open()) {
     warning("Unable to read or set logging filename. Configuration database is not open")
     return(NULL)
@@ -418,4 +434,36 @@ WriteLog <- function(dMeasure_obj, message) {
   } else {
     private$config_db$write_log_db(message)
   }
+})
+
+#' ReadLog
+#'
+#' reads from logfile (if available)
+.active("ReadLog", function(value) {
+  # logging filename, or sets logging filename
+  #
+  # @param filename
+  #
+  # if no @param filename, then returns current log filename
+
+  if (!missing(value)) {
+    stop("cannot be set, $BPdatabase is read-only")
+  }
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read logs."))
+             return(NULL)
+           })
+
+  if (!private$config_db$is_open()) {
+    warning("Unable to read logs. Configuration database is not open")
+    return(NULL)
+  }
+
+  return(private$config_db$log_db$conn() %>>% dplyr::tbl("logs") %>>%
+           dplyr::collect())
+
 })
