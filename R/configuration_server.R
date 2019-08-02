@@ -277,3 +277,193 @@ server.permission <- function(dMeasure_obj) {
   }
   return(permission)
 })
+
+.active("Log", function(setting) {
+  # state of logging, or sets logging state
+  #
+  # @param setting
+  #   set to TRUE if to start logging
+  #   set to FALSE if to stop logging
+  # if no @param setting, then returns whether
+  #  currently logging or not
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read/change logging status."))
+             return(NULL)
+             })
+
+  if (!private$config_db$is_open()) {
+    warning("Unable to read or set logging status. Configuration database is not open")
+    return(NULL)
+  }
+
+  current_setting <- private$config_db$conn() %>>%
+    # read directly from configuration database
+    dplyr::tbl("LogSettings") %>>%
+    dplyr::pull(Log) %>>% as.logical()
+
+  if (missing(setting)) {
+    setting <- current_setting
+  }
+
+  if (setting == TRUE) {
+    # try to start logging
+    if (self$LogFile == "") {
+      # empty string is intended to be 'no choice', but RSQLite will
+      # open a 'temporary' database anyway if given an empty string!
+      warning("No logging database file has been selected.")
+      setting <- FALSE
+    } else {
+      if (!private$config_db$keep_log) {
+        # configuration database is open (from earlier check),
+        # but not currently logging
+        private$config_db$open_log_db(filename = self$LogFile,
+                                      tag = Sys.info()[["user"]])
+        # tries to open the logging database
+        if (is.null(private$config_db$log_db)) {
+          # log database not successfully opened
+          warning("Failed to open logging database file.")
+          setting <- FALSE
+        }
+      }
+      if (private$emr_db$is_open() & !private$emr_db$keep_log) {
+        # EMR database is open, but not currently logging
+        private$emr_db$open_log_db(filename = self$LogFile,
+                                   tag = Sys.info()[["user"]])
+        # tries to open the logging database
+        if (is.null(private$emr_db$log_db)) {
+          # log database not successfully opened
+          warning("Failed to open logging database file.")
+          setting <- FALSE
+        }
+      }
+    }
+  } else {
+    # stop logging
+    if (private$config_db$keep_log) {
+      # configuration database is open (from earlier check),
+      # and currently logging
+      private$config_db$close_log_db()
+    }
+    if (private$emr_db$is_open() & private$emr_db$keep_log) {
+      # EMR database is open, and currently logging
+      private$emr_db$close_log_db()
+    }
+  }
+
+  if (current_setting != setting) {
+    # change in setting.record to configuration database
+    query <- "UPDATE LogSettings SET Log = ? WHERE id = 1"
+    data_for_sql <- as.list.data.frame(c(as.numeric(setting)))
+    private$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+  }
+
+  private$set_reactive(self$LogR, setting)
+  return(setting)
+})
+.reactive("LogR", FALSE)
+
+.active("LogFile", function(filename) {
+  # logging filename, or sets logging filename
+  #
+  # @param filename
+  #
+  # if no @param filename, then returns current log filename
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read/change logging parameters."))
+             return(NULL)
+           })
+
+  if (!private$config_db$is_open()) {
+    warning("Unable to read or set logging filename. Configuration database is not open")
+    return(NULL)
+  }
+
+  current_filename <- private$config_db$conn() %>>%
+    # read directly from configuration database
+    dplyr::tbl("LogSettings") %>>%
+    dplyr::pull(Filename) %>>% as.character() %>>% paste0("")
+
+  if (missing(filename)) {
+    filename <- current_filename
+  } # no filename provided, so return current value
+
+  if (filename != current_filename) {
+    if (self$Log) {
+      warning("Unable to change Logfile when logging is turned on. Turn logging off first.")
+      filename <- current_filename
+      # 'reset' logging filename to current filename
+    } else {
+      query <- "UPDATE LogSettings SET Filename = ? WHERE id = 1"
+      data_for_sql <- as.list.data.frame(c(as.character(filename)))
+      private$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+    }
+  }
+
+  private$set_reactive(self$LogFileR, filename)
+  return(filename)
+})
+.reactive("LogFileR", "")
+
+#' WriteLog
+#'
+#' writes to Logfile (if available, and logging is turned on)
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param message
+#'
+#' @return nothing
+WriteLog <- function(dMeasure_obj, message) {
+  dMeasure_obj$WriteLog(message)
+}
+
+.public("WriteLog", function(message) {
+  # write message to logfile database
+
+  if(!private$config_db$is_open()) {
+    warning("Unable to write log message, configuration database is not open.")
+  } else if (!private$config_db$keep_log) {
+    warning("Unable to write log message, logging database is not open.")
+  } else {
+    private$config_db$write_log_db(message)
+  }
+})
+
+#' ReadLog
+#'
+#' reads from logfile (if available)
+.active("ReadLog", function(value) {
+  # logging filename, or sets logging filename
+  #
+  # @param filename
+  #
+  # if no @param filename, then returns current log filename
+
+  if (!missing(value)) {
+    stop("cannot be set, $BPdatabase is read-only")
+  }
+
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w) {
+             warning(paste(w,
+                           "'ServerAdmin' permission required",
+                           "to read logs."))
+             return(NULL)
+           })
+
+  if (!private$config_db$is_open()) {
+    warning("Unable to read logs. Configuration database is not open")
+    return(NULL)
+  }
+
+  return(private$config_db$log_db$conn() %>>% dplyr::tbl("logs") %>>%
+           dplyr::collect())
+
+})

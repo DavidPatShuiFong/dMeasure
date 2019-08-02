@@ -93,6 +93,9 @@ filter_appointments <- function(dMeasure_obj,
 
   if (private$emr_db$is_open()) {
     # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "filter_appointments",
+      data = list(date_from, date_to, clinicians))}
     self$appointments_filtered <- private$db$appointments %>>%
       dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
       dplyr::filter(Provider %in% clinicians) %>>%
@@ -101,6 +104,7 @@ filter_appointments <- function(dMeasure_obj,
     #
     # this reactive is not "collect()"ed because it is joined to other
     # filtered database lists prior to 'collection'
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
 
   return(self$appointments_filtered)
