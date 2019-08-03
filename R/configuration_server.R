@@ -436,9 +436,9 @@ WriteLog <- function(dMeasure_obj, message) {
   }
 })
 
-#' ReadLog
-#'
-#' reads from logfile (if available)
+# ReadLog
+#
+# reads from logfile (if available)
 .active("ReadLog", function(value) {
   # logging filename, or sets logging filename
   #
@@ -447,7 +447,7 @@ WriteLog <- function(dMeasure_obj, message) {
   # if no @param filename, then returns current log filename
 
   if (!missing(value)) {
-    stop("cannot be set, $BPdatabase is read-only")
+    stop("cannot be set, $ReadLog is read-only")
   }
 
   tryCatch(permission <- self$server.permission(),
@@ -460,6 +460,16 @@ WriteLog <- function(dMeasure_obj, message) {
 
   if (!private$config_db$is_open()) {
     warning("Unable to read logs. Configuration database is not open")
+    return(NULL)
+  }
+
+  if (is.null(private$config_db$log_db)) {
+    warning("Unable to read logs. Log database is not open")
+    return(NULL)
+  }
+
+  if (!private$config_db$log_db$is_open()) {
+    warning("Unable to read logs. Log database is not open")
     return(NULL)
   }
 
