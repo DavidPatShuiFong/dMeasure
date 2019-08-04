@@ -4,12 +4,14 @@
 \alias{clinician_list}
 \title{find available list of clinician appointments to view}
 \usage{
-clinician_list(dMeasure_obj, view_name = "All")
+clinician_list(dMeasure_obj, view_name = "All", location = NULL)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{view_name}{name of view. default is All i.e. 'no specific view'}
+
+\item{location}{location. default is whatever is already set}
 }
 \value{
 the clinician choice list

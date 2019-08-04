@@ -15,7 +15,8 @@ choose_date(dMeasure_obj, date_from = dMeasure_obj$date_a,
 \value{
 list(date_a, date_b)
 
-if date_a is later than date_b, an error is returned
+if date_a is later than date_b, a warning is returned,
+and the dates are NOT changed
 }
 \description{
 Sets 'from' and 'to' dates used in subsequent searches

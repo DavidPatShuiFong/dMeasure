@@ -778,14 +778,23 @@ match_user <- function(dMeasure_obj) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param view_name name of view. default is All i.e. 'no specific view'
+#' @param location location. default is whatever is already set
 #'
 #' @return the clinician choice list
 clinician_list <- function(dMeasure_obj,
-                           view_name = "All") {
-  dMeasure_obj$clinician_list(view_name)
+                           view_name = "All",
+                           location = NULL) {
+  dMeasure_obj$clinician_list(view_name, location)
 }
 
-.public("clinician_list", function(view_name = "All") {
+.public("clinician_list", function(view_name = "All",
+                                   location = NULL) {
+
+  if (is.null(location)) {
+    location <- self$location
+  } else {
+    self$location <- location
+  }
   if (self$location == 'All') {
     # note that 'ifelse' only returns result in the
     # same 'shape' as the comparison statement
@@ -1074,7 +1083,8 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' @return list(date_a, date_b)
 #'
-#' if date_a is later than date_b, an error is returned
+#' if date_a is later than date_b, a warning is returned,
+#' and the dates are NOT changed
 choose_date <- function(dMeasure_obj,
                         date_from = dMeasure_obj$date_a,
                         date_to = dMeasure_obj$date_b) {
@@ -1084,7 +1094,9 @@ choose_date <- function(dMeasure_obj,
 .public("choose_date", function(date_from = self$date_a,
                                 date_to = self$date_b) {
   if (date_from > date_to) {
-    stop("'From' date cannot be later than 'To' date")
+    warning("'From' date cannot be later than 'To' date")
+    date_from <- self$date_a
+    date_to <- self$date_b
   }
   self$date_a <- date_from
   self$date_b <- date_to
