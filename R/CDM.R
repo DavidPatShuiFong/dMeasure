@@ -83,6 +83,216 @@ cdm_item_names <- as.character(unique(cdm_item$name)) # de-factored and unique c
   rbind(a, b)
 })
 
+### malignancy list for CDM
+.active("malignancy_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$malignancy_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$malignancy_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Malignancy'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### hiv list for CDM
+.active("hiv_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$hiv_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$hiv_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : HIV'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### haemoglobinopathy list for CDM
+.active("haemoglobinopathy_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$haemoglobinopathy_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$haemoglobinopathy_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Haemoglobinopathy'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### asplenic list for CDM
+.active("asplenic_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$asplenic_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$asplenic_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Asplenia'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### transplant list for CDM
+.active("transplant_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$transplant_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$transplant_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : transplant'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### trisomy21 list for CDM
+.active("trisomy21_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$trisomy21_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$trisomy21_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Trisomy 21'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### chroniclungdisease list for CDM
+.active("chroniclungdisease_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$chroniclungdisease_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$chroniclungdisease_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Chronic Lung Disease'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### neurologic list for CDM
+.active("neurologic_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$neurologic_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$neurologic_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Neurologic condition'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### chronic liver disease list for CDM
+.active("chronicliverdisease_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$chronicliverdisease_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$chronicliverdisease_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Liver Disease'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### chronicrenaldisease list for CDM
+.active("chronicrenaldisease_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$chronicrenaldisease_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$chronicrenaldisease_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Chronic Renal Disease'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+### cardiacdisease list for CDM
+.active("cardiacdisease_list_cdm", function(value) {
+  if (!missing(value)) {
+    stop("Can't set `$cardiacdisease_list_cdm`", call. = FALSE)
+  }
+
+  a <- self$appointments_list %>>%
+    dplyr::filter(InternalID %in% self$cardiacdisease_list()) %>>%
+    dplyr::select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>>%
+    dplyr::mutate(MBSName = c('GPMP'), Description = c('History : Cardiac Disease'),
+                  ServiceDate = as.Date(-Inf, origin = '1970-01-01'), MBSItem = NA) %>>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+
+  return(a)
+})
+
+
 ##### methods ###########################################################################
 
 #' CDM item status of patients in appointment view
@@ -219,6 +429,17 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
       dplyr::filter(!(MBSName == "GPMP R/V")) %>>% # GPMP R/V will be added back in as a 'tagged' version
       rbind(self$diabetes_list_cdm) %>>%
       rbind(self$asthma_list_cdm) %>>%
+      rbind(self$malignancy_list_cdm) %>>%
+      rbind(self$hiv_list_cdm) %>>%
+      rbind(self$haemoglobinopathy_list_cdm) %>>%
+      rbind(self$asplenic_list_cdm) %>>%
+      rbind(self$transplant_list_cdm) %>>%
+      rbind(self$chronicliverdisease_list_cdm) %>>%
+      rbind(self$chronicrenaldisease_list_cdm) %>>%
+      rbind(self$chroniclungdisease_list_cdm) %>>%
+      rbind(self$neurologic_list_cdm) %>>%
+      rbind(self$trisomy21_list_cdm) %>>%
+      rbind(self$cardiacdisease_list_cdm) %>>%
       rbind(self$aha75_list_cdm) %>>%
       dplyr::filter(MBSName %in% cdm_chosen) %>>%
       dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider, MBSName) %>>%
@@ -251,7 +472,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
         dplyr::mutate(mbstag_print = paste0(MBSName, # printable version of information
                                             dplyr::if_else(
                                               ServiceDate == -Inf,
-                                              '',
+                                              paste0(" (", Description, ")"),
                                               paste0(" (", ServiceDate, ")",
                                                      dplyr::if_else(
                                                        self$interval(ServiceDate, AppointmentDate)$year < 1,

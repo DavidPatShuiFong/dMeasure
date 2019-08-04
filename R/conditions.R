@@ -139,7 +139,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("hiv_list", function(appointments) {
+.public("hiv_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have HIV
 
@@ -340,7 +340,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("chronicliverdisease_list", function(appointments) {
+.public("chronicliverdisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have chronic liver disease
 
@@ -362,7 +362,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("chronicrenaldisease_list", function(appointments) {
+.public("chronicrenaldisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have chronic renal disease
 
@@ -385,7 +385,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("pregnant_list", function(appointments) {
+.public("pregnant_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # are pregnant
 
