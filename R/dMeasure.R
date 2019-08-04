@@ -939,7 +939,15 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>>%
-    dplyr::select(c('InternalID', 'Collected', 'TestName'))
+    dplyr::select(InternalID, ReportID,
+                  TestName,
+                  Reported, Checked, Actioned,
+                  # three dates
+                  CheckedBy,
+                  # a name of the provider who checked
+                  Notation, Action,
+                  # Action includes 'Urgent Appointment' and 'Non-urgent Appointment'
+                  Comment)
   # as of Jan/2019, the odbc engine for MSSQL can't handle the
   # full ('Select *') Investigations table
   # due to some type of bug/standards non-compliance.
@@ -972,7 +980,21 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$correspondenceIn <- emr_db$conn() %>>%
     # InternalID, CorrespondenceDate, Subject, Detail
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>>%
-    dplyr::select('InternalID', 'CorrespondenceDate', 'Subject', 'Detail')
+    dplyr::select(InternalID, DocumentID,
+                  CorrespondenceDate,
+                  Subject, Detail, Comment)
+
+  private$db$correspondenceInRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CORRESPONDENCEIN")) %>>%
+    dplyr::select(DOCUMENTID, INTERNALID,
+                  USERID, CHECKEDBY,
+                  # both USERID and CHECKEDBY are numbers, not names
+                  CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
+                  # three dates
+                  SUBJECT, DETAIL, COMMENT,
+                  NOTATION, ACTION)
+  # Action includes 6 for Non-urgent appointment,
+  # and 7 for Urgent appointment
 
   private$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
