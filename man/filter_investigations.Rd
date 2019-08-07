@@ -5,7 +5,7 @@
 \title{List of investigations}
 \usage{
 filter_investigations(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, Action = NULL, Actioned = NULL)
+  clinicians = NA, Action = NA, Actioned = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -16,13 +16,15 @@ filter_investigations(dMeasure_obj, date_from = NA, date_to = NA,
 
 \item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
 
-\item{Action=NULL}{Filter by action?
-a vector of actions (in string form)
-e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"}
+\item{Action=NA}{Filter by action?
+a vector of actions (in string form) or NULL
+e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
+if NA, will adopt the value of $filter_investigations_Action}
 
-\item{Actioned=NULL}{Filter by having been 'actioned?' i.e. notified
-can be logical (TRUE or FALSE)
-or a Date (actioned prior to or by 'Actioned' Date)}
+\item{Actioned=NA}{Filter by having been 'actioned?' i.e. notified
+can be logical (TRUE or FALSE), a NULL
+or a Date (actioned prior to or by 'Actioned' Date)
+if NA, will adopt the value of $filter_investigations_Actioned}
 }
 \value{
 list of investigations

@@ -22,6 +22,47 @@ NULL
                    Action = character()))
 # filtered by chosen dates and clinicians, action and notification
 
+
+.private(".filter_investigations_Action", NULL)
+# the default value of 'Action' for method $filter_investigations
+# can be NULL, or a vector of strings
+.private(".filter_investigations_Actioned", NULL)
+# the default value of 'Actioned' for method $filter_investigations
+# can be NULL, a logical (TRUE/FALSE), or a Date
+
+.active("filter_investigations_Action", function(value) {
+  if (missing(value)) {
+    return(private$.filter_investigations_Action)
+  }
+  if (is.null(value) || is.character(value)) {
+    # accepts NULL value
+    # accepts string, or vector of strings
+    private$.filter_investigations_Action <- value
+    private$set_reactive(self$filter_investigations_ActionR, value)
+  } else {
+    warning(paste("filter_investigations_Action can only be set to a string,",
+                  "a vector of strings or NULL"))
+  }
+})
+.reactive("filter_investigations_ActionR", quote(NULL))
+
+.active("filter_investigations_Actioned", function(value) {
+  if (missing(value)) {
+    return(private$.filter_investigations_Actioned)
+  }
+  if (is.null(value) || is.logical(value) || inherits(value, "Date")) {
+    # accepts NULL
+    # accepts TRUE/FALSE
+    # accepts Date type
+    private$.filter_investigations_Actioned <- value
+    private$set_reactive(self$filter_investigations_ActionedR, value)
+  } else {
+    warning(paste("filter_investigations_Actioned can only be a Date,",
+                  "a logical (TRUE/FALSE) or NULL."))
+  }
+})
+.reactive("filter_investigations_ActionedR", quote(NULL))
+
 #' List of investigations
 #'
 #' Filtered by date, and chosen clinicians
@@ -31,28 +72,30 @@ NULL
 #' @param date_from=dMeasure_obj$date_a start date
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NULL Filter by action?
-#'  a vector of actions (in string form)
+#' @param Action=NA Filter by action?
+#'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
-#' @param Actioned=NULL Filter by having been 'actioned?' i.e. notified
-#'  can be logical (TRUE or FALSE)
+#'  if NA, will adopt the value of $filter_investigations_Action
+#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
+#'  if NA, will adopt the value of $filter_investigations_Actioned
 #'
 #' @return list of investigations
 filter_investigations <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
                                 clinicians = NA,
-                                Action = NULL,
-                                Actioned = NULL) {
+                                Action = NA,
+                                Actioned = NA) {
   dMeasure_obj$filter_investigations(date_from, date_to, clinicians,
                                    Action, Actioned)
 }
 .public("filter_investigations", function(date_from = NA,
                                           date_to = NA,
                                           clinicians = NA,
-                                          Action = NULL,
-                                          Actioned = NULL) {
+                                          Action = NA,
+                                          Actioned = NA) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -65,6 +108,12 @@ filter_investigations <- function(dMeasure_obj,
     # 'if' is not vectorized so will only read the first element of the list
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
+  }
+  if (is.na(Action)) {
+    Action <- self$filter_investigations_Action
+  }
+  if (is.na(Actioned)) {
+    Actioned <- self$filter_investigations_Actioned
   }
 
   # no additional clinician filtering based on privileges or user restrictions
@@ -118,7 +167,9 @@ filter_investigations <- function(dMeasure_obj,
 .reactive_event("investigations_filteredR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR()), {
+                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                      self$filter_investigations_actionR(),
+                      self$filter_investigations_actionedR()), {
                       # update if reactive version of $date_a Rdate_b
                       # or $clinicians are updated.
                       self$filter_investigations()
