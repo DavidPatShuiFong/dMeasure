@@ -32,16 +32,20 @@ NULL
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
 #' @param Action=NULL Filter by action?
+#'  a vector of actions (in string form)
+#'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #' @param Actioned=NULL Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE)
+#'  or a Date (actioned prior to or by 'Actioned' Date)
 #'
 #' @return list of investigations
-filter_appointments <- function(dMeasure_obj,
+filter_investigations <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
                                 clinicians = NA,
                                 Action = NULL,
                                 Actioned = NULL) {
-  dMeasure_obj$filter_appointments(date_from, date_to, clinicians,
+  dMeasure_obj$filter_investigations(date_from, date_to, clinicians,
                                    Action, Actioned)
 }
 .public("filter_investigations", function(date_from = NA,
@@ -86,13 +90,21 @@ filter_appointments <- function(dMeasure_obj,
     }
 
     if (!is.null(Actioned)) {
-      if (Actioned == TRUE) {
-        investigations <- investigations %>>%
-          dplyr::filter(!is.na(Actioned)) # has been actioned
+      if (is.logical(Actioned)) {
+        if (Actioned == TRUE) {
+          investigations <-
+            dplyr::filter(investigations, !is.na(Actioned)) # has been actioned
+        }
+        if (Actioned == FALSE) {
+          investigations <-
+            dplyr::filter(investigations, is.na(Actioned)) # has not been actioned
+        }
       }
-      if (Actioned == FALSE) {
-        investigations <- investigations %>>%
-          dplyr::filter(is.na(Actioned)) # has not been actioned
+      if (inherits(Actioned, "Date")) {
+        # a date type
+        ComparisonDate <- Actioned
+        investigations <-
+          dplyr::filter(investigations, Actioned <= ComparisonDate)
       }
     }
     self$investigations_filtered <- investigations
