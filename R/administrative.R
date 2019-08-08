@@ -22,6 +22,25 @@ NULL
                    Action = character()))
 # filtered by chosen dates and clinicians, action and notification
 
+.public("investigations_filtered_appointment",
+        data.frame(InternalID = integer(), ReportID = integer(),
+                   TestName = character(),
+                   Reported = as.Date(integer(0),
+                                      origin = "1970-01-01"),
+                   Checked = as.Date(integer(0),
+                                     origin = "1970-01-01"),
+                   Actioned = as.Date(integer(0),
+                                      origin = "1970-01-01"),
+                   CheckedBy = character(),
+                   Notation = character(), Comment = character(),
+                   Action = character(),
+                   Patient = character(),
+                   AppointmentDate =  as.Date(integer(0),
+                                              origin = "1970-01-01"),
+                   AppointmentTime = character(),
+                   Provider = character(),
+                   Status = character()))
+
 .public("investigations_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
@@ -37,7 +56,12 @@ NULL
                                       origin = "1970-01-01"),
                    CheckedBy = character(),
                    Notation = character(), Comment = character(),
-                   Action = character()))
+                   Action = character(),
+                   AppointmentDate =  as.Date(integer(0),
+                                              origin = "1970-01-01"),
+                   AppointmentTime = character(),
+                   Provider = character(),
+                   Status = character()))
 
 
 .private(".filter_incoming_Action", NULL)
@@ -145,9 +169,11 @@ filter_investigations <- function(dMeasure_obj,
     if (self$Log) {log_id <- private$config_db$write_log_db(
       query = "filter_investigations",
       data = list(date_from, date_to, clinicians))}
+
     investigations <- private$db$investigations %>>%
       dplyr::filter(Checked >= date_from & Checked <= date_to) %>>%
-      dplyr::filter(CheckedBy %in% clinicians)
+      dplyr::filter(CheckedBy %in% clinicians) %>>%
+      dplyr::mutate(TestName = trimws(TestName))
     # a database filter on an empty list after %in% will result in an error message
 
     if (!is.null(Action)) {
@@ -194,6 +220,112 @@ filter_investigations <- function(dMeasure_obj,
                         # re-calculates the appointments
                       })
                 ))
+
+#' List of investigations with appointments
+#'
+#' Filtered by date, and chosen clinicians
+#' added information about appointments scheduled after the 'Checked' date
+#' Stores result in $investigations_filtered_appointments
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_to=dMeasure_obj$date_b end date (inclusive)
+#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param Action=NA Filter by action?
+#'  a vector of actions (in string form) or NULL
+#'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
+#'  if NA, will adopt the value of $filter_incoming_Action
+#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE), a NULL
+#'  or a Date (actioned prior to or by 'Actioned' Date)
+#'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param lazy=FALSE if TRUE, don't 'call' filter_investigations
+#'  to re-calculate
+#'
+#' @return list of investigations with relevant appointments
+filter_investigations_appointment <- function(dMeasure_obj,
+                                              date_from = NA,
+                                              date_to = NA,
+                                              clinicians = NA,
+                                              Action = NA,
+                                              Actioned = NA,
+                                              lazy = FALSE) {
+  dMeasure_obj$filter_investigations_appointment(date_from, date_to, clinicians,
+                                                 Action, Actioned)
+}
+.public("filter_investigations_appointment", function(date_from = NA,
+                                                      date_to = NA,
+                                                      clinicians = NA,
+                                                      Action = NA,
+                                                      Actioned = NA,
+                                                      lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (!is.null(Action) && is.na(Action)) {
+    # note that 'NULL' is a valid value,  but will ERROR the is.na() test
+    Action <- self$filter_incoming_Action
+  }
+  if (!is.null(Actioned) && is.na(Actioned)) {
+    Actioned <- self$filter_incoming_Actioned
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "filter_incoming_appointment",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$filter_investigations(date_from, date_to, clinicians,
+                                 Action, Actioned)
+      # if not 'lazy' evaluation, then re-calculate self$investigations_filtered
+      # (that is automatically done by calling the $filter_investigations)
+    }
+
+    self$investigations_filtered_appointment <- self$investigations_filtered %>>%
+      dplyr::left_join(private$db$appointments %>>%
+                         # only check against appointments after date_from
+                         dplyr::filter(AppointmentDate > date_from),
+                       by = "InternalID") %>>%
+      dplyr::filter(AppointmentDate > Checked) %>>%
+      dplyr::mutate(Status = trimws(Status))
+    # further filter against the 'checked' date for each investigation
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$investigations_filtered_appointment)
+})
+.reactive_event("investigations_filtered_appointmentR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                      self$filter_incoming_ActionR(),
+                      self$filter_incoming_ActionedR()), {
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$filter_investigations_appointment()
+                        # re-calculates the appointments
+                      })
+                ))
+
 
 #' List of investigations, with patient names
 #'
@@ -260,28 +392,25 @@ filter_investigations_named <- function(dMeasure_obj,
     # only if EMR database is open
 
     if (!lazy) {
-      self$filter_investigations(date_from, date_to, clinicians,
-                                 Action, Actioned)
-      # if not 'lazy' evaluation, then re-calculate self$investigations_filtered
-      # (that is automatically done by calling the $filter_investigations)
+      self$filter_investigations_appointment(date_from, date_to, clinicians,
+                                             Action, Actioned, lazy)
+      # if not 'lazy' evaluation, then re-calculate $investigations_filtered_appointment
+      # (that is automatically done by calling the $filter_investigations_appointment)
     }
 
-    self$investigations_filtered_named <- self$investigations_filtered %>>%
+    self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
       dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
       # need patients database to access date-of-birth
-      dplyr::select(Title, Firstname, Middlename, Surname,
+      dplyr::select(Patient,
                     DOB, InternalID, RecordNo, TestName,
                     Reported, Checked, CheckedBy,
-                    Notation, Action, Actioned, Comment) %>>%
-      dplyr::mutate(Title = trimws(Title), Firstname = trimws(Firstname),
-                    Middlename = trimws(Middlename), Surname = trimws(Surname),
-                    TestName = trimws(TestName)) %>>%
+                    Notation, Action, Actioned, Comment,
+                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
-      dplyr::mutate(Patient = paste(Title, Firstname,
-                                    Middlename), Surname) %>>% # combined name
-      dplyr::select(-c(Title, Firstname, Middlename, Surname)) %>>% # drop name parts
       dplyr::mutate(Reported = as.Date(Reported), Checked = as.Date(Checked),
-                    Actioned = as.Date(Actioned)) %>>%
+                    Actioned = as.Date(Actioned),
+                    AppointmentDate = as.Date(AppointmentDate),
+                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
       dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
       dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
                                         dplyr::case_when(!is.na(Reported) ~ Reported,
