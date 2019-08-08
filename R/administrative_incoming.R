@@ -89,6 +89,8 @@ NULL
 .public("investigations_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
+                   ReportID = numeric(),
+                   RecordNo = character(),
                    DOB = as.Date(integer(0),
                                  origin = "1970-01-01"),
                    Age = numeric(),
@@ -112,6 +114,8 @@ NULL
 .public("correspondence_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
+                   DocumentID = numeric(),
+                   RecordNo = character(),
                    DOB = as.Date(integer(0),
                                  origin = "1970-01-01"),
                    Age = numeric(),
@@ -443,10 +447,10 @@ filter_investigations_named <- function(dMeasure_obj,
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
   }
-  if (is.na(Action)) {
+  if (!is.null(Action) && is.na(Action)) {
     Action <- self$filter_incoming_Action
   }
-  if (is.na(Actioned)) {
+  if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
   }
 
@@ -470,12 +474,13 @@ filter_investigations_named <- function(dMeasure_obj,
       dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
       # need patients database to access date-of-birth
       dplyr::select(Patient,
-                    DOB, InternalID, RecordNo, TestName,
+                    DOB, InternalID, RecordNo, TestName, ReportID,
                     Reported, Checked, CheckedBy,
                     Notation, Action, Actioned, Comment,
                     AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
-      dplyr::mutate(Reported = as.Date(Reported), Checked = as.Date(Checked),
+      dplyr::mutate(RecordNo = trimws(RecordNo),
+                    Reported = as.Date(Reported), Checked = as.Date(Checked),
                     Actioned = as.Date(Actioned),
                     AppointmentDate = as.Date(AppointmentDate),
                     AppointmentTime = self$hrmin(AppointmentTime)) %>>%
@@ -792,10 +797,10 @@ filter_correspondence_named <- function(dMeasure_obj,
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
   }
-  if (is.na(Action)) {
+  if (!is.null(Action) && is.na(Action)) {
     Action <- self$filter_incoming_Action
   }
-  if (is.na(Actioned)) {
+  if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
   }
 
@@ -819,13 +824,14 @@ filter_correspondence_named <- function(dMeasure_obj,
       dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
       # need patients database to access date-of-birth
       dplyr::select(Patient,
-                    DOB, InternalID, RecordNo,
+                    DOB, InternalID, RecordNo, DocumentID,
                     Category, Subject, Detail,
                     CorrespondenceDate, CheckDate, CHECKEDBY,
                     NOTATION, ACTION, ActionDate, Comment,
                     AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
-      dplyr::mutate(DocumentName = paste(Category, Subject, Detail, collapse = ":"),
+      dplyr::mutate(RecordNo = trimws(RecordNo),
+                    DocumentName = paste(Category, Subject, Detail, collapse = ":"),
                     CorrespondenceDate = as.Date(CorrespondenceDate),
                     CheckDate = as.Date(CheckDate),
                     ActionDate = as.Date(ActionDate),
@@ -867,3 +873,180 @@ filter_correspondence_named <- function(dMeasure_obj,
                         # re-calculates the appointments
                       })
                 ))
+
+
+#' incoming (investigations and correspondence) view
+#'
+#' filter to date range
+#' and clinicians
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_to=dMeasure_obj$date_b end date (inclusive)
+#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param Action=NA Filter by action?
+#'  a vector of actions (in string form) or NULL
+#'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
+#'  if NA, will adopt the value of $filter_incoming_Action
+#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE), a NULL
+#'  or a Date (actioned prior to or by 'Actioned' Date)
+#'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
+#' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print=TRUE optionally add a 'printable' description of 'action'
+#'
+#' @return list of appointments (with patient details)
+incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
+                          clinicians = NA,
+                          Action = NA,
+                          Actioned = NA,
+                          lazy = FALSE,
+                          screentag = FALSE, screentag_print = TRUE) {
+  dMeasure_obj$view_incoming(date_from, date_to, clinicians,
+                             Action, Actioned, lazy, screentag, screentag_print)
+}
+.public("view_incoming", function (date_from = NA, date_to = NA,
+                                   clinicians = NA,
+                                   Action = NA,
+                                   Actioned = NA,
+                                   lazy = FALSE,
+                                   screentag = FALSE, screentag_print = TRUE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (all(is.na(clinicians))) {
+    clinicians <- self$clinicians
+  }
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter cannot handle empty list()
+  }
+
+  if (!is.null(Action) && is.na(Action)) {
+    # note that 'NULL' is a valid value,  but will ERROR the is.na() test
+    Action <- self$filter_incoming_Action
+  }
+  if (!is.null(Actioned) && is.na(Actioned)) {
+    Actioned <- self$filter_incoming_Actioned
+  }
+
+  # create empty table
+  incoming <- data.frame(Patient = character(),
+                         InternalID = numeric(), # will be later dropped
+                         ReportID = numeric(), # will be later dropped
+                         DocumentID = numeric(), # will be later dropped
+                         RecordNo = character(),
+                         DOB = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+                         Age = numeric(),
+                         TestName = character(),
+                         Reported = as.Date(integer(0),
+                                            origin = "1970-01-01"),
+                         Checked = as.Date(integer(0),
+                                           origin = "1970-01-01"),
+                         Actioned = as.Date(integer(0),
+                                            origin = "1970-01-01"),
+                         CheckedBy = character(),
+                         Notation = character(),
+                         Comment = character(),
+                         Action = character(),
+                         AppointmentDate =  as.Date(integer(0),
+                                                    origin = "1970-01-01"),
+                         AppointmentTime = character(),
+                         Provider = character(),
+                         Status = character())
+
+
+  if (screentag) {
+    incoming <- cbind(incoming, data.frame(viewtag = character()))
+  }
+  if (screentag_print) {
+    incoming <- cbind(incoming, data.frame(viewtag_print = character()))
+  }
+
+  if (!private$emr_db$is_open()) {
+    # EMR database is not open
+    # empty data-frame already created to return
+  } else {
+    # only if EMR database is open
+
+    if (!lazy) {
+      self$filter_investigations_named(date_from, date_to,
+                                       clinicians, Action, Actioned,
+                                       lazy = FALSE)
+      self$filter_correspondence_named(date_from, date_to,
+                                       clinicians, Action, Actioned,
+                                       lazy = FALSE)
+      # if not 'lazy' evaluation, then re-calculate
+      # $correspondence_filtered_named and $investigations$filtered_named
+      # (that is automatically done by calling the above methods
+    }
+
+    incoming <- dplyr::bind_rows(incoming, self$investigations_filtered_named)
+
+    incoming <- dplyr::bind_rows(incoming,
+                                 dplyr::rename(self$correspondence_filtered_named,
+                                               TestName = DocumentName,
+                                               Reported = CorrespondenceDate,
+                                               Checked = CheckDate,
+                                               Actioned = ActionDate))
+
+    incoming <- incoming %>>%
+      dplyr::mutate(PastAppointment = AppointmentDate < Sys.Date()) %>>%
+      # the listed appointment has already 'past'
+      dplyr::mutate(AppointmentDetail = paste(AppointmentDate, " ", AppointmentTime,
+                                              " ", Provider, " (", Status, ")",
+                                              sep = ""))
+    if (screentag) {
+      incoming <- incoming %>>%
+        dplyr::mutate(viewtag =
+                        semantic_tag(AppointmentDate, # semantic/fomantic buttons
+                                     colour =
+                                       dplyr::if_else(PastAppointment,
+                                                      'yellow',
+                                                      'green'),
+                                     popuphtml =
+                                       paste0("<h4>Date : ", AppointmentDate,
+                                              " : ", AppointmentTime,
+                                              "</h4><h6>Provider : ", Provider,
+                                              "</h6><p><font size=\'+0\'>Status : ",
+                                              Status, "</p>")))
+
+    }
+
+    if (screentag_print) {
+      incoming <- incoming %>>%
+        dplyr::mutate(viewtag_print = paste(dplyr::if_else(PastAppointment,
+                                                           "Past : ",
+                                                           ""),
+                                            AppointmentDetail,
+                                            sep = ""))
+    }
+
+    incoming <- incoming %>>%
+      dplyr::group_by(Patient, InternalID, RecordNo, DOB, Age,
+                      TestName, ReportID, DocumentID,
+                      Reported, Checked, Actioned,
+                      CheckedBy, Notation, Comment, Action,
+                      PastAppointment) %>>%
+      # group appointments by the investigation report or Document
+      # gathers appointments referring to the same report/correspondence into a single row
+      {if (screentag) {dplyr::summarise(., tag = paste(viewtag, collapse = ""))}
+        else {.}} %>>%
+      {if (screentag_print) {dplyr::summarise(., tag_print =
+                                                paste(viewtag_print, collapse = ", "))}
+        else {.}} %>>%
+      dplyr::ungroup()
+  }
+
+  incoming <- dplyr::select(incoming,
+                            -c(InternalID, ReportID, DocumentID, PastAppointment))
+
+  return(incoming)
+})
