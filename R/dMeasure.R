@@ -991,7 +991,7 @@ initialize_emr_tables <- function(dMeasure_obj,
                   # both USERID and CHECKEDBY are numbers, not names
                   CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
                   # three dates
-                  SUBJECT, DETAIL, COMMENT,
+                  CATEGORY, SUBJECT, DETAIL, COMMENT,
                   NOTATION, ACTION)
   # Action includes 6 for Non-urgent appointment,
   # and 7 for Urgent appointment

@@ -63,6 +63,29 @@ NULL
                    Provider = character(),
                    Status = character()))
 
+.public("correspondence_filtered_appointment",
+        data.frame(InternalID = integer(),
+                   DocumentID = integer(),
+                   Category = character(),
+                   Subject = character(),
+                   Detail = character(),
+                   CorrespondenceDate = as.Date(integer(0),
+                                                origin = "1970-01-01"),
+                   CheckDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+                   ActionDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   CHECKEDBY = numeric(), # this will be a number! (UserID)
+                   NOTATION = numeric(), # this will be a number!
+                   Comment = character(),
+                   ACTION = numeric(), # this will be a number!
+                   Patient = character(),
+                   AppointmentDate =  as.Date(integer(0),
+                                              origin = "1970-01-01"),
+                   AppointmentTime = character(),
+                   Provider = character(),
+                   Status = character()))
+
 .public("investigations_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
@@ -86,6 +109,28 @@ NULL
                    Provider = character(),
                    Status = character()))
 
+.public("correspondence_filtered_named",
+        data.frame(Patient = character(),
+                   InternalID = integer(),
+                   DOB = as.Date(integer(0),
+                                 origin = "1970-01-01"),
+                   Age = numeric(),
+                   DocumentName = character(),
+                   CorrespondenceDate = as.Date(integer(0),
+                                                origin = "1970-01-01"),
+                   CheckDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+                   ActionDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   CheckedBy = character(),
+                   Notation = character(),
+                   Comment = character(),
+                   Action = character(),
+                   AppointmentDate =  as.Date(integer(0),
+                                              origin = "1970-01-01"),
+                   AppointmentTime = character(),
+                   Provider = character(),
+                   Status = character()))
 
 .private(".filter_incoming_Action", NULL)
 # the default value of 'Action' for method $filter_investigations
@@ -588,6 +633,237 @@ filter_correspondence <- function(dMeasure_obj,
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$filter_correspondence()
+                        # re-calculates the appointments
+                      })
+                ))
+
+#' List of correspondence with appointments
+#'
+#' Filtered by date, and chosen clinicians
+#' added information about appointments scheduled after the 'Checked' date
+#' Stores result in $correspondence_filtered_appointments
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_to=dMeasure_obj$date_b end date (inclusive)
+#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param Action=NA Filter by action?
+#'  a vector of actions (in string form) or NULL
+#'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
+#'  if NA, will adopt the value of $filter_incoming_Action
+#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE), a NULL
+#'  or a Date (actioned prior to or by 'Actioned' Date)
+#'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param lazy=FALSE if TRUE, don't 'call' filter_correspondence
+#'  to re-calculate
+#'
+#' @return list of correspondence with relevant appointments
+filter_correspondence_appointment <- function(dMeasure_obj,
+                                              date_from = NA,
+                                              date_to = NA,
+                                              clinicians = NA,
+                                              Action = NA,
+                                              Actioned = NA,
+                                              lazy = FALSE) {
+  dMeasure_obj$filter_correspondence_appointment(date_from, date_to, clinicians,
+                                                 Action, Actioned)
+}
+.public("filter_correspondence_appointment", function(date_from = NA,
+                                                      date_to = NA,
+                                                      clinicians = NA,
+                                                      Action = NA,
+                                                      Actioned = NA,
+                                                      lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (!is.null(Action) && is.na(Action)) {
+    # note that 'NULL' is a valid value,  but will ERROR the is.na() test
+    Action <- self$filter_incoming_Action
+  }
+  if (!is.null(Actioned) && is.na(Actioned)) {
+    Actioned <- self$filter_incoming_Actioned
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "filter_correspondence_appointment",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$filter_correspondence(date_from, date_to, clinicians,
+                                 Action, Actioned)
+      # if not 'lazy' evaluation, then re-calculate self$correspondence_filtered
+      # (that is automatically done by calling the $filter_correspondence)
+    }
+
+    self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
+      dplyr::left_join(private$db$appointments %>>%
+                         # only check against appointments after date_from
+                         dplyr::filter(AppointmentDate > date_from),
+                       by = "InternalID") %>>%
+      dplyr::filter(AppointmentDate > CheckDate) %>>%
+      dplyr::mutate(Status = trimws(Status))
+    # further filter against the 'checked' date for each correspondence
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$correspondence_filtered_appointment)
+})
+.reactive_event("correspondence_filtered_appointmentR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                      self$filter_incoming_ActionR(),
+                      self$filter_incoming_ActionedR()), {
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$filter_correspondence_appointment()
+                        # re-calculates the appointments
+                      })
+                ))
+
+#' List of correspondence, with patient names
+#'
+#' Filtered by date, and chosen clinicians
+#' Stores result in $correspondence_filtered_named
+#' Values stored as numeric in $correspondence_filtered_appointments
+#' are changed to 'human-readable' character strings e.g. ACTION
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_to=dMeasure_obj$date_b end date (inclusive)
+#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param Action=NA Filter by action?
+#'  a vector of actions (in string form) or NULL
+#'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
+#'  if NA, will adopt the value of $filter_incoming_Action
+#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  can be logical (TRUE or FALSE), a NULL
+#'  or a Date (actioned prior to or by 'Actioned' Date)
+#'  if NA, will adopt the value of $filter_incoming_Actioned
+#'
+#' @return list of correspondence
+filter_correspondence_named <- function(dMeasure_obj,
+                                        date_from = NA,
+                                        date_to = NA,
+                                        clinicians = NA,
+                                        Action = NA,
+                                        Actioned = NA,
+                                        lazy = FALSE) {
+  dMeasure_obj$filter_correspondence_named(date_from, date_to, clinicians,
+                                           Action, Actioned, lazy)
+}
+.public("filter_correspondence_named", function(date_from = NA,
+                                                date_to = NA,
+                                                clinicians = NA,
+                                                Action = NA,
+                                                Actioned = NA,
+                                                lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(Action)) {
+    Action <- self$filter_incoming_Action
+  }
+  if (is.na(Actioned)) {
+    Actioned <- self$filter_incoming_Actioned
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+
+    if (!lazy) {
+      self$filter_correspondence_appointment(date_from, date_to, clinicians,
+                                             Action, Actioned, lazy)
+      # if not 'lazy' evaluation, then re-calculate $correspondence_filtered_appointment
+      # (that is automatically done by calling the $filter_correspondence_appointment)
+    }
+
+    self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
+      dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
+      # need patients database to access date-of-birth
+      dplyr::select(Patient,
+                    DOB, InternalID, RecordNo,
+                    Category, Subject, Detail,
+                    CorrespondenceDate, CheckDate, CHECKEDBY,
+                    NOTATION, ACTION, ActionDate, Comment,
+                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(DocumentName = paste(Category, Subject, Detail, collapse = ":"),
+                    CorrespondenceDate = as.Date(CorrespondenceDate),
+                    CheckDate = as.Date(CheckDate),
+                    ActionDate = as.Date(ActionDate),
+                    AppointmentDate = as.Date(AppointmentDate),
+                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+      dplyr::select(-c(Category, Subject, Detail)) %>>%
+      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
+                    Age = self$calc_age(DOB, # try several different dates for 'age'
+                                        dplyr::case_when(
+                                          !is.na(CorrespondenceDate) ~ CorrespondenceDate,
+                                          !is.na(CheckDate) ~ CheckDate,
+                                          TRUE ~ Sys.Date()))) %>>%
+      dplyr::mutate(CheckedBy = self$UserFullConfig$Fullname[CHECKEDBY]) %>>%
+      dplyr::mutate(Notation = c("Normal", "Abnormal", "Stable",
+                                 "Acceptable", "Unacceptable", "Being treated",
+                                 "Under specialist care", "")
+                    [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
+                    # this strange if_else is to deal with 'empty' NOTATION
+                    Action = c("No action", "Reception to advise",
+                               "Nurse to advise", "Doctor to advise",
+                               "Send routine reminder", "Non-urgent appointment",
+                               "Urgent appointment", "")
+                    # this strange if_else is to deal with 'empty' ACTION
+                    [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]) %>>%
+      dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
+  }
+
+  return(self$correspondence_filtered_named)
+})
+.reactive_event("correspondence_filtered_namedR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                      self$filter_incoming_ActionR(),
+                      self$filter_incoming_ActionedR()), {
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$filter_correspondence_named(lazy = TRUE)
                         # re-calculates the appointments
                       })
                 ))
