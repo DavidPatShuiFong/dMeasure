@@ -34,7 +34,7 @@ Collate:
     'CDM.R'
     'CancerScreen_bowelcancer.R'
     'Immunization.R'
-    'administrative.R'
+    'administrative_incoming.R'
     'billings.R'
     'configuration_location.R'
     'configuration_password.R'
