@@ -21,7 +21,8 @@ NULL
                    CheckedBy = character(),
                    Notation = character(),
                    Comment = character(),
-                   Action = character()))
+                   Action = character(),
+                   stringsAsFactors = FALSE))
 # filtered by chosen dates and clinicians, action and notification
 
 .public("correspondence_filtered",
@@ -39,7 +40,8 @@ NULL
                    CHECKEDBY = numeric(), # this will be a number! (UserID)
                    NOTATION = numeric(), # this will be a number!
                    Comment = character(),
-                   ACTION = numeric())) # this will be a number!
+                   ACTION = numeric(),
+                   stringsAsFactors = FALSE)) # this will be a number!
 
 # filtered by chosen dates and clinicians, action and notification
 
@@ -61,7 +63,8 @@ NULL
                                               origin = "1970-01-01"),
                    AppointmentTime = character(),
                    Provider = character(),
-                   Status = character()))
+                   Status = character(),
+                   stringsAsFactors = FALSE))
 
 .public("correspondence_filtered_appointment",
         data.frame(InternalID = integer(),
@@ -84,7 +87,8 @@ NULL
                                               origin = "1970-01-01"),
                    AppointmentTime = character(),
                    Provider = character(),
-                   Status = character()))
+                   Status = character(),
+                   stringsAsFactors = FALSE))
 
 .public("investigations_filtered_named",
         data.frame(Patient = character(),
@@ -109,7 +113,8 @@ NULL
                                               origin = "1970-01-01"),
                    AppointmentTime = character(),
                    Provider = character(),
-                   Status = character()))
+                   Status = character(),
+                   stringsAsFactors = FALSE))
 
 .public("correspondence_filtered_named",
         data.frame(Patient = character(),
@@ -134,7 +139,8 @@ NULL
                                               origin = "1970-01-01"),
                    AppointmentTime = character(),
                    Provider = character(),
-                   Status = character()))
+                   Status = character(),
+                   stringsAsFactors = FALSE))
 
 .private(".filter_incoming_Action", NULL)
 # the default value of 'Action' for method $filter_investigations
@@ -370,16 +376,19 @@ filter_investigations_appointment <- function(dMeasure_obj,
       # if not 'lazy' evaluation, then re-calculate self$investigations_filtered
       # (that is automatically done by calling the $filter_investigations)
     }
-
-    self$investigations_filtered_appointment <- self$investigations_filtered %>>%
-      dplyr::left_join(private$db$appointments %>>%
-                         # only check against appointments after date_from
-                         dplyr::filter(AppointmentDate > date_from),
-                       by = "InternalID") %>>%
-      dplyr::filter(AppointmentDate > Checked) %>>%
-      dplyr::mutate(Status = trimws(Status))
-    # further filter against the 'checked' date for each investigation
-
+    if (dplyr::pull(dplyr::tally(self$investigations_filtered), n) > 0) {
+      # the strange incantation above counts the rows, without extracting the entire table
+      # initially rows = 0, which can causes a problem if attempting
+      # to join tables (without using copy = TRUE) from different sources
+      self$investigations_filtered_appointment <- self$investigations_filtered %>>%
+        dplyr::left_join(private$db$appointments %>>%
+                           # only check against appointments after date_from
+                           dplyr::filter(AppointmentDate > date_from),
+                         by = "InternalID") %>>%
+        dplyr::filter(AppointmentDate > Checked) %>>%
+        dplyr::mutate(Status = trimws(Status))
+      # further filter against the 'checked' date for each investigation
+    }
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
 
@@ -388,14 +397,12 @@ filter_investigations_appointment <- function(dMeasure_obj,
 .reactive_event("investigations_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
-                      self$filter_incoming_ActionR(),
-                      self$filter_incoming_ActionedR()), {
-                        # update if reactive version of $date_a Rdate_b
-                        # or $clinicians are updated.
-                        self$filter_investigations_appointment()
-                        # re-calculates the appointments
-                      })
+                    self$investigations_filteredR(), {
+                      # update if reactive version of $date_a Rdate_b
+                      # or $clinicians are updated.
+                      self$filter_investigations_appointment()
+                      # re-calculates the appointments
+                    })
                 ))
 
 
@@ -470,25 +477,30 @@ filter_investigations_named <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_investigations_appointment)
     }
 
-    self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
-      # need patients database to access date-of-birth
-      dplyr::select(Patient,
-                    DOB, InternalID, RecordNo, TestName, ReportID,
-                    Reported, Checked, CheckedBy,
-                    Notation, Action, Actioned, Comment,
-                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
-      dplyr::collect() %>>%
-      dplyr::mutate(RecordNo = trimws(RecordNo),
-                    Reported = as.Date(Reported), Checked = as.Date(Checked),
-                    Actioned = as.Date(Actioned),
-                    AppointmentDate = as.Date(AppointmentDate),
-                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
-      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
-      dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
-                                        dplyr::case_when(!is.na(Reported) ~ Reported,
-                                                         !is.na(Checked) ~ Checked,
-                                                         TRUE ~ Sys.Date())))
+    if (dplyr::pull(dplyr::tally(self$investigations_filtered_appointment), n) > 0) {
+      # the strange incantation above counts the rows, without extracting the entire table
+      # initially rows = 0, which can causes a problem if attempting
+      # to join tables (without using copy = TRUE) from different sources
+      self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
+        dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
+        # need patients database to access date-of-birth
+        dplyr::select(Patient,
+                      DOB, InternalID, RecordNo, TestName, ReportID,
+                      Reported, Checked, CheckedBy,
+                      Notation, Action, Actioned, Comment,
+                      AppointmentDate, AppointmentTime, Provider, Status) %>>%
+        dplyr::collect() %>>%
+        dplyr::mutate(RecordNo = trimws(RecordNo),
+                      Reported = as.Date(Reported), Checked = as.Date(Checked),
+                      Actioned = as.Date(Actioned),
+                      AppointmentDate = as.Date(AppointmentDate),
+                      AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+        dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
+        dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
+                                          dplyr::case_when(!is.na(Reported) ~ Reported,
+                                                           !is.na(Checked) ~ Checked,
+                                                           TRUE ~ Sys.Date())))
+    }
   }
 
   return(self$investigations_filtered_named)
@@ -496,14 +508,12 @@ filter_investigations_named <- function(dMeasure_obj,
 .reactive_event("investigations_filtered_namedR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
-                      self$filter_incoming_ActionR(),
-                      self$filter_incoming_ActionedR()), {
-                        # update if reactive version of $date_a Rdate_b
-                        # or $clinicians are updated.
-                        self$filter_investigations_named(lazy = TRUE)
-                        # re-calculates the appointments
-                      })
+                    c(self$investigations_filtered_appointmentR()), {
+                      # update if reactive version of $date_a Rdate_b
+                      # or $clinicians are updated.
+                      self$filter_investigations_named(lazy = TRUE)
+                      # re-calculates the appointments
+                    })
                 ))
 
 
@@ -567,8 +577,9 @@ filter_correspondence <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  clinicians <- unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,
-                                           "UserID"], use.names = FALSE)
+  clinician_n <- c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,
+                                              "UserID"], use.names = FALSE),0)
+  # again, need to add zero to list because cannot search on empty list
 
   if (private$emr_db$is_open()) {
     # only if EMR database is open
@@ -578,7 +589,7 @@ filter_correspondence <- function(dMeasure_obj,
 
     correspondence <- private$db$correspondenceInRaw %>>%
       dplyr::filter(CHECKDATE >= date_from & CHECKDATE <= date_to) %>>%
-      dplyr::filter(CHECKEDBY %in% clinicians) %>>%
+      dplyr::filter(CHECKEDBY %in% clinician_n) %>>%
       dplyr::select(INTERNALID, DOCUMENTID,
                     CATEGORY, SUBJECT, DETAIL,
                     CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
@@ -588,7 +599,9 @@ filter_correspondence <- function(dMeasure_obj,
                     CorrespondenceDate = CORRESPONDENCEDATE,
                     CheckDate = CHECKDATE, ActionDate = ACTIONDATE,
                     Comment = COMMENT) %>>%
-      dplyr::mutate(Subject = trimws(Subject))
+      dplyr::mutate(Category = trimws(Category),
+                    Subject = trimws(Subject),
+                    Detail = trimws(Detail))
     # note leaves CHECKEDBY, NOTATION and ACTION in original names
     # as these values are in numeric (UserID etc.) rather than 'named'/string form
 
@@ -629,7 +642,7 @@ filter_correspondence <- function(dMeasure_obj,
 
   return(correspondence)
 })
-.reactive_event("correspondencce_filteredR",
+.reactive_event("correspondence_filteredR",
                 quote(
                   shiny::eventReactive(
                     c(self$date_aR(), self$date_bR(), self$cliniciansR(),
@@ -720,14 +733,19 @@ filter_correspondence_appointment <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_correspondence)
     }
 
-    self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
-      dplyr::left_join(private$db$appointments %>>%
-                         # only check against appointments after date_from
-                         dplyr::filter(AppointmentDate > date_from),
-                       by = "InternalID") %>>%
-      dplyr::filter(AppointmentDate > CheckDate) %>>%
-      dplyr::mutate(Status = trimws(Status))
-    # further filter against the 'checked' date for each correspondence
+    if (dplyr::pull(dplyr::tally(self$correspondence_filtered), n) > 0) {
+      # the strange incantation above counts the rows, without extracting the entire table
+      # initially rows = 0, which can causes a problem if attempting
+      # to join tables (without using copy = TRUE) from different sources
+      self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
+        dplyr::left_join(private$db$appointments %>>%
+                           # only check against appointments after date_from
+                           dplyr::filter(AppointmentDate > date_from),
+                         by = "InternalID") %>>%
+        dplyr::filter(AppointmentDate > CheckDate) %>>%
+        dplyr::mutate(Status = trimws(Status))
+      # further filter against the 'checked' date for each correspondence
+    }
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -737,14 +755,12 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 .reactive_event("correspondence_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
-                      self$filter_incoming_ActionR(),
-                      self$filter_incoming_ActionedR()), {
-                        # update if reactive version of $date_a Rdate_b
-                        # or $clinicians are updated.
-                        self$filter_correspondence_appointment()
-                        # re-calculates the appointments
-                      })
+                    c(self$correspondence_filteredR()), {
+                      # update if reactive version of $date_a Rdate_b
+                      # or $clinicians are updated.
+                      self$filter_correspondence_appointment(lazy = TRUE)
+                      # re-calculates the appointments
+                    })
                 ))
 
 #' List of correspondence, with patient names
@@ -820,43 +836,55 @@ filter_correspondence_named <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_correspondence_appointment)
     }
 
-    self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
-      # need patients database to access date-of-birth
-      dplyr::select(Patient,
-                    DOB, InternalID, RecordNo, DocumentID,
-                    Category, Subject, Detail,
-                    CorrespondenceDate, CheckDate, CHECKEDBY,
-                    NOTATION, ACTION, ActionDate, Comment,
-                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
-      dplyr::collect() %>>%
-      dplyr::mutate(RecordNo = trimws(RecordNo),
-                    DocumentName = paste(Category, Subject, Detail, collapse = ":"),
-                    CorrespondenceDate = as.Date(CorrespondenceDate),
-                    CheckDate = as.Date(CheckDate),
-                    ActionDate = as.Date(ActionDate),
-                    AppointmentDate = as.Date(AppointmentDate),
-                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
-      dplyr::select(-c(Category, Subject, Detail)) %>>%
-      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
-                    Age = self$calc_age(DOB, # try several different dates for 'age'
-                                        dplyr::case_when(
-                                          !is.na(CorrespondenceDate) ~ CorrespondenceDate,
-                                          !is.na(CheckDate) ~ CheckDate,
-                                          TRUE ~ Sys.Date()))) %>>%
-      dplyr::mutate(CheckedBy = self$UserFullConfig$Fullname[CHECKEDBY]) %>>%
-      dplyr::mutate(Notation = c("Normal", "Abnormal", "Stable",
-                                 "Acceptable", "Unacceptable", "Being treated",
-                                 "Under specialist care", "")
-                    [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
-                    # this strange if_else is to deal with 'empty' NOTATION
-                    Action = c("No action", "Reception to advise",
-                               "Nurse to advise", "Doctor to advise",
-                               "Send routine reminder", "Non-urgent appointment",
-                               "Urgent appointment", "")
-                    # this strange if_else is to deal with 'empty' ACTION
-                    [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]) %>>%
-      dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
+    if (dplyr::pull(dplyr::tally(self$correspondence_filtered_appointment), n) > 0) {
+      # the strange incantation above counts the rows, without extracting the entire table
+      # initially rows = 0, which can causes a problem if attempting
+      # to join tables (without using copy = TRUE) from different sources
+      n_UserNames <- length(c(self$UserFullConfig$Fullname))
+      # needed later for changing CHECKEDBY to a user name
+
+      self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
+        dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
+        # need patients database to access date-of-birth
+        dplyr::select(Patient,
+                      DOB, InternalID, RecordNo, DocumentID,
+                      Category, Subject, Detail,
+                      CorrespondenceDate, CheckDate, CHECKEDBY,
+                      NOTATION, ACTION, ActionDate, Comment,
+                      AppointmentDate, AppointmentTime, Provider, Status) %>>%
+        dplyr::collect() %>>%
+        dplyr::mutate(RecordNo = trimws(RecordNo),
+                      DocumentName = paste(Category, Subject, Detail, sep = ":"),
+                      CorrespondenceDate = as.Date(CorrespondenceDate),
+                      CheckDate = as.Date(CheckDate),
+                      ActionDate = as.Date(ActionDate),
+                      AppointmentDate = as.Date(AppointmentDate),
+                      AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+        dplyr::select(-c(Category, Subject, Detail)) %>>%
+        dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
+                      Age = self$calc_age(DOB, # try several different dates for 'age'
+                                          dplyr::case_when(
+                                            !is.na(CorrespondenceDate) ~ CorrespondenceDate,
+                                            !is.na(CheckDate) ~ CheckDate,
+                                            TRUE ~ Sys.Date()))) %>>%
+        dplyr::mutate(CheckedBy = c(self$UserFullConfig$Fullname, "")
+                      [dplyr::if_else(CHECKEDBY == 0,
+                                      as.integer(n_UserNames + 1),
+                                      CHECKEDBY)],
+                      # this strange incantation is to deal with '0' CHECKEDBY
+                      Notation = c("Normal", "Abnormal", "Stable",
+                                   "Acceptable", "Unacceptable", "Being treated",
+                                   "Under specialist care", "")
+                      [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
+                      # this strange if_else is to deal with 'empty' NOTATION
+                      Action = c("No action", "Reception to advise",
+                                 "Nurse to advise", "Doctor to advise",
+                                 "Send routine reminder", "Non-urgent appointment",
+                                 "Urgent appointment", "")
+                      # this strange if_else is to deal with 'empty' ACTION
+                      [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]) %>>%
+        dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
+    }
   }
 
   return(self$correspondence_filtered_named)
@@ -864,14 +892,12 @@ filter_correspondence_named <- function(dMeasure_obj,
 .reactive_event("correspondence_filtered_namedR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
-                      self$filter_incoming_ActionR(),
-                      self$filter_incoming_ActionedR()), {
-                        # update if reactive version of $date_a Rdate_b
-                        # or $clinicians are updated.
-                        self$filter_correspondence_named(lazy = TRUE)
-                        # re-calculates the appointments
-                      })
+                    c(self$correspondence_filtered_appointmentR()), {
+                      # update if reactive version of $date_a Rdate_b
+                      # or $clinicians are updated.
+                      self$filter_correspondence_named(lazy = TRUE)
+                      # re-calculates the appointments
+                    })
                 ))
 
 
@@ -960,14 +986,16 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                                                     origin = "1970-01-01"),
                          AppointmentTime = character(),
                          Provider = character(),
-                         Status = character())
+                         Status = character(),
+                         PastAppointment = logical(),
+                         stringsAsFactors = FALSE)
 
 
   if (screentag) {
-    incoming <- cbind(incoming, data.frame(viewtag = character()))
+    incoming <- cbind(incoming, data.frame(labeltag = character()))
   }
   if (screentag_print) {
-    incoming <- cbind(incoming, data.frame(viewtag_print = character()))
+    incoming <- cbind(incoming, data.frame(labeltag_print = character()))
   }
 
   if (!private$emr_db$is_open()) {
@@ -1037,9 +1065,9 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                       PastAppointment) %>>%
       # group appointments by the investigation report or Document
       # gathers appointments referring to the same report/correspondence into a single row
-      {if (screentag) {dplyr::summarise(., tag = paste(viewtag, collapse = ""))}
+      {if (screentag) {dplyr::summarise(., labeltag = paste(viewtag, collapse = ""))}
         else {.}} %>>%
-      {if (screentag_print) {dplyr::summarise(., tag_print =
+      {if (screentag_print) {dplyr::summarise(., labeltag_print =
                                                 paste(viewtag_print, collapse = ", "))}
         else {.}} %>>%
       dplyr::ungroup()

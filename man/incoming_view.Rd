@@ -5,7 +5,7 @@
 \title{incoming (investigations and correspondence) view}
 \usage{
 incoming_view(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, actions = NA, actioned = NA, lazy = FALSE,
+  clinicians = NA, Action = NA, Actioned = NA, lazy = FALSE,
   screentag = FALSE, screentag_print = TRUE)
 }
 \arguments{
