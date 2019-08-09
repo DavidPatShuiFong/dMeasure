@@ -376,19 +376,14 @@ filter_investigations_appointment <- function(dMeasure_obj,
       # if not 'lazy' evaluation, then re-calculate self$investigations_filtered
       # (that is automatically done by calling the $filter_investigations)
     }
-    if (dplyr::pull(dplyr::tally(self$investigations_filtered), n) > 0) {
-      # the strange incantation above counts the rows, without extracting the entire table
-      # initially rows = 0, which can causes a problem if attempting
-      # to join tables (without using copy = TRUE) from different sources
-      self$investigations_filtered_appointment <- self$investigations_filtered %>>%
-        dplyr::left_join(private$db$appointments %>>%
-                           # only check against appointments after date_from
-                           dplyr::filter(AppointmentDate > date_from),
-                         by = "InternalID") %>>%
-        dplyr::filter(AppointmentDate > Checked) %>>%
-        dplyr::mutate(Status = trimws(Status))
-      # further filter against the 'checked' date for each investigation
-    }
+    self$investigations_filtered_appointment <- self$investigations_filtered %>>%
+      dplyr::left_join(private$db$appointments %>>%
+                         # only check against appointments after date_from
+                         dplyr::filter(AppointmentDate > date_from),
+                       by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(AppointmentDate > Checked) %>>%
+      dplyr::mutate(Status = trimws(Status))
+
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
 
@@ -477,30 +472,26 @@ filter_investigations_named <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_investigations_appointment)
     }
 
-    if (dplyr::pull(dplyr::tally(self$investigations_filtered_appointment), n) > 0) {
-      # the strange incantation above counts the rows, without extracting the entire table
-      # initially rows = 0, which can causes a problem if attempting
-      # to join tables (without using copy = TRUE) from different sources
-      self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
-        dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
-        # need patients database to access date-of-birth
-        dplyr::select(Patient,
-                      DOB, InternalID, RecordNo, TestName, ReportID,
-                      Reported, Checked, CheckedBy,
-                      Notation, Action, Actioned, Comment,
-                      AppointmentDate, AppointmentTime, Provider, Status) %>>%
-        dplyr::collect() %>>%
-        dplyr::mutate(RecordNo = trimws(RecordNo),
-                      Reported = as.Date(Reported), Checked = as.Date(Checked),
-                      Actioned = as.Date(Actioned),
-                      AppointmentDate = as.Date(AppointmentDate),
-                      AppointmentTime = self$hrmin(AppointmentTime)) %>>%
-        dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
-        dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
-                                          dplyr::case_when(!is.na(Reported) ~ Reported,
-                                                           !is.na(Checked) ~ Checked,
-                                                           TRUE ~ Sys.Date())))
-    }
+    self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
+      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      # need patients database to access date-of-birth
+      dplyr::select(Patient,
+                    DOB, InternalID, RecordNo, TestName, ReportID,
+                    Reported, Checked, CheckedBy,
+                    Notation, Action, Actioned, Comment,
+                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(RecordNo = trimws(RecordNo),
+                    Reported = as.Date(Reported), Checked = as.Date(Checked),
+                    Actioned = as.Date(Actioned),
+                    AppointmentDate = as.Date(AppointmentDate),
+                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
+      dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
+                                        dplyr::case_when(!is.na(Reported) ~ Reported,
+                                                         !is.na(Checked) ~ Checked,
+                                                         TRUE ~ Sys.Date())))
+
   }
 
   return(self$investigations_filtered_named)
@@ -733,19 +724,14 @@ filter_correspondence_appointment <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_correspondence)
     }
 
-    if (dplyr::pull(dplyr::tally(self$correspondence_filtered), n) > 0) {
-      # the strange incantation above counts the rows, without extracting the entire table
-      # initially rows = 0, which can causes a problem if attempting
-      # to join tables (without using copy = TRUE) from different sources
-      self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
-        dplyr::left_join(private$db$appointments %>>%
-                           # only check against appointments after date_from
-                           dplyr::filter(AppointmentDate > date_from),
-                         by = "InternalID") %>>%
-        dplyr::filter(AppointmentDate > CheckDate) %>>%
-        dplyr::mutate(Status = trimws(Status))
-      # further filter against the 'checked' date for each correspondence
-    }
+    self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
+      dplyr::left_join(private$db$appointments %>>%
+                         # only check against appointments after date_from
+                         dplyr::filter(AppointmentDate > date_from),
+                       by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(AppointmentDate > CheckDate) %>>%
+      dplyr::mutate(Status = trimws(Status))
+    # further filter against the 'checked' date for each correspondence
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -836,55 +822,54 @@ filter_correspondence_named <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_correspondence_appointment)
     }
 
-    if (dplyr::pull(dplyr::tally(self$correspondence_filtered_appointment), n) > 0) {
-      # the strange incantation above counts the rows, without extracting the entire table
-      # initially rows = 0, which can causes a problem if attempting
-      # to join tables (without using copy = TRUE) from different sources
-      n_UserNames <- length(c(self$UserFullConfig$Fullname))
-      # needed later for changing CHECKEDBY to a user name
+    n_UserNames <- length(c(self$UserFullConfig$Fullname))
+    # needed later for changing CHECKEDBY to a user name
 
-      self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
-        dplyr::left_join(private$db$patients, by = 'InternalID') %>>%
-        # need patients database to access date-of-birth
-        dplyr::select(Patient,
-                      DOB, InternalID, RecordNo, DocumentID,
-                      Category, Subject, Detail,
-                      CorrespondenceDate, CheckDate, CHECKEDBY,
-                      NOTATION, ACTION, ActionDate, Comment,
-                      AppointmentDate, AppointmentTime, Provider, Status) %>>%
-        dplyr::collect() %>>%
-        dplyr::mutate(RecordNo = trimws(RecordNo),
-                      DocumentName = paste(Category, Subject, Detail, sep = ":"),
-                      CorrespondenceDate = as.Date(CorrespondenceDate),
-                      CheckDate = as.Date(CheckDate),
-                      ActionDate = as.Date(ActionDate),
-                      AppointmentDate = as.Date(AppointmentDate),
-                      AppointmentTime = self$hrmin(AppointmentTime)) %>>%
-        dplyr::select(-c(Category, Subject, Detail)) %>>%
-        dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
-                      Age = self$calc_age(DOB, # try several different dates for 'age'
-                                          dplyr::case_when(
-                                            !is.na(CorrespondenceDate) ~ CorrespondenceDate,
-                                            !is.na(CheckDate) ~ CheckDate,
-                                            TRUE ~ Sys.Date()))) %>>%
-        dplyr::mutate(CheckedBy = c(self$UserFullConfig$Fullname, "")
-                      [dplyr::if_else(CHECKEDBY == 0,
-                                      as.integer(n_UserNames + 1),
-                                      CHECKEDBY)],
-                      # this strange incantation is to deal with '0' CHECKEDBY
-                      Notation = c("Normal", "Abnormal", "Stable",
-                                   "Acceptable", "Unacceptable", "Being treated",
-                                   "Under specialist care", "")
-                      [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
-                      # this strange if_else is to deal with 'empty' NOTATION
-                      Action = c("No action", "Reception to advise",
-                                 "Nurse to advise", "Doctor to advise",
-                                 "Send routine reminder", "Non-urgent appointment",
-                                 "Urgent appointment", "")
-                      # this strange if_else is to deal with 'empty' ACTION
-                      [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]) %>>%
-        dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
-    }
+    self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
+      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      # need patients database to access date-of-birth
+      dplyr::select(Patient,
+                    DOB, InternalID, RecordNo, DocumentID,
+                    Category, Subject, Detail,
+                    CorrespondenceDate, CheckDate, CHECKEDBY,
+                    NOTATION, ACTION, ActionDate, Comment,
+                    AppointmentDate, AppointmentTime, Provider, Status) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(RecordNo = trimws(RecordNo),
+                    DocumentName = paste(dplyr::if_else(is.na(Category), "", Category),
+                                         dplyr::if_else(is.na(Subject), "", Subject),
+                                         dplyr::if_else(is.na(Detail), "", Detail),
+                                         sep = ":"),
+                    CorrespondenceDate = as.Date(CorrespondenceDate),
+                    CheckDate = as.Date(CheckDate),
+                    ActionDate = as.Date(ActionDate),
+                    AppointmentDate = as.Date(AppointmentDate),
+                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+      dplyr::select(-c(Category, Subject, Detail)) %>>%
+      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
+                    Age = self$calc_age(DOB, # try several different dates for 'age'
+                                        dplyr::case_when(
+                                          !is.na(CorrespondenceDate) ~ CorrespondenceDate,
+                                          !is.na(CheckDate) ~ CheckDate,
+                                          TRUE ~ Sys.Date()))) %>>%
+      dplyr::mutate(CheckedBy = c(self$UserFullConfig$Fullname, "")
+                    [dplyr::if_else(CHECKEDBY == 0,
+                                    as.integer(n_UserNames + 1),
+                                    CHECKEDBY)],
+                    # this strange incantation is to deal with '0' CHECKEDBY
+                    Notation = c("Normal", "Abnormal", "Stable",
+                                 "Acceptable", "Unacceptable", "Being treated",
+                                 "Under specialist care", "")
+                    [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
+                    # this strange if_else is to deal with 'empty' NOTATION
+                    Action = c("No action", "Reception to advise",
+                               "Nurse to advise", "Doctor to advise",
+                               "Send routine reminder", "Non-urgent appointment",
+                               "Urgent appointment", "")
+                    # this strange if_else is to deal with 'empty' ACTION
+                    [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]) %>>%
+      dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
+
   }
 
   return(self$correspondence_filtered_named)
@@ -1034,18 +1019,39 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
     if (screentag) {
       incoming <- incoming %>>%
         dplyr::mutate(viewtag =
-                        semantic_tag(AppointmentDate, # semantic/fomantic buttons
-                                     colour =
-                                       dplyr::if_else(PastAppointment,
-                                                      'yellow',
-                                                      'green'),
-                                     popuphtml =
-                                       paste0("<h4>Date : ", AppointmentDate,
-                                              " : ", AppointmentTime,
-                                              "</h4><h6>Provider : ", Provider,
-                                              "</h6><p><font size=\'+0\'>Status : ",
-                                              Status, "</p>")))
-
+                        semantic_button(AppointmentDate, # semantic/fomantic buttons
+                                        colour =
+                                          dplyr::if_else(PastAppointment,
+                                                         'yellow',
+                                                         'green'),
+                                        popuphtml =
+                                          paste0("<h4>Date : ", AppointmentDate,
+                                                 ", ", AppointmentTime,
+                                                 "</h4><h6>Provider : ", Provider,
+                                                 "</h6><p><font size=\'+0\'>Status : ",
+                                                 Status, "</p>")),
+                      patienttag =
+                        semantic_button(Patient,
+                                        colour = 'teal',
+                                        popuphtml =
+                                          paste0("<p><font size = \'+0\'>DOB : ",
+                                                 DOB,"</p>",
+                                                 "<p>Age : ", Age, "</p>")),
+                      testtag =
+                        semantic_button(TestName,
+                                        colour = 'purple',
+                                        popuphtml =
+                                          paste0("<p><font size = \'+0\'>Reported : ",
+                                                 Reported, "</p"))) %>>%
+        dplyr::group_by(patienttag, InternalID, RecordNo,
+                        testtag, ReportID, DocumentID,
+                        Checked, Actioned,
+                        CheckedBy, Notation, Comment, Action,
+                        PastAppointment) %>>%
+        # group appointments by the investigation report or Document
+        # gathers appointments referring to the same report/correspondence into a single row
+        dplyr::summarise(labeltag = paste(viewtag, collapse = "")) %>>%
+        dplyr::ungroup()
     }
 
     if (screentag_print) {
@@ -1054,23 +1060,18 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                                                            "Past : ",
                                                            ""),
                                             AppointmentDetail,
-                                            sep = ""))
+                                            sep = "")) %>>%
+        dplyr::group_by(Patient, InternalID, RecordNo, DOB, Age,
+                        TestName, ReportID, DocumentID,
+                        Reported, Checked, Actioned,
+                        CheckedBy, Notation, Comment, Action,
+                        PastAppointment) %>>%
+        # group appointments by the investigation report or Document
+        # gathers appointments referring to the same report/correspondence into a single row
+        dplyr::summarise(labeltag_print =
+                           paste(viewtag_print, collapse = ", ")) %>>%
+        dplyr::ungroup()
     }
-
-    incoming <- incoming %>>%
-      dplyr::group_by(Patient, InternalID, RecordNo, DOB, Age,
-                      TestName, ReportID, DocumentID,
-                      Reported, Checked, Actioned,
-                      CheckedBy, Notation, Comment, Action,
-                      PastAppointment) %>>%
-      # group appointments by the investigation report or Document
-      # gathers appointments referring to the same report/correspondence into a single row
-      {if (screentag) {dplyr::summarise(., labeltag = paste(viewtag, collapse = ""))}
-        else {.}} %>>%
-      {if (screentag_print) {dplyr::summarise(., labeltag_print =
-                                                paste(viewtag_print, collapse = ", "))}
-        else {.}} %>>%
-      dplyr::ungroup()
   }
 
   incoming <- dplyr::select(incoming,
