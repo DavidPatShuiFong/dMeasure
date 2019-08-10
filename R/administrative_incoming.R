@@ -382,7 +382,8 @@ filter_investigations_appointment <- function(dMeasure_obj,
                          dplyr::filter(AppointmentDate > date_from),
                        by = "InternalID", copy = TRUE) %>>%
       dplyr::filter(AppointmentDate > Checked) %>>%
-      dplyr::mutate(Status = trimws(Status))
+      dplyr::mutate(Status = trimws(Status),
+                    TestName = trimws(TestName))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -836,9 +837,15 @@ filter_correspondence_named <- function(dMeasure_obj,
                     AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
       dplyr::mutate(RecordNo = trimws(RecordNo),
-                    DocumentName = paste(dplyr::if_else(is.na(Category), "", Category),
-                                         dplyr::if_else(is.na(Subject), "", Subject),
-                                         dplyr::if_else(is.na(Detail), "", Detail),
+                    DocumentName = paste(dplyr::if_else(is.na(Category),
+                                                        "",
+                                                        trimws(Category)),
+                                         dplyr::if_else(is.na(Subject),
+                                                        "",
+                                                        trimws(Subject)),
+                                         dplyr::if_else(is.na(Detail),
+                                                        "",
+                                                        trimws(Detail)),
                                          sep = ":"),
                     CorrespondenceDate = as.Date(CorrespondenceDate),
                     CheckDate = as.Date(CheckDate),
