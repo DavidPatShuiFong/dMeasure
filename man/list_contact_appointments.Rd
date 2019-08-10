@@ -18,7 +18,8 @@ list_contact_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 
 \item{status=NA}{filter by 'status' if not NA
 permissible values are 'Booked', 'Completed', 'At billing',
-'Waiting', 'With doctor'}
+'Waiting', 'With doctor'
+if NA, adopts from active $appointment_status}
 
 \item{lazy=FALSE}{if TRUE, then re-calculate $appointments_list}
 }

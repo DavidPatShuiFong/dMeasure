@@ -19,9 +19,14 @@ NULL
                                                           origin = "1970-01-01")))
 .public("contact_visits_list", data.frame(Patient = character(),
                                           InternalID = integer(),
-                                          Visit =
+                                          VisitDate =
                                             as.Date(integer(0),
                                                     origin = "1970-01-01")))
+.public("contact_services_list", data.frame(Patient = character(),
+                                            InternalID = integer(),
+                                            ServiceDate =
+                                              as.Date(integer(0),
+                                                      origin = "1970-01-01")))
 # filtered by chosen dates and clinicians
 .public("contact_count_list", data.frame(Patient = character(),
                                          InternalID = integer(),
@@ -148,7 +153,7 @@ visit_types <- c("Surgery", "Home", "Non Visit", "Hospital", "RACF", "Telephone"
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
 #' @param visit_types=NA filter by 'visit_type' if not NA
-#'  permissible values are "Home", "Non Visit", "Hospital", "RACF",
+#'  permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",
 #'  "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 #'  "Other", "Hostel", "Telehealth"
 #'  if NA, adopts value from active $visit_type
@@ -223,6 +228,89 @@ list_contact_visits <- function(dMeasure_obj,
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$list_contact_visits()
+                        # re-calculates the appointments
+                      })
+                ))
+
+
+#' List of contacts (service type)
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_to=dMeasure_obj$date_b end date (inclusive)
+#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#'
+#' @return dataframe of Patient (name), InternalID, ServiceDate
+list_contact_services <- function(dMeasure_obj,
+                                  date_from = NA,
+                                  date_to = NA,
+                                  clinicians = NA) {
+  dMeasure_obj$list_contact_services(date_from, date_to, clinicians)
+}
+
+.public("list_contact_services", function(date_from = NA,
+                                          date_to = NA,
+                                          clinicians = NA) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  clinicians <-
+    c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,"UserID"],
+             use.names = FALSE), -1) # change to UserID, again minimum length 1
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "contact_services",
+      data = list(date_from, date_to, clinicians))}
+
+    self$contact_services_list <- private$db$servicesRaw %>>%
+      dplyr::filter(ServiceDate >= date_from & ServiceDate <= date_to) %>>%
+      dplyr::left_join(private$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
+      dplyr::filter(UserID %in% clinicians) %>>% # not just doctors!
+      dplyr::group_by(InternalID, ServiceDate) %>>%
+      dplyr::summarise() %>>% # plucks out unique service dates
+      dplyr::ungroup() %>>%
+      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      dplyr::select(Firstname, Surname, InternalID, ServiceDate) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
+                    ServiceDate = as.Date(ServiceDate)) %>>%
+      dplyr::select(Patient, InternalID, ServiceDate)
+
+    if (self$Log)
+    {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$contact_services_list)
+})
+.reactive_event("contact_services_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$date_aR(), self$date_bR(),
+                      self$cliniciansR(), self$visit_typeR()), {
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$list_contact_services()
                         # re-calculates the appointments
                       })
                 ))
