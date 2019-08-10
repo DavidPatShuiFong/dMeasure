@@ -148,6 +148,9 @@ NULL
 .private(".filter_incoming_Actioned", NULL)
 # the default value of 'Actioned' for method $filter_investigations
 # can be NULL, a logical (TRUE/FALSE), or a Date
+.private(".filter_incoming_ignorePast", FALSE)
+# the default value of 'ignorePast' for method $filter_investigations
+# can be a logical (TRUE/FALSE)
 
 .active("filter_incoming_Action", function(value) {
   if (missing(value)) {
@@ -181,6 +184,22 @@ NULL
   }
 })
 .reactive("filter_incoming_ActionedR", quote(NULL))
+
+.active("filter_incoming_ignorePast", function(value) {
+  if (missing(value)) {
+    return(private$.filter_incoming_ignorePast)
+  }
+  if (is.logical(value)) {
+    # accepts TRUE/FALSE
+    # accepts Date type
+    private$.filter_incoming_ignorePast <- value
+    private$set_reactive(self$filter_incoming_ignorePastR, value)
+  } else {
+    warning(paste("filter_incoming_ignorePast can only be",
+                  "a logical (TRUE/FALSE)."))
+  }
+})
+.reactive("filter_incoming_ignorePastR", quote(FALSE))
 
 #' List of investigations
 #'
@@ -317,6 +336,8 @@ filter_investigations <- function(dMeasure_obj,
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#'  if NA, adopts $filter_incoming_ignorePast
 #' @param lazy=FALSE if TRUE, don't 'call' filter_investigations
 #'  to re-calculate
 #'
@@ -327,15 +348,18 @@ filter_investigations_appointment <- function(dMeasure_obj,
                                               clinicians = NA,
                                               Action = NA,
                                               Actioned = NA,
+                                              ignorePast = NA,
                                               lazy = FALSE) {
   dMeasure_obj$filter_investigations_appointment(date_from, date_to, clinicians,
-                                                 Action, Actioned)
+                                                 Action, Actioned, ignorePast,
+                                                 lazy)
 }
 .public("filter_investigations_appointment", function(date_from = NA,
                                                       date_to = NA,
                                                       clinicians = NA,
                                                       Action = NA,
                                                       Actioned = NA,
+                                                      ignorePast = NA,
                                                       lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -357,6 +381,9 @@ filter_investigations_appointment <- function(dMeasure_obj,
   if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
   }
+  if (is.na(ignorePast)) {
+    ignorePast <- self$filter_incoming_ignorePast
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -376,10 +403,15 @@ filter_investigations_appointment <- function(dMeasure_obj,
       # if not 'lazy' evaluation, then re-calculate self$investigations_filtered
       # (that is automatically done by calling the $filter_investigations)
     }
+    today <- Sys.Date() # later used if ignorePast is true
+
     self$investigations_filtered_appointment <- self$investigations_filtered %>>%
       dplyr::left_join(private$db$appointments %>>%
                          # only check against appointments after date_from
-                         dplyr::filter(AppointmentDate > date_from),
+                         dplyr::filter(AppointmentDate > date_from) %>>%
+                         {if (ignorePast) # ignore appointments before 'today'?
+                           dplyr::filter(., AppointmentDate >= today)
+                           else .},
                        by = "InternalID", copy = TRUE) %>>%
       dplyr::filter(AppointmentDate > Checked) %>>%
       dplyr::mutate(Status = trimws(Status),
@@ -393,7 +425,8 @@ filter_investigations_appointment <- function(dMeasure_obj,
 .reactive_event("investigations_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
-                    self$investigations_filteredR(), {
+                    c(self$investigations_filteredR(),
+                      self$filter_incoming_ignorePastR()), {
                       # update if reactive version of $date_a Rdate_b
                       # or $clinicians are updated.
                       self$filter_investigations_appointment()
@@ -419,6 +452,10 @@ filter_investigations_appointment <- function(dMeasure_obj,
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#'  if NA, adopts $filter_incoming_ignorePast
+#' @param lazy=FALSE only re-calculate $invesigations_filtered_appointment
+#'  if lazy is TRUE
 #'
 #' @return list of investigations
 filter_investigations_named <- function(dMeasure_obj,
@@ -427,15 +464,17 @@ filter_investigations_named <- function(dMeasure_obj,
                                         clinicians = NA,
                                         Action = NA,
                                         Actioned = NA,
+                                        ignorePast = NA,
                                         lazy = FALSE) {
   dMeasure_obj$filter_investigations_named(date_from, date_to, clinicians,
-                                           Action, Actioned, lazy)
+                                           Action, Actioned, ignorePast, lazy)
 }
 .public("filter_investigations_named", function(date_from = NA,
                                                 date_to = NA,
                                                 clinicians = NA,
                                                 Action = NA,
                                                 Actioned = NA,
+                                                ignorePast = NA,
                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -456,6 +495,9 @@ filter_investigations_named <- function(dMeasure_obj,
   if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
   }
+  if (is.na(ignorePast)) {
+    ignorePast <- self$filter_incoming_ignorePast
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -468,7 +510,8 @@ filter_investigations_named <- function(dMeasure_obj,
 
     if (!lazy) {
       self$filter_investigations_appointment(date_from, date_to, clinicians,
-                                             Action, Actioned, lazy)
+                                             Action, Actioned, ignorePast,
+                                             lazy)
       # if not 'lazy' evaluation, then re-calculate $investigations_filtered_appointment
       # (that is automatically done by calling the $filter_investigations_appointment)
     }
@@ -665,6 +708,8 @@ filter_correspondence <- function(dMeasure_obj,
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#'  if NA, will adopts value of $filter_incoming_ignorePast
 #' @param lazy=FALSE if TRUE, don't 'call' filter_correspondence
 #'  to re-calculate
 #'
@@ -675,15 +720,18 @@ filter_correspondence_appointment <- function(dMeasure_obj,
                                               clinicians = NA,
                                               Action = NA,
                                               Actioned = NA,
+                                              ignorePast = NA,
                                               lazy = FALSE) {
   dMeasure_obj$filter_correspondence_appointment(date_from, date_to, clinicians,
-                                                 Action, Actioned)
+                                                 Action, Actioned, ignorePast,
+                                                 lazy)
 }
 .public("filter_correspondence_appointment", function(date_from = NA,
                                                       date_to = NA,
                                                       clinicians = NA,
                                                       Action = NA,
                                                       Actioned = NA,
+                                                      ignorePast = NA,
                                                       lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -705,6 +753,9 @@ filter_correspondence_appointment <- function(dMeasure_obj,
   if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
   }
+  if (is.na(ignorePast)) {
+    ignorePast <- self$filter_incoming_ignorePast
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -725,10 +776,15 @@ filter_correspondence_appointment <- function(dMeasure_obj,
       # (that is automatically done by calling the $filter_correspondence)
     }
 
+    today <- Sys.Date() # required if ignorePast is TRUE
+
     self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
       dplyr::left_join(private$db$appointments %>>%
                          # only check against appointments after date_from
-                         dplyr::filter(AppointmentDate > date_from),
+                         dplyr::filter(AppointmentDate > date_from) %>>%
+                         {if (ignorePast) # ignore appointments before 'today'?
+                           dplyr::filter(., AppointmentDate >= today)
+                           else .},
                        by = "InternalID", copy = TRUE) %>>%
       dplyr::filter(AppointmentDate > CheckDate) %>>%
       dplyr::mutate(Status = trimws(Status))
@@ -742,11 +798,15 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 .reactive_event("correspondence_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
-                    c(self$correspondence_filteredR()), {
+                    c(self$correspondence_filteredR(),
+                      self$filter_incoming_ignorePastR()), {
                       # update if reactive version of $date_a Rdate_b
                       # or $clinicians are updated.
-                      self$filter_correspondence_appointment(lazy = TRUE)
-                      # re-calculates the appointments
+                      self$filter_correspondence_appointment(
+                        lazy = TRUE,
+                        ignorePast =
+                          self$filter_incoming_ignorePastR())
+                        # re-calculates the appointments
                     })
                 ))
 
@@ -769,6 +829,10 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#'  if NA, will adopt the value of $filter_incoming_ignorePast
+#' @param lazy=FALSE if TRUE, don't 'call' filter_correspondence_appointment
+#'  to re-calculate
 #'
 #' @return list of correspondence
 filter_correspondence_named <- function(dMeasure_obj,
@@ -777,15 +841,17 @@ filter_correspondence_named <- function(dMeasure_obj,
                                         clinicians = NA,
                                         Action = NA,
                                         Actioned = NA,
+                                        ignorePast = NA,
                                         lazy = FALSE) {
   dMeasure_obj$filter_correspondence_named(date_from, date_to, clinicians,
-                                           Action, Actioned, lazy)
+                                           Action, Actioned, ignorePast, lazy)
 }
 .public("filter_correspondence_named", function(date_from = NA,
                                                 date_to = NA,
                                                 clinicians = NA,
                                                 Action = NA,
                                                 Actioned = NA,
+                                                ignorePast = NA,
                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -818,7 +884,7 @@ filter_correspondence_named <- function(dMeasure_obj,
 
     if (!lazy) {
       self$filter_correspondence_appointment(date_from, date_to, clinicians,
-                                             Action, Actioned, lazy)
+                                             Action, Actioned, ignorePast, lazy)
       # if not 'lazy' evaluation, then re-calculate $correspondence_filtered_appointment
       # (that is automatically done by calling the $filter_correspondence_appointment)
     }
@@ -910,6 +976,8 @@ filter_correspondence_named <- function(dMeasure_obj,
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
+#' @param ignorePast=NA ignore appointments before current Sys.Date() date?
+#'  retrieves from $filter_incoming_ignorePast if NA
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
 #' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
 #' @param screentag_print=TRUE optionally add a 'printable' description of 'action'
@@ -919,15 +987,19 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                           clinicians = NA,
                           Action = NA,
                           Actioned = NA,
+                          ignorePast = NA,
                           lazy = FALSE,
                           screentag = FALSE, screentag_print = TRUE) {
   dMeasure_obj$view_incoming(date_from, date_to, clinicians,
-                             Action, Actioned, lazy, screentag, screentag_print)
+                             Action, Actioned, ingorePast,
+                             lazy,
+                             screentag, screentag_print)
 }
 .public("view_incoming", function (date_from = NA, date_to = NA,
                                    clinicians = NA,
                                    Action = NA,
                                    Actioned = NA,
+                                   ignorePast = NA,
                                    lazy = FALSE,
                                    screentag = FALSE, screentag_print = TRUE) {
 
@@ -952,6 +1024,9 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
   }
   if (!is.null(Actioned) && is.na(Actioned)) {
     Actioned <- self$filter_incoming_Actioned
+  }
+  if (is.na(ignorePast)) {
+    ignorePast <- self$filter_incoming_ignorePast
   }
 
   # create empty table
@@ -999,9 +1074,11 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
     if (!lazy) {
       self$filter_investigations_named(date_from, date_to,
                                        clinicians, Action, Actioned,
+                                       ignorePast,
                                        lazy = FALSE)
       self$filter_correspondence_named(date_from, date_to,
                                        clinicians, Action, Actioned,
+                                       ignorePast,
                                        lazy = FALSE)
       # if not 'lazy' evaluation, then re-calculate
       # $correspondence_filtered_named and $investigations$filtered_named

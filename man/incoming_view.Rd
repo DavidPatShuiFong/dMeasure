@@ -5,8 +5,8 @@
 \title{incoming (investigations and correspondence) view}
 \usage{
 incoming_view(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, Action = NA, Actioned = NA, lazy = FALSE,
-  screentag = FALSE, screentag_print = TRUE)
+  clinicians = NA, Action = NA, Actioned = NA, ignorePast = NA,
+  lazy = FALSE, screentag = FALSE, screentag_print = TRUE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -28,6 +28,9 @@ if NA, will adopt the value of $filter_incoming_Action}
 can be logical (TRUE or FALSE), a NULL
 or a Date (actioned prior to or by 'Actioned' Date)
 if NA, will adopt the value of $filter_incoming_Actioned}
+
+\item{ignorePast=NA}{ignore appointments before current Sys.Date() date?
+retrieves from $filter_incoming_ignorePast if NA}
 
 \item{screentag=FALSE}{optionally add a fomantic/semantic HTML description of 'action'}
 

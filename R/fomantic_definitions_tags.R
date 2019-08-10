@@ -15,7 +15,13 @@ semantic_tag <- function(tag, colour="", popuptext = NA, popuphtml = NA) {
   #
   paste0('<span class="huge ', colour, ' ui tag label"',
          ifelse(!is.na(popuphtml),
-                paste0('data-variation="wide" data-position = "left center" data-html="',
+                paste0('data-variation="wide" data-position = "left center"',
+                       'data-htmltagX="', # this is a 'dummy' attribute
+                       # to help datatables order this column alphabetically!
+                       tag, # will order this column alphabetically by 'tag'
+                       '"',
+
+                'data-html="',
                        popuphtml,
                        '"', sep=""),
                 # 'data-variation' is only available in the
@@ -48,7 +54,12 @@ semantic_tag <- function(tag, colour="", popuptext = NA, popuphtml = NA) {
 semantic_button <- function(button, colour="", popuptext = NA, popuphtml = NA) {
   paste0('<span class="huge ', colour, ' ui button"',
          ifelse(!is.na(popuphtml),
-                paste0('data-variation="wide" data-position = "left center" data-html="',
+                paste0('data-variation="wide" data-position = "left center"',
+                       'data-htmltagX="', # this is a 'dummy' attribute
+                       # to help datatables order this column alphabetically!
+                       button, # will order this column alphabetically by 'button'
+                       '"',
+                       'data-html="',
                        popuphtml,
                        '"', sep=""),
                 # 'data-variation' is only available
