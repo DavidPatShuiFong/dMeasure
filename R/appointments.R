@@ -96,6 +96,7 @@ filter_appointments <- function(dMeasure_obj,
     if (self$Log) {log_id <- private$config_db$write_log_db(
       query = "filter_appointments",
       data = list(date_from, date_to, clinicians))}
+
     self$appointments_filtered <- private$db$appointments %>>%
       dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
       dplyr::filter(Provider %in% clinicians) %>>%
@@ -168,10 +169,10 @@ filter_appointments_time <- function(dMeasure_obj,
     }
 
     self$appointments_filtered_time <-
-      self$appointments_filtered %>%
-      dplyr::collect() %>% # force read of database required before mutations
+      self$appointments_filtered %>>%
+      dplyr::collect() %>>% # force read of database required before mutations
       dplyr::mutate(AppointmentTime = self$hrmin(AppointmentTime),
-                    AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
+                    AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>>%
       dplyr::arrange(AppointmentDate, AppointmentTime)
   }
 
@@ -236,12 +237,12 @@ list_appointments <- function(dMeasure_obj,
     }
 
     self$appointments_list <-
-      self$appointments_filtered_time %>%
-      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>%
+      self$appointments_filtered_time %>>%
+      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
       # need patients database to access date-of-birth
       dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
-                      'AppointmentTime', 'Provider', 'DOB')) %>%
-      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
+                      'AppointmentTime', 'Provider', 'DOB')) %>>%
+      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
       dplyr::mutate(Age = self$calc_age(DOB, AppointmentDate))
 
   }
@@ -316,9 +317,9 @@ billed_appointments <- function(dMeasure_obj,
     }
 
     self$appointments_billings <-
-      self$appointments_list %>%
-      dplyr::left_join(private$db$services, by = "InternalID", copy=TRUE) %>%
-      dplyr::collect() %>%
+      self$appointments_list %>>%
+      dplyr::left_join(private$db$services, by = "InternalID", copy=TRUE) %>>%
+      dplyr::collect() %>>%
       dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
   }
   return(self$appointments_billings)
