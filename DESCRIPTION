@@ -40,4 +40,5 @@ Collate:
     'configuration_password.R'
     'configuration_server.R'
     'configuration_user.R'
+    'contact.R'
     'utils_pipe.R'

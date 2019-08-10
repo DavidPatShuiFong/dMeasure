@@ -43,6 +43,27 @@ NULL
                                             MBSItem = integer(), Description = character())
         )
 
+
+appointment_status_types <- c("Booked", "Completed", "At billing", "Waiting", "With doctor")
+# valid appointment states. note that 'with doctor' applies to any health provider type!
+.private(".appointment_status", appointment_status_types)
+# by default, all status types are valid
+.active("appointment_status", function(value) {
+  if (missing(value)) {
+    return(private$.appointment_status)
+  }
+  if (is.character(value)) {
+    # accepts string, or vector of strings
+    private$.appointment_status <- value
+    private$set_reactive(self$appointment_statusR, value)
+  } else {
+    warning(paste("filter_incoming_Action can only be set to a string,",
+                  "a vector of strings. Valid strings are",
+                  appointment_status_types))
+  }
+})
+.reactive("appointment_statusR", quote(appointment_status_types))
+
 # appointment list with billings
 # collects ALL billings for patients who have displayed appointments
 # used by billings view, and CDM billings view
@@ -59,18 +80,23 @@ NULL
 #' @param date_from=dMeasure_obj$date_a start date
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param status=NA filter by 'status' if not NA
+#'  permissible values are 'Booked', 'Completed', 'At billing',
+#'  'Waiting', 'With doctor'
 #'
 #' @return list of appointments
 filter_appointments <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
-                                clinicians = NA) {
-  dMeasure_obj$filter_appointments(date_from, date_to, clinicians)
+                                clinicians = NA,
+                                status = NA) {
+  dMeasure_obj$filter_appointments(date_from, date_to, clinicians, status)
 }
 
 .public("filter_appointments", function(date_from = NA,
                                         date_to = NA,
-                                        clinicians = NA) {
+                                        clinicians = NA,
+                                        status = NA) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -83,6 +109,9 @@ filter_appointments <- function(dMeasure_obj,
     # 'if' is not vectorized so will only read the first element of the list
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
+  }
+  if (is.na(status)) {
+    status <- self$appointment_status
   }
 
   # no additional clinician filtering based on privileges or user restrictions
@@ -100,7 +129,8 @@ filter_appointments <- function(dMeasure_obj,
     self$appointments_filtered <- private$db$appointments %>>%
       dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
       dplyr::filter(Provider %in% clinicians) %>>%
-      dplyr::mutate(Status = trimws(Status)) # get rid of redundant whitespace
+      dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
+      dplyr::filter(Status %in% status)
     # a database filter on an empty list after %in% will result in an error message
     #
     # this reactive is not "collect()"ed because it is joined to other
@@ -113,7 +143,8 @@ filter_appointments <- function(dMeasure_obj,
 .reactive_event("appointments_filteredR",
           quote(
             shiny::eventReactive(
-              c(self$date_aR(), self$date_bR(), self$cliniciansR()), {
+              c(self$date_aR(), self$date_bR(),
+                self$cliniciansR(), self$appointment_statusR()), {
                 # update if reactive version of $date_a Rdate_b
                 # or $clinicians are updated.
                 self$filter_appointments()
@@ -131,18 +162,23 @@ filter_appointments <- function(dMeasure_obj,
 #' @param date_to=dMeasure_obj$date_b end date, inclusive (date object)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
 #' @param lazy=FALSE if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#' @param status=NA filter by 'status' if not NA
+#'  permissible values are 'Booked', 'Completed', 'At billing',
+#'  'Waiting', 'With doctor'
 #'
 #' @return list of appointments
 filter_appointments_time <- function(dMeasure_obj,
                                      date_from = NA, date_to = NA,
                                      clinicians = NA,
+                                     status = NA,
                                      lazy = FALSE) {
-  dMeasure_obj$filter_appointments_time(date_from, date_to, clinicians)
+  dMeasure_obj$filter_appointments_time(date_from, date_to, clinicians, status)
 }
 
 .public("filter_appointments_time", function(date_from = NA,
                                              date_to = NA,
                                              clinicians = NA,
+                                             status = NA,
                                              lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -163,7 +199,7 @@ filter_appointments_time <- function(dMeasure_obj,
   if (private$emr_db$is_open()) {
     # only if EMR database is open
     if (!lazy) {
-      self$filter_appointments(date_from, date_to, clinicians)
+      self$filter_appointments(date_from, date_to, clinicians, status)
       # if not 'lazy' evaluation, then re-calculate self$appointments_filtered
       # (that is automatically done by calling the $filter_appointments method)
     }
@@ -198,19 +234,25 @@ filter_appointments_time <- function(dMeasure_obj,
 #' @param date_from=dMeasure_obj$date_a start date, inclusive (date object)
 #' @param date_to=dMeasure_obj$date_b end date, inclusive (date object)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param status=NA filter by 'status' if not NA
+#'  permissible values are 'Booked', 'Completed', 'At billing',
+#'  'Waiting', 'With doctor'
 #' @param lazy=FALSE if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#'
 #'
 #' @return list of appointments
 list_appointments <- function(dMeasure_obj,
                               date_from = NA, date_to = NA,
                               clinicians = NA,
+                              status = NA,
                               lazy = FALSE) {
-  dMeasure_obj$list_appointments(date_from, date_to, clinicians)
+  dMeasure_obj$list_appointments(date_from, date_to, clinicians, status)
 }
 
 .public("list_appointments", function(date_from = NA,
                                       date_to = NA,
                                       clinicians = NA,
+                                      status = NA,
                                       lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -231,7 +273,7 @@ list_appointments <- function(dMeasure_obj,
   if (private$emr_db$is_open()) {
     # only if EMR database is open
     if (!lazy) {
-      self$filter_appointments_time(date_from, date_to, clinicians, lazy = FALSE)
+      self$filter_appointments_time(date_from, date_to, clinicians, status, lazy = FALSE)
       # if not 'lazy' evaluation, then re-calculate self$appointments_filtered_time
       # (that is automatically done by calling the $filter_appointments_time method)
     }
@@ -269,6 +311,9 @@ list_appointments <- function(dMeasure_obj,
 #' @param date_from=dMeasure_obj$date_a start date, inclusive (date object)
 #' @param date_to=dMeasure_obj$date_b end date, inclusive (date object)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param status=NA filter by 'status' if not NA
+#'  permissible values are 'Booked', 'Completed', 'At billing',
+#'  'Waiting', 'With doctor'
 #' @param lazy=FALSE if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
 #'
 #' @return list of appointments
@@ -280,13 +325,15 @@ list_appointments <- function(dMeasure_obj,
 billed_appointments <- function(dMeasure_obj,
                                 date_from = NA, date_to = NA,
                                 clinicians = NA,
+                                status = NA,
                                 lazy = FALSE) {
-  dMeasure_obj$billed_appointments(dMeasure_obj, date_from, date_to, clinicians, lazy)
+  dMeasure_obj$billed_appointments(dMeasure_obj, date_from, date_to, clinicians, status, lazy)
 }
 
 .public("billed_appointments", function(date_from = NA,
                                         date_to = NA,
                                         clinicians = NA,
+                                        status = NA,
                                         lazy = FALSE) {
   if (is.na(date_from)) {
     date_from <- self$date_a

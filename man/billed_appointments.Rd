@@ -5,7 +5,7 @@
 \title{List of appointments with billings}
 \usage{
 billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, lazy = FALSE)
+  clinicians = NA, status = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -15,6 +15,10 @@ billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \item{date_to=dMeasure_obj$date_b}{end date, inclusive (date object)}
 
 \item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
+
+\item{status=NA}{filter by 'status' if not NA
+permissible values are 'Booked', 'Completed', 'At billing',
+'Waiting', 'With doctor'}
 
 \item{lazy=FALSE}{if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
 }

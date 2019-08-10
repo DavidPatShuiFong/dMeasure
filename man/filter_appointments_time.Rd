@@ -5,7 +5,7 @@
 \title{List of appointments with 'human (and R)' readable time-of-day}
 \usage{
 filter_appointments_time(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, lazy = FALSE)
+  clinicians = NA, status = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -17,6 +17,10 @@ filter_appointments_time(dMeasure_obj, date_from = NA, date_to = NA,
 \item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
 
 \item{lazy=FALSE}{if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
+
+\item{status=NA}{filter by 'status' if not NA
+permissible values are 'Booked', 'Completed', 'At billing',
+'Waiting', 'With doctor'}
 }
 \value{
 list of appointments

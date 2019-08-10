@@ -421,6 +421,8 @@ reactive_event <- list(name = NULL, value = NULL)
       private$db$correspondenceIn <- NULL
       private$db$reportValues <- NULL
       private$db$services <- NULL
+      private$db$servicesRaw <- NULL
+      private$db$invoices <- NULL
       private$db$history <- NULL
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
@@ -960,6 +962,16 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(c('Patient', 'InternalID',
                     'AppointmentDate', 'AppointmentTime',
                     'Provider', 'Status'))
+  # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
+
+  private$db$visits <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Visits')) %>>%
+    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName) %>>%
+    dplyr::mutate(VisitType = trimws(VisitType),
+                  DrName = trimws(DrName))
+  # VisitType : 'Surgery', 'Home', "Non Visit', 'Hospital', 'RACF', 'Telephone'
+  # ... 'SMS', 'Email', 'Locum Service', 'Out of Office', 'Other', 'Hostel'
+  # ... 'Telehealth'
 
   private$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID
@@ -1005,6 +1017,16 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+
+  private$db$servicesRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'SERVICES')) %>>%
+    dplyr::select('InvoiceID' = 'INVOICEID', 'ServiceDate' = 'SERVICEDATE',
+                  'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+
+  private$db$invoices <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
+    dplyr::select('InvoiceID' = 'INVOICEID', 'UserID' = 'USERID',
+                  'InternalID' = 'INTERNALID')
 
   private$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
