@@ -8,7 +8,7 @@
 NULL
 
 ## Fields
-.public("investigations_filtered",
+.public(dMeasure, "investigations_filtered",
         data.frame(InternalID = integer(),
                    ReportID = integer(),
                    TestName = character(),
@@ -25,7 +25,7 @@ NULL
                    stringsAsFactors = FALSE))
 # filtered by chosen dates and clinicians, action and notification
 
-.public("correspondence_filtered",
+.public(dMeasure, "correspondence_filtered",
         data.frame(InternalID = integer(),
                    DocumentID = integer(),
                    Category = character(),
@@ -45,7 +45,7 @@ NULL
 
 # filtered by chosen dates and clinicians, action and notification
 
-.public("investigations_filtered_appointment",
+.public(dMeasure, "investigations_filtered_appointment",
         data.frame(InternalID = integer(), ReportID = integer(),
                    TestName = character(),
                    Reported = as.Date(integer(0),
@@ -66,7 +66,7 @@ NULL
                    Status = character(),
                    stringsAsFactors = FALSE))
 
-.public("correspondence_filtered_appointment",
+.public(dMeasure, "correspondence_filtered_appointment",
         data.frame(InternalID = integer(),
                    DocumentID = integer(),
                    Category = character(),
@@ -90,7 +90,7 @@ NULL
                    Status = character(),
                    stringsAsFactors = FALSE))
 
-.public("investigations_filtered_named",
+.public(dMeasure, "investigations_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
                    ReportID = numeric(),
@@ -116,7 +116,7 @@ NULL
                    Status = character(),
                    stringsAsFactors = FALSE))
 
-.public("correspondence_filtered_named",
+.public(dMeasure, "correspondence_filtered_named",
         data.frame(Patient = character(),
                    InternalID = integer(),
                    DocumentID = numeric(),
@@ -142,17 +142,17 @@ NULL
                    Status = character(),
                    stringsAsFactors = FALSE))
 
-.private(".filter_incoming_Action", NULL)
+.private(dMeasure, ".filter_incoming_Action", NULL)
 # the default value of 'Action' for method $filter_investigations
 # can be NULL, or a vector of strings
-.private(".filter_incoming_Actioned", NULL)
+.private(dMeasure, ".filter_incoming_Actioned", NULL)
 # the default value of 'Actioned' for method $filter_investigations
 # can be NULL, a logical (TRUE/FALSE), or a Date
-.private(".filter_incoming_ignorePast", FALSE)
+.private(dMeasure, ".filter_incoming_ignorePast", FALSE)
 # the default value of 'ignorePast' for method $filter_investigations
 # can be a logical (TRUE/FALSE)
 
-.active("filter_incoming_Action", function(value) {
+.active(dMeasure, "filter_incoming_Action", function(value) {
   if (missing(value)) {
     return(private$.filter_incoming_Action)
   }
@@ -166,9 +166,9 @@ NULL
                   "a vector of strings or NULL"))
   }
 })
-.reactive("filter_incoming_ActionR", quote(NULL))
+.reactive(dMeasure, "filter_incoming_ActionR", quote(NULL))
 
-.active("filter_incoming_Actioned", function(value) {
+.active(dMeasure, "filter_incoming_Actioned", function(value) {
   if (missing(value)) {
     return(private$.filter_incoming_Actioned)
   }
@@ -183,9 +183,9 @@ NULL
                   "a logical (TRUE/FALSE) or NULL."))
   }
 })
-.reactive("filter_incoming_ActionedR", quote(NULL))
+.reactive(dMeasure, "filter_incoming_ActionedR", quote(NULL))
 
-.active("filter_incoming_ignorePast", function(value) {
+.active(dMeasure, "filter_incoming_ignorePast", function(value) {
   if (missing(value)) {
     return(private$.filter_incoming_ignorePast)
   }
@@ -199,7 +199,7 @@ NULL
                   "a logical (TRUE/FALSE)."))
   }
 })
-.reactive("filter_incoming_ignorePastR", quote(FALSE))
+.reactive(dMeasure, "filter_incoming_ignorePastR", quote(FALSE))
 
 #' List of investigations
 #'
@@ -229,11 +229,11 @@ filter_investigations <- function(dMeasure_obj,
   dMeasure_obj$filter_investigations(date_from, date_to, clinicians,
                                      Action, Actioned)
 }
-.public("filter_investigations", function(date_from = NA,
-                                          date_to = NA,
-                                          clinicians = NA,
-                                          Action = NA,
-                                          Actioned = NA) {
+.public(dMeasure, "filter_investigations", function(date_from = NA,
+                                                    date_to = NA,
+                                                    clinicians = NA,
+                                                    Action = NA,
+                                                    Actioned = NA) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -305,7 +305,7 @@ filter_investigations <- function(dMeasure_obj,
 
   return(investigations)
 })
-.reactive_event("investigations_filteredR",
+.reactive_event(dMeasure, "investigations_filteredR",
                 quote(
                   shiny::eventReactive(
                     c(self$date_aR(), self$date_bR(), self$cliniciansR(),
@@ -354,13 +354,13 @@ filter_investigations_appointment <- function(dMeasure_obj,
                                                  Action, Actioned, ignorePast,
                                                  lazy)
 }
-.public("filter_investigations_appointment", function(date_from = NA,
-                                                      date_to = NA,
-                                                      clinicians = NA,
-                                                      Action = NA,
-                                                      Actioned = NA,
-                                                      ignorePast = NA,
-                                                      lazy = FALSE) {
+.public(dMeasure, "filter_investigations_appointment", function(date_from = NA,
+                                                                date_to = NA,
+                                                                clinicians = NA,
+                                                                Action = NA,
+                                                                Actioned = NA,
+                                                                ignorePast = NA,
+                                                                lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -422,16 +422,16 @@ filter_investigations_appointment <- function(dMeasure_obj,
 
   return(self$investigations_filtered_appointment)
 })
-.reactive_event("investigations_filtered_appointmentR",
+.reactive_event(dMeasure, "investigations_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
                     c(self$investigations_filteredR(),
                       self$filter_incoming_ignorePastR()), {
-                      # update if reactive version of $date_a Rdate_b
-                      # or $clinicians are updated.
-                      self$filter_investigations_appointment()
-                      # re-calculates the appointments
-                    })
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$filter_investigations_appointment()
+                        # re-calculates the appointments
+                      })
                 ))
 
 
@@ -469,13 +469,13 @@ filter_investigations_named <- function(dMeasure_obj,
   dMeasure_obj$filter_investigations_named(date_from, date_to, clinicians,
                                            Action, Actioned, ignorePast, lazy)
 }
-.public("filter_investigations_named", function(date_from = NA,
-                                                date_to = NA,
-                                                clinicians = NA,
-                                                Action = NA,
-                                                Actioned = NA,
-                                                ignorePast = NA,
-                                                lazy = FALSE) {
+.public(dMeasure, "filter_investigations_named", function(date_from = NA,
+                                                          date_to = NA,
+                                                          clinicians = NA,
+                                                          Action = NA,
+                                                          Actioned = NA,
+                                                          ignorePast = NA,
+                                                          lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -540,7 +540,7 @@ filter_investigations_named <- function(dMeasure_obj,
 
   return(self$investigations_filtered_named)
 })
-.reactive_event("investigations_filtered_namedR",
+.reactive_event(dMeasure, "investigations_filtered_namedR",
                 quote(
                   shiny::eventReactive(
                     c(self$investigations_filtered_appointmentR()), {
@@ -580,11 +580,11 @@ filter_correspondence <- function(dMeasure_obj,
   dMeasure_obj$filter_correspondence(date_from, date_to, clinicians,
                                      Action, Actioned)
 }
-.public("filter_correspondence", function(date_from = NA,
-                                          date_to = NA,
-                                          clinicians = NA,
-                                          Action = NA,
-                                          Actioned = NA) {
+.public(dMeasure, "filter_correspondence", function(date_from = NA,
+                                                    date_to = NA,
+                                                    clinicians = NA,
+                                                    Action = NA,
+                                                    Actioned = NA) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -677,7 +677,7 @@ filter_correspondence <- function(dMeasure_obj,
 
   return(correspondence)
 })
-.reactive_event("correspondence_filteredR",
+.reactive_event(dMeasure, "correspondence_filteredR",
                 quote(
                   shiny::eventReactive(
                     c(self$date_aR(), self$date_bR(), self$cliniciansR(),
@@ -726,13 +726,13 @@ filter_correspondence_appointment <- function(dMeasure_obj,
                                                  Action, Actioned, ignorePast,
                                                  lazy)
 }
-.public("filter_correspondence_appointment", function(date_from = NA,
-                                                      date_to = NA,
-                                                      clinicians = NA,
-                                                      Action = NA,
-                                                      Actioned = NA,
-                                                      ignorePast = NA,
-                                                      lazy = FALSE) {
+.public(dMeasure, "filter_correspondence_appointment", function(date_from = NA,
+                                                                date_to = NA,
+                                                                clinicians = NA,
+                                                                Action = NA,
+                                                                Actioned = NA,
+                                                                ignorePast = NA,
+                                                                lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -795,19 +795,19 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 
   return(self$correspondence_filtered_appointment)
 })
-.reactive_event("correspondence_filtered_appointmentR",
+.reactive_event(dMeasure, "correspondence_filtered_appointmentR",
                 quote(
                   shiny::eventReactive(
                     c(self$correspondence_filteredR(),
                       self$filter_incoming_ignorePastR()), {
-                      # update if reactive version of $date_a Rdate_b
-                      # or $clinicians are updated.
-                      self$filter_correspondence_appointment(
-                        lazy = TRUE,
-                        ignorePast =
-                          self$filter_incoming_ignorePastR())
+                        # update if reactive version of $date_a Rdate_b
+                        # or $clinicians are updated.
+                        self$filter_correspondence_appointment(
+                          lazy = TRUE,
+                          ignorePast =
+                            self$filter_incoming_ignorePastR())
                         # re-calculates the appointments
-                    })
+                      })
                 ))
 
 #' List of correspondence, with patient names
@@ -846,13 +846,13 @@ filter_correspondence_named <- function(dMeasure_obj,
   dMeasure_obj$filter_correspondence_named(date_from, date_to, clinicians,
                                            Action, Actioned, ignorePast, lazy)
 }
-.public("filter_correspondence_named", function(date_from = NA,
-                                                date_to = NA,
-                                                clinicians = NA,
-                                                Action = NA,
-                                                Actioned = NA,
-                                                ignorePast = NA,
-                                                lazy = FALSE) {
+.public(dMeasure, "filter_correspondence_named", function(date_from = NA,
+                                                          date_to = NA,
+                                                          clinicians = NA,
+                                                          Action = NA,
+                                                          Actioned = NA,
+                                                          ignorePast = NA,
+                                                          lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -947,7 +947,7 @@ filter_correspondence_named <- function(dMeasure_obj,
 
   return(self$correspondence_filtered_named)
 })
-.reactive_event("correspondence_filtered_namedR",
+.reactive_event(dMeasure, "correspondence_filtered_namedR",
                 quote(
                   shiny::eventReactive(
                     c(self$correspondence_filtered_appointmentR()), {
@@ -995,13 +995,13 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                              lazy,
                              screentag, screentag_print)
 }
-.public("view_incoming", function (date_from = NA, date_to = NA,
-                                   clinicians = NA,
-                                   Action = NA,
-                                   Actioned = NA,
-                                   ignorePast = NA,
-                                   lazy = FALSE,
-                                   screentag = FALSE, screentag_print = TRUE) {
+.public(dMeasure, "view_incoming", function (date_from = NA, date_to = NA,
+                                             clinicians = NA,
+                                             Action = NA,
+                                             Actioned = NA,
+                                             ignorePast = NA,
+                                             lazy = FALSE,
+                                             screentag = FALSE, screentag_print = TRUE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a

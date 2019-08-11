@@ -43,10 +43,10 @@ zostavax_list <- function(dMeasure_obj,
                              vaxtag, vaxtag_print)
 }
 
-.public("zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                                  appointments_list = NULL,
-                                  lazy = FALSE,
-                                  vaxtag = FALSE, vaxtag_print = TRUE) {
+.public(dMeasure, "zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                            appointments_list = NULL,
+                                            lazy = FALSE,
+                                            vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where Zostavax is recommended (might already be given)
 
   if (is.na(date_from)) {
@@ -79,6 +79,7 @@ zostavax_list <- function(dMeasure_obj,
     dplyr::left_join(private$db$immunizations %>>%
                        # those who have had the zostavax vaccine
                        dplyr::filter((VaccineName %LIKE% "%zostavax%") | (VaccineID == 103)),
+                     by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::left_join(private$db$preventive_health %>>%
                        # those who have been removed from the reminder system for Zostavax
@@ -160,10 +161,10 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                               vaxtag, vaxtag_print)
 }
 
-.public("influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                                   appointments_list = NULL,
-                                   lazy = FALSE,
-                                   vaxtag = FALSE, vaxtag_print = TRUE) {
+.public(dMeasure, "influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                             appointments_list = NULL,
+                                             lazy = FALSE,
+                                             vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where influenza is recommended (might already be given)
 
   if (is.na(date_from)) {
@@ -202,6 +203,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                                                 dplyr::collect(), use.names = FALSE)),
                      # there are many, many influenza vaccine IDs, but these can be found
                      # via the db$vaccine_disease database
+                     by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
     dplyr::filter(GivenDate <= AppointmentDate) %>>%
@@ -457,11 +459,11 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
                         chosen)
 }
 
-.public("vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                             appointments_list = NULL,
-                             lazy = FALSE,
-                             vaxtag = FALSE, vaxtag_print = TRUE,
-                             chosen = vax_names) {
+.public(dMeasure, "vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                       appointments_list = NULL,
+                                       lazy = FALSE,
+                                       vaxtag = FALSE, vaxtag_print = TRUE,
+                                       chosen = vax_names) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -507,12 +509,12 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%
       # gathers vaccination notifications on the same appointment into a single row
-                      {if (vaxtag)
-                      {dplyr::summarise(., vaxtag = paste(vaxtag, collapse = ""))}
-                        else {.}} %>>%
-                        {if (vaxtag_print)
-                        {dplyr::summarise(., vaxtag_print = paste(vaxtag_print, collapse = ", "))}
-                          else {.}} %>>%
+      {if (vaxtag)
+      {dplyr::summarise(., vaxtag = paste(vaxtag, collapse = ""))}
+        else {.}} %>>%
+      {if (vaxtag_print)
+      {dplyr::summarise(., vaxtag_print = paste(vaxtag_print, collapse = ", "))}
+        else {.}} %>>%
       dplyr::ungroup()
   }
 

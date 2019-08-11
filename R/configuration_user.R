@@ -189,20 +189,20 @@ restrictionTypes_list <- function() {
   )
 }
 
-.public_init("restrictionTypes", quote(
+.public_init(dMeasure, "restrictionTypes", quote(
   dMeasure::restrictionTypes_list()
 ))
 
 
-.public_init("restrictionTypes_df",
+.public_init(dMeasure, "restrictionTypes_df",
              quote(data.frame(Reduce(rbind, self$restrictionTypes))))
 
 # converts the list to a dataframe
-.public_init("restrictionTypes_id",
+.public_init(dMeasure, "restrictionTypes_id",
              quote(unlist(self$restrictionTypes_df$id,
                           use.names = FALSE)))
 
-.public_init("user_attribute_types",
+.public_init(dMeasure, "user_attribute_types",
              quote(unlist(dplyr::filter(self$restrictionTypes_df,
                                         userAttribute == TRUE)$id,
                           use.names = FALSE)))
@@ -224,7 +224,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   dMeasure_obj$userrestriction.change(restriction, state)
 }
 
-.public("userrestriction.change", function(restriction, state) {
+.public(dMeasure, "userrestriction.change", function(restriction, state) {
 
   tryCatch(permission <- self$useradmin.permission(),
            warning = function(w)
@@ -285,7 +285,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
                            paste(x[!is.na(x)],
                                  collapse = "")),
                    collapse = "")
-             ) > 0)
+      ) > 0)
       # any passwords are set?
     )
   # the code to concatenate strings, NA or not, was found on StackOverflow
@@ -327,7 +327,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   return(newstate)
 })
 
-.private("validate.userconfig.description", function(description) {
+.private(dMeasure, "validate.userconfig.description", function(description) {
   # validate Fullname, Location and Attributes
   # returns TRUE if validates
   #  returns error (stop) if fales to validate
@@ -366,7 +366,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
 })
 
-.private("validate.proposed.userconfig", function(proposed_UserConfig) {
+.private(dMeasure, "validate.proposed.userconfig", function(proposed_UserConfig) {
   # check whether proposed userconfig satisfied some requirements
   # e.g. if a restriction has been placed, then at least one user might need
   #  an attribute to 'override' that restriction
@@ -430,7 +430,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
 }
 
-.public("userconfig.insert", function(description) {
+.public(dMeasure, "userconfig.insert", function(description) {
   # adding a new user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
@@ -543,7 +543,7 @@ userconfig.update <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.update(description)
 }
 
-.public("userconfig.update", function (description) {
+.public(dMeasure, "userconfig.update", function (description) {
   # change (update) a user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
@@ -590,7 +590,7 @@ userconfig.update <- function(dMeasure_obj, description) {
            error = function(e) {
              stop(paste("Error in description validation :", e[[1]],
                         "- Unable to update this user description"))
-             })
+           })
 
   proposed_UserConfig <- private$.UserConfig %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
@@ -642,7 +642,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.delete(description)
 }
 
-.public("userconfig.delete", function(description) {
+.public(dMeasure, "userconfig.delete", function(description) {
   # delete a user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
@@ -697,7 +697,7 @@ userconfig.list <- function(dMeasure_obj) {
   dMeasure_obj$userconfig.list()
 }
 
-.public("userconfig.list", function() {
+.public(dMeasure, "userconfig.list", function() {
   tryCatch(permission <- self$useradmin.permission(),
            warning = function(w)
              stop(paste(w,
@@ -718,7 +718,7 @@ userrestriction.list <- function(dMeasure_obj) {
   dMeasure_obj$userrestriction.list()
 }
 
-.public("userrestriction.list", function() {
+.public(dMeasure, "userrestriction.list", function() {
   private$.UserRestrictions$Restriction
 })
 
@@ -742,7 +742,7 @@ useradmin.permission <- function(dMeasure_obj) {
   dMeasure_obj$useradmin.permission()
 }
 
-.public("useradmin.permission", function() {
+.public(dMeasure, "useradmin.permission", function() {
   if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &

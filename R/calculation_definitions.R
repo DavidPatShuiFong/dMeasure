@@ -4,7 +4,7 @@ NULL
 
 ## 'helper' functions for calculation
 
-.public("calc_age", function(birthDate, refDate = Sys.Date()) {
+.public(dMeasure, "calc_age", function(birthDate, refDate = Sys.Date()) {
   # Calculate age at a given reference date
   # Create an interval between the date of birth and the enrollment date;
   # note that arguments can be vectors, so needto use mapply
@@ -21,7 +21,7 @@ NULL
   return(period)
 })
 
-.public("calc_age_months", function(birthDate, refDate = Sys.Date()) {
+.public(dMeasure, "calc_age_months", function(birthDate, refDate = Sys.Date()) {
   # Calculate age at a given reference date, in months
   # Create an interval between the date of birth and the enrollment date;
   # note that arguments can be vectors, so need to use mapply
@@ -38,7 +38,7 @@ NULL
   return(period)
 })
 
-.public("interval", function(date_a, date_b, unit = "none") {
+.public(dMeasure, "interval", function(date_a, date_b, unit = "none") {
   # calculate period between date_a and date_b
   # date_a and date_b can be lists
   # returns $year, $month, $day
@@ -99,7 +99,7 @@ NULL
   return(interval)
 })
 
-.public("hrmin", function(t) {
+.public(dMeasure, "hrmin", function(t) {
   # converts seconds to a 'time' starting from midnight
   # t : value in seconds
   # returns 24-hour time of form '14:15' (hh:mm)
@@ -126,7 +126,7 @@ NULL
 simple_encode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
   dMeasure_obj$simple_encode(msg, key, nonce)
 }
-.public("simple_encode", function (msg, key = NULL, nonce = NULL) {
+.public(dMeasure, "simple_encode", function (msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
     nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
@@ -163,7 +163,7 @@ simple_encode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
 simple_decode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
   dMeasure_obj$simple_decode(msg, key, nonce)
 }
-.public("simple_decode", function(msg, key = NULL, nonce = NULL) {
+.public(dMeasure, "simple_decode", function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
     nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
@@ -200,7 +200,7 @@ simple_decode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
 simple_tag <- function(dMeasure_obj, msg, key = NULL) {
   dMeasure_obj$simple_tag(msg, key)
 }
-.public("simple_tag", function(msg, key = NULL) {
+.public(dMeasure, "simple_tag", function(msg, key = NULL) {
   if (is.null(key)) {
     if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
       # if not set then the number of characters will be zero
@@ -233,7 +233,7 @@ simple_tag <- function(dMeasure_obj, msg, key = NULL) {
 simple_tag_compare <- function(dMeasure_obj, msg, tag, key = NULL) {
   dMeasure_obj$simple_tag_compare(msg, tag, key)
 }
-.public("simple_tag_compare", function(msg, tag, key = NULL) {
+.public(dMeasure, "simple_tag_compare", function(msg, tag, key = NULL) {
   if (is.null(key)) {
     if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
       # if not set then the number of characters will be zero

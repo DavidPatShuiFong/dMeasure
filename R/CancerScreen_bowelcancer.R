@@ -45,7 +45,7 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
                      lazy, action, screentag, screentag_print)
 }
 
-.public("fobt_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "fobt_list", function(date_from = NA, date_to = NA, clinicians = NA,
                               appointments_list = NULL,
                               lazy = FALSE,
                               action = FALSE, screentag = FALSE, screentag_print = TRUE) {

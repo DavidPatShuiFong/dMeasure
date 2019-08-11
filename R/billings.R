@@ -27,12 +27,12 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
   dMeasure_obj$appointments_billlings_sameday(date_from, date_to, clinicians,
                                               lazy, screentag, screentag_print)
 }
-.public("appointments_billings_sameday", function(date_from = NA,
-                                                  date_to = NA,
-                                                  clinicians = NA,
-                                                  lazy = FALSE,
-                                                  screentag = FALSE,
-                                                  screentag_print = TRUE) {
+.public(dMeasure, "appointments_billings_sameday", function(date_from = NA,
+                                                            date_to = NA,
+                                                            clinicians = NA,
+                                                            lazy = FALSE,
+                                                            screentag = FALSE,
+                                                            screentag_print = TRUE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -56,19 +56,19 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
     # billings done on the same day as displayed appointments
     dplyr::select(Patient, InternalID, AppointmentDate, AppointmentTime,
                   Provider, MBSItem, Description)
-    # need to preserve ApppointmentTime and Provider
-    # in the case where there are multiple apppointments
-    # for the patient in the same time period/day and providers
+  # need to preserve ApppointmentTime and Provider
+  # in the case where there are multiple apppointments
+  # for the patient in the same time period/day and providers
 
   if (screentag) {
     # change MBSITEMS into fomantic/semantic tags
     billings_sameday <- billings_sameday %>>%
-    dplyr::mutate(billingtag =
-                    semantic_button(MBSItem,
-                                    colour = 'green',
-                                    popuphtml = paste0('<h4>', AppointmentDate,
-                                                       "</h3><p><font size=\'+0\'>",
-                                                       Description, '</p>')))
+      dplyr::mutate(billingtag =
+                      semantic_button(MBSItem,
+                                      colour = 'green',
+                                      popuphtml = paste0('<h4>', AppointmentDate,
+                                                         "</h3><p><font size=\'+0\'>",
+                                                         Description, '</p>')))
   }
 
   if (screentag_print) {
@@ -98,12 +98,12 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians,
   dMeasure_obj$billings_list(date_from, date_to, clinicians,
                              lazy, screentag, screentag_print)
 }
-.public("billings_list", function(date_from = NA,
-                                  date_to = NA,
-                                  clinicians = NA,
-                                  lazy = FALSE,
-                                  screentag = FALSE,
-                                  screentag_print = TRUE) {
+.public(dMeasure, "billings_list", function(date_from = NA,
+                                            date_to = NA,
+                                            clinicians = NA,
+                                            lazy = FALSE,
+                                            screentag = FALSE,
+                                            screentag_print = TRUE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -134,10 +134,10 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians,
       # gathers vaccination notifications on the same appointment into a single row
       {if (screentag) {
         dplyr::summarise(., billingtag = paste(billingtag, collapse = ""))
-        } else {.} } %>>%
+      } else {.} } %>>%
       {if (screentag_print) {
         dplyr::summarise(., billingtag_print = paste(billingtag_print, collapse = ", "))
-        } else {.} } %>>%
+      } else {.} } %>>%
       dplyr::ungroup()
   }
   return(billingslist)

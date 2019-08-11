@@ -20,7 +20,7 @@ NULL
 location.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$location.insert(description)
 }
-.public("location.insert", function(description) {
+.public(dMeasure, "location.insert", function(description) {
   # insert a practice location
 
   tryCatch(permission <- self$location.permission(),
@@ -31,7 +31,7 @@ location.insert <- function(dMeasure_obj, description) {
   if (length(grep(toupper(description$Name),
                   toupper(as.data.frame(private$PracticeLocations %>>%
                                         dplyr::select(Name)))
-                  ))) {
+  ))) {
     # if the proposed new name is the same as one that already exists
     # (ignoring case). grep returns empty integer list if no match
     stop("New practice location name cannot be the same as existing names")
@@ -75,7 +75,7 @@ location.update <- function(dMeasure_obj, description) {
   dMeasure_obj$location.update(description)
 }
 
-.public("location.update", function(description) {
+.public(dMeasure, "location.update", function(description) {
   # change (update) a practice location
 
   tryCatch(permission <- self$location.permission(),
@@ -132,7 +132,7 @@ location.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$location.delete(description)
 }
 
-.public("location.delete", function(description) {
+.public(dMeasure, "location.delete", function(description) {
   # delete a practice location
 
   tryCatch(permission <- self$location.permission(),
@@ -181,7 +181,7 @@ location.list <- function(dMeasure_obj) {
   dMeasure_obj$location.list()
 }
 
-.public("location.list", function() {
+.public(dMeasure, "location.list", function() {
 
   tryCatch(permission <- self$location.permission(),
            warning = function(w)
@@ -211,7 +211,7 @@ location.permission <- function(dMeasure_obj) {
   dMeasure_obj$location.permission()
 }
 
-.public("location.permission", function() {
+.public(dMeasure, "location.permission", function() {
   if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
