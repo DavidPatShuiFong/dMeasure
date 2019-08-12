@@ -17,19 +17,22 @@ NULL
                    InternalID = integer(),
                    AppointmentDate =
                      as.Date(integer(0),
-                             origin = "1970-01-01")))
+                             origin = "1970-01-01"),
+                   stringsAsFactors = FALSE))
 .public(dMeasure, "contact_visits_list",
         data.frame(Patient = character(),
                    InternalID = integer(),
                    VisitDate =
                      as.Date(integer(0),
-                             origin = "1970-01-01")))
+                             origin = "1970-01-01"),
+                   stringsAsFactors = FALSE))
 .public(dMeasure, "contact_services_list",
         data.frame(Patient = character(),
                    InternalID = integer(),
                    ServiceDate =
                      as.Date(integer(0),
-                             origin = "1970-01-01")))
+                             origin = "1970-01-01"),
+                   stringsAsFactors = FALSE))
 # filtered by chosen dates and clinicians
 .public(dMeasure, "contact_count_list",
         data.frame(Patient = character(),
@@ -386,6 +389,12 @@ list_contact_count <- function(dMeasure_obj,
     }
 
     self$contact_count_list <- self$contact_appointments_list %>>%
+      dplyr::bind_rows(
+        (self$contact_visits_list %>>%
+           dplyr::rename(AppointmentDate = VisitDate)),
+        (self$contact_services_list %>>%
+           dplyr::rename(AppointmentDate = ServiceDate))
+      ) %>>%
       dplyr::group_by(Patient, InternalID) %>>%
       dplyr::summarise(Count = n()) # plucks out unique appointment dates
 
