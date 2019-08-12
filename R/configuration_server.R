@@ -50,7 +50,7 @@ server.insert <- function(dMeasure_obj, description) {
     newid <- max(c(as.data.frame(private$.BPdatabase)$id, 0)) + 1
     # initially, private$.BPdatabase$id might be an empty set, so need to append a '0'
     description$id <- newid
-    description$dbPassword <- self$simple_encode(description$dbPassword)
+    description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
 
@@ -142,7 +142,7 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::filter(id == description$id) %>>%
       dplyr::pull(dbPassword)
   } else {
-    description$dbPassword <- self$simple_encode(description$dbPassword)
+    description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
   }

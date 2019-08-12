@@ -439,7 +439,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
                         "'UserAdmin' permission required to change user configuration")))
 
   if (!is.null(description$password)) {
-    description$password <- self$simple_encode(description$password)
+    description$password <- dMeasure::simple_encode(description$password)
     # immediately encode password if it was provided
   }
 
@@ -553,7 +553,7 @@ userconfig.update <- function(dMeasure_obj, description) {
                "'UserAdmin' permission required to change user configuration")))
 
   if (!is.null(description$password)) {
-    description$password <- self$simple_encode(description$password)
+    description$password <- dMeasure::simple_encode(description$password)
     # immediately encode password if it was provided
   }
 

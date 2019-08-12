@@ -529,12 +529,12 @@ filter_investigations_named <- function(dMeasure_obj,
                     Reported = as.Date(Reported), Checked = as.Date(Checked),
                     Actioned = as.Date(Actioned),
                     AppointmentDate = as.Date(AppointmentDate),
-                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+                    AppointmentTime = dMeasure::hrmin(AppointmentTime)) %>>%
       dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
-      dplyr::mutate(Age = self$calc_age(DOB, # try several different dates for 'age'
-                                        dplyr::case_when(!is.na(Reported) ~ Reported,
-                                                         !is.na(Checked) ~ Checked,
-                                                         TRUE ~ Sys.Date())))
+      dplyr::mutate(Age = dMeasure::calc_age(DOB, # try several different dates for 'age'
+                                             dplyr::case_when(!is.na(Reported) ~ Reported,
+                                                              !is.na(Checked) ~ Checked,
+                                                              TRUE ~ Sys.Date())))
 
   }
 
@@ -917,14 +917,14 @@ filter_correspondence_named <- function(dMeasure_obj,
                     CheckDate = as.Date(CheckDate),
                     ActionDate = as.Date(ActionDate),
                     AppointmentDate = as.Date(AppointmentDate),
-                    AppointmentTime = self$hrmin(AppointmentTime)) %>>%
+                    AppointmentTime = dMeasure::hrmin(AppointmentTime)) %>>%
       dplyr::select(-c(Category, Subject, Detail)) %>>%
       dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
-                    Age = self$calc_age(DOB, # try several different dates for 'age'
-                                        dplyr::case_when(
-                                          !is.na(CorrespondenceDate) ~ CorrespondenceDate,
-                                          !is.na(CheckDate) ~ CheckDate,
-                                          TRUE ~ Sys.Date()))) %>>%
+                    Age = dMeasure::calc_age(DOB, # try several different dates for 'age'
+                                             dplyr::case_when(
+                                               !is.na(CorrespondenceDate) ~ CorrespondenceDate,
+                                               !is.na(CheckDate) ~ CheckDate,
+                                               TRUE ~ Sys.Date()))) %>>%
       dplyr::mutate(CheckedBy = c(self$UserFullConfig$Fullname, "")
                     [dplyr::if_else(CHECKEDBY == 0,
                                     as.integer(n_UserNames + 1),
@@ -1103,30 +1103,33 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
     if (screentag) {
       incoming <- incoming %>>%
         dplyr::mutate(viewtag =
-                        semantic_button(AppointmentDate, # semantic/fomantic buttons
-                                        colour =
-                                          dplyr::if_else(PastAppointment,
-                                                         'yellow',
-                                                         'green'),
-                                        popuphtml =
-                                          paste0("<h4>Date : ", AppointmentDate,
-                                                 ", ", AppointmentTime,
-                                                 "</h4><h6>Provider : ", Provider,
-                                                 "</h6><p><font size=\'+0\'>Status : ",
-                                                 Status, "</p>")),
+                        dMeasure::semantic_button(
+                          AppointmentDate, # semantic/fomantic buttons
+                          colour =
+                            dplyr::if_else(PastAppointment,
+                                           'yellow',
+                                           'green'),
+                          popuphtml =
+                            paste0("<h4>Date : ", AppointmentDate,
+                                   ", ", AppointmentTime,
+                                   "</h4><h6>Provider : ", Provider,
+                                   "</h6><p><font size=\'+0\'>Status : ",
+                                   Status, "</p>")),
                       patienttag =
-                        semantic_button(Patient,
-                                        colour = 'teal',
-                                        popuphtml =
-                                          paste0("<p><font size = \'+0\'>DOB : ",
-                                                 DOB,"</p>",
-                                                 "<p>Age : ", Age, "</p>")),
+                        dMeasure::semantic_button(
+                          Patient,
+                          colour = 'teal',
+                          popuphtml =
+                            paste0("<p><font size = \'+0\'>DOB : ",
+                                   DOB,"</p>",
+                                   "<p>Age : ", Age, "</p>")),
                       testtag =
-                        semantic_button(TestName,
-                                        colour = 'purple',
-                                        popuphtml =
-                                          paste0("<p><font size = \'+0\'>Reported : ",
-                                                 Reported, "</p"))) %>>%
+                        dMeasure::semantic_button(
+                          TestName,
+                          colour = 'purple',
+                          popuphtml =
+                            paste0("<p><font size = \'+0\'>Reported : ",
+                                   Reported, "</p"))) %>>%
         dplyr::group_by(patienttag, InternalID, RecordNo,
                         testtag, ReportID, DocumentID,
                         Checked, Actioned,

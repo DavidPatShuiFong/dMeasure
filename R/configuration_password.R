@@ -26,7 +26,7 @@ user_login <- function(dMeasure_obj, password) {
   if (self$empty_password()) {
     stop("No password set for currently identified user!")
   }
-  if (!self$simple_tag_compare(password, private$.identified_user$Password)) {
+  if (!dMeasure::simple_tag_compare(password, private$.identified_user$Password)) {
     stop("Wrong password")
   } else {
     self$authenticated <- TRUE
@@ -85,7 +85,7 @@ user_logout <- function(dMeasure_obj) {
 
   if (!newpassword == "") {
     # only encode password if it isn't a reset ("")
-    newpassword <- self$simple_tag(newpassword)
+    newpassword <- dMeasure::simple_tag(newpassword)
   }
   # encode (actually 'tag') the password, if not an empty string
   # tagging (hash) defined in calculation_definitions.R
@@ -154,7 +154,7 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
-    if (!self$simple_tag_compare(oldpassword, private$.identified_user$Password)) {
+    if (!dMeasure::simple_tag_compare(oldpassword, private$.identified_user$Password)) {
       stop("Old password incorrect")
     } else {
       # old password specified correctly

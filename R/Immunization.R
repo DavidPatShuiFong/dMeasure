@@ -97,39 +97,43 @@ zostavax_list <- function(dMeasure_obj,
   if (vaxtag) {
     zostavax_list <- zostavax_list %>>%
       dplyr::mutate(vaxtag =
-                      semantic_tag(paste0(' Zostavax '),
-                                   colour =
-                                     dplyr::if_else(is.na(GivenDate),
-                                                    dplyr::if_else(is.na(ITEMID), c('red'), c('purple')),
-                                                    c('green')),
-                                   # red if not given, purple if removed from herpes zoster vax reminders
-                                   # and green if has had the vax
-                                   popuphtml =
-                                     paste0("<h4>",
-                                            dplyr::if_else(is.na(ITEMID),
-                                                           dplyr::if_else(is.na(GivenDate),
-                                                                          "Age 70 to 79 years",
-                                                                          paste0('Date : ', format(GivenDate))),
-                                                           'Removed from herpes zoster immunization reminders'),
-                                            "</h4>")))
+                      dMeasure::semantic_tag(
+                        paste0(' Zostavax '),
+                        colour =
+                          dplyr::if_else(is.na(GivenDate),
+                                         dplyr::if_else(is.na(ITEMID), c('red'), c('purple')),
+                                         c('green')),
+                        # red if not given, purple if removed from herpes zoster vax reminders
+                        # and green if has had the vax
+                        popuphtml =
+                          paste0("<h4>",
+                                 dplyr::if_else(is.na(ITEMID),
+                                                dplyr::if_else(
+                                                  is.na(GivenDate),
+                                                  "Age 70 to 79 years",
+                                                  paste0('Date : ', format(GivenDate))),
+                                                'Removed from herpes zoster immunization reminders'),
+                                 "</h4>")))
   }
 
   if (vaxtag_print) {
     zostavax_list <- zostavax_list %>>%
       dplyr::mutate(vaxtag_print =
                       paste0("Zostavax", " ", # printable version of information
-                             dplyr::if_else(is.na(GivenDate),
-                                            dplyr::if_else(is.na(ITEMID),
-                                                           "(DUE) (Age 70 to 79 years)",
-                                                           "(Removed from herpes zoster immunization reminders)"),
-                                            paste0("(Given : ", format(GivenDate), ")"))
+                             dplyr::if_else(
+                               is.na(GivenDate),
+                               dplyr::if_else(
+                                 is.na(ITEMID),
+                                 "(DUE) (Age 70 to 79 years)",
+                                 "(Removed from herpes zoster immunization reminders)"),
+                               paste0("(Given : ", format(GivenDate), ")"))
                       ))
   }
 
   zostavax_list <- zostavax_list %>>%
     dplyr::select(intersect(names(zostavax_list),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Provider",
-                              "DOB", "Age", "vaxtag", "vaxtag_print")))
+                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+                              "Provider", "DOB", "Age", "vaxtag", "vaxtag_print")))
 
   return(zostavax_list)
 })
@@ -228,7 +232,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                   Reason = "Age 65 years or greater")
 
   l5 <- appointments_list %>>%
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 60) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Age 6 months to 4 years inclusive") %>>%
@@ -236,7 +240,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   lprematurity <- appointments_list %>>%
     # pre-term infants
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 24) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$history %>>% dplyr::filter(ConditionID == 2973) %>>%
@@ -318,7 +322,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   lchildaspirin <- appointments_list %>>%
     # children aged 6 months to 10 years on long-term aspirin
     # risk of Reye's syndrome after influenza infection
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths <= 131) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$currentrx %>>%
@@ -372,7 +376,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     l <- l %>>%
       dplyr::mutate(
         vaxtag =
-          semantic_tag(
+          dMeasure::semantic_tag(
             paste0(' Influenza '),
             colour =
               dplyr::if_else(is.na(GivenDate) |

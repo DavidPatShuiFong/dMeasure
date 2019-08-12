@@ -46,9 +46,9 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 }
 
 .public(dMeasure, "fobt_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                              appointments_list = NULL,
-                              lazy = FALSE,
-                              action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+                                        appointments_list = NULL,
+                                        lazy = FALSE,
+                                        action = FALSE, screentag = FALSE, screentag_print = TRUE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -155,7 +155,7 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
     dplyr::mutate(OutOfDateTest =
                     dplyr::case_when(is.na(TestDate) ~ 1,
                                      # if no date (no detected test)
-                                     self$interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
+                                     dMeasure::interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
                                      # if old (2 years or more)
                                      TRUE ~ 3)) %>>%   # if up-to-date
     tidyr::replace_na(list(TestName = 'FOBT'))
@@ -171,7 +171,7 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
   if (screentag) {
     screen_fobt_ix <- screen_fobt_ix %>>%
       dplyr::mutate(screentag =
-                      semantic_tag(
+                      dMeasure::semantic_tag(
                         trimws(TestName),
                         colour = c('red', 'yellow', 'green')[OutOfDateTest],
                         popuphtml = paste0("<h4>Date : ", TestDate, "</h4>"))

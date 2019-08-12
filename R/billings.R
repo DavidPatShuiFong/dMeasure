@@ -64,11 +64,11 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
     # change MBSITEMS into fomantic/semantic tags
     billings_sameday <- billings_sameday %>>%
       dplyr::mutate(billingtag =
-                      semantic_button(MBSItem,
-                                      colour = 'green',
-                                      popuphtml = paste0('<h4>', AppointmentDate,
-                                                         "</h3><p><font size=\'+0\'>",
-                                                         Description, '</p>')))
+                      dMeasure::semantic_button(MBSItem,
+                                                colour = 'green',
+                                                popuphtml = paste0('<h4>', AppointmentDate,
+                                                                   "</h3><p><font size=\'+0\'>",
+                                                                   Description, '</p>')))
   }
 
   if (screentag_print) {

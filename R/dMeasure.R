@@ -423,7 +423,7 @@ reactive_event <- list(obj = NULL, name = NULL, value = NULL)
       private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
                              server = server$Address, database = server$Database,
                              uid = server$UserID,
-                             pwd = self$simple_decode(server$dbPassword))
+                             pwd = dMeasure::simple_decode(server$dbPassword))
     }
 
     if (!private$emr_db$is_open() || !DBI::dbIsValid(private$emr_db$conn())) {
