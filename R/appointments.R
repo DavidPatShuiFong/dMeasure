@@ -104,10 +104,10 @@ filter_appointments <- function(dMeasure_obj,
                  status = NA) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -148,7 +148,7 @@ filter_appointments <- function(dMeasure_obj,
 .reactive_event(dMeasure, "appointments_filteredR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(),
+                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR(), self$appointment_statusR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
@@ -188,10 +188,10 @@ filter_appointments_time <- function(dMeasure_obj,
                  lazy = FALSE) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             clinicians <- self$clinicians
@@ -263,10 +263,10 @@ list_appointments <- function(dMeasure_obj,
                  lazy = FALSE) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (all(is.na(clinicians))) {
             clinicians <- self$clinicians
@@ -344,10 +344,10 @@ billed_appointments <- function(dMeasure_obj,
                  status = NA,
                  lazy = FALSE) {
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (all(is.na(clinicians))) {
             clinicians <- self$clinicians

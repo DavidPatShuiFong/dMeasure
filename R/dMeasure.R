@@ -1,5 +1,6 @@
 ##### dMeasure ###########################################
 #' @include r6_helpers.R
+#' @include dateContact.R
 #' functions to help create R6 classes
 NULL
 
@@ -17,7 +18,6 @@ NULL
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
 #' \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
-#' \item{\code{\link{choose_date}} : change, or read, search date range}
 #' \item{\code{\link{location_list}} : list practice locations/groups}
 #' \item{\code{\link{choose_location}} : change, or read, current location}
 #' }
@@ -1073,50 +1073,14 @@ initialize_emr_tables <- function(dMeasure_obj,
   return(UserFullConfig)
 })
 
-##### date variables and location #####################################
+##### location #####################################
 
 ## fields
 
-.public(dMeasure, "date_a", Sys.Date()) # 'from' date. by default, it is 'today'
-.public(dMeasure, "date_b", Sys.Date()) # 'to' date
 .public(dMeasure, "location", "All")    # location/group. by default, it is 'All'
 
 ## methods
 
-#' Choose date
-#'
-#' Sets 'from' and 'to' dates used in subsequent searches
-#'
-#' @param date_from 'From' date. default is current date_from
-#' @param date_to 'To' date. default is current date_to
-#'
-#' @return list(date_a, date_b)
-#'
-#' if date_a is later than date_b, a warning is returned,
-#' and the dates are NOT changed
-choose_date <- function(dMeasure_obj,
-                        date_from = dMeasure_obj$date_a,
-                        date_to = dMeasure_obj$date_b) {
-  dMeasure_obj$choose_date(date_from, date_to)
-}
-
-.public(dMeasure, "choose_date", function(date_from = self$date_a,
-                                          date_to = self$date_b) {
-  if (date_from > date_to) {
-    warning("'From' date cannot be later than 'To' date")
-    date_from <- self$date_a
-    date_to <- self$date_b
-  }
-  self$date_a <- date_from
-  self$date_b <- date_to
-
-  private$set_reactive(self$date_aR, self$date_a)
-  private$set_reactive(self$date_bR, self$date_b)
-
-  return(list(self$date_a, self$date_b))
-})
-.reactive(dMeasure, "date_aR", quote(self$date_a))
-.reactive(dMeasure, "date_bR", quote(self$date_b))
 #' Show list of locations
 #'
 #' This includes 'All'
@@ -1182,3 +1146,6 @@ choose_location <- function(dMeasure_obj,
 
   return(self$location)
 })
+
+##### date and contact ####################################################
+.public_init(dMeasure, "dateContact", dateContact$new())

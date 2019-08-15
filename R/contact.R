@@ -75,10 +75,10 @@ list_contact_appointments <- function(dMeasure_obj,
                  lazy = FALSE) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -182,10 +182,10 @@ list_contact_visits <- function(dMeasure_obj,
                  visit_type = NA) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -232,7 +232,7 @@ list_contact_visits <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_visits_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(),
+                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR(), self$visit_typeR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
@@ -264,10 +264,10 @@ list_contact_services <- function(dMeasure_obj,
                                                     clinicians = NA) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -315,7 +315,7 @@ list_contact_services <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_services_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(),
+                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR(), self$visit_typeR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
@@ -356,10 +356,10 @@ list_contact_count <- function(dMeasure_obj,
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!

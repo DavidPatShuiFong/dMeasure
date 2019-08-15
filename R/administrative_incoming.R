@@ -236,10 +236,10 @@ filter_investigations <- function(dMeasure_obj,
                                                     Actioned = NA) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -308,7 +308,7 @@ filter_investigations <- function(dMeasure_obj,
 .reactive_event(dMeasure, "investigations_filteredR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                    c(self$dateContact$date_aR(), self$dateContact$date_bR(), self$cliniciansR(),
                       self$filter_incoming_ActionR(),
                       self$filter_incoming_ActionedR()), {
                         # update if reactive version of $date_a Rdate_b
@@ -363,10 +363,10 @@ filter_investigations_appointment <- function(dMeasure_obj,
                                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -478,10 +478,10 @@ filter_investigations_named <- function(dMeasure_obj,
                                                           lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -587,10 +587,10 @@ filter_correspondence <- function(dMeasure_obj,
                                                     Actioned = NA) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -680,7 +680,7 @@ filter_correspondence <- function(dMeasure_obj,
 .reactive_event(dMeasure, "correspondence_filteredR",
                 quote(
                   shiny::eventReactive(
-                    c(self$date_aR(), self$date_bR(), self$cliniciansR(),
+                    c(self$dateContact$date_aR(), self$dateContact$date_bR(), self$cliniciansR(),
                       self$filter_incoming_ActionR(),
                       self$filter_incoming_ActionedR()), {
                         # update if reactive version of $date_a Rdate_b
@@ -735,10 +735,10 @@ filter_correspondence_appointment <- function(dMeasure_obj,
                                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -855,10 +855,10 @@ filter_correspondence_named <- function(dMeasure_obj,
                                                           lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -1004,10 +1004,10 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                                              screentag = FALSE, screentag_print = TRUE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians

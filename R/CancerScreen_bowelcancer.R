@@ -17,8 +17,8 @@ NULL
 #' Bowel cancer screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
+#' @param date_from from date range (default self$dateContact$date_a)
+#' @param date_to to date range (default self$dateContact$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list dataframe, list of appointments to search
 #'  (as opposed to using self$appointments_list)
@@ -51,10 +51,10 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
                                         action = FALSE, screentag = FALSE, screentag_print = TRUE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians

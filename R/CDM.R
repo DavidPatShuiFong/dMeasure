@@ -324,10 +324,10 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                   screentag = FALSE, screentag_print = TRUE) {
 
           if (is.na(date_from)) {
-            date_from <- self$date_a
+            date_from <- self$dateContact$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$date_b
+            date_to <- self$dateContact$date_b
           }
           if (all(is.na(clinicians))) {
             clinicians <- self$clinicians

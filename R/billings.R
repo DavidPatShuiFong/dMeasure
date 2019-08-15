@@ -14,7 +14,7 @@ NULL
 #' filter to billings which are done on the same day as displayed appointments
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_from=dMeasure_obj$dateContact$date_a start date
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
@@ -35,10 +35,10 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
                                                             screentag_print = TRUE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -85,7 +85,7 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
 #' billings are aggregated/group to patient/day
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
+#' @param date_from=dMeasure_obj$dateContact$date_a start date
 #' @param date_to=dMeasure_obj$date_b end date (inclusive)
 #' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
@@ -106,10 +106,10 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians,
                                             screentag_print = TRUE) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
