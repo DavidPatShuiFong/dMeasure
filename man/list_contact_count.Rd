@@ -5,8 +5,7 @@
 \title{List of contacts counts}
 \usage{
 list_contact_count(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, min_contact = 1, min_date = as.Date(-Inf, origin =
-  "1970-01-01"), lazy = FALSE)
+  clinicians = NA, min_contact = NA, min_date = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -17,12 +16,12 @@ list_contact_count(dMeasure_obj, date_from = NA, date_to = NA,
 
 \item{clinicians}{list of clinicians to view. default is $clinicians}
 
-\item{min_contact}{minimum number of contacts. default is one (1)}
+\item{min_contact}{minimum number of contacts. default is $contact_min, initially one (1)}
 
-\item{min_date}{most recent contact must be at least min_date. default is -Inf}
+\item{min_date}{most recent contact must be at least min_date. default is $contact_minDate, initially -Inf}
 }
 \value{
-dataframe of Patient (name), InternalID, Counts
+dataframe of Patient (name), InternalID, Count, and most recent contact date
 }
 \description{
 Filtered by date, and chosen clinicians

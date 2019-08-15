@@ -305,7 +305,37 @@ list_contact_services <- function(dMeasure_obj,
                 ))
 
 
+.private(dMeasure, ".contact_min", 1)
+.active(dMeasure, "contact_min", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.contact_min)
+  }
+  if (value >= 1) {
+    private$.contact_min <- value
+    private$set_reactive(self$contact_minR, value)
+  } else {
+    warning("$contact_min only accepts value greater than or equal to one (1).")
+  }
+})
+.reactive(dMeasure, "contact_minR", 1)
 
+.private(dMeasure, ".contact_minDate", as.Date(-Inf,
+                                               origin = "1970-01-01"))
+.active(dMeasure, "contact_minDate", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.contact_minDate)
+  }
+  if (inherits(value, "Date")) {
+    private$.contact_minDate <- value
+    private$set_reactive(self$contact_minDateR, value)
+  } else {
+    warning("$contact_minDate only accepts as.Date() values.")
+  }
+})
+.reactive(dMeasure, "contact_minDateR", as.Date(-Inf,
+                                                origin = "1970-01-01"))
 
 #' List of contacts counts
 #'
@@ -315,16 +345,16 @@ list_contact_services <- function(dMeasure_obj,
 #' @param date_from start date. default is $dateContact$date_a
 #' @param date_to end date (inclusive). default is $dateContact$date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
-#' @param min_contact minimum number of contacts. default is one (1)
-#' @param min_date most recent contact must be at least min_date. default is -Inf
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_count <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,
                                clinicians = NA,
-                               min_contact = 1,
-                               min_date = as.Date(-Inf, origin = "1970-01-01"),
+                               min_contact = NA,
+                               min_date = NA,
                                lazy = FALSE) {
   dMeasure_obj$list_contact_count(date_from, date_to, clinicians, min_contact, min_date,
                                   lazy)
@@ -333,9 +363,8 @@ list_contact_count <- function(dMeasure_obj,
 .public(dMeasure, "list_contact_count", function(date_from = NA,
                                                  date_to = NA,
                                                  clinicians = NA,
-                                                 min_contact = 1,
-                                                 min_date = as.Date(-Inf,
-                                                                    origin = "1970-01-01"),
+                                                 min_contact = NA,
+                                                 min_date = NA,
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -349,6 +378,12 @@ list_contact_count <- function(dMeasure_obj,
     # 'if' is not vectorized so will only read the first element of the list
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
   }
 
   # no additional clinician filtering based on privileges or user restrictions
@@ -392,7 +427,11 @@ list_contact_count <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_count_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$contact_appointments_listR()), {
+                    c(self$contact_appointments_listR(),
+                      self$contact_visits_listR(),
+                      self$contact_services_listR(),
+                      self$contact_minR(),
+                      self$contact_minDateR()), {
                       # update if reactive version of $date_a Rdate_b
                       # or $clinicians are updated.
                       self$list_contact_count(lazy = TRUE)
