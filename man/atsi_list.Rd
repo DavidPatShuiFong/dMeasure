@@ -4,13 +4,12 @@
 \alias{atsi_list}
 \title{list of patients recorded ATSI ethnicity}
 \usage{
-atsi_list(dMeasure_obj, appointments = NULL)
+atsi_list(dMeasure_obj, intID = NULL)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{appointments}{list. requires $InternalID
-by default, the appointments in $appointments_filtered}
+\item{intID}{list of InternalID}
 }
 \value{
 a list of numbers, which are the InternalIDs
