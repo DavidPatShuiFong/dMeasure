@@ -54,25 +54,22 @@ NULL
 #' @param status=NA filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
-#'  if NA, adopts from active $appointment_status
-#' @param lazy=FALSE if TRUE, then re-calculate $appointments_list
+#'  if NA, adopts from active $dateContact$appointment_status
 #'
 #' @return dataframe of Patient (name), InternalID, AppointmentDate
 list_contact_appointments <- function(dMeasure_obj,
                                       date_from = NA,
                                       date_to = NA,
                                       clinicians = NA,
-                                      status = NA,
-                                      lazy = FALSE) {
-  dMeasure_obj$list_contact_appointments(date_from, date_to, clinicians, status, lazy)
+                                      status = NA) {
+  dMeasure_obj$list_contact_appointments(date_from, date_to, clinicians, status)
 }
 
 .public(dMeasure, "list_contact_appointments",
         function(date_from = NA,
                  date_to = NA,
                  clinicians = NA,
-                 status = NA,
-                 lazy = FALSE) {
+                 status = NA) {
 
           if (is.na(date_from)) {
             date_from <- self$dateContact$date_a
@@ -85,6 +82,9 @@ list_contact_appointments <- function(dMeasure_obj,
             # 'if' is not vectorized so will only read the first element of the list
             # but if clinicians is a single NA, then read $clinicians
             clinicians <- self$clinicians
+          }
+          if (is.na(status)) {
+            status <- self$dateContact$appointment_status
           }
 
           # no additional clinician filtering based on privileges or user restrictions
@@ -100,17 +100,18 @@ list_contact_appointments <- function(dMeasure_obj,
               query = "contact_appointments",
               data = list(date_from, date_to, clinicians))}
 
-            if (!lazy) {
-              self$list_appointments(date_from, date_to,
-                                     clinicians, status = status,
-                                     lazy = FALSE)
-              # if not 'lazy' evaluation, then re-calculate self$appointments_list
-              # (that is automatically done by calling the $list_appointments method)
-            }
-
-            self$contact_appointments_list <- self$appointments_list %>>%
+            self$contact_appointments_list <- private$db$appointments %>>%
+              dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
+              dplyr::filter(Provider %in% clinicians) %>>%
+              dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
+              dplyr::filter(Status %in% status) %>>%
+              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              # need patients database to access date-of-birth
               dplyr::group_by(Patient, InternalID, AppointmentDate) %>>%
-              dplyr::summarise() # plucks out unique appointment dates
+              dplyr::summarise() %>>% # plucks out unique appointment dates
+              dplyr::ungroup() %>>%
+              dplyr::collect() %>>%
+              dplyr::mutate(AppointmentDate = as.Date(AppointmentDate))
 
             if (self$Log) {private$config_db$duration_log_db(log_id)}
           }
@@ -357,12 +358,11 @@ list_contact_count <- function(dMeasure_obj,
       data = list(date_from, date_to, clinicians))}
 
     if (!lazy) {
-      self$list_contact_appointments(date_from, date_to,
-                                     clinicians, status = status,
-                                     lazy = FALSE)
-      # if not 'lazy' evaluation, then re-calculate self$appointments_list
-      # (that is automatically done by calling the $list_appointments method)
+      a$list_contact_appointments()
+      a$list_contact_visits()
+      a$list_contact_services()
     }
+
     self$contact_count_list <- self$contact_appointments_list %>>%
       dplyr::bind_rows(
         (self$contact_visits_list %>>%

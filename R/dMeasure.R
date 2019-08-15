@@ -1149,3 +1149,10 @@ choose_location <- function(dMeasure_obj,
 
 ##### date and contact ####################################################
 .public_init(dMeasure, "dateContact", dateContact$new())
+
+.public(dMeasure, "choose_date", function(date_from = self$dateContact$date_a,
+                                          date_to = self$dateContact$date_b) {
+  # just a 'dummy' for the dateContact$choose_date method
+
+  return(self$dateContact$choose_date(date_from = date_from, date_to = date_to))
+})
