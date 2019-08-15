@@ -4,12 +4,20 @@ NULL
 
 ## 'helper' functions for calculation
 
-.public("calc_age", function(birthDate, refDate = Sys.Date()) {
+#' Calculate age a given reference date
+#'
+#' Create an interval between the date of birth and the enrollment date;
+#'
+#' @param birthdate vector of dates
+#' @param refDate reference date(s)
+#'
+#' @return period(s) (in years)
+#' @export
+calc_age <- function(birthDate, refDate = Sys.Date()) {
   # Calculate age at a given reference date
-  # Create an interval between the date of birth and the enrollment date;
-  # note that arguments can be vectors, so needto use mapply
 
   period <- mapply(function(x, y)
+    # Arguments can be vectors, so need to use mapply
     (length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
       ifelse(y > x, 1, -1),
     # note that seq.Date can't handle 'negative' periods
@@ -19,10 +27,18 @@ NULL
   # if not converted, could return an empty list, instead of empty numeric
 
   return(period)
-})
+}
 
-.public("calc_age_months", function(birthDate, refDate = Sys.Date()) {
-  # Calculate age at a given reference date, in months
+#' Calculate age a given reference date, in months
+#'
+#' Create an interval between the date of birth and the enrollment date;
+#'
+#' @param birthdate vector of dates
+#' @param refDate reference date(s)
+#'
+#' @return period(s) (in months)
+#' @export
+calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   # Create an interval between the date of birth and the enrollment date;
   # note that arguments can be vectors, so need to use mapply
 
@@ -36,17 +52,23 @@ NULL
   # if not converted, could return an empty list, instead of empty numeric
 
   return(period)
-})
+}
 
-.public("interval", function(date_a, date_b, unit = "none") {
-  # calculate period between date_a and date_b
-  # date_a and date_b can be lists
-  # returns $year, $month, $day
-  # can return 'negative' numbers
-  # returns NA if either of date_a or date_b is NA
-  # returns an arbitrarily large number of years if min(date_a, date_b) is -Inf
-  #
-  # if 'unit' = month, then convert all years to months
+#' Calculate period between two dates
+#'
+#' Create an interval between the date_a and date_b
+#'
+#' can return 'negative' numbers
+#' returns NA if either of date_a or date_b is NA
+#' returns an arbitrarily large number of years (Inf) if min(date_a, date_b) is -Inf
+#
+#' @param date_a vector of dates
+#' @param date_b vector of dates
+#' @param unit "none" or "month". if "month", convert all years tomonths
+#'
+#' @return period(s) in $year, $month and $day
+#' @export
+interval <- function(date_a, date_b, unit = "none") {
 
   infinity_years <- Inf
 
@@ -97,15 +119,20 @@ NULL
   }
 
   return(interval)
-})
+}
 
-.public("hrmin", function(t) {
-  # converts seconds to a 'time' starting from midnight
-  # t : value in seconds
-  # returns 24-hour time of form '14:15' (hh:mm)
+#' Calculate seconds to a 'time' starting from midnight
+#'
+#' t: value in seconds
+#'
+#' @param t seconds
+#'
+#' @return 24-hour time of form '14:15' (hh:mm)
+#' @export
+hrmin <- function(t) {
 
   format(as.POSIXct('1900-1-1') + t, '%H:%M')
-})
+}
 
 # code for encoding/decoding. not 'very' secret
 # requires libraries jsonlite (provides base64enc partly for obfuscation)
@@ -117,16 +144,13 @@ NULL
 #' Uses sodium library and base64_enc/dec from jsonlite. Has some defaults, but
 #' will also take command-line arguments or read from environment
 #'
-#' @param dMeasure_obj dMeasure R6 object
 #' @param msg the text to encode
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #' @param nonce a non-secret unique data value used to randomize the cipher
 #'
 #' @return - the encrypted text
-simple_encode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
-  dMeasure_obj$simple_encode(msg, key, nonce)
-}
-.public("simple_encode", function (msg, key = NULL, nonce = NULL) {
+#' @export
+simple_encode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
     nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
@@ -145,7 +169,7 @@ simple_encode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
   key <- sodium::hash(charToRaw(key))
   return(jsonlite::base64_enc(
     sodium::data_encrypt(charToRaw(msg), key, nonce)))
-})
+}
 
 #' Simple decoder
 #'
@@ -154,16 +178,13 @@ simple_encode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
 #' will also take command-line arguments or read from environment.
 #' Companion function to simple_encode
 #'
-#' @param dMeasure_obj dMeasure R6 object
 #' @param msg the text to decode
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #' @param nonce a non-secret unique data value used to randomize the cipher
 #'
 #' @return - the encrypted text
-simple_decode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
-  dMeasure_obj$simple_decode(msg, key, nonce)
-}
-.public("simple_decode", function(msg, key = NULL, nonce = NULL) {
+#' @export
+simple_decode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
     nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
@@ -184,7 +205,7 @@ simple_decode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
   return(rawToChar(sodium::data_decrypt(
     jsonlite::base64_dec(msg),key, nonce)
   ))
-})
+}
 
 #' Simple tagger
 #'
@@ -192,15 +213,12 @@ simple_decode <- function(dMeasure_obj, msg, key = NULL, nonce = NULL) {
 #' Uses sodium library and base64enc. Has some defaults, but
 #' will also take command-line arguments or read from environment.
 #'
-#' @param dMeasure_obj dMeasure R6 object
 #' @param msg the text to decode
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #'
 #' @return - the hash
-simple_tag <- function(dMeasure_obj, msg, key = NULL) {
-  dMeasure_obj$simple_tag(msg, key)
-}
-.public("simple_tag", function(msg, key = NULL) {
+#' @export
+simple_tag <- function(msg, key = NULL) {
   if (is.null(key)) {
     if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
       # if not set then the number of characters will be zero
@@ -216,7 +234,7 @@ simple_tag <- function(dMeasure_obj, msg, key = NULL) {
   tag <- jsonlite::base64_enc(sodium::data_tag(msg, key))
 
   return(tag)
-})
+}
 
 #' Simple tag comparison
 #'
@@ -224,16 +242,13 @@ simple_tag <- function(dMeasure_obj, msg, key = NULL) {
 #' Uses sodium library and base64enc. Has some defaults, but
 #' will also take command-line arguments or read from environment.
 #'
-#' @param dMeasure_obj dMeasure R6 object
 #' @param msg the text to check
 #' @param tag the tagged message (base64 encoded)
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #'
 #' @return - TRUE if matching, FALSE otherwise
-simple_tag_compare <- function(dMeasure_obj, msg, tag, key = NULL) {
-  dMeasure_obj$simple_tag_compare(msg, tag, key)
-}
-.public("simple_tag_compare", function(msg, tag, key = NULL) {
+#' @export
+simple_tag_compare <- function(msg, tag, key = NULL) {
   if (is.null(key)) {
     if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
       # if not set then the number of characters will be zero
@@ -254,4 +269,4 @@ simple_tag_compare <- function(dMeasure_obj, msg, tag, key = NULL) {
   # 'all' checks that that all the elements of the comparison vector are TRUE
 
   return(result)
-})
+}

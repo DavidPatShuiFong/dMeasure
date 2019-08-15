@@ -17,7 +17,7 @@ NULL
 diabetes_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$diabetes_list(appointments)
 }
-.public("diabetes_list", function(appointments = NULL) {
+.public(dMeasure, "diabetes_list", function(appointments = NULL) {
   # Best Practice Diabetes code
   diabetes_codes <- c(3, 775, 776, 778, 774, 7840, 11998)
 
@@ -48,7 +48,7 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 asthma_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$asthma_list(appointments)
 }
-.public("asthma_list", function(appointments = NULL) {
+.public(dMeasure, "asthma_list", function(appointments = NULL) {
   # Best Practice Asthma code
   asthma_codes <- c(281, 285, 283, 284, 282)
 
@@ -78,7 +78,7 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 atsi_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$atsi_list(appointments)
 }
-.public("atsi_list", function(appointments = NULL) {
+.public(dMeasure, "atsi_list", function(appointments = NULL) {
   # Best Practice Aboriginal or Torres Strait Islander codes
   atsi_codes <- c("Aboriginal", "Torres Strait Islander",
                   "Aboriginal/Torres Strait Islander")
@@ -110,7 +110,7 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
 malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$malignancy_list(appointments)
 }
-.public("malignancy_list", function(appointments = NULL) {
+.public(dMeasure, "malignancy_list", function(appointments = NULL) {
   # Best Practice codes including for many cancers, carcinomas, lymphomas, leukaemias
   malignancy_codes <- c(463, 478, 485, 7845, 449, 6075, 453, 456, 473, 490, 11927,
                         445, 444, 446, 447, 448, 451, 457, 458, 459, 460, 462, 469, 454,
@@ -139,7 +139,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("hiv_list", function(appointments = NULL) {
+.public(dMeasure, "hiv_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have HIV
 
@@ -160,7 +160,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("haemoglobinopathy_list", function(appointments = NULL) {
+.public(dMeasure, "haemoglobinopathy_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have haemoglobinopathy
 
@@ -181,7 +181,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("asplenic_list", function(appointments = NULL) {
+.public(dMeasure, "asplenic_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # are asplenic
 
@@ -202,7 +202,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("transplant_list", function(appointments = NULL) {
+.public(dMeasure, "transplant_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have had transplants
 
@@ -224,7 +224,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("cardiacdisease_list", function(appointments = NULL) {
+.public(dMeasure, "cardiacdisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have had cardiac disease
 
@@ -248,7 +248,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("trisomy21_list", function(appointments = NULL) {
+.public(dMeasure, "trisomy21_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have trisomy 21
 
@@ -269,7 +269,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("bmi30_list", function(appointments = NULL) {
+.public(dMeasure, "bmi30_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have bmi 30 or more (obesity)
 
@@ -295,7 +295,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("chroniclungdisease_list", function(appointments = NULL) {
+.public(dMeasure, "chroniclungdisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have lung disease such as bronchiectasis, cystic fibrosis, COPD/COAD
   # asthma is in a separate list
@@ -317,7 +317,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("neurologic_list", function(appointments = NULL) {
+.public(dMeasure, "neurologic_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have neurologic disease
 
@@ -340,7 +340,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("chronicliverdisease_list", function(appointments = NULL) {
+.public(dMeasure, "chronicliverdisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have chronic liver disease
 
@@ -362,7 +362,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("chronicrenaldisease_list", function(appointments = NULL) {
+.public(dMeasure, "chronicrenaldisease_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # have chronic renal disease
 
@@ -385,7 +385,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-.public("pregnant_list", function(appointments = NULL) {
+.public(dMeasure, "pregnant_list", function(appointments = NULL) {
   # returns vector of InternalID of patients who
   # are pregnant
 

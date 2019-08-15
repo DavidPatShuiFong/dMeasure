@@ -10,15 +10,17 @@ filter_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from=dMeasure_obj$date_a}{start date}
+\item{date_from}{start date. default is $dateContact$date_a}
 
-\item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
+\item{date_to}{end date (inclusive). default is $dateContact$date_b}
 
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
+\item{clinicians}{list of clinicians to view. default is $clinicians}
 
-\item{status=NA}{filter by 'status' if not NA
+\item{status}{filter by 'status' if not NA
 permissible values are 'Booked', 'Completed', 'At billing',
-'Waiting', 'With doctor'}
+'Waiting', 'With doctor'
+default is all possible appointment status
+ $dateContact$appointment_status_types}
 }
 \value{
 list of appointments

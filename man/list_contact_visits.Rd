@@ -17,7 +17,7 @@ list_contact_visits(dMeasure_obj, date_from = NA, date_to = NA,
 \item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
 
 \item{visit_types=NA}{filter by 'visit_type' if not NA
-permissible values are "Home", "Non Visit", "Hospital", "RACF",
+permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",
 "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 "Other", "Hostel", "Telehealth"
 if NA, adopts value from active $visit_type}

@@ -4,11 +4,9 @@
 \alias{simple_tag_compare}
 \title{Simple tag comparison}
 \usage{
-simple_tag_compare(dMeasure_obj, msg, tag, key = NULL)
+simple_tag_compare(msg, tag, key = NULL)
 }
 \arguments{
-\item{dMeasure_obj}{dMeasure R6 object}
-
 \item{msg}{the text to check}
 
 \item{tag}{the tagged message (base64 encoded)}

@@ -5,7 +5,7 @@
 \title{List of contacts (appointment type)}
 \usage{
 list_contact_appointments(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, status = NA, lazy = FALSE)
+  clinicians = NA, status = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -19,9 +19,7 @@ list_contact_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \item{status=NA}{filter by 'status' if not NA
 permissible values are 'Booked', 'Completed', 'At billing',
 'Waiting', 'With doctor'
-if NA, adopts from active $appointment_status}
-
-\item{lazy=FALSE}{if TRUE, then re-calculate $appointments_list}
+if NA, adopts from active $dateContact$appointment_status}
 }
 \value{
 dataframe of Patient (name), InternalID, AppointmentDate
