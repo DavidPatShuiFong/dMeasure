@@ -47,27 +47,6 @@ NULL
                    MBSItem = integer(), Description = character())
 )
 
-
-appointment_status_types <- c("Booked", "Completed", "At billing", "Waiting", "With doctor")
-# valid appointment states. note that 'with doctor' applies to any health provider type!
-.private(dMeasure, ".appointment_status", appointment_status_types)
-# by default, all status types are valid
-.active(dMeasure, "appointment_status", function(value) {
-  if (missing(value)) {
-    return(private$.appointment_status)
-  }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
-    private$.appointment_status <- value
-    private$set_reactive(self$appointment_statusR, value)
-  } else {
-    warning(paste("filter_incoming_Action can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  appointment_status_types))
-  }
-})
-.reactive(dMeasure, "appointment_statusR", quote(appointment_status_types))
-
 # appointment list with billings
 # collects ALL billings for patients who have displayed appointments
 # used by billings view, and CDM billings view
@@ -116,7 +95,7 @@ filter_appointments <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           if (is.na(status)) {
-            status <- self$appointment_status
+            status <- self$dateContact$appointment_status
           }
 
           # no additional clinician filtering based on privileges or user restrictions
@@ -136,7 +115,8 @@ filter_appointments <- function(dMeasure_obj,
               dplyr::filter(Provider %in% clinicians) %>>%
               dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
               dplyr::filter(Status %in% status)
-            # a database filter on an empty list after %in% will result in an error message
+            # a database filter on an empty list after %in% will
+            # result in an error message
             #
             # this reactive is not "collect()"ed because it is joined to other
             # filtered database lists prior to 'collection'
@@ -149,7 +129,7 @@ filter_appointments <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
-                      self$cliniciansR(), self$appointment_statusR()), {
+                      self$cliniciansR(), self$dateContact$appointment_statusR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$filter_appointments()

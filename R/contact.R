@@ -128,30 +128,6 @@ list_contact_appointments <- function(dMeasure_obj,
                     })
                 ))
 
-
-
-visit_types <- c("Surgery", "Home", "Non Visit", "Hospital", "RACF", "Telephone",
-                 "SMS", "Email", "Locum Service", "Out of Office", "Other", "Hostel",
-                 "Telehealth")
-
-.private(dMeasure, ".visit_type", visit_types)
-# by default, all visit types are valid
-.active(dMeasure, "visit_type", function(value) {
-  if (missing(value)) {
-    return(private$.visit_type)
-  }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
-    private$.visit_type <- value
-    private$set_reactive(self$visit_typeR, value)
-  } else {
-    warning(paste("visit_type can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  visit_types))
-  }
-})
-.reactive(dMeasure, "visit_typeR", quote(visit_types))
-
 #' List of contacts (visit type)
 #'
 #' Filtered by date, and chosen clinicians
@@ -194,7 +170,7 @@ list_contact_visits <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           if (is.na(visit_type)) {
-            visit_type <- self$visit_type
+            visit_type <- self$dateContact$visit_type
           }
 
           # no additional clinician filtering based on privileges or user restrictions
@@ -233,7 +209,7 @@ list_contact_visits <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
-                      self$cliniciansR(), self$visit_typeR()), {
+                      self$cliniciansR(), self$dateContact$visit_typeR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$list_contact_visits()
@@ -316,7 +292,7 @@ list_contact_services <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
-                      self$cliniciansR(), self$visit_typeR()), {
+                      self$cliniciansR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$list_contact_services()
@@ -387,7 +363,6 @@ list_contact_count <- function(dMeasure_obj,
       # if not 'lazy' evaluation, then re-calculate self$appointments_list
       # (that is automatically done by calling the $list_appointments method)
     }
-
     self$contact_count_list <- self$contact_appointments_list %>>%
       dplyr::bind_rows(
         (self$contact_visits_list %>>%
@@ -396,7 +371,7 @@ list_contact_count <- function(dMeasure_obj,
            dplyr::rename(AppointmentDate = ServiceDate))
       ) %>>%
       dplyr::group_by(Patient, InternalID) %>>%
-      dplyr::summarise(Count = n()) # plucks out unique appointment dates
+      dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate)) # plucks out unique appointment dates
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
