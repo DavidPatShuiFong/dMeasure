@@ -37,7 +37,10 @@ NULL
 .public(dMeasure, "contact_count_list",
         data.frame(Patient = character(),
                    InternalID = integer(),
-                   Count = integer()))
+                   Count = integer(),
+                   Latest = as.Date(integer(0),
+                                    origin = "1970-01-01"),
+                   stringsAsFactors = FALSE))
 # filtered by chosen dates and clinicians
 
 
@@ -309,27 +312,30 @@ list_contact_services <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param status=NA filter by 'status' if not NA
-#'  permissible values are 'Booked', 'Completed', 'At billing',
-#'  'Waiting', 'With doctor'
+#' @param date_from start date. default is $dateContact$date_a
+#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is one (1)
+#' @param min_date most recent contact must be at least min_date. default is -Inf
 #'
-#' @return dataframe of Patient (name), InternalID, Counts
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_count <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,
                                clinicians = NA,
-                               status = NA,
+                               min_contact = 1,
+                               min_date = as.Date(-Inf, origin = "1970-01-01"),
                                lazy = FALSE) {
-  dMeasure_obj$list_contact_count(date_from, date_to, clinicians, status, lazy)
+  dMeasure_obj$list_contact_count(date_from, date_to, clinicians, min_contact, min_date,
+                                  lazy)
 }
 
 .public(dMeasure, "list_contact_count", function(date_from = NA,
                                                  date_to = NA,
                                                  clinicians = NA,
-                                                 status = NA,
+                                                 min_contact = 1,
+                                                 min_date = as.Date(-Inf,
+                                                                    origin = "1970-01-01"),
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -371,7 +377,12 @@ list_contact_count <- function(dMeasure_obj,
            dplyr::rename(AppointmentDate = ServiceDate))
       ) %>>%
       dplyr::group_by(Patient, InternalID) %>>%
-      dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate)) # plucks out unique appointment dates
+      dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate),
+                       Latest = max(AppointmentDate)) %>>%
+      # plucks out unique appointment dates
+      dplyr::ungroup() %>>%
+      dplyr::filter(Count >= min_contact) %>>%
+      dplyr::filter(Latest >= min_date)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
