@@ -413,7 +413,8 @@ filter_investigations_appointment <- function(dMeasure_obj,
                            dplyr::filter(., AppointmentDate >= today)
                            else .},
                        by = "InternalID", copy = TRUE) %>>%
-      dplyr::filter(AppointmentDate > Checked) %>>%
+      dplyr::filter(is.na(AppointmentDate) || AppointmentDate > Checked) %>>%
+      # filter appointments, if any, to date after date of checking
       dplyr::mutate(Status = trimws(Status),
                     TestName = trimws(TestName))
 
@@ -519,22 +520,24 @@ filter_investigations_named <- function(dMeasure_obj,
     self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
       dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
       # need patients database to access date-of-birth
-      dplyr::select(Patient,
+      dplyr::select(Firstname, Surname,
                     DOB, InternalID, RecordNo, TestName, ReportID,
                     Reported, Checked, CheckedBy,
                     Notation, Action, Actioned, Comment,
                     AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
-      dplyr::mutate(RecordNo = trimws(RecordNo),
+      dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
+                    RecordNo = trimws(RecordNo),
                     Reported = as.Date(Reported), Checked = as.Date(Checked),
                     Actioned = as.Date(Actioned),
                     AppointmentDate = as.Date(AppointmentDate),
-                    AppointmentTime = dMeasure::hrmin(AppointmentTime)) %>>%
-      dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
+                    AppointmentTime = dMeasure::hrmin(AppointmentTime),
+                    DOB = as.Date(substr(DOB, 1, 10))) %>>%
       dplyr::mutate(Age = dMeasure::calc_age(DOB, # try several different dates for 'age'
                                              dplyr::case_when(!is.na(Reported) ~ Reported,
                                                               !is.na(Checked) ~ Checked,
-                                                              TRUE ~ Sys.Date())))
+                                                              TRUE ~ Sys.Date()))) %>>%
+      dplyr::select(-c(Firstname, Surname))
 
   }
 
@@ -786,7 +789,8 @@ filter_correspondence_appointment <- function(dMeasure_obj,
                            dplyr::filter(., AppointmentDate >= today)
                            else .},
                        by = "InternalID", copy = TRUE) %>>%
-      dplyr::filter(AppointmentDate > CheckDate) %>>%
+      dplyr::filter(is.na(AppointmentDate) || AppointmentDate > CheckDate) %>>%
+      # filter appointment date (if any) to after the document was checked
       dplyr::mutate(Status = trimws(Status))
     # further filter against the 'checked' date for each correspondence
 
@@ -895,14 +899,15 @@ filter_correspondence_named <- function(dMeasure_obj,
     self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
       dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
       # need patients database to access date-of-birth
-      dplyr::select(Patient,
+      dplyr::select(Firstname, Surname,
                     DOB, InternalID, RecordNo, DocumentID,
                     Category, Subject, Detail,
                     CorrespondenceDate, CheckDate, CHECKEDBY,
                     NOTATION, ACTION, ActionDate, Comment,
                     AppointmentDate, AppointmentTime, Provider, Status) %>>%
       dplyr::collect() %>>%
-      dplyr::mutate(RecordNo = trimws(RecordNo),
+      dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
+                    RecordNo = trimws(RecordNo),
                     DocumentName = paste(dplyr::if_else(is.na(Category),
                                                         "",
                                                         trimws(Category)),
@@ -918,7 +923,7 @@ filter_correspondence_named <- function(dMeasure_obj,
                     ActionDate = as.Date(ActionDate),
                     AppointmentDate = as.Date(AppointmentDate),
                     AppointmentTime = dMeasure::hrmin(AppointmentTime)) %>>%
-      dplyr::select(-c(Category, Subject, Detail)) %>>%
+      dplyr::select(-c(Firstname, Surname, Category, Subject, Detail)) %>>%
       dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10)),
                     Age = dMeasure::calc_age(DOB, # try several different dates for 'age'
                                              dplyr::case_when(
