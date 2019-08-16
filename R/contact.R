@@ -5,8 +5,6 @@
 #'
 #' @include dMeasure.R
 #' needs the '.public' function from dMeasure.R
-#' @include appointments.R
-#' needs $appointments_listR() and $appointments_list
 NULL
 
 ## Fields
@@ -399,9 +397,9 @@ list_contact_count <- function(dMeasure_obj,
       data = list(date_from, date_to, clinicians))}
 
     if (!lazy) {
-      a$list_contact_appointments()
-      a$list_contact_visits()
-      a$list_contact_services()
+      self$list_contact_appointments()
+      self$list_contact_visits()
+      self$list_contact_services()
     }
 
     self$contact_count_list <- self$contact_appointments_list %>>%

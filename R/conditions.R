@@ -473,7 +473,7 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  # Best Practice codes for trisomy 21
+  # Best Practice codes for lung disease
   cld_codes <- c(598, 4740, 414, 702)
 
   private$db$history %>>%
