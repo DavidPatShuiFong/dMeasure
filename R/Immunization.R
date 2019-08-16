@@ -195,8 +195,10 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   if (is.null(appointments_list)) {
     appointments_list <- self$appointments_list
   }
-  intID <- appointments_list %>>% dplyr::pull(InternalID)
-  # just the InternalID of the appointment list
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
 
   lprevious <- appointments_list %>>%
     # those who have had influenza vaccines in the past
@@ -252,72 +254,72 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::select(-AgeInMonths)
 
   ldiabetes <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$diabetes_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$diabetes_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Diabetes")
 
   latsi <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$atsi_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$atsi_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Aboriginal or Torres Strait Islander")
 
   lasthma <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$asthma_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$asthma_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Asthma")
 
   lmalignancy <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$malignancy_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$malignancy_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Malignancy")
 
   lhiv <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$hiv_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$hiv_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "HIV")
 
   lhaemoglobinopathy <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$haemoglobinopathy_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$haemoglobinopathy_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Haemoglobinopathy")
 
   lasplenic <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$asplenic_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$asplenic_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Asplenia")
 
   ltransplant <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$transplant_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$transplant_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Transplant recipient")
 
   lcardiac <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$cardiacdisease_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$cardiacdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Heart disease")
 
   lbmi30 <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$bmi30_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$bmi30_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "BMI>30")
 
   lchroniclung <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chroniclungdisease_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$chroniclungdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Chronic lung disease")
 
   lneurology <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$neurologic_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$neurologic_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Neurological disease")
 
   lchronicliver <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chronicliverdisease_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$chronicliverdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Chronic liver disease")
 
   lrenaldisease <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chronicrenaldisease_list(intID)) %>>%
+    dplyr::filter(InternalID %in% self$chronicrenaldisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "BMI>30")
 
@@ -348,7 +350,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                     "GivenDate", "Reason"))
 
   lpregnant <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$pregnant_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$pregnant_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Pregnancy")
 

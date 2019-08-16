@@ -4,12 +4,13 @@
 \alias{cardiacdisease_list}
 \title{list of patients with cardiac conditioins}
 \usage{
-cardiacdisease_list(dMeasure_obj, intID)
+cardiacdisease_list(dMeasure_obj, appointments = NULL)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{intID}{list of InternalID}
+\item{appointments}{dataframe of appointments $InternalID and $Date
+if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a list of numbers, which are the InternalIDs
