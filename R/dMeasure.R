@@ -902,6 +902,9 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   private$db$patients <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
+  # fields include InternalID, ExternalID, StatusText
+  # Title, Firstname, Middlename, Surname, Preferredname
+  # DOB, Sex, Ethnicity
 
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName

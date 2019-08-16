@@ -123,7 +123,7 @@ list_contact_appointments <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$appointments_listR()), {
-                      # update if reactive version of $date_a Rdate_b
+                      # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$list_contact_appointments(lazy = TRUE)
                       # re-calculates the appointments
@@ -212,7 +212,7 @@ list_contact_visits <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR(), self$dateContact$visit_typeR()), {
-                        # update if reactive version of $date_a Rdate_b
+                        # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
                         self$list_contact_visits()
                         # re-calculates the appointments
@@ -295,7 +295,7 @@ list_contact_services <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR()), {
-                        # update if reactive version of $date_a Rdate_b
+                        # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
                         self$list_contact_services()
                         # re-calculates the appointments
@@ -430,7 +430,7 @@ list_contact_count <- function(dMeasure_obj,
                       self$contact_services_listR(),
                       self$contact_minR(),
                       self$contact_minDateR()), {
-                      # update if reactive version of $date_a Rdate_b
+                      # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$list_contact_count(lazy = TRUE)
                       # re-calculates the counts
