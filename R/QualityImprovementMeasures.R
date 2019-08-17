@@ -19,7 +19,7 @@ NULL
     return(private$.qim_ignoreOld)
   }
   if (is.logical(value)) {
-    private$.contact_min <- value
+    private$.qim_ignoreOld <- value
     private$set_reactive(self$qim_ignoreOldR, value)
   } else {
     warning("$qim_ignoreOld only accepts logical values (TRUE/FALSE).")
@@ -27,6 +27,33 @@ NULL
 })
 .reactive(dMeasure, "qim_ignoreOldR", TRUE)
 
+##### demographic groupings for reporting ############################################
+
+.active(dMeasure, "qim_demographicGroupings", function(value) {
+  if (!missing(value)) {
+    warning("$qim_demographicGroupings is read-only.")
+  } else {
+    return(c("Age5", "Sex", "Ethnicity", "MaritalStatus", "Sexuality"))
+    # vector of valid demographic groups (for QIM reporting)
+    # Age in 5 year categories
+    # Ethnicity
+    # MaritalStatus
+    # Sexuality
+  }
+})
+
+.private_init(dMeasure, ".qim_demographicGroup", quote(self$qim_demographicGroupings))
+.active(dMeasure, "qim_demographicGroup", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.qim_demographicGroup)
+  }
+  value <- intersect(value, self$qim_demographicGroupings)
+  # make sure groups are valid
+  private$.qim_demographicGroup <- value
+  private$set_reactive(self$qim_demographicGroupR, value)
+})
+.reactive(dMeasure, "qim_demographicGroupR", quote(self$qim_demographicGroupings))
 
 ##### QIM diabetes fields ###########################################################
 
@@ -266,6 +293,176 @@ list_qim_diabetes <- function(dMeasure_obj,
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$list_qim_diabetes(lazy = TRUE)
+                      # re-calculates the counts
+                    })
+                ))
+
+
+.active(dMeasure, "qim_diabetes_measureTypes", function(value) {
+  if (!missing(value)) {
+    warning("$qim_diabetes_measureTypes is read-only.")
+  } else {
+    return(c("HbA1C", "Influenza", "BP"))
+    # vector of valid QIM measures for diabetes (for QIM reporting)
+    # QIM 01 - HbA1C
+    # QIM 05 - Influenza
+    # QIM 10 - Blood pressure
+  }
+})
+
+.private_init(dMeasure, ".qim_diabetes_measure", quote(self$qim_diabetes_measureTypes))
+.active(dMeasure, "qim_diabetes_measure", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.qim_diabetes_measure)
+  }
+  value <- intersect(value, self$qim_diabetes_measureTypes)
+  # only valid measure types allowed
+  private$.qim_diabetes_measure <- value
+  private$set_reactive(self$qim_diabetes_measureR, value)
+})
+.reactive(dMeasure, "qim_diabetes_measureR", quote(self$qim_diabetes_measureTypes))
+
+.public(dMeasure, "qim_diabetes_report",
+        data.frame(NULL,
+                   stringsAsFactors = FALSE))
+# empty data frame, number of columns dynamically change
+
+#' Diabetes Quality Improvement Measure report, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' Shows chosen QIM measures, and by demographic grouping
+#'
+#' QIM 01 - HbA1C - most recent. the QIM measure is within last twelve months
+#' QIM 05 - Influenza immunization - most recent. the QIM measure is within last 15 months
+#' QIM 10 - Blood pressure - most recent. the QIM measure is within the last six monthe
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $dateContact$date_a
+#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param demographic demographic groupings for reporting.
+#'  if not supplied, reads $qim_demographicGroup
+#'  list of available demographic groups in $qim_demographicGroupings
+#' @param measure measures to report
+#'  if not supplied, reads $qim_diabetes_measure
+#'  list of available measures in $qim_diabetes_measureTypes
+#'  currently 'HbA1C', 'Influenza' and 'BP'
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+report_qim_diabetes <- function(dMeasure_obj,
+                                date_from = NA,
+                                date_to = NA,
+                                clinicians = NA,
+                                min_contact = NA,
+                                min_date = NA,
+                                demographic = NA,
+                                measure = NA,
+                                ignoreOld = NA,
+                                lazy = FALSE) {
+  dMeasure_obj$report_qim_diabetes(date_from, date_to, clinicians,
+
+                                        min_contact, min_date,
+                                   demographic, measure,
+                                   ignoreOld,
+                                   lazy)
+}
+
+.public(dMeasure, "report_qim_diabetes", function(date_from = NA,
+                                                  date_to = NA,
+                                                  clinicians = NA,
+                                                  min_contact = NA,
+                                                  min_date = NA,
+                                                  demographic = NA,
+                                                  measure = NA,
+                                                  ignoreOld = NA,
+                                                  lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$dateContact$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$dateContact$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(demographic)) {
+    demographic <- self$qim_demographicGroup
+  }
+  if (is.na(measure)) {
+    measure <- self$qim_diabetes_measure
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "qim_diabetes_report",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_diabetes(date_from, date_to, clinicians,
+                             min_contact, min_date, ignoreOld,
+                             lazy)
+    }
+
+    measure <- dplyr::recode(measure,
+                             'HbA1C' = 'HbA1CDone',
+                             'Influenza' = 'InfluenzaDone',
+                             'BP' = 'BPDone')
+    report_groups <- c(demographic, measure, "")
+    # group by both demographic groupings and measures of interest
+    # add a dummy string in case there are no demographic or measure groups chosen!
+
+    self$qim_diabetes_report <- self$qim_diabetes_list %>>%
+      dplyr::mutate(HbA1CDone = !is.na(HbA1CDate),
+                    InfluenzaDone = !is.na(FluvaxDate),
+                    BPDone = !is.na(BPDate)) %>>%
+      # a measure is 'done' if it exists (not NA)
+      # if ignoreOld = TRUE, the the observation must fall within
+      #  the required timeframe
+      dplyr::group_by_at(report_groups) %>>%
+      # group_by_at takes a vector of strings
+      dplyr::summarise(n = n())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_diabetes_report)
+})
+.reactive_event(dMeasure, "qim_diabetes_reportR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$list_qim_diabetesR()), {
+                      # update if reactive version of $date_a $date_b
+                      # or $clinicians are updated.
+                      self$report_qim_diabetes(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
