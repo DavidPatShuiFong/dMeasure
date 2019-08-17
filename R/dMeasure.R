@@ -119,6 +119,7 @@ dMeasure <-
     private$emr_db$close()
     private$db$users <- NULL
     private$db$patients <- NULL
+    private$db$clinical <- NULL
     private$db$investigations <- NULL
     private$db$appointments <- NULL
     private$db$immunizations <- NULL
@@ -379,6 +380,7 @@ dMeasure <-
       # either database not opened, or has just been closed, including set to 'None'
       private$db$users <- NULL
       private$db$patients <- NULL
+      private$db$clinical <- NULL
       private$db$investigations <- NULL
       private$db$appointments <- NULL
       private$db$immunizations <- NULL
@@ -901,10 +903,43 @@ initialize_emr_tables <- function(dMeasure_obj,
   # does not include password in public/reactive
 
   private$db$patients <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
+    dplyr::mutate(Ethnicity = trimws(Ethnicity),
+                  Sex = trimws(Sex))
+
   # fields include InternalID, ExternalID, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
   # DOB, Sex, Ethnicity
+
+  private$db$MARITALSTATUS <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'MARITALSTATUS'))
+  # has the fields MARITALSTATUSCODE (a number)
+  # and MARITALSTATUSNAME (a string)
+
+  private$db$SEXUALITY <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'SEXUALITY'))
+  # has the fields SEXUALITYCODE (a number)
+  # and SEXUALITYNAME (a string)
+
+  private$db$clinical <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
+    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY) %>>%
+    dplyr::left_join(private$db$MARITALSTATUS,
+                     by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
+    dplyr::left_join(private$db$SEXUALITY,
+                     by = c("SEXUALITY" = "SEXUALITYCODE")) %>>%
+    dplyr::select(-c(MARITALSTATUS, SEXUALITY)) %>>%
+    dplyr::rename(InternalID = INTERNALID,
+                  MaritalStatus = MARITALSTATUSNAME,
+                  Sexuality = SEXUALITYNAME) %>>%
+    dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
+                  Sexuality = trimws(Sexuality))
+  # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
+  #  (which are not dated or given additional identifiers)
+  # MaritalStatusName and SexualityName provided as strings
+  # 'codes' can be found in dbo.CLINICAL
+  # and interpretation of codes can be found in dbo.MARITALSTATUS
+  # and dbo.SEXUALITY
 
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName

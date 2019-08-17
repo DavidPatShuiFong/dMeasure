@@ -239,8 +239,20 @@ list_qim_diabetes <- function(dMeasure_obj,
                          dplyr::mutate(BP = paste0(`3`,"/",`4`)) %>>%
                          dplyr::select(-c(`3`, `4`)),
                        by = "InternalID",
-                       copy = TRUE)
-
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% diabetesID) %>>%
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% diabetesID) %>>%
+                         dplyr::select(InternalID, MaritalStatus, Sexuality),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      # round age group to nearest 5 years
+      dplyr::select(-DOB)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
