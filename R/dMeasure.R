@@ -979,7 +979,12 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
-    dplyr::select('InternalID', 'ReportDate', 'ResultName', 'LoincCode')
+    dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
+                  ResultValue, Units, Range)
+  # BPCode
+  #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
+  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
+  #  17 - Albumin/Creatinine ratio
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
@@ -1003,9 +1008,16 @@ initialize_emr_tables <- function(dMeasure_obj,
                   'Condition', 'ConditionID', 'Status')
 
   private$db$observations <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'DATANAME',
-                  'DATACODE', 'DATAVALUE', 'OBSDATE')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
+    dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
+                  ObservationDate, ObservationTime, ObservationValue)
+  # ObservationCode
+  #  1 - temp, 2 - pulse (rate)
+  #  3 - systolic blood pressure, 4 - diastolic blood pressure
+  #  6 - BSL, 7 - Height, 8 - Weight, 9 - BMI
+  #  10 - Head circumference
+  #  17 - Waist, 18 - Hip
+  #  21 - WHRatio, 26 - DiabRisk
 
   private$db$currentrx <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%

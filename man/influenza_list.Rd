@@ -30,7 +30,7 @@ dataframe list of influenza eligible patients
 }
 \description{
 Includes patients who may have already had influenza vaccine,
-date of previous Zostavax is included.
+date of previous influenza vaccine is included.
 }
 \details{
 Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')

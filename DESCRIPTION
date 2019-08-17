@@ -15,6 +15,7 @@ Imports:
     odbc,
     RSQLite,
     tidyr,
+    tibble,
     magrittr,
     pipeR,
     dbConnection,
@@ -36,12 +37,13 @@ Collate:
     'CDM.R'
     'CancerScreen_bowelcancer.R'
     'Immunization.R'
+    'contact.R'
+    'QualityImprovementMeasures.R'
     'administrative_incoming.R'
     'billings.R'
     'configuration_location.R'
     'configuration_password.R'
     'configuration_server.R'
     'configuration_user.R'
-    'contact.R'
     'contactConditions.R'
     'utils_pipe.R'
