@@ -158,7 +158,8 @@ list_qim_diabetes <- function(dMeasure_obj,
     }
 
     diabetesID <- self$contact_diabetes_list %>>%
-      dplyr::pull(InternalID)
+      dplyr::pull(InternalID) %>>%
+      c(-1) # add a dummy ID to prevent empty vector
     fluvaxID <- unlist(private$db$vaccine_disease %>>%
                          dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
                          dplyr::select(VACCINEID) %>>%
@@ -176,7 +177,8 @@ list_qim_diabetes <- function(dMeasure_obj,
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
       dplyr::left_join(private$db$reportValues %>>%
                          dplyr::filter(InternalID %in% diabetesID &&
-                                         BPCode == 1 && # BPCode == 1 is HbA1C
+                                         (BPCode == 1 || BPCode == 19) &&
+                                         # BPCode 1 is HbA1C, 19 is SI units
                                          # these reports include 'manual' entries
                                          # in the diabetes assessment dialog
                                          ReportDate <= date_to) %>>%
@@ -194,7 +196,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                          dplyr::mutate(HbA1CDate = as.Date(HbA1CDate)) %>>%
                          # convert to R's 'standard' date format
                          # didn't work before collect()
-                         {if (ignoreOld) {
+                         {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring results that don't qualify for QIM
                            dplyr::filter(., dMeasure::calc_age(HbA1CDate, date_to) == 0)}
                            # throw out results which are more than twelve months old
@@ -219,7 +221,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                          dplyr::collect() %>>%
                          dplyr::mutate(FluvaxDate = as.Date(FluvaxDate)) %>>%
                          # convert to R's 'standard' date format, didn't work before collect()
-                         {if (ignoreOld) {
+                         {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring vaccinations that don't qualify for QIM
                            dplyr::filter(., dMeasure::calc_age_months(FluvaxDate, date_to) < 15)}
                            # throw out vaccinations which are fifteen months or older
@@ -251,7 +253,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                          dplyr::collect() %>>%
                          dplyr::mutate(BPDate = as.Date(BPDate)) %>>%
                          # convert to R's standard date format
-                         {if (ignoreOld) {
+                         {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring observations that don't qualify for QIM
                            dplyr::filter(., dMeasure::calc_age_months(BPDate, date_to) < 6)}
                            # throw out observations which are six months or older
@@ -289,12 +291,13 @@ list_qim_diabetes <- function(dMeasure_obj,
 .reactive_event(dMeasure, "qim_diabetes_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$contact_diabetes_listR()), {
-                      # update if reactive version of $date_a $date_b
-                      # or $clinicians are updated.
-                      self$list_qim_diabetes(lazy = TRUE)
-                      # re-calculates the counts
-                    })
+                    c(self$contact_diabetes_listR(),
+                      self$qim_ignoreOldR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_diabetes(lazy = TRUE)
+                        # re-calculates the counts
+                      })
                 ))
 
 
@@ -370,7 +373,7 @@ report_qim_diabetes <- function(dMeasure_obj,
                                 lazy = FALSE) {
   dMeasure_obj$report_qim_diabetes(date_from, date_to, clinicians,
 
-                                        min_contact, min_date,
+                                   min_contact, min_date,
                                    demographic, measure,
                                    ignoreOld,
                                    lazy)
@@ -449,7 +452,12 @@ report_qim_diabetes <- function(dMeasure_obj,
       #  the required timeframe
       dplyr::group_by_at(report_groups) %>>%
       # group_by_at takes a vector of strings
-      dplyr::summarise(n = n())
+      dplyr::summarise(n = n()) %>>%
+      dplyr::ungroup() %>>%
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
+    # if no rows, then grouping will not remove unnecessary columns,
+    # so
+
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -459,10 +467,14 @@ report_qim_diabetes <- function(dMeasure_obj,
 .reactive_event(dMeasure, "qim_diabetes_reportR",
                 quote(
                   shiny::eventReactive(
-                    c(self$qim_diabetes_listR()), {
-                      # update if reactive version of $date_a $date_b
-                      # or $clinicians are updated.
-                      self$report_qim_diabetes(lazy = TRUE)
-                      # re-calculates the counts
-                    })
+                    c(self$qim_diabetes_listR(),
+                      self$qim_demographicGroupR(),
+                      self$qim_diabetes_measureR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        # or change in demographic grouping
+                        # or change in measures
+                        self$report_qim_diabetes(lazy = TRUE)
+                        # re-calculates the counts
+                      })
                 ))

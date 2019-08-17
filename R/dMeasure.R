@@ -1019,7 +1019,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   # BPCode
   #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
   #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
-  #  17 - Albumin/Creatinine ratio
+  #  17 - Albumin/Creatinine ratio, 19 - HbA1C (SI)
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%

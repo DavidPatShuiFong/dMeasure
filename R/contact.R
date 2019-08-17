@@ -412,7 +412,7 @@ list_contact_count <- function(dMeasure_obj,
       ) %>>%
       dplyr::group_by(Patient, InternalID) %>>%
       dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate),
-                       Latest = max(AppointmentDate)) %>>%
+                       Latest = max(c(AppointmentDate, -Inf))) %>>%
       # plucks out unique appointment dates
       dplyr::ungroup() %>>%
       dplyr::filter(Count >= min_contact) %>>%
