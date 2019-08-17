@@ -94,7 +94,6 @@ list_contact_appointments <- function(dMeasure_obj,
             clinicians <- c("") # dplyr::filter does not work on zero-length list()
           }
 
-
           if (private$emr_db$is_open()) {
             # only if EMR database is open
             if (self$Log) {log_id <- private$config_db$write_log_db(
@@ -122,10 +121,12 @@ list_contact_appointments <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_appointments_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$appointments_listR()), {
+                    c(self$dateContact$date_aR(),
+                      self$dateContact$date_bR(),
+                      self$cliniciansR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_contact_appointments(lazy = TRUE)
+                      self$list_contact_appointments()
                       # re-calculates the appointments
                     })
                 ))

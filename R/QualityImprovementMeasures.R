@@ -459,7 +459,7 @@ report_qim_diabetes <- function(dMeasure_obj,
 .reactive_event(dMeasure, "qim_diabetes_reportR",
                 quote(
                   shiny::eventReactive(
-                    c(self$list_qim_diabetesR()), {
+                    c(self$qim_diabetes_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$report_qim_diabetes(lazy = TRUE)

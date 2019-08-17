@@ -108,7 +108,7 @@ list_contact_diabetes <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_diabetes_contact(lazy = TRUE)
+                      self$list_contact_diabetes(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
