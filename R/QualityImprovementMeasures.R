@@ -80,6 +80,7 @@ NULL
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
@@ -89,9 +90,10 @@ list_qim_active <- function(dMeasure_obj,
                             clinicians = NA,
                             min_contact = NA,
                             min_date = NA,
+                            contact_type = NA,
                             lazy = FALSE) {
   dMeasure_obj$list_qim_active(date_from, date_to, clinicians,
-                               min_contact, min_date,
+                               min_contact, min_date, contact_type,
                                lazy)
 }
 .public(dMeasure, "list_qim_active", function(date_from = NA,
@@ -99,6 +101,7 @@ list_qim_active <- function(dMeasure_obj,
                                               clinicians = NA,
                                               min_contact = NA,
                                               min_date = NA,
+                                              contact_type = NA,
                                               lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -119,6 +122,9 @@ list_qim_active <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -134,7 +140,7 @@ list_qim_active <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -209,21 +215,24 @@ report_qim_active <- function(dMeasure_obj,
                               clinicians = NA,
                               min_contact = NA,
                               min_date = NA,
+                              contact_type = NA,
                               demographic = NA,
                               lazy = FALSE) {
   dMeasure_obj$report_qim_active(date_from, date_to, clinicians,
                                  min_contact, min_date,
+                                 contact_type,
                                  demographic,
                                  lazy)
 }
 
 .public(dMeasure, "report_qim_active", function(date_from = NA,
-                                                  date_to = NA,
-                                                  clinicians = NA,
-                                                  min_contact = NA,
-                                                  min_date = NA,
-                                                  demographic = NA,
-                                                  lazy = FALSE) {
+                                                date_to = NA,
+                                                clinicians = NA,
+                                                min_contact = NA,
+                                                min_date = NA,
+                                                contact_type = NA,
+                                                demographic = NA,
+                                                lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$dateContact$date_a
@@ -243,6 +252,9 @@ report_qim_active <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
   if (is.na(demographic)) {
     demographic <- self$qim_demographicGroup
   }
@@ -261,7 +273,8 @@ report_qim_active <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_qim_active(date_from, date_to, clinicians,
-                             min_contact, min_date)
+                           min_contact, min_date, contact_type,
+                           lazy)
     }
 
     report_groups <- c(demographic, "")

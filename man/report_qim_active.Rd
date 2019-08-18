@@ -6,7 +6,7 @@
 \usage{
 report_qim_active(dMeasure_obj, date_from = NA, date_to = NA,
   clinicians = NA, min_contact = NA, min_date = NA,
-  demographic = NA, lazy = FALSE)
+  contact_type = NA, demographic = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

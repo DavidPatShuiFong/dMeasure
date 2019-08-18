@@ -63,6 +63,7 @@ dateContact <-
               )
               # this is a 'skeleton' class
               # it is filled in the with the '.public' function
+
   )
 
 
@@ -144,14 +145,15 @@ choose_date <- function(dateContact_obj,
   if (missing(value)) {
     return(private$.appointment_status)
   }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
+  if (is.character(value) || is.null(value)) {
+    # accepts string, or vector of strings, or NULL
+    if (is.null(value)) {value <- ""}
     private$.appointment_status <- value
-    private$set_reactive(self$appointment_statusR, value)
+    private$set_reactive(self$appointment_statusR, private$.appointment_status)
   } else {
-    warning(paste("filter_incoming_Action can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  self$appointment_status_types))
+    warning(paste0("filter_incoming_Action can only be set to a string,",
+                   "a vector of strings or NULL. Valid strings are: '",
+                   paste(self$appointment_status_types, collapse = ", "), "'."))
   }
 })
 .reactive(dateContact, "appointment_statusR", quote(private$.appointment_status))
@@ -177,14 +179,15 @@ choose_date <- function(dateContact_obj,
   if (missing(value)) {
     return(private$.visit_type)
   }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
+  if (is.character(value) || is.null(value)) {
+    # accepts string, or vector of strings, or NULL
+    if (is.null(value)) {value <- ""}
     private$.visit_type <- value
-    private$set_reactive(self$visit_typeR, value)
+    private$set_reactive(self$visit_typeR, private$.visit_type)
   } else {
-    warning(paste("visit_type can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  visit_types))
+    warning(paste0("visit_type can only be set to a string,",
+                   "a vector of strings or NULL. Valid strings are :'",
+                   paste(self$visit_types, collapse = ", "), "'."))
   }
 })
 .reactive(dateContact, "visit_typeR", quote(private$.visit_type))
