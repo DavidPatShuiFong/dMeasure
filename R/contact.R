@@ -123,7 +123,9 @@ list_contact_appointments <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(),
                       self$dateContact$date_bR(),
-                      self$cliniciansR()), {
+                      self$cliniciansR(),
+                      self$dateContact$appointment_statusR()),
+                    ignoreNULL = FALSE, {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$list_contact_appointments()
@@ -212,12 +214,14 @@ list_contact_visits <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
-                      self$cliniciansR(), self$dateContact$visit_typeR()), {
-                        # update if reactive version of $date_a $date_b
-                        # or $clinicians are updated.
-                        self$list_contact_visits()
-                        # re-calculates the appointments
-                      })
+                      self$cliniciansR(),
+                      self$dateContact$visit_typeR()),
+                    ignoreNULL = FALSE, {
+                      # update if reactive version of $date_a $date_b
+                      # or $clinicians are updated.
+                      self$list_contact_visits()
+                      # re-calculates the appointments
+                    })
                 ))
 
 
@@ -336,6 +340,42 @@ list_contact_services <- function(dMeasure_obj,
 .reactive(dMeasure, "contact_minDateR", as.Date(-Inf,
                                                 origin = "1970-01-01"))
 
+
+
+.active(dMeasure, "contact_types", function(value) {
+  # types of contacts
+  #
+  # appointments are in the appointment book
+  # visits are recorded notes
+  # services are billing episodes
+  if (!missing(value)) {
+    warning("$contact_types is read-only.")
+  } else {
+    return(c("Appointments", "Visits", "Services"))
+  }
+})
+
+
+.private(dMeasure, ".contact_type", c("Services"))
+.active(dMeasure, "contact_type", function(value) {
+  # types of contacts which are counted
+  # vector of strings (can be multiple)
+  # acceptable values are 'Appointments', 'Visits' and 'Services'
+  #
+  # appointments are in the appointment book
+  # visits are recorded notes
+  # services are billing episodes
+
+  if (missing(value)) {
+    return(private$.contact_type)
+  }
+  value <- intersect(value, self$contact_types)
+  # only valid types
+  private$.contact_type <- value
+  private$set_reactive(self$contact_typeR, value)
+})
+.reactive(dMeasure, "contact_typeR", quote(private$.contact_type))
+
 #' List of contacts counts
 #'
 #' Filtered by date, and chosen clinicians
@@ -346,6 +386,7 @@ list_contact_services <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_count <- function(dMeasure_obj,
@@ -354,8 +395,10 @@ list_contact_count <- function(dMeasure_obj,
                                clinicians = NA,
                                min_contact = NA,
                                min_date = NA,
+                               contact_type = NA,
                                lazy = FALSE) {
-  dMeasure_obj$list_contact_count(date_from, date_to, clinicians, min_contact, min_date,
+  dMeasure_obj$list_contact_count(date_from, date_to, clinicians,
+                                  min_contact, min_date, contact_type,
                                   lazy)
 }
 
@@ -364,6 +407,7 @@ list_contact_count <- function(dMeasure_obj,
                                                  clinicians = NA,
                                                  min_contact = NA,
                                                  min_date = NA,
+                                                 contact_type = NA,
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -384,6 +428,9 @@ list_contact_count <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -398,23 +445,43 @@ list_contact_count <- function(dMeasure_obj,
       data = list(date_from, date_to, clinicians))}
 
     if (!lazy) {
-      self$list_contact_appointments()
-      self$list_contact_visits()
-      self$list_contact_services()
+      if ("Appointments" %in% contact_type) {
+        self$list_contact_appointments()
+      }
+      if ("Visits" %in% contact_type) {
+        self$list_contact_visits()
+      }
+      if ("Services" %in% contact_type) {
+        self$list_contact_services()
+      }
     }
 
-    self$contact_count_list <- self$contact_appointments_list %>>%
-      dplyr::bind_rows(
-        (self$contact_visits_list %>>%
-           dplyr::rename(AppointmentDate = VisitDate)),
-        (self$contact_services_list %>>%
-           dplyr::rename(AppointmentDate = ServiceDate))
-      ) %>>%
-      dplyr::group_by(Patient, InternalID) %>>%
-      dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate),
-                       Latest = max(c(AppointmentDate, -Inf))) %>>%
-      # plucks out unique appointment dates
-      dplyr::ungroup() %>>%
+    self$contact_count_list <- data.frame(Patient = character(),
+                                          InternalID = integer(),
+                                          Count = integer(),
+                                          Latest = as.Date(integer(0),
+                                                           origin = "1970-01-01"),
+                                          stringsAsFactors = FALSE) %>>%
+      {if ("Appointments" %in% contact_type) {
+        dplyr::bind_rows(., self$contact_appointments_list)}
+        else {.}} %>>%
+      {if ("Visits" %in% contact_type) {
+        dplyr::bind_rows(.,
+                         self$contact_visits_list %>>%
+                           dplyr::rename(AppointmentDate = VisitDate))}
+        else {.}} %>>%
+      {if ("Services" %in% contact_type) {
+        dplyr::bind_rows(.,
+                         self$contact_services_list %>>%
+                           dplyr::rename(AppointmentDate = ServiceDate))}
+        else {.}} %>>%
+      {if (nrow(.) > 0) {
+        dplyr::group_by(., Patient, InternalID) %>>%
+          dplyr::summarise(Count = dplyr::n_distinct(AppointmentDate),
+                           Latest = max(c(AppointmentDate, -Inf))) %>>%
+          # plucks out unique appointment dates
+          dplyr::ungroup()}
+        else {.}} %>>%
       dplyr::filter(Count >= min_contact) %>>%
       dplyr::filter(Latest >= min_date)
 
@@ -430,7 +497,9 @@ list_contact_count <- function(dMeasure_obj,
                       self$contact_visits_listR(),
                       self$contact_services_listR(),
                       self$contact_minR(),
-                      self$contact_minDateR()), {
+                      self$contact_minDateR(),
+                      self$contact_typeR()),
+                    ignoreNULL = FALSE, {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
                       self$list_contact_count(lazy = TRUE)

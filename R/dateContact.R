@@ -137,7 +137,8 @@ choose_date <- function(dateContact_obj,
 })
 
 # valid appointment states. note that 'with doctor' applies to any health provider type!
-.private_init(dateContact, ".appointment_status", quote(self$appointment_status_types))
+.private_init(dateContact, ".appointment_status",
+              quote(c("With doctor", "At billing", "Completed")))
 # by default, all status types are valid
 .active(dateContact, "appointment_status", function(value) {
   if (missing(value)) {
@@ -153,7 +154,7 @@ choose_date <- function(dateContact_obj,
                   self$appointment_status_types))
   }
 })
-.reactive(dateContact, "appointment_statusR", quote(self$appointment_status_types))
+.reactive(dateContact, "appointment_statusR", quote(private$.appointment_status))
 
 ##### visit types #################################################################
 
@@ -167,7 +168,10 @@ choose_date <- function(dateContact_obj,
            "Telehealth"))
 })
 
-.private_init(dateContact, ".visit_type", quote(self$visit_types))
+.private_init(dateContact, ".visit_type", quote(c("Surgery", "Home", "Hospital",
+                                                  "RACF", "Locum Service",
+                                                  "Out of Office",
+                                                  "Hostel", "Telehealth")))
 # by default, all visit types are valid
 .active(dateContact, "visit_type", function(value) {
   if (missing(value)) {
@@ -183,5 +187,5 @@ choose_date <- function(dateContact_obj,
                   visit_types))
   }
 })
-.reactive(dateContact, "visit_typeR", quote(self$visit_types))
+.reactive(dateContact, "visit_typeR", quote(private$.visit_type))
 

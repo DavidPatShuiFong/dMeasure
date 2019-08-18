@@ -55,11 +55,258 @@ NULL
 })
 .reactive(dMeasure, "qim_demographicGroupR", quote(self$qim_demographicGroupings))
 
+
+##### QIM active fields #############################################################
+
+.public(dMeasure, "qim_active_list",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts
+
+##### QIM active methods ##########################################################
+#' List of active patients, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $dateContact$date_a
+#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+list_qim_active <- function(dMeasure_obj,
+                            date_from = NA,
+                            date_to = NA,
+                            clinicians = NA,
+                            min_contact = NA,
+                            min_date = NA,
+                            lazy = FALSE) {
+  dMeasure_obj$list_qim_active(date_from, date_to, clinicians,
+                               min_contact, min_date,
+                               lazy)
+}
+.public(dMeasure, "list_qim_active", function(date_from = NA,
+                                              date_to = NA,
+                                              clinicians = NA,
+                                              min_contact = NA,
+                                              min_date = NA,
+                                              lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$dateContact$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$dateContact$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "active_qim",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_contact_count(date_from, date_to, clinicians,
+                              min_contact, min_date,
+                              lazy)
+    }
+
+    activeID <- self$contact_count_list %>>%
+      dplyr::pull(InternalID) %>>%
+      c(-1) # add a dummy ID to prevent empty vector
+
+    self$qim_active_list <- self$contact_count_list %>>%
+      dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% activeID) %>>%
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% activeID) %>>%
+                         dplyr::select(InternalID, MaritalStatus, Sexuality),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      # round age group to nearest 5 years
+      dplyr::select(-DOB) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% activeID) %>>%
+                         dplyr::select(InternalID, RecordNo),
+                       by = "InternalID", # add RecordNo
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) # drop the InternalID
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_active_list)
+})
+.reactive_event(dMeasure, "qim_active_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$contact_count_listR()), {
+                      # update if reactive version of $date_a $date_b
+                      # or $clinicians are updated.
+                      self$list_qim_active(lazy = TRUE)
+                      # re-calculates the counts
+                    })
+                ))
+
+
+.public(dMeasure, "qim_active_report",
+        data.frame(NULL,
+                   stringsAsFactors = FALSE))
+# empty data frame, number of columns dynamically change
+
+#' Quality Improvement Measure report, in the contact list. Active contacts
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $dateContact$date_a
+#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param demographic demographic groupings for reporting.
+#'  if not supplied, reads $qim_demographicGroup
+#'  list of available demographic groups in $qim_demographicGroupings
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+report_qim_active <- function(dMeasure_obj,
+                              date_from = NA,
+                              date_to = NA,
+                              clinicians = NA,
+                              min_contact = NA,
+                              min_date = NA,
+                              demographic = NA,
+                              lazy = FALSE) {
+  dMeasure_obj$report_qim_active(date_from, date_to, clinicians,
+                                 min_contact, min_date,
+                                 demographic,
+                                 lazy)
+}
+
+.public(dMeasure, "report_qim_active", function(date_from = NA,
+                                                  date_to = NA,
+                                                  clinicians = NA,
+                                                  min_contact = NA,
+                                                  min_date = NA,
+                                                  demographic = NA,
+                                                  lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$dateContact$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$dateContact$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(demographic)) {
+    demographic <- self$qim_demographicGroup
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "qim_active_report",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_active(date_from, date_to, clinicians,
+                             min_contact, min_date)
+    }
+
+    report_groups <- c(demographic, "")
+    # group by demographic groupings
+    # add a dummy string in case there are no demographic chosen!
+
+    self$qim_active_report <- self$qim_active_list %>>%
+      dplyr::group_by_at(report_groups) %>>%
+      # group_by_at takes a vector of strings
+      dplyr::summarise(n = n()) %>>%
+      dplyr::ungroup() %>>%
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
+    # if no rows, then grouping will not remove unnecessary columns,
+    # so
+
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_active_report)
+})
+.reactive_event(dMeasure, "qim_active_reportR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_active_listR(),
+                      self$qim_demographicGroupR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        # or change in demographic grouping
+                        self$report_qim_active(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
+
 ##### QIM diabetes fields ###########################################################
 
 .public(dMeasure, "qim_diabetes_list",
         data.frame(Patient = character(),
-                   InternalID = integer(),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
                    HbA1CDate = as.Date(integer(0),
                                        origin = "1970-01-01"),
                    HbA1CValue = double(),
@@ -281,7 +528,13 @@ list_qim_diabetes <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-DOB)
+      dplyr::select(-DOB) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% diabetesID) %>>%
+                         dplyr::select(InternalID, RecordNo),
+                       by = "InternalID", # add RecordNo
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) # drop the InternalID
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -372,7 +625,6 @@ report_qim_diabetes <- function(dMeasure_obj,
                                 ignoreOld = NA,
                                 lazy = FALSE) {
   dMeasure_obj$report_qim_diabetes(date_from, date_to, clinicians,
-
                                    min_contact, min_date,
                                    demographic, measure,
                                    ignoreOld,

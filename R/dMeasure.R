@@ -905,9 +905,10 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$patients <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
     dplyr::mutate(Ethnicity = trimws(Ethnicity),
-                  Sex = trimws(Sex))
+                  Sex = trimws(Sex),
+                  RecordNo = trimws(RecordNo))
 
-  # fields include InternalID, ExternalID, StatusText
+  # fields include InternalID, ExternalID, RecordNo, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
   # DOB, Sex, Ethnicity
 
