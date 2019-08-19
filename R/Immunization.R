@@ -74,11 +74,20 @@ zostavax_list <- function(dMeasure_obj,
     appointments_list <- self$appointments_list
   }
 
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
+  intID <- dplyr::pull(intID_Date, InternalID)
+  # just the InternalID
+
   zostavax_list <- appointments_list %>>%
     dplyr::filter(Age >= 70 & Age <= 80) %>>% # from age 70 to 80 years inclusive
     dplyr::left_join(private$db$immunizations %>>%
-                       # those who have had the zostavax vaccine
-                       dplyr::filter((VaccineName %LIKE% "%zostavax%") | (VaccineID == 103)),
+                       dplyr::filter(InternalID %in% intID &&
+                                       # those who have had the zostavax vaccine
+                                       (VaccineName %LIKE% "%zostavax%" ||
+                                          VaccineID == 103)),
                      by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::left_join(private$db$preventive_health %>>%
@@ -141,7 +150,7 @@ zostavax_list <- function(dMeasure_obj,
 #' List of patients potentially eligible for influenza vaccine
 #'
 #' Includes patients who may have already had influenza vaccine,
-#' date of previous Zostavax is included.
+#' date of previous influenza vaccine is included.
 #'
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
@@ -195,22 +204,25 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   if (is.null(appointments_list)) {
     appointments_list <- self$appointments_list
   }
+
   intID_Date <- appointments_list %>>%
     dplyr::select(InternalID, AppointmentDate) %>>%
     dplyr::rename(Date = AppointmentDate)
   # just the InternalID and AppointmentDate of the appointment list
+  intID <- dplyr::pull(intID_Date, InternalID)
+  # just the InternalID
+  fluvaxID <- unlist(private$db$vaccine_disease %>>%
+                       dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
+                       dplyr::select(VACCINEID) %>>%
+                       dplyr::collect(), use.names = FALSE)
+  # there are many, many influenza vaccine IDs, but these can be found
+  # via the db$vaccine_disease database
 
   lprevious <- appointments_list %>>%
     # those who have had influenza vaccines in the past
-    dplyr::left_join(private$db$immunizations %>>% dplyr::collect() %>>%
-                       # those who have had the influenza vaccine
-                       dplyr::filter(VaccineID %in%
-                                       unlist(private$db$vaccine_disease %>>%
-                                                dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
-                                                dplyr::select(VACCINEID) %>>%
-                                                dplyr::collect(), use.names = FALSE)),
-                     # there are many, many influenza vaccine IDs, but these can be found
-                     # via the db$vaccine_disease database
+    dplyr::left_join(private$db$immunizations %>>%
+                       dplyr::filter(InternalID %in% intID &&
+                                       VaccineID %in% vaxID),
                      by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%

@@ -67,7 +67,7 @@ NULL
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
 #'  default is all possible appointment status
-#'   $dateContact$appointment_status_types
+#'   $appointment_status_types
 #'
 #' @return list of appointments
 filter_appointments <- function(dMeasure_obj,
@@ -97,7 +97,7 @@ filter_appointments <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           if (is.na(status)) {
-            status <- self$dateContact$appointment_status_types
+            status <- self$appointment_status_types
             # by default, include all appointments status types
             # e.g. Booked, Waiting, Complete
             # this is unlike list_contact_appointments
@@ -134,7 +134,7 @@ filter_appointments <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
-                      self$cliniciansR(), self$dateContact$appointment_statusR()), {
+                      self$cliniciansR(), self$appointment_statusR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
                         self$filter_appointments()

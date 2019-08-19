@@ -63,6 +63,7 @@ dateContact <-
               )
               # this is a 'skeleton' class
               # it is filled in the with the '.public' function
+
   )
 
 
@@ -126,62 +127,4 @@ choose_date <- function(dateContact_obj,
 })
 .reactive(dateContact, "date_aR", quote(self$date_a))
 .reactive(dateContact, "date_bR", quote(self$date_b))
-
-##### appointment status ################################################################
-
-.active(dateContact, "appointment_status_types", function(value) {
-  if (!missing(value)) {
-    warning("'appointment_status_types' cannot be set.")
-  }
-  return (c("Booked", "Completed", "At billing", "Waiting", "With doctor"))
-})
-
-# valid appointment states. note that 'with doctor' applies to any health provider type!
-.private_init(dateContact, ".appointment_status", quote(self$appointment_status_types))
-# by default, all status types are valid
-.active(dateContact, "appointment_status", function(value) {
-  if (missing(value)) {
-    return(private$.appointment_status)
-  }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
-    private$.appointment_status <- value
-    private$set_reactive(self$appointment_statusR, value)
-  } else {
-    warning(paste("filter_incoming_Action can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  self$appointment_status_types))
-  }
-})
-.reactive(dateContact, "appointment_statusR", quote(self$appointment_status_types))
-
-##### visit types #################################################################
-
-
-.active(dateContact, "visit_types", function(value) {
-  if (!missing(value)) {
-    warning("'visit_types' cannot be set.")
-  }
-  return(c("Surgery", "Home", "Non Visit", "Hospital", "RACF", "Telephone",
-           "SMS", "Email", "Locum Service", "Out of Office", "Other", "Hostel",
-           "Telehealth"))
-})
-
-.private_init(dateContact, ".visit_type", quote(self$visit_types))
-# by default, all visit types are valid
-.active(dateContact, "visit_type", function(value) {
-  if (missing(value)) {
-    return(private$.visit_type)
-  }
-  if (is.character(value)) {
-    # accepts string, or vector of strings
-    private$.visit_type <- value
-    private$set_reactive(self$visit_typeR, value)
-  } else {
-    warning(paste("visit_type can only be set to a string,",
-                  "a vector of strings. Valid strings are",
-                  visit_types))
-  }
-})
-.reactive(dateContact, "visit_typeR", quote(self$visit_types))
 

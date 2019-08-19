@@ -119,6 +119,7 @@ dMeasure <-
     private$emr_db$close()
     private$db$users <- NULL
     private$db$patients <- NULL
+    private$db$clinical <- NULL
     private$db$investigations <- NULL
     private$db$appointments <- NULL
     private$db$immunizations <- NULL
@@ -379,6 +380,7 @@ dMeasure <-
       # either database not opened, or has just been closed, including set to 'None'
       private$db$users <- NULL
       private$db$patients <- NULL
+      private$db$clinical <- NULL
       private$db$investigations <- NULL
       private$db$appointments <- NULL
       private$db$immunizations <- NULL
@@ -901,7 +903,44 @@ initialize_emr_tables <- function(dMeasure_obj,
   # does not include password in public/reactive
 
   private$db$patients <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
+    dplyr::mutate(Ethnicity = trimws(Ethnicity),
+                  Sex = trimws(Sex),
+                  RecordNo = trimws(RecordNo))
+
+  # fields include InternalID, ExternalID, RecordNo, StatusText
+  # Title, Firstname, Middlename, Surname, Preferredname
+  # DOB, Sex, Ethnicity
+
+  private$db$MARITALSTATUS <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'MARITALSTATUS'))
+  # has the fields MARITALSTATUSCODE (a number)
+  # and MARITALSTATUSNAME (a string)
+
+  private$db$SEXUALITY <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'SEXUALITY'))
+  # has the fields SEXUALITYCODE (a number)
+  # and SEXUALITYNAME (a string)
+
+  private$db$clinical <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
+    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY) %>>%
+    dplyr::left_join(private$db$MARITALSTATUS,
+                     by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
+    dplyr::left_join(private$db$SEXUALITY,
+                     by = c("SEXUALITY" = "SEXUALITYCODE")) %>>%
+    dplyr::select(-c(MARITALSTATUS, SEXUALITY)) %>>%
+    dplyr::rename(InternalID = INTERNALID,
+                  MaritalStatus = MARITALSTATUSNAME,
+                  Sexuality = SEXUALITYNAME) %>>%
+    dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
+                  Sexuality = trimws(Sexuality))
+  # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
+  #  (which are not dated or given additional identifiers)
+  # MaritalStatusName and SexualityName provided as strings
+  # 'codes' can be found in dbo.CLINICAL
+  # and interpretation of codes can be found in dbo.MARITALSTATUS
+  # and dbo.SEXUALITY
 
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
@@ -976,7 +1015,12 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
-    dplyr::select('InternalID', 'ReportDate', 'ResultName', 'LoincCode')
+    dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
+                  ResultValue, Units, Range)
+  # BPCode
+  #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
+  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
+  #  17 - Albumin/Creatinine ratio, 19 - HbA1C (SI)
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
@@ -1000,9 +1044,16 @@ initialize_emr_tables <- function(dMeasure_obj,
                   'Condition', 'ConditionID', 'Status')
 
   private$db$observations <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'DATANAME',
-                  'DATACODE', 'DATAVALUE', 'OBSDATE')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
+    dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
+                  ObservationDate, ObservationTime, ObservationValue)
+  # ObservationCode
+  #  1 - temp, 2 - pulse (rate)
+  #  3 - systolic blood pressure, 4 - diastolic blood pressure
+  #  6 - BSL, 7 - Height, 8 - Weight, 9 - BMI
+  #  10 - Head circumference
+  #  17 - Waist, 18 - Hip
+  #  21 - WHRatio, 26 - DiabRisk
 
   private$db$currentrx <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%

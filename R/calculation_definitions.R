@@ -16,10 +16,14 @@ NULL
 calc_age <- function(birthDate, refDate = Sys.Date()) {
   # Calculate age at a given reference date
 
+  if (length(birthDate) == 0) {return(numeric(0))}
+  # empty vector, so return empty numeric
+
   period <- mapply(function(x, y)
     # Arguments can be vectors, so need to use mapply
-    (length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
-      ifelse(y > x, 1, -1),
+    (ifelse(is.na(x), NA,
+            length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
+       ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
 
@@ -42,9 +46,13 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   # Create an interval between the date of birth and the enrollment date;
   # note that arguments can be vectors, so need to use mapply
 
+  if (length(birthDate) == 0) {return(numeric(0))}
+  # empty vector, so return empty numeric
+
   period <- mapply(function(x, y)
-    (length(seq.Date(min(x, y), max(x, y), by = "month")) - 1) *
-      ifelse(y > x, 1, -1),
+    (ifelse(is.na(x), NA,
+            length(seq.Date(min(x, y), max(x, y), by = "month")) - 1) *
+      ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
 
