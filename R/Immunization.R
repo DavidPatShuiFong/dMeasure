@@ -23,8 +23,8 @@ NULL
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
+#' @param date_from from date range (default self$dateContact$date_a)
+#' @param date_to to date range (default self$dateContact$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -43,17 +43,17 @@ zostavax_list <- function(dMeasure_obj,
                              vaxtag, vaxtag_print)
 }
 
-.public("zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                                  appointments_list = NULL,
-                                  lazy = FALSE,
-                                  vaxtag = FALSE, vaxtag_print = TRUE) {
+.public(dMeasure, "zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                            appointments_list = NULL,
+                                            lazy = FALSE,
+                                            vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where Zostavax is recommended (might already be given)
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -74,11 +74,21 @@ zostavax_list <- function(dMeasure_obj,
     appointments_list <- self$appointments_list
   }
 
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
+  intID <- dplyr::pull(intID_Date, InternalID)
+  # just the InternalID
+
   zostavax_list <- appointments_list %>>%
     dplyr::filter(Age >= 70 & Age <= 80) %>>% # from age 70 to 80 years inclusive
     dplyr::left_join(private$db$immunizations %>>%
-                       # those who have had the zostavax vaccine
-                       dplyr::filter((VaccineName %LIKE% "%zostavax%") | (VaccineID == 103)),
+                       dplyr::filter(InternalID %in% intID &&
+                                       # those who have had the zostavax vaccine
+                                       (VaccineName %LIKE% "%zostavax%" ||
+                                          VaccineID == 103)),
+                     by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::left_join(private$db$preventive_health %>>%
                        # those who have been removed from the reminder system for Zostavax
@@ -96,39 +106,43 @@ zostavax_list <- function(dMeasure_obj,
   if (vaxtag) {
     zostavax_list <- zostavax_list %>>%
       dplyr::mutate(vaxtag =
-                      semantic_tag(paste0(' Zostavax '),
-                                   colour =
-                                     dplyr::if_else(is.na(GivenDate),
-                                                    dplyr::if_else(is.na(ITEMID), c('red'), c('purple')),
-                                                    c('green')),
-                                   # red if not given, purple if removed from herpes zoster vax reminders
-                                   # and green if has had the vax
-                                   popuphtml =
-                                     paste0("<h4>",
-                                            dplyr::if_else(is.na(ITEMID),
-                                                           dplyr::if_else(is.na(GivenDate),
-                                                                          "Age 70 to 79 years",
-                                                                          paste0('Date : ', format(GivenDate))),
-                                                           'Removed from herpes zoster immunization reminders'),
-                                            "</h4>")))
+                      dMeasure::semantic_tag(
+                        paste0(' Zostavax '),
+                        colour =
+                          dplyr::if_else(is.na(GivenDate),
+                                         dplyr::if_else(is.na(ITEMID), c('red'), c('purple')),
+                                         c('green')),
+                        # red if not given, purple if removed from herpes zoster vax reminders
+                        # and green if has had the vax
+                        popuphtml =
+                          paste0("<h4>",
+                                 dplyr::if_else(is.na(ITEMID),
+                                                dplyr::if_else(
+                                                  is.na(GivenDate),
+                                                  "Age 70 to 79 years",
+                                                  paste0('Date : ', format(GivenDate))),
+                                                'Removed from herpes zoster immunization reminders'),
+                                 "</h4>")))
   }
 
   if (vaxtag_print) {
     zostavax_list <- zostavax_list %>>%
       dplyr::mutate(vaxtag_print =
                       paste0("Zostavax", " ", # printable version of information
-                             dplyr::if_else(is.na(GivenDate),
-                                            dplyr::if_else(is.na(ITEMID),
-                                                           "(DUE) (Age 70 to 79 years)",
-                                                           "(Removed from herpes zoster immunization reminders)"),
-                                            paste0("(Given : ", format(GivenDate), ")"))
+                             dplyr::if_else(
+                               is.na(GivenDate),
+                               dplyr::if_else(
+                                 is.na(ITEMID),
+                                 "(DUE) (Age 70 to 79 years)",
+                                 "(Removed from herpes zoster immunization reminders)"),
+                               paste0("(Given : ", format(GivenDate), ")"))
                       ))
   }
 
   zostavax_list <- zostavax_list %>>%
     dplyr::select(intersect(names(zostavax_list),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Provider",
-                              "DOB", "Age", "vaxtag", "vaxtag_print")))
+                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+                              "Provider", "DOB", "Age", "vaxtag", "vaxtag_print")))
 
   return(zostavax_list)
 })
@@ -136,13 +150,13 @@ zostavax_list <- function(dMeasure_obj,
 #' List of patients potentially eligible for influenza vaccine
 #'
 #' Includes patients who may have already had influenza vaccine,
-#' date of previous Zostavax is included.
+#' date of previous influenza vaccine is included.
 #'
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
+#' @param date_from from date range (default self$dateContact$date_a)
+#' @param date_to to date range (default self$dateContact$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -160,17 +174,17 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                               vaxtag, vaxtag_print)
 }
 
-.public("influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                                   appointments_list = NULL,
-                                   lazy = FALSE,
-                                   vaxtag = FALSE, vaxtag_print = TRUE) {
+.public(dMeasure, "influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                             appointments_list = NULL,
+                                             lazy = FALSE,
+                                             vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where influenza is recommended (might already be given)
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -191,17 +205,25 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     appointments_list <- self$appointments_list
   }
 
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
+  intID <- dplyr::pull(intID_Date, InternalID)
+  # just the InternalID
+  fluvaxID <- unlist(private$db$vaccine_disease %>>%
+                       dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
+                       dplyr::select(VACCINEID) %>>%
+                       dplyr::collect(), use.names = FALSE)
+  # there are many, many influenza vaccine IDs, but these can be found
+  # via the db$vaccine_disease database
+
   lprevious <- appointments_list %>>%
     # those who have had influenza vaccines in the past
-    dplyr::left_join(private$db$immunizations %>>% dplyr::collect() %>>%
-                       # those who have had the influenza vaccine
-                       dplyr::filter(VaccineID %in%
-                                       unlist(private$db$vaccine_disease %>>%
-                                                dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
-                                                dplyr::select(VACCINEID) %>>%
-                                                dplyr::collect(), use.names = FALSE)),
-                     # there are many, many influenza vaccine IDs, but these can be found
-                     # via the db$vaccine_disease database
+    dplyr::left_join(private$db$immunizations %>>%
+                       dplyr::filter(InternalID %in% intID &&
+                                       VaccineID %in% vaxID),
+                     by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
     dplyr::filter(GivenDate <= AppointmentDate) %>>%
@@ -226,7 +248,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                   Reason = "Age 65 years or greater")
 
   l5 <- appointments_list %>>%
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 60) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Age 6 months to 4 years inclusive") %>>%
@@ -234,7 +256,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   lprematurity <- appointments_list %>>%
     # pre-term infants
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 24) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$history %>>% dplyr::filter(ConditionID == 2973) %>>%
@@ -244,79 +266,79 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::select(-AgeInMonths)
 
   ldiabetes <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$diabetes_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$diabetes_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Diabetes")
 
   latsi <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$atsi_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$atsi_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Aboriginal or Torres Strait Islander")
 
   lasthma <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$asthma_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$asthma_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Asthma")
 
   lmalignancy <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$malignancy_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$malignancy_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Malignancy")
 
   lhiv <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$hiv_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$hiv_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "HIV")
 
   lhaemoglobinopathy <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$haemoglobinopathy_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$haemoglobinopathy_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Haemoglobinopathy")
 
   lasplenic <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$asplenic_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$asplenic_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Asplenia")
 
   ltransplant <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$transplant_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$transplant_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Transplant recipient")
 
   lcardiac <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$cardiacdisease_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$cardiacdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Heart disease")
 
   lbmi30 <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$bmi30_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$bmi30_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "BMI>30")
 
   lchroniclung <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chroniclungdisease_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$chroniclungdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Chronic lung disease")
 
   lneurology <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$neurologic_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$neurologic_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Neurological disease")
 
   lchronicliver <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chronicliverdisease_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$chronicliverdisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Chronic liver disease")
 
   lrenaldisease <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$chronicrenaldisease_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$chronicrenaldisease_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "BMI>30")
 
   lchildaspirin <- appointments_list %>>%
     # children aged 6 months to 10 years on long-term aspirin
     # risk of Reye's syndrome after influenza infection
-    dplyr::mutate(AgeInMonths = self$calc_age_months(DOB, AppointmentDate)) %>>%
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(DOB, AppointmentDate)) %>>%
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths <= 131) %>>%
     dplyr::filter(InternalID %in%
                     (private$db$currentrx %>>%
@@ -340,7 +362,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                     "GivenDate", "Reason"))
 
   lpregnant <- appointments_list %>>%
-    dplyr::filter(InternalID %in% self$pregnant_list(appointments_list)) %>>%
+    dplyr::filter(InternalID %in% self$pregnant_list(intID_Date)) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Pregnancy")
 
@@ -370,7 +392,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     l <- l %>>%
       dplyr::mutate(
         vaxtag =
-          semantic_tag(
+          dMeasure::semantic_tag(
             paste0(' Influenza '),
             colour =
               dplyr::if_else(is.na(GivenDate) |
@@ -435,8 +457,8 @@ vax_names <- c("Zostavax", "Influenza")
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
+#' @param date_from from date range (default self$dateContact$date_a)
+#' @param date_to to date range (default self$dateContact$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -457,17 +479,17 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
                         chosen)
 }
 
-.public("vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
-                             appointments_list = NULL,
-                             lazy = FALSE,
-                             vaxtag = FALSE, vaxtag_print = TRUE,
-                             chosen = vax_names) {
+.public(dMeasure, "vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+                                       appointments_list = NULL,
+                                       lazy = FALSE,
+                                       vaxtag = FALSE, vaxtag_print = TRUE,
+                                       chosen = vax_names) {
 
   if (is.na(date_from)) {
-    date_from <- self$date_a
+    date_from <- self$dateContact$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$date_b
+    date_to <- self$dateContact$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -507,12 +529,12 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%
       # gathers vaccination notifications on the same appointment into a single row
-                      {if (vaxtag)
-                      {dplyr::summarise(., vaxtag = paste(vaxtag, collapse = ""))}
-                        else {.}} %>>%
-                        {if (vaxtag_print)
-                        {dplyr::summarise(., vaxtag_print = paste(vaxtag_print, collapse = ", "))}
-                          else {.}} %>>%
+      {if (vaxtag)
+      {dplyr::summarise(., vaxtag = paste(vaxtag, collapse = ""))}
+        else {.}} %>>%
+      {if (vaxtag_print)
+      {dplyr::summarise(., vaxtag_print = paste(vaxtag_print, collapse = ", "))}
+        else {.}} %>>%
       dplyr::ungroup()
   }
 

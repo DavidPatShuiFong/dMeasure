@@ -11,9 +11,9 @@ influenza_list(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default self$dateContact$date_a)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default self$dateContact$date_b)}
 
 \item{clinicians}{list of clinicians (default self$clinicians)}
 
@@ -30,7 +30,7 @@ dataframe list of influenza eligible patients
 }
 \description{
 Includes patients who may have already had influenza vaccine,
-date of previous Zostavax is included.
+date of previous influenza vaccine is included.
 }
 \details{
 Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')

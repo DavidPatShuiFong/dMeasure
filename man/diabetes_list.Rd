@@ -9,8 +9,8 @@ diabetes_list(dMeasure_obj, appointments = NULL)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{appointments}{list. requires $InternalID
-by default, the appointments in $appointments_filtered}
+\item{appointments}{dataframe of appointments $InternalID and $Date
+if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a list of numbers, which are the InternalIDs

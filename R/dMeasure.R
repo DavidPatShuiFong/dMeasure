@@ -1,3 +1,9 @@
+##### dMeasure ###########################################
+#' @include r6_helpers.R
+#' @include dateContact.R
+#' functions to help create R6 classes
+NULL
+
 #' dMeasure class
 #' @title dMeasure class
 #' @description case-finding in EMR (Best Practice)
@@ -12,7 +18,6 @@
 #' \item{\code{\link{read_configuration_db}} : read SQLite configuration database}
 #' \item{\code{\link{open_emr_db}} : open Best Practice database}
 #' \item{\code{\link{initialize_emr_tables}} : configure Best Practice datatables}
-#' \item{\code{\link{choose_date}} : change, or read, search date range}
 #' \item{\code{\link{location_list}} : list practice locations/groups}
 #' \item{\code{\link{choose_location}} : change, or read, current location}
 #' }
@@ -26,14 +31,18 @@ dMeasure <-
                 initialize = function () {
                   if (length(public_init_fields$name) > 0) { # only if any defined
                     for (i in 1:length(public_init_fields$name)) {
-                      self[[public_init_fields$name[[i]]]] <-
-                        eval(public_init_fields$value[[i]]) # could 'quote' the value
+                      if (public_init_fields$obj[[i]] == "dMeasure") {
+                        self[[public_init_fields$name[[i]]]] <-
+                          eval(public_init_fields$value[[i]]) # could 'quote' the value
+                      }
                     }
                   }
                   if (length(private_init_fields$name) > 0) { # only if any defined
                     for (i in 1:length(private_init_fields$name)) {
-                      private[[private_init_fields$name[[i]]]] <-
-                        eval(private_init_fields$value[[i]]) # could 'quote' the value
+                      if (private_init_fields$obj[[i]] == "dMeasure") {
+                        private[[private_init_fields$name[[i]]]] <-
+                          eval(private_init_fields$value[[i]]) # could 'quote' the value
+                      }
                     }
                   }
 
@@ -42,15 +51,19 @@ dMeasure <-
                     # note that this is for reading (from programs calling this object) only!
                     if (length(reactive_fields$name) > 0) { # only if any .reactive() defined
                       for (i in 1:length(reactive_fields$name)) {
-                        self[[reactive_fields$name[[i]]]] <- shiny::reactiveVal(
-                          eval(reactive_fields$value[[i]]) # could 'quote' the value
-                        )
+                        if (reactive_fields$obj[[i]] == "dMeasure") {
+                          self[[reactive_fields$name[[i]]]] <- shiny::reactiveVal(
+                            eval(reactive_fields$value[[i]]) # could 'quote' the value
+                          )
+                        }
                       }
                     }
                     if (length(reactive_event$name) > 0) { # only if any .reactive() defined
                       for (i in 1:length(reactive_event$name)) {
-                        self[[reactive_event$name[[i]]]] <-
-                          eval(reactive_event$value[[i]]) # could 'quote' the value
+                        if (reactive_event$obj[[i]] == "dMeasure") {
+                          self[[reactive_event$name[[i]]]] <-
+                            eval(reactive_event$value[[i]]) # could 'quote' the value
+                        }
                       }
                     }
                   }
@@ -60,74 +73,26 @@ dMeasure <-
               # it is filled in the with the '.public' function
   )
 
-##### function to fill in the class ######################
-.public <- function(...) dMeasure$set("public", ...)
-.private <- function(...) dMeasure$set("private", ...)
-.active <- function(...) dMeasure$set("active", ...)
 
-public_init_fields <- list(name = NULL, value = NULL)
-.public_init <- function(name, value) {
-  dMeasure$set("public", name, NULL)
-  public_init_fields$name <<- c(public_init_fields$name, name)
-  public_init_fields$value <<- c(public_init_fields$value, value)
-  # to be initialized during self$initialize
-  # e.g. references another field's value
-  # $value will be 'eval()' during initialization, so can be quote()'d
-}
+##### special reactive functions ##########################
 
-private_init_fields <- list(name = NULL, value = NULL)
-.private_init <- function(name, value) {
-  dMeasure$set("private", name, NULL)
-  private_init_fields$name <<- c(private_init_fields$name, name)
-  private_init_fields$value <<- c(private_init_fields$value, value)
-  # to be initialized during self$initialize
-  # e.g. references another field's value
-  # $value will be 'eval()' during initialization, so can be quote()'d
-}
 
-reactive_fields <- list(name = NULL, value = NULL)
-# this will progressively hold definitions of reactive fields
-.reactive <- function(name, value) {
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # only if reactive environment is possible (using shiny)
-    dMeasure$set("public", name, NULL)
-    reactive_fields$name <<- c(reactive_fields$name, name)
-    reactive_fields$value <<- c(reactive_fields$value, list(value))
-    # $value is listed so it can hold NULL!
-    # to be initialized as reactiveVal during self$initialize
-    # $value will be 'eval()' during initialization, so can be quote()'d
-  }
-}
-.private("set_reactive", function(myreactive, value) {
+.private(dMeasure, "set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
   # myreactive is passed by reference
   if (requireNamespace("shiny", quietly = TRUE)) {
     myreactive(value)
   }
 })
-.private("trigger", function(myreactive) {
+.private(dMeasure, "trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
   myreactive(1 - shiny::isolate(myreactive()))
 })
 
-reactive_event <- list(name = NULL, value = NULL)
-# this will progressively hold definitions of reactive fields
-.reactive_event <- function(name, value) {
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    # only if reactive environment is possible (using shiny)
-    dMeasure$set("public", name, NULL)
-    reactive_event$name <<- c(reactive_event$name, name)
-    reactive_event$value <<- c(reactive_event$value, list(value))
-    # $value is listed so it can hold NULL!
-    # to be initialized as reactiveVal during self$initialize
-    # $value will be 'eval()' during initialization, so can be quote()'d
-  }
-}
-
 
 ##### close and finalize object ##########################
 
-.public("close", function() {
+.public(dMeasure, "close", function() {
   # close any open database connections
   if (!is.null(private$.identified_user)) {
     self$user_logout()
@@ -154,6 +119,7 @@ reactive_event <- list(name = NULL, value = NULL)
     private$emr_db$close()
     private$db$users <- NULL
     private$db$patients <- NULL
+    private$db$clinical <- NULL
     private$db$investigations <- NULL
     private$db$appointments <- NULL
     private$db$immunizations <- NULL
@@ -169,7 +135,7 @@ reactive_event <- list(name = NULL, value = NULL)
   invisible(self)
 })
 
-.public("finalize", function() {
+.public(dMeasure, "finalize", function() {
   # object being destroyed/removed
   # close all open connections
   self$close()
@@ -178,9 +144,9 @@ reactive_event <- list(name = NULL, value = NULL)
 ##### Configuration file location ########################
 ## fields
 
-.public("yaml_config_filepath", character())
-.public("sql_config_filepath", character())
-.private("local_config", character())
+.public(dMeasure, "yaml_config_filepath", character())
+.public(dMeasure, "sql_config_filepath", character())
+.private(dMeasure, "local_config", character())
 
 ## active fields
 
@@ -205,7 +171,7 @@ reactive_event <- list(name = NULL, value = NULL)
 #' dMeasure_obj$configuration_file_path # read filepath
 #' dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
 #'  # sets filepath
-.active("configuration_file_path", function (filepath) {
+.active(dMeasure, "configuration_file_path", function (filepath) {
 
   self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
   # the location the of the '.yaml' configuration file
@@ -260,26 +226,26 @@ reactive_event <- list(name = NULL, value = NULL)
 
   return(self$sql_config_filepath)
 })
-.reactive("configuration_file_pathR", NULL)
+.reactive(dMeasure, "configuration_file_pathR", NULL)
 
 ##### Configuration details - databases, locations, users ###########
 
 ## Fields
-.private_init("config_db", quote(dbConnection::dbConnection$new()))
+.private_init(dMeasure, "config_db", quote(dbConnection::dbConnection$new()))
 # R6 connection to database
 # using either DBI or pool
-.reactive("config_db_trigR", 0)
+.reactive(dMeasure, "config_db_trigR", 0)
 # $config_db_trigR will trigger (0/1) with each configuration
 # database change
 
-.private(".BPdatabase", data.frame(id = integer(),
-                                   Name = character(),
-                                   Address = character(),
-                                   Database = character(),
-                                   UserID = character(),
-                                   dbPassword = character(),
-                                   stringsAsFactors = FALSE))
-.active("BPdatabase", function(value) {
+.private(dMeasure, ".BPdatabase", data.frame(id = integer(),
+                                             Name = character(),
+                                             Address = character(),
+                                             Database = character(),
+                                             UserID = character(),
+                                             dbPassword = character(),
+                                             stringsAsFactors = FALSE))
+.active(dMeasure, "BPdatabase", function(value) {
   if (!missing(value)) {
     stop("cannot be set, $BPdatabase is read-only")
   } else {
@@ -293,37 +259,37 @@ reactive_event <- list(name = NULL, value = NULL)
     }
   }
 })
-.reactive("BPdatabaseR", quote(data.frame(id = integer(),
-                                          Name = character(),
-                                          Address = character(),
-                                          Database = character(),
-                                          UserID = character(),
-                                          dbPassword = character(),
-                                          stringsAsFactors = FALSE)))
-.active("BPdatabaseNames", function(value) {
+.reactive(dMeasure, "BPdatabaseR", quote(data.frame(id = integer(),
+                                                    Name = character(),
+                                                    Address = character(),
+                                                    Database = character(),
+                                                    UserID = character(),
+                                                    dbPassword = character(),
+                                                    stringsAsFactors = FALSE)))
+.active(dMeasure, "BPdatabaseNames", function(value) {
   if (!missing(value)) {
     stop("cannot set, $BPdatabaseNames is read-only!")
   } else {
     private$.BPdatabase %>>% dplyr::pull(Name)
   }
 })
-.private(".BPdatabaseChoice", "None")
+.private(dMeasure, ".BPdatabaseChoice", "None")
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
-.private("PracticeLocations", data.frame(id = integer(),
-                                         Name = character(),
-                                         Description = character(),
-                                         stringsAsFactors = FALSE))
+.private(dMeasure, "PracticeLocations", data.frame(id = integer(),
+                                                   Name = character(),
+                                                   Description = character(),
+                                                   stringsAsFactors = FALSE))
 # id needed for editing this dataframe later
 # need default value for practice location filter
 # interface initialization
-.private(".UserConfig", data.frame(id = integer(),
-                                   Fullname = character(), AuthIdentity = character(),
-                                   Location = character(),
-                                   Attributes = character(),
-                                   Password = character(),
-                                   stringsAsFactors = FALSE))
-.active("UserConfig", function(value) {
+.private(dMeasure, ".UserConfig", data.frame(id = integer(),
+                                             Fullname = character(), AuthIdentity = character(),
+                                             Location = character(),
+                                             Attributes = character(),
+                                             Password = character(),
+                                             stringsAsFactors = FALSE))
+.active(dMeasure, "UserConfig", function(value) {
   if (!missing(value)) {
     stop("self$UserConfig is read-only!")
   }
@@ -334,18 +300,18 @@ reactive_event <- list(name = NULL, value = NULL)
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
-.reactive("UserConfigR", quote(data.frame(id = integer(), Fullname = character(),
-                                          AuthIdentity = character(),
-                                          Location = character(),
-                                          Attributes = character())))
+.reactive(dMeasure, "UserConfigR", quote(data.frame(id = integer(), Fullname = character(),
+                                                    AuthIdentity = character(),
+                                                    Location = character(),
+                                                    Attributes = character())))
 
-.private(".UserRestrictions", data.frame(uid = integer(),
-                                         Restriction = character(),
-                                         stringsAsFactors = FALSE))
+.private(dMeasure, ".UserRestrictions", data.frame(uid = integer(),
+                                                   Restriction = character(),
+                                                   stringsAsFactors = FALSE))
 
-.reactive("UserRestrictions", quote(data.frame(uid = integer(),
-                                               Restriction = character(),
-                                               stringsAsFactors = FALSE)))
+.reactive(dMeasure, "UserRestrictions", quote(data.frame(uid = integer(),
+                                                         Restriction = character(),
+                                                         stringsAsFactors = FALSE)))
 
 # this lists the 'enabled' restrictions,
 #  relevant to the 'Attributes' field of 'UserConfig'
@@ -373,7 +339,7 @@ reactive_event <- list(name = NULL, value = NULL)
 #' @examples
 #' dMeasure_obj$BPdatabaseChoice # returns the current choice
 #' dMeasure_obj$BPdatabaseChoice <- "None" # sets database to none
-.active("BPdatabaseChoice", function(choice) {
+.active(dMeasure, "BPdatabaseChoice", function(choice) {
   if (missing(choice)) {
     return(private$.BPdatabaseChoice)
   } else {
@@ -404,7 +370,7 @@ reactive_event <- list(name = NULL, value = NULL)
       private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
                              server = server$Address, database = server$Database,
                              uid = server$UserID,
-                             pwd = self$simple_decode(server$dbPassword))
+                             pwd = dMeasure::simple_decode(server$dbPassword))
     }
 
     if (!private$emr_db$is_open() || !DBI::dbIsValid(private$emr_db$conn())) {
@@ -414,6 +380,7 @@ reactive_event <- list(name = NULL, value = NULL)
       # either database not opened, or has just been closed, including set to 'None'
       private$db$users <- NULL
       private$db$patients <- NULL
+      private$db$clinical <- NULL
       private$db$investigations <- NULL
       private$db$appointments <- NULL
       private$db$immunizations <- NULL
@@ -421,6 +388,8 @@ reactive_event <- list(name = NULL, value = NULL)
       private$db$correspondenceIn <- NULL
       private$db$reportValues <- NULL
       private$db$services <- NULL
+      private$db$servicesRaw <- NULL
+      private$db$invoices <- NULL
       private$db$history <- NULL
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
@@ -429,7 +398,7 @@ reactive_event <- list(name = NULL, value = NULL)
         log_id <- private$config_db$write_log_db(
           query = "opened EMR database",
           data = choice)
-        }
+      }
       # successfully opened database
       # set choice of database to attempted choice
       self$initialize_emr_tables() # initialize data tables
@@ -469,7 +438,7 @@ reactive_event <- list(name = NULL, value = NULL)
     # 'None' if not successful, or if 'None' was chosen
   }
 })
-.reactive("BPdatabaseChoiceR", NULL) # reactive version
+.reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
 
 ## methods
 
@@ -495,7 +464,7 @@ open_configuration_db <-
     dMeasure_obj$open_configuration_db(configuration_file_path)
   }
 
-.public("open_configuration_db", function (
+.public(dMeasure, "open_configuration_db", function (
   configuration_file_path = self$configuration_file_path) {
 
   # if no configuration filepath is defined, then try to read one
@@ -641,7 +610,7 @@ read_configuration_db <- function(dMeasure_obj,
   dMeasure_obj$read_configuration_db(config_db)
 }
 
-.public("read_configuration_db", function(config_db = private$config_db) {
+.public(dMeasure, "read_configuration_db", function(config_db = private$config_db) {
 
   if (!config_db$is_open()) {
     # if config_db is not yet opened/defined
@@ -686,7 +655,7 @@ read_configuration_db <- function(dMeasure_obj,
 
   invisible(self)
 })
-.public("BPdatabaseChoice_new", function() {
+.public(dMeasure, "BPdatabaseChoice_new", function() {
   if (private$config_db$is_open()) {
     # config database is open
     new <- private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
@@ -702,11 +671,11 @@ read_configuration_db <- function(dMeasure_obj,
 ##### User login ##################################################
 
 ## fields
-.private(".identified_user", data.frame(id = integer(), Fullname = character(),
-                                        AuthIdentity = character(), Location = character(),
-                                        Password = character(), Attributes = character()))
+.private(dMeasure, ".identified_user", data.frame(id = integer(), Fullname = character(),
+                                                  AuthIdentity = character(), Location = character(),
+                                                  Password = character(), Attributes = character()))
 # user information for just the identified user
-.public("authenticated", FALSE)
+.public(dMeasure, "authenticated", FALSE)
 # has the current 'identified' user been authenticated yet?
 
 ## methods
@@ -722,7 +691,7 @@ match_user <- function(dMeasure_obj) {
   dMeasure_obj$match_user()
 }
 
-.public("match_user", function() {
+.public(dMeasure, "match_user", function() {
   private$.identified_user <-
     private$.UserConfig[private$.UserConfig$AuthIdentity == Sys.info()[["user"]],]
   private$set_reactive(self$identified_user,
@@ -742,18 +711,18 @@ match_user <- function(dMeasure_obj) {
 
   invisible(self)
 })
-.reactive("identified_user", NULL)
+.reactive(dMeasure, "identified_user", NULL)
 
 ##### clinician choice list #######################################
 
 ## fields
-.public("clinician_choice_list", NULL)
+.public(dMeasure, "clinician_choice_list", NULL)
 # available clinicians appointments
-.public("clinicians", NULL)
+.public(dMeasure, "clinicians", NULL)
 # chosen clinician list
 
 ## constants
-.public("view_restrictions", list(
+.public(dMeasure, "view_restrictions", list(
   # if a view restriction is active, then by default users
   # can only see patients in their own appointment book for
   # the specified topic
@@ -778,14 +747,23 @@ match_user <- function(dMeasure_obj) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param view_name name of view. default is All i.e. 'no specific view'
+#' @param location location. default is whatever is already set
 #'
 #' @return the clinician choice list
 clinician_list <- function(dMeasure_obj,
-                           view_name = "All") {
-  dMeasure_obj$clinician_list(view_name)
+                           view_name = "All",
+                           location = NULL) {
+  dMeasure_obj$clinician_list(view_name, location)
 }
 
-.public("clinician_list", function(view_name = "All") {
+.public(dMeasure, "clinician_list", function(view_name = "All",
+                                             location = NULL) {
+
+  if (is.null(location)) {
+    location <- self$location
+  } else {
+    self$location <- location
+  }
   if (self$location == 'All') {
     # note that 'ifelse' only returns result in the
     # same 'shape' as the comparison statement
@@ -837,7 +815,7 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
   dMeasure_obj$choose_clinicians(choices, view_name)
 }
 
-.public("choose_clinicians", function(choices = "", view_name = "All") {
+.public(dMeasure, "choose_clinicians", function(choices = "", view_name = "All") {
   choices <- intersect(choices, self$clinician_list(view_name))
   # can only actually choose clinicians available in chosen view
 
@@ -846,17 +824,17 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 
   return(choices)
 })
-.reactive("cliniciansR", quote(self$clinicians))
+.reactive(dMeasure, "cliniciansR", quote(self$clinicians))
 
 ##### Electronic Medical Record (EMR) database configuration ######
 
 ## fields
-.private_init("emr_db", quote(dbConnection::dbConnection$new()))
+.private_init(dMeasure, "emr_db", quote(dbConnection::dbConnection$new()))
 # R6 object containing database object
-.private("db", list(dbversion = 0)) # later will be the EMR databases.
+.private(dMeasure, "db", list(dbversion = 0)) # later will be the EMR databases.
 # $db$dbversion is number of EMR database openings
 # there is also a 'public reactive' version if shiny is available
-.reactive("dbversion", 0)
+.reactive(dMeasure, "dbversion", 0)
 
 ## methods
 
@@ -875,7 +853,7 @@ open_emr_db <- function(dMeasure_obj,
   dMeasure_obj$open_emr_db(BPdatabaseChoice)
 }
 
-.public("open_emr_db",function(BPdatabaseChoice = NULL) {
+.public(dMeasure, "open_emr_db",function(BPdatabaseChoice = NULL) {
 
   if (!private$config_db$is_open() || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
@@ -909,7 +887,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
-.public("initialize_emr_tables", function(emr_db = private$emr_db) {
+.public(dMeasure, "initialize_emr_tables", function(emr_db = private$emr_db) {
 
   print("Re-initializing databases")
 
@@ -925,12 +903,57 @@ initialize_emr_tables <- function(dMeasure_obj,
   # does not include password in public/reactive
 
   private$db$patients <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients'))
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
+    dplyr::mutate(Ethnicity = trimws(Ethnicity),
+                  Sex = trimws(Sex),
+                  RecordNo = trimws(RecordNo))
+
+  # fields include InternalID, ExternalID, RecordNo, StatusText
+  # Title, Firstname, Middlename, Surname, Preferredname
+  # DOB, Sex, Ethnicity
+
+  private$db$MARITALSTATUS <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'MARITALSTATUS'))
+  # has the fields MARITALSTATUSCODE (a number)
+  # and MARITALSTATUSNAME (a string)
+
+  private$db$SEXUALITY <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'SEXUALITY'))
+  # has the fields SEXUALITYCODE (a number)
+  # and SEXUALITYNAME (a string)
+
+  private$db$clinical <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
+    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY) %>>%
+    dplyr::left_join(private$db$MARITALSTATUS,
+                     by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
+    dplyr::left_join(private$db$SEXUALITY,
+                     by = c("SEXUALITY" = "SEXUALITYCODE")) %>>%
+    dplyr::select(-c(MARITALSTATUS, SEXUALITY)) %>>%
+    dplyr::rename(InternalID = INTERNALID,
+                  MaritalStatus = MARITALSTATUSNAME,
+                  Sexuality = SEXUALITYNAME) %>>%
+    dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
+                  Sexuality = trimws(Sexuality))
+  # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
+  #  (which are not dated or given additional identifiers)
+  # MaritalStatusName and SexualityName provided as strings
+  # 'codes' can be found in dbo.CLINICAL
+  # and interpretation of codes can be found in dbo.MARITALSTATUS
+  # and dbo.SEXUALITY
 
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>>%
-    dplyr::select(c('InternalID', 'Collected', 'TestName'))
+    dplyr::select(InternalID, ReportID,
+                  TestName,
+                  Reported, Checked, Actioned,
+                  # three dates
+                  CheckedBy,
+                  # a name of the provider who checked
+                  Notation, Action,
+                  # Action includes 'Urgent Appointment' and 'Non-urgent Appointment'
+                  Comment)
   # as of Jan/2019, the odbc engine for MSSQL can't handle the
   # full ('Select *') Investigations table
   # due to some type of bug/standards non-compliance.
@@ -943,6 +966,16 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(c('Patient', 'InternalID',
                     'AppointmentDate', 'AppointmentTime',
                     'Provider', 'Status'))
+  # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
+
+  private$db$visits <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Visits')) %>>%
+    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName) %>>%
+    dplyr::mutate(VisitType = trimws(VisitType),
+                  DrName = trimws(DrName))
+  # VisitType : 'Surgery', 'Home', "Non Visit', 'Hospital', 'RACF', 'Telephone'
+  # ... 'SMS', 'Email', 'Locum Service', 'Out of Office', 'Other', 'Hostel'
+  # ... 'Telehealth'
 
   private$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID
@@ -963,17 +996,46 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$correspondenceIn <- emr_db$conn() %>>%
     # InternalID, CorrespondenceDate, Subject, Detail
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>>%
-    dplyr::select('InternalID', 'CorrespondenceDate', 'Subject', 'Detail')
+    dplyr::select(InternalID, DocumentID,
+                  CorrespondenceDate,
+                  Subject, Detail, Comment)
+
+  private$db$correspondenceInRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "CORRESPONDENCEIN")) %>>%
+    dplyr::select(DOCUMENTID, INTERNALID,
+                  USERID, CHECKEDBY,
+                  # both USERID and CHECKEDBY are numbers, not names
+                  CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
+                  # three dates
+                  CATEGORY, SUBJECT, DETAIL, COMMENT,
+                  NOTATION, ACTION)
+  # Action includes 6 for Non-urgent appointment,
+  # and 7 for Urgent appointment
 
   private$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
-    dplyr::select('InternalID', 'ReportDate', 'ResultName', 'LoincCode')
+    dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
+                  ResultValue, Units, Range)
+  # BPCode
+  #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
+  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
+  #  17 - Albumin/Creatinine ratio, 19 - HbA1C (SI)
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+
+  private$db$servicesRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'SERVICES')) %>>%
+    dplyr::select('InvoiceID' = 'INVOICEID', 'ServiceDate' = 'SERVICEDATE',
+                  'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+
+  private$db$invoices <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
+    dplyr::select('InvoiceID' = 'INVOICEID', 'UserID' = 'USERID',
+                  'InternalID' = 'INTERNALID')
 
   private$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
@@ -982,9 +1044,16 @@ initialize_emr_tables <- function(dMeasure_obj,
                   'Condition', 'ConditionID', 'Status')
 
   private$db$observations <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "OBSERVATIONS")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'DATANAME',
-                  'DATACODE', 'DATAVALUE', 'OBSDATE')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
+    dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
+                  ObservationDate, ObservationTime, ObservationValue)
+  # ObservationCode
+  #  1 - temp, 2 - pulse (rate)
+  #  3 - systolic blood pressure, 4 - diastolic blood pressure
+  #  6 - BSL, 7 - Height, 8 - Weight, 9 - BMI
+  #  10 - Head circumference
+  #  17 - Waist, 18 - Hip
+  #  21 - WHRatio, 26 - DiabRisk
 
   private$db$currentrx <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
@@ -1026,7 +1095,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' @name UserFullConfig
 #'
-.active("UserFullConfig", function(value) {
+.active(dMeasure, "UserFullConfig", function(value) {
   if (!missing(value)) {
     stop("Can't set `$UserFullConfig`", call. = FALSE)
     # read-only field
@@ -1055,47 +1124,14 @@ initialize_emr_tables <- function(dMeasure_obj,
   return(UserFullConfig)
 })
 
-##### date variables and location #####################################
+##### location #####################################
 
 ## fields
 
-.public("date_a", Sys.Date()) # 'from' date. by default, it is 'today'
-.public("date_b", Sys.Date()) # 'to' date
-.public("location", "All")    # location/group. by default, it is 'All'
+.public(dMeasure, "location", "All")    # location/group. by default, it is 'All'
 
 ## methods
 
-#' Choose date
-#'
-#' Sets 'from' and 'to' dates used in subsequent searches
-#'
-#' @param date_from 'From' date. default is current date_from
-#' @param date_to 'To' date. default is current date_to
-#'
-#' @return list(date_a, date_b)
-#'
-#' if date_a is later than date_b, an error is returned
-choose_date <- function(dMeasure_obj,
-                        date_from = dMeasure_obj$date_a,
-                        date_to = dMeasure_obj$date_b) {
-  dMeasure_obj$choose_date(date_from, date_to)
-}
-
-.public("choose_date", function(date_from = self$date_a,
-                                date_to = self$date_b) {
-  if (date_from > date_to) {
-    stop("'From' date cannot be later than 'To' date")
-  }
-  self$date_a <- date_from
-  self$date_b <- date_to
-
-  private$set_reactive(self$date_aR, self$date_a)
-  private$set_reactive(self$date_bR, self$date_b)
-
-  return(list(self$date_a, self$date_b))
-})
-.reactive("date_aR", quote(self$date_a))
-.reactive("date_bR", quote(self$date_b))
 #' Show list of locations
 #'
 #' This includes 'All'
@@ -1107,7 +1143,7 @@ location_list <- function(dMeasure_obj) {
   dMeasure_obj$location_list()
 }
 
-.active("location_list", function(value) {
+.active(dMeasure, "location_list", function(value) {
   if (!missing(value)) {
     stop("$location_list is read-only!")
   }
@@ -1130,11 +1166,11 @@ location_list <- function(dMeasure_obj) {
   return(locations)
 
 })
-.reactive("location_listR", quote("All")) # includes 'All'
-.reactive("location_groupR", quote("")) # does not include 'All'
-.reactive("PracticeLocationsR", quote(data.frame(id = numeric(),
-                                                 Name = character(),
-                                                 Description = character())))
+.reactive(dMeasure, "location_listR", quote("All")) # includes 'All'
+.reactive(dMeasure, "location_groupR", quote("")) # does not include 'All'
+.reactive(dMeasure, "PracticeLocationsR", quote(data.frame(id = numeric(),
+                                                           Name = character(),
+                                                           Description = character())))
 #' Choose location
 #'
 #' Location is used in subsequent list of clinicians available
@@ -1151,7 +1187,7 @@ choose_location <- function(dMeasure_obj,
   dMeasure_obj$choose_location(location)
 }
 
-.public("choose_location", function(location = self$location) {
+.public(dMeasure, "choose_location", function(location = self$location) {
   locations <- self$location_list
   if (!(location %in% locations)) {
     stop(paste0("'", location, "' is not in the list of locations."))
@@ -1160,4 +1196,14 @@ choose_location <- function(dMeasure_obj,
   }
 
   return(self$location)
+})
+
+##### date and contact ####################################################
+.public_init(dMeasure, "dateContact", dateContact$new())
+
+.public(dMeasure, "choose_date", function(date_from = self$dateContact$date_a,
+                                          date_to = self$dateContact$date_b) {
+  # just a 'dummy' for the dateContact$choose_date method
+
+  return(self$dateContact$choose_date(date_from = date_from, date_to = date_to))
 })

@@ -21,7 +21,7 @@ server.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$server.insert(description)
 }
 
-.public("server.insert", function(description) {
+.public(dMeasure, "server.insert", function(description) {
 
   tryCatch(permission <- self$server.permission(),
            warning = function(w)
@@ -50,7 +50,7 @@ server.insert <- function(dMeasure_obj, description) {
     newid <- max(c(as.data.frame(private$.BPdatabase)$id, 0)) + 1
     # initially, private$.BPdatabase$id might be an empty set, so need to append a '0'
     description$id <- newid
-    description$dbPassword <- self$simple_encode(description$dbPassword)
+    description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
 
@@ -88,7 +88,7 @@ server.update <- function(dMeasure_obj, description) {
   dMeasure_obj$server.update(description)
 }
 
-.public("server.update", function(description) {
+.public(dMeasure, "server.update", function(description) {
 
   tryCatch(permission <- self$server.permission(),
            warning = function(w)
@@ -142,7 +142,7 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::filter(id == description$id) %>>%
       dplyr::pull(dbPassword)
   } else {
-    description$dbPassword <- self$simple_encode(description$dbPassword)
+    description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
   }
@@ -178,7 +178,7 @@ server.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$server.delete(description)
 }
 
-.public("server.delete", function(description) {
+.public(dMeasure, "server.delete", function(description) {
   # delete a server description
 
   tryCatch(permission <- self$server.permission(),
@@ -223,7 +223,7 @@ server.list <- function(dMeasure_obj) {
   dMeasure_obj$server.list()
 }
 
-.public("server.list", function() {
+.public(dMeasure, "server.list", function() {
   # list server descriptions
 
   tryCatch(permission <- self$server.permission(),
@@ -260,7 +260,7 @@ server.permission <- function(dMeasure_obj) {
   dMeasure_obj$server.permission()
 }
 
-.public("server.permission", function() {
+.public(dMeasure, "server.permission", function() {
   if ("ServerAdmin" %in% unlist(private$UserRestrictions$Restriction)) {
     # only some users allowed to see/change server settings
     if ("ServerAdmin" %in% unlist(private$.identified_user$Attributes) &
@@ -278,7 +278,7 @@ server.permission <- function(dMeasure_obj) {
   return(permission)
 })
 
-.active("Log", function(setting) {
+.active(dMeasure, "Log", function(setting) {
   # state of logging, or sets logging state
   #
   # @param setting
@@ -293,7 +293,7 @@ server.permission <- function(dMeasure_obj) {
                            "'ServerAdmin' permission required",
                            "to read/change logging status."))
              return(NULL)
-             })
+           })
 
   if (!private$config_db$is_open()) {
     warning("Unable to read or set logging status. Configuration database is not open")
@@ -364,9 +364,9 @@ server.permission <- function(dMeasure_obj) {
   private$set_reactive(self$LogR, setting)
   return(setting)
 })
-.reactive("LogR", FALSE)
+.reactive(dMeasure, "LogR", FALSE)
 
-.active("LogFile", function(filename) {
+.active(dMeasure, "LogFile", function(filename) {
   # logging filename, or sets logging filename
   #
   # @param filename
@@ -410,7 +410,7 @@ server.permission <- function(dMeasure_obj) {
   private$set_reactive(self$LogFileR, filename)
   return(filename)
 })
-.reactive("LogFileR", "")
+.reactive(dMeasure, "LogFileR", "")
 
 #' WriteLog
 #'
@@ -424,7 +424,7 @@ WriteLog <- function(dMeasure_obj, message) {
   dMeasure_obj$WriteLog(message)
 }
 
-.public("WriteLog", function(message) {
+.public(dMeasure, "WriteLog", function(message) {
   # write message to logfile database
 
   if(!private$config_db$is_open()) {
@@ -439,7 +439,7 @@ WriteLog <- function(dMeasure_obj, message) {
 # ReadLog
 #
 # reads from logfile (if available)
-.active("ReadLog", function(value) {
+.active(dMeasure, "ReadLog", function(value) {
   # logging filename, or sets logging filename
   #
   # @param filename

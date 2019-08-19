@@ -19,14 +19,14 @@ user_login <- function(dMeasure_obj, password) {
   dMeasure_obj$user_login(password)
 }
 
-.public("user_login", function(password) {
+.public(dMeasure, "user_login", function(password) {
   if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
   if (self$empty_password()) {
     stop("No password set for currently identified user!")
   }
-  if (!self$simple_tag_compare(password, private$.identified_user$Password)) {
+  if (!dMeasure::simple_tag_compare(password, private$.identified_user$Password)) {
     stop("Wrong password")
   } else {
     self$authenticated <- TRUE
@@ -44,7 +44,7 @@ user_login <- function(dMeasure_obj, password) {
 empty_password <- function(dMeasure_obj) {
   dMeasure_obj$empty_password()
 }
-.public("empty_password", function() {
+.public(dMeasure, "empty_password", function() {
   # returns true if password for identified user is not defined, or empty
   # this is used by Dailymeasure to prompt for a password to be set
   empty = FALSE
@@ -69,7 +69,7 @@ user_logout <- function(dMeasure_obj) {
   dMeasure_obj$user_logout()
 }
 
-.public("user_logout", function() {
+.public(dMeasure, "user_logout", function() {
   if (is.null(private$.identified_user) ||
       nrow(private$.identified_user) == 0) {
     # no identified user
@@ -80,12 +80,12 @@ user_logout <- function(dMeasure_obj) {
   return(self$authenticated)
 })
 
-.private("change_password", function(name, newpassword) {
+.private(dMeasure, "change_password", function(name, newpassword) {
   # change password of named 'name' (Fullname) user to 'newpassword'
 
   if (!newpassword == "") {
     # only encode password if it isn't a reset ("")
-    newpassword <- self$simple_tag(newpassword)
+    newpassword <- dMeasure::simple_tag(newpassword)
   }
   # encode (actually 'tag') the password, if not an empty string
   # tagging (hash) defined in calculation_definitions.R
@@ -128,7 +128,7 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   dMeasure_obj$password.set(newpassword, oldpassword)
 }
 
-.public("password.set", function(newpassword, oldpassword = NULL) {
+.public(dMeasure, "password.set", function(newpassword, oldpassword = NULL) {
   if (is.null(private$.identified_user)) {
     stop("No user identified!")
   }
@@ -154,7 +154,7 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
-    if (!self$simple_tag_compare(oldpassword, private$.identified_user$Password)) {
+    if (!dMeasure::simple_tag_compare(oldpassword, private$.identified_user$Password)) {
       stop("Old password incorrect")
     } else {
       # old password specified correctly
@@ -183,8 +183,8 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
   dMeasure_obj$password.reset(user, newpassword = "")
 }
 
-.public("password.reset", function(user,
-                                   newpassword = "") {
+.public(dMeasure, "password.reset", function(user,
+                                             newpassword = "") {
 
   tryCatch(permission <- self$useradmin.permission(),
            warning = function(w)

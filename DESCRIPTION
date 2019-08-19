@@ -1,7 +1,7 @@
 Package: dMeasure
 Type: Package
 Title: case finding in the EMR (Best Practice)
-Version: 0.2.0
+Version: 0.3.0
 Author: David Fong
 Maintainer: David Fong <vkelim@bigpond.com>
 Description: Search for health interventions in the Best Practice EMR database.
@@ -15,6 +15,7 @@ Imports:
     odbc,
     RSQLite,
     tidyr,
+    tibble,
     magrittr,
     pipeR,
     dbConnection,
@@ -27,6 +28,8 @@ Suggests:
 RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'
+    'r6_helpers.R'
+    'dateContact.R'
     'dMeasure.R'
     'calculation_definitions.R'
     'appointments.R'
@@ -34,9 +37,13 @@ Collate:
     'CDM.R'
     'CancerScreen_bowelcancer.R'
     'Immunization.R'
+    'contact.R'
+    'QualityImprovementMeasures.R'
+    'administrative_incoming.R'
     'billings.R'
     'configuration_location.R'
     'configuration_password.R'
     'configuration_server.R'
     'configuration_user.R'
+    'contactConditions.R'
     'utils_pipe.R'
