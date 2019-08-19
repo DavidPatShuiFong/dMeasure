@@ -7,9 +7,75 @@
 #' needs the '.public' function from dMeasure.R
 NULL
 
-## Fields
 
-## Fields
+##### appointment status ################################################################
+
+.active(dMeasure, "appointment_status_types", function(value) {
+  if (!missing(value)) {
+    warning("'appointment_status_types' cannot be set.")
+  }
+  return (c("Booked", "Completed", "At billing", "Waiting", "With doctor"))
+})
+
+# valid appointment states. note that 'with doctor' applies to any health provider type!
+.private_init(dMeasure, ".appointment_status",
+              quote(c("With doctor", "At billing", "Completed")))
+# by default, all status types are valid
+.active(dMeasure, "appointment_status", function(value) {
+  if (missing(value)) {
+    return(private$.appointment_status)
+  }
+  if (is.character(value) || is.null(value)) {
+    # accepts string, or vector of strings, or NULL
+    if (is.null(value)) {value <- ""}
+    private$.appointment_status <- value
+    private$set_reactive(self$appointment_statusR, private$.appointment_status)
+  } else {
+    warning(paste0("filter_incoming_Action can only be set to a string,",
+                   "a vector of strings or NULL. Valid strings are: '",
+                   paste(self$appointment_status_types, collapse = ", "), "'."))
+  }
+})
+.reactive(dMeasure, "appointment_statusR", quote(private$.appointment_status))
+
+##### visit types #################################################################
+
+
+.active(dMeasure, "visit_types", function(value) {
+  if (!missing(value)) {
+    warning("'visit_types' cannot be set.")
+  }
+  return(c("Surgery", "Home", "Non Visit", "Hospital", "RACF", "Telephone",
+           "SMS", "Email", "Locum Service", "Out of Office", "Other", "Hostel",
+           "Telehealth"))
+})
+
+.private_init(dMeasure, ".visit_type", quote(c("Surgery", "Home", "Hospital",
+                                                  "RACF", "Locum Service",
+                                                  "Out of Office",
+                                                  "Hostel", "Telehealth")))
+# by default, all visit types are valid
+.active(dMeasure, "visit_type", function(value) {
+  if (missing(value)) {
+    return(private$.visit_type)
+  }
+  if (is.character(value) || is.null(value)) {
+    # accepts string, or vector of strings, or NULL
+    if (is.null(value)) {value <- ""}
+    private$.visit_type <- value
+    private$set_reactive(self$visit_typeR, private$.visit_type)
+  } else {
+    warning(paste0("visit_type can only be set to a string,",
+                   "a vector of strings or NULL. Valid strings are :'",
+                   paste(self$visit_types, collapse = ", "), "'."))
+  }
+})
+.reactive(dMeasure, "visit_typeR", quote(private$.visit_type))
+
+
+
+
+###### Fields #############################################################
 .public(dMeasure, "contact_appointments_list",
         data.frame(Patient = character(),
                    InternalID = integer(),
@@ -55,7 +121,7 @@ NULL
 #' @param status=NA filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
-#'  if NA, adopts from active $dateContact$appointment_status
+#'  if NA, adopts from active $appointment_status
 #'
 #' @return dataframe of Patient (name), InternalID, AppointmentDate
 list_contact_appointments <- function(dMeasure_obj,
@@ -85,7 +151,7 @@ list_contact_appointments <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           if (is.na(status)) {
-            status <- self$dateContact$appointment_status
+            status <- self$appointment_status
           }
 
           # no additional clinician filtering based on privileges or user restrictions
@@ -124,7 +190,7 @@ list_contact_appointments <- function(dMeasure_obj,
                     c(self$dateContact$date_aR(),
                       self$dateContact$date_bR(),
                       self$cliniciansR(),
-                      self$dateContact$appointment_statusR()),
+                      self$appointment_statusR()),
                     ignoreNULL = FALSE, {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
@@ -175,7 +241,7 @@ list_contact_visits <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           if (is.na(visit_type)) {
-            visit_type <- self$dateContact$visit_type
+            visit_type <- self$visit_type
           }
 
           # no additional clinician filtering based on privileges or user restrictions
@@ -215,7 +281,7 @@ list_contact_visits <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(self$dateContact$date_aR(), self$dateContact$date_bR(),
                       self$cliniciansR(),
-                      self$dateContact$visit_typeR()),
+                      self$visit_typeR()),
                     ignoreNULL = FALSE, {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
