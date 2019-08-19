@@ -78,16 +78,17 @@ zostavax_list <- function(dMeasure_obj,
     dplyr::select(InternalID, AppointmentDate) %>>%
     dplyr::rename(Date = AppointmentDate)
   # just the InternalID and AppointmentDate of the appointment list
-  intID <- dplyr::pull(intID_Date, InternalID)
+  intID <- c(dplyr::pull(intID_Date, InternalID), -1)
+  # add -1 dummy because cannot search %in% empty vector
   # just the InternalID
 
   zostavax_list <- appointments_list %>>%
     dplyr::filter(Age >= 70 & Age <= 80) %>>% # from age 70 to 80 years inclusive
     dplyr::left_join(private$db$immunizations %>>%
-                       dplyr::filter(InternalID %in% intID &&
+                       dplyr::filter((InternalID %in% intID) &&
                                        # those who have had the zostavax vaccine
-                                       (VaccineName %LIKE% "%zostavax%" ||
-                                          VaccineID == 103)),
+                                       ((VaccineName %LIKE% "%zostavax%") ||
+                                          (VaccineID == 103))),
                      by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::left_join(private$db$preventive_health %>>%
@@ -209,8 +210,8 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::select(InternalID, AppointmentDate) %>>%
     dplyr::rename(Date = AppointmentDate)
   # just the InternalID and AppointmentDate of the appointment list
-  intID <- dplyr::pull(intID_Date, InternalID)
-  # just the InternalID
+  intID <- c(dplyr::pull(intID_Date, InternalID), -1)
+  # just the InternalID. add 'dummy' because cannot search %in% empty vector
   fluvaxID <- unlist(private$db$vaccine_disease %>>%
                        dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
                        dplyr::select(VACCINEID) %>>%
@@ -222,7 +223,7 @@ influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # those who have had influenza vaccines in the past
     dplyr::left_join(private$db$immunizations %>>%
                        dplyr::filter(InternalID %in% intID &&
-                                       VaccineID %in% vaxID),
+                                       VaccineID %in% fluvaxID),
                      by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%

@@ -1046,7 +1046,10 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$observations <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
     dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
-                  ObservationDate, ObservationTime, ObservationValue)
+                  ObservationDate, ObservationTime, ObservationValue) %>>%
+    dplyr::mutate(ObservationName = trimws(ObservationName),
+                  ObservationValue = trimws(ObservationValue))
+
   # ObservationCode
   #  1 - temp, 2 - pulse (rate)
   #  3 - systolic blood pressure, 4 - diastolic blood pressure

@@ -429,17 +429,19 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
 
   appointments %>>% dplyr::collect() %>>%
     dplyr::inner_join(private$db$observations %>>%
-                        dplyr::filter(DATACODE == 9),
+                        dplyr::filter(ObservationCode == 9),
                       # this is BMI. also in DATANAME, but different spellings/cases
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter(as.Date(OBSDATE) <= as.Date(Date)) %>>%
+    dplyr::filter(as.Date(ObservationDate) <= as.Date(Date)) %>>%
     # observation done before the appointment date
     dplyr::group_by(InternalID, Date) %>>%
-    dplyr::slice(which.max(OBSDATE)) %>>% # choose the observation with the most recent observation date
-    # unfortunately, as the code stands, this generates a vector which is not appointment date specific
+    dplyr::slice(which.max(ObservationDate)) %>>%
+    # choose the observation with the most recent observation date
+    # unfortunately, as the code stands, this generates a vector which
+    # is not appointment date specific
     # if a range of appointment dates has been chosen
     dplyr::ungroup() %>>%
-    dplyr::filter(DATAVALUE >= 30) %>>% # those with BMI >= 30
+    dplyr::filter(as.numeric(ObservationValue) >= 30) %>>% # those with BMI >= 30
     dplyr::pull(InternalID) %>>%
     unique()
 })
