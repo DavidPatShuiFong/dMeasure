@@ -51,9 +51,9 @@ NULL
 })
 
 .private_init(dMeasure, ".visit_type", quote(c("Surgery", "Home", "Hospital",
-                                                  "RACF", "Locum Service",
-                                                  "Out of Office",
-                                                  "Hostel", "Telehealth")))
+                                               "RACF", "Locum Service",
+                                               "Out of Office",
+                                               "Hostel", "Telehealth")))
 # by default, all visit types are valid
 .active(dMeasure, "visit_type", function(value) {
   if (missing(value)) {
@@ -331,9 +331,15 @@ list_contact_services <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  clinicians <-
-    c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,"UserID"],
-             use.names = FALSE), -1) # change to UserID, again minimum length 1
+  if ("UserID" %in% colnames(self$UserFullConfig)) {
+    clinicians <-
+      c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,"UserID"],
+               use.names = FALSE), -1)} # change to UserID, again minimum length 1
+  else {
+    clinicians <- c(-1)
+    # there might not a "UserID" field in self$UserFullConfig if there is no
+    # open EMR database
+  }
 
   if (private$emr_db$is_open()) {
     # only if EMR database is open
