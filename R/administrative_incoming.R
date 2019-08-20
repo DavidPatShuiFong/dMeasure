@@ -261,6 +261,9 @@ filter_investigations <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
+  investigations <- self$investigations_filtered
+  # this will normally be replaced in code below, unless no EMR database is open
+
   if (private$emr_db$is_open()) {
     # only if EMR database is open
     if (self$Log) {log_id <- private$config_db$write_log_db(
@@ -615,9 +618,18 @@ filter_correspondence <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  clinician_n <- c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,
-                                              "UserID"], use.names = FALSE),0)
+  if ("UserID" %in% colnames(self$UserFullConfig)) {
+    clinician_n <- c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians,
+                                                "UserID"], use.names = FALSE),0)}
+  else {
+    # there might not be a "UserID" field in self$UserFullConfig if there is
+    # no open clinical database
+    clinicina_n <- c(-1)
+  }
   # again, need to add zero to list because cannot search on empty list
+
+  correspondence <- self$correspondence_filtered
+  # this should usually be replaced by subsequent code, unless no EMR is open
 
   if (private$emr_db$is_open()) {
     # only if EMR database is open
@@ -1064,7 +1076,9 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
 
 
   if (screentag) {
-    incoming <- cbind(incoming, data.frame(labeltag = character()))
+    incoming <- cbind(incoming, data.frame(labeltag = character(),
+                                           patienttag = character(),
+                                           testtag = character()))
   }
   if (screentag_print) {
     incoming <- cbind(incoming, data.frame(labeltag_print = character()))
