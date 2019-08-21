@@ -145,15 +145,23 @@ fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
                                                          TestName = ResultName),
                                          by = 'InternalID')
       ) %>>%
-        dplyr::mutate(TestDate = as.Date(substr(TestDate, 1, 10))) %>>%
+        dplyr::mutate(TestDate = as.Date(substr(TestDate, 1, 10))),
         # remove time from date
-        dplyr::group_by(InternalID) %>>%
-        # group by patient ID (need most recent investigation for each patient)
-        # only keep the latest(/recent) dated investigation
-        dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)),
       by = NULL) %>>%
+    dplyr::mutate(TestDate = as.Date(ifelse(TestDate > AppointmentDate,
+                                    -Inf,
+                                    TestDate), origin = "1970-01-01"),
+                  TestDate = as.Date(ifelse(is.na(TestDate), -Inf, TestDate),
+                                     origin = "1970-01-01")) %>>%
+    dplyr::mutate(TestName = ifelse(TestDate == -Inf, NA, TestName)) %>>%
+    # only test dates (and names) less than the joined appointment date are kept
+    dplyr::group_by(InternalID, AppointmentDate) %>>%
+    # group by patient ID (need most recent investigation for each patient)
+    # only keep the latest(/recent) dated investigation prior to each appointment
+    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+    dplyr::ungroup() %>>%
     dplyr::mutate(OutOfDateTest =
-                    dplyr::case_when(is.na(TestDate) ~ 1,
+                    dplyr::case_when((TestDate == -Inf) ~ 1,
                                      # if no date (no detected test)
                                      dMeasure::interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
                                      # if old (2 years or more)
