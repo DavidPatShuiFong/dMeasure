@@ -12,7 +12,7 @@ billings_list(dMeasure_obj, date_from, date_to, clinicians, lazy,
 
 \item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
 
-\item{date_from=dMeasure_obj$dateContact$date_a}{start date}
+\item{date_from=dMeasure_obj$date_a}{start date}
 
 \item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
 

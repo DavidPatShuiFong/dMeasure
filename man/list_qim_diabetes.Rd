@@ -5,21 +5,23 @@
 \title{List of diabetics, with Quality Improvement Measures, in the contact list}
 \usage{
 list_qim_diabetes(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, min_contact = NA, min_date = NA, ignoreOld = NA,
-  lazy = FALSE)
+  clinicians = NA, min_contact = NA, min_date = NA,
+  contact_type = NA, ignoreOld = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{start date. default is $dateContact$date_a}
+\item{date_from}{start date. default is $date_a}
 
-\item{date_to}{end date (inclusive). default is $dateContact$date_b}
+\item{date_to}{end date (inclusive). default is $date_b}
 
 \item{clinicians}{list of clinicians to view. default is $clinicians}
 
 \item{min_contact}{minimum number of contacts. default is $contact_min, initially one (1)}
 
 \item{min_date}{most recent contact must be at least min_date. default is $contact_minDate, initially -Inf}
+
+\item{contact_type}{contact types which are accepted. default is $contact_type}
 
 \item{ignoreOld}{ignore results/observatioins that don't qualify for quality improvement measures
 if not supplied, reads $qim_ignoreOld}

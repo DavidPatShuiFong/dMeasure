@@ -75,8 +75,8 @@ NULL
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
@@ -105,10 +105,10 @@ list_qim_active <- function(dMeasure_obj,
                                               lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -198,8 +198,8 @@ list_qim_active <- function(dMeasure_obj,
 #'
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
@@ -235,10 +235,10 @@ report_qim_active <- function(dMeasure_obj,
                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -345,8 +345,8 @@ report_qim_active <- function(dMeasure_obj,
 #' the reference date for 'most recent' measurement is 'date_to'
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
@@ -381,10 +381,10 @@ list_qim_diabetes <- function(dMeasure_obj,
                                                 lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -614,8 +614,8 @@ list_qim_diabetes <- function(dMeasure_obj,
 #' the reference date for 'most recent' measurement is 'date_to'
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
@@ -661,10 +661,10 @@ report_qim_diabetes <- function(dMeasure_obj,
                                                   lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!

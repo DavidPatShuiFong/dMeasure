@@ -1,6 +1,5 @@
 ##### dMeasure ###########################################
 #' @include r6_helpers.R
-#' @include dateContact.R
 #' functions to help create R6 classes
 NULL
 
@@ -87,7 +86,7 @@ dMeasure <-
 .private(dMeasure, "trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
   if (requireNamespace("shiny", quietly = TRUE)) {
-      myreactive(1 - shiny::isolate(myreactive()))
+    myreactive(1 - shiny::isolate(myreactive()))
   }
 })
 
@@ -1202,12 +1201,47 @@ choose_location <- function(dMeasure_obj,
   return(self$location)
 })
 
-##### date and contact ####################################################
-.public_init(dMeasure, "dateContact", dateContact$new())
+##### date setting ####################################################
 
-.public(dMeasure, "choose_date", function(date_from = self$dateContact$date_a,
-                                          date_to = self$dateContact$date_b) {
-  # just a 'dummy' for the dateContact$choose_date method
+## fields
 
-  return(self$dateContact$choose_date(date_from = date_from, date_to = date_to))
+.public_init(dMeasure, "date_a", quote(Sys.Date())) # 'from' date. by default, it is 'today'
+.public_init(dMeasure, "date_b", quote(Sys.Date())) # 'to' date
+
+## methods
+
+#' Choose date
+#'
+#' Sets 'from' and 'to' dates used in subsequent searches
+#'
+#' @param dMeasure_obj dateContact R6 object
+#' @param date_from 'From' date. default is current date_from
+#' @param date_to 'To' date. default is current date_to
+#'
+#' @return list(date_a, date_b)
+#'
+#' if date_a is later than date_b, a warning is returned,
+#' and the dates are NOT changed
+choose_date <- function(dMeasure_obj,
+                        date_from = dMeasure_obj$date_a,
+                        date_to = dMeasure_obj$date_b) {
+  dMeasure_obj$choose_date(date_from, date_to)
+}
+
+.public(dMeasure, "choose_date", function(date_from = self$date_a,
+                                          date_to = self$date_b) {
+  if (date_from > date_to) {
+    warning("'From' date cannot be later than 'To' date")
+    date_from <- self$date_a
+    date_to <- self$date_b
+  }
+  self$date_a <- date_from
+  self$date_b <- date_to
+
+  private$set_reactive(self$date_aR, self$date_a)
+  private$set_reactive(self$date_bR, self$date_b)
+
+  return(list(self$date_a, self$date_b))
 })
+.reactive(dMeasure, "date_aR", quote(self$date_a))
+.reactive(dMeasure, "date_bR", quote(self$date_b))

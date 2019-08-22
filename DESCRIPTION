@@ -29,7 +29,6 @@ RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'
     'r6_helpers.R'
-    'dateContact.R'
     'dMeasure.R'
     'calculation_definitions.R'
     'appointments.R'

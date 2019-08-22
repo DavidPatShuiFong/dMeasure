@@ -5,19 +5,22 @@
 \title{Diabetes Quality Improvement Measure report, in the contact list}
 \usage{
 report_qim_diabetes(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, min_contact = NA, min_date = NA,
-  demographic = NA, measure = NA, ignoreOld = NA, lazy = FALSE)
+  clinicians = NA, min_contact = NA, contact_type = NA,
+  min_date = NA, demographic = NA, measure = NA, ignoreOld = NA,
+  lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{start date. default is $dateContact$date_a}
+\item{date_from}{start date. default is $date_a}
 
-\item{date_to}{end date (inclusive). default is $dateContact$date_b}
+\item{date_to}{end date (inclusive). default is $date_b}
 
 \item{clinicians}{list of clinicians to view. default is $clinicians}
 
 \item{min_contact}{minimum number of contacts. default is $contact_min, initially one (1)}
+
+\item{contact_type}{contact types which are accepted. default is $contact_type}
 
 \item{min_date}{most recent contact must be at least min_date. default is $contact_minDate, initially -Inf}
 

@@ -11,9 +11,9 @@ vax_list(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$dateContact$date_a)}
+\item{date_from}{from date range (default self$date_a)}
 
-\item{date_to}{to date range (default self$dateContact$date_b)}
+\item{date_to}{to date range (default self$date_b)}
 
 \item{clinicians}{list of clinicians (default self$clinicians)}
 
