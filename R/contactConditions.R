@@ -32,6 +32,7 @@ NULL
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_diabetes <- function(dMeasure_obj,
@@ -40,9 +41,10 @@ list_contact_diabetes <- function(dMeasure_obj,
                                   clinicians = NA,
                                   min_contact = NA,
                                   min_date = NA,
+                                  contact_type = NA,
                                   lazy = FALSE) {
   dMeasure_obj$list_contact_diabetes(date_from, date_to, clinicians,
-                                     min_contact, min_date,
+                                     min_contact, min_date, contact_type,
                                      lazy)
 }
 
@@ -51,6 +53,7 @@ list_contact_diabetes <- function(dMeasure_obj,
                                                     clinicians = NA,
                                                     min_contact = NA,
                                                     min_date = NA,
+                                                    contact_type = NA,
                                                     lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -71,6 +74,10 @@ list_contact_diabetes <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
+
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -86,7 +93,7 @@ list_contact_diabetes <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -136,6 +143,7 @@ list_contact_diabetes <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_chroniclungdisease <- function(dMeasure_obj,
@@ -144,9 +152,10 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
                                             clinicians = NA,
                                             min_contact = NA,
                                             min_date = NA,
+                                            contact_type = NA,
                                             lazy = FALSE) {
   dMeasure_obj$list_contact_chroniclungdisease(date_from, date_to, clinicians,
-                                               min_contact, min_date,
+                                               min_contact, min_date, contact_type,
                                                lazy)
 }
 
@@ -155,6 +164,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
                                                               clinicians = NA,
                                                               min_contact = NA,
                                                               min_date = NA,
+                                                              contact_type = NA,
                                                               lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -175,6 +185,9 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -190,7 +203,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -242,6 +255,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_15plus <- function(dMeasure_obj,
@@ -250,9 +264,10 @@ list_contact_15plus <- function(dMeasure_obj,
                                 clinicians = NA,
                                 min_contact = NA,
                                 min_date = NA,
+                                contact_type = NA,
                                 lazy = FALSE) {
   dMeasure_obj$list_contact_15plus(date_from, date_to, clinicians,
-                                   min_contact, min_date,
+                                   min_contact, min_date, contact_type,
                                    lazy)
 }
 
@@ -261,6 +276,7 @@ list_contact_15plus <- function(dMeasure_obj,
                                                   clinicians = NA,
                                                   min_contact = NA,
                                                   min_date = NA,
+                                                  contact_type = NA,
                                                   lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -281,6 +297,9 @@ list_contact_15plus <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -296,7 +315,7 @@ list_contact_15plus <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -349,6 +368,7 @@ list_contact_15plus <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_65plus <- function(dMeasure_obj,
@@ -357,9 +377,10 @@ list_contact_65plus <- function(dMeasure_obj,
                                 clinicians = NA,
                                 min_contact = NA,
                                 min_date = NA,
+                                contact_type = NA,
                                 lazy = FALSE) {
   dMeasure_obj$list_contact_65plus(date_from, date_to, clinicians,
-                                   min_contact, min_date,
+                                   min_contact, min_date, contact_type,
                                    lazy)
 }
 
@@ -368,6 +389,7 @@ list_contact_65plus <- function(dMeasure_obj,
                                                   clinicians = NA,
                                                   min_contact = NA,
                                                   min_date = NA,
+                                                  contact_type = NA,
                                                   lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -388,6 +410,9 @@ list_contact_65plus <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -403,7 +428,7 @@ list_contact_65plus <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -456,6 +481,7 @@ list_contact_65plus <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_45_74 <- function(dMeasure_obj,
@@ -464,9 +490,10 @@ list_contact_45_74 <- function(dMeasure_obj,
                                clinicians = NA,
                                min_contact = NA,
                                min_date = NA,
+                               contact_type = NA,
                                lazy = FALSE) {
   dMeasure_obj$list_contact_45_74(date_from, date_to, clinicians,
-                                  min_contact, min_date,
+                                  min_contact, min_date, contact_type,
                                   lazy)
 }
 
@@ -475,6 +502,7 @@ list_contact_45_74 <- function(dMeasure_obj,
                                                  clinicians = NA,
                                                  min_contact = NA,
                                                  min_date = NA,
+                                                 contact_type = NA,
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -495,6 +523,9 @@ list_contact_45_74 <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -510,7 +541,7 @@ list_contact_45_74 <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
@@ -570,6 +601,7 @@ list_contact_45_74 <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_contact_cst <- function(dMeasure_obj,
@@ -578,9 +610,10 @@ list_contact_cst <- function(dMeasure_obj,
                              clinicians = NA,
                              min_contact = NA,
                              min_date = NA,
+                             contact_type = NA,
                              lazy = FALSE) {
   dMeasure_obj$list_contact_cst(date_from, date_to, clinicians,
-                                min_contact, min_date,
+                                min_contact, min_date, contact_type,
                                 lazy)
 }
 
@@ -589,6 +622,7 @@ list_contact_cst <- function(dMeasure_obj,
                                                clinicians = NA,
                                                min_contact = NA,
                                                min_date = NA,
+                                               contact_type = NA,
                                                lazy = FALSE) {
 
   if (is.na(date_from)) {
@@ -609,6 +643,9 @@ list_contact_cst <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -624,7 +661,7 @@ list_contact_cst <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_count(date_from, date_to, clinicians,
-                              min_contact, min_date,
+                              min_contact, min_date, contact_type,
                               lazy)
     }
 
