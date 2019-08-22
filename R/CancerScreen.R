@@ -312,12 +312,17 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
     # only keep the latest(/recent) dated investigation prior to each appointment
     dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
     dplyr::ungroup() %>>%
+    dplyr::mutate(TestAge = dMeasure::interval(TestDate, AppointmentDate)$year) %>>%
     dplyr::mutate(OutOfDateTest =
                     dplyr::case_when((TestDate == -Inf) ~ 1,
                                      # if no date (no detected test)
-                                     dMeasure::interval(TestDate, AppointmentDate)$year >= 2 ~ 2,
-                                     # if old (2 years or more)
-                                     TRUE ~ 3)) %>>%   # if up-to-date
+                                     TestAge < 2 ~ 3,
+                                     TestAge >= 5 ~ 2,
+                                     # if old (5 years for either cervical screening HPV or Pap)
+                                     grepl('pap', TestName, ignore.case = TRUE) ~ 2,
+                                     # otherwise if 'Pap' and more than two years
+                                     # last case is 2 to 4 years (inclusive) and CST
+                                     TRUE ~ 3)) %>>%
     tidyr::replace_na(list(TestName = 'Cervical screening'))
 
   return_selection <- c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
