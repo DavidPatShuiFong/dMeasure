@@ -646,7 +646,7 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$.UserRestrictions <- config_db$conn() %>>%
     dplyr::tbl("UserRestrictions") %>>% dplyr::collect()
-  self$UserRestrictions(private$.UserRestrictions)
+  private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
   self$match_user()
   # see if 'identified' system user is matched with a configured user
