@@ -14,11 +14,10 @@ open_configuration_db(dMeasure_obj,
 }
 \value{
 nothing, modifies \code{dMeasure_obj}
-both these parameters have defaults, which may have
-been set by previous calls
 }
 \description{
 Opens SQL connection to SQLite configuration file.
+Does not read the configuration file (that is done by $read_configuration_db)
 }
 \details{
 Also check the SQL database
@@ -26,4 +25,10 @@ is compliant. new tables are added, and old ones
 are checked to see if all required fields/columns
 are present. if a field/column is missing, then
 the missing field/column is added.
+}
+\examples{
+dMeasure_obj <- dMeasure$new()
+dMeasure_obj$open_configuration_db()
+dMeasure_obj$read_configuration_db()
+dMeasure_obj$UserConfig
 }

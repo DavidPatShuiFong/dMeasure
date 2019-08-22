@@ -151,13 +151,15 @@ dMeasure <-
 
 ## active fields
 
-#' read configuration filepaths
+#' read (or set) configuration filepath
 #'
 #' By default, the YAML configuration is either in the working
 #' directory (where a local installation of R lives),
 #' or the user's home directory
 #'
-#' this method will set $yaml_config_filepath and $sql_config_filepath
+#' '~/.DailyMeasure_cfg.yaml'
+#'
+#' this method will read or set $sql_config_filepath
 #' it will read the YAML configuration filepath, which if already
 #' existing might contain the 'real' location of the $sql_config_filepath
 #'
@@ -165,13 +167,23 @@ dMeasure <-
 #'
 #' @name configuration_file_path
 #'
-#' @return SQL filepath
+#' @param dMeasure_obj dMeasure R6 object
+#' @param value (opt) filepath to set
+#'
+#' @return SQL filepath (only returned if no 'value' provided)
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
 #' dMeasure_obj$configuration_file_path # read filepath
 #' dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
 #'  # sets filepath
+configuration_file_path <- function(dMeasure_obj, value) {
+  if (missing(value)) {
+    return(dMeasure_obj$configuration_file_path)
+  } else {
+    dMeasure_obj$configuration_file_path <- value
+  }
+}
 .active(dMeasure, "configuration_file_path", function (filepath) {
 
   self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
@@ -246,6 +258,30 @@ dMeasure <-
                                              UserID = character(),
                                              dbPassword = character(),
                                              stringsAsFactors = FALSE))
+#' show database configurations
+#'
+#' @name BPdatabase
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' reactive version : BPdatabaseR
+#'
+#' @return dataframe of database descriptions
+#'  id, Name, Address, Database, UserID, dbPassword
+#'
+#'  Address will look something like "COMPUTERNAME\\BPSINSTANCE"
+#'   note that '\' needed to be quoted, so becomes '\\'
+#'  Database should be 'BPSPATIENTS' (or perhaps 'BPSSAMPLES')
+#'  userID should always be 'bpsrawdata'
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$BPdatabase
+BPdatabase <- function(dMeasure_obj) {
+  return(dMeasure_obj$BPdatabase)
+}
 .active(dMeasure, "BPdatabase", function(value) {
   if (!missing(value)) {
     stop("cannot be set, $BPdatabase is read-only")
@@ -267,6 +303,22 @@ dMeasure <-
                                                     UserID = character(),
                                                     dbPassword = character(),
                                                     stringsAsFactors = FALSE)))
+#' show database configuration names
+#'
+#' @name BPdatabase
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return vector of names of database configurations
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$BPdatabaseNames
+BPdatabaseNames <- function(dMeasure_obj) {
+  return(dMeasure_obj$BPdatabaseNames)
+}
 .active(dMeasure, "BPdatabaseNames", function(value) {
   if (!missing(value)) {
     stop("cannot set, $BPdatabaseNames is read-only!")
@@ -290,6 +342,28 @@ dMeasure <-
                                              Attributes = character(),
                                              Password = character(),
                                              stringsAsFactors = FALSE))
+#' show user configurations
+#'
+#' @name UserConfig
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return dataframe of user configuration descriptions
+#'  id, Fullname, AuthIdentity, Location, Attributes
+#'
+#'  Fullname - Best Practice full user name
+#'  AuthIdentity - Windows login identity
+#'  Location - vector of groups/locations
+#'  Attributes - vector of user's attributes/permissions
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$UserConfig
+UserConfig <- function(dMeasure_obj) {
+  return(dMeasure_obj$UserConfig)
+}
 .active(dMeasure, "UserConfig", function(value) {
   if (!missing(value)) {
     stop("self$UserConfig is read-only!")
@@ -326,7 +400,7 @@ dMeasure <-
 #' choose (or read) database choice
 #'
 #' This must be one of 'None' or one of the defined databases.
-#' Tries to open the databse. If fails, will be set to 'None'.
+#' Tries to open the database. If fails, will be set to 'None'.
 #'
 #' Sets $BPdatabasechoiceR reactive, if shiny/reactive
 #' environment available
@@ -335,11 +409,23 @@ dMeasure <-
 #'
 #' @name BPdatabaseChoice
 #'
-#' @return the current database choice
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choice (optional) name of database choice
+#'
+#'  posible value includes "None", which will close any current database
+#'
+#' @return the current database choice, if choice not provided
 #'
 #' @examples
 #' dMeasure_obj$BPdatabaseChoice # returns the current choice
 #' dMeasure_obj$BPdatabaseChoice <- "None" # sets database to none
+BPdatabaseChoice <- function(dMeasure_obj, choice) {
+  if (missing(choice)) {
+    return(dMeasure_obj$BPdatabaseChoice)
+  } else {
+    dMeasure_obj$BPdatabaseChoice <- choice
+  }
+}
 .active(dMeasure, "BPdatabaseChoice", function(choice) {
   if (missing(choice)) {
     return(private$.BPdatabaseChoice)
@@ -447,6 +533,7 @@ dMeasure <-
 #' Open the SQL connection to the configuration from the SQL configuration file
 #'
 #' Opens SQL connection to SQLite configuration file.
+#' Does not read the configuration file (that is done by $read_configuration_db)
 #'
 #' Also check the SQL database
 #' is compliant. new tables are added, and old ones
@@ -458,8 +545,12 @@ dMeasure <-
 #' @param configuration_file_path (location of SQL configuration)
 #'
 #' @return nothing, modifies \code{dMeasure_obj}
-#' both these parameters have defaults, which may have
-#' been set by previous calls
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$UserConfig
 open_configuration_db <-
   function(dMeasure_obj,
            configuration_file_path = dMeasure_obj$configuration_file_path) {
@@ -606,12 +697,22 @@ open_configuration_db <-
 #' read the SQL configuration database
 #'
 #' @param dMeasure_obj dMeasure object
-#' @param config_db R6 object to open SQL database - default is the internally stored value
+#' @param config_db R6 object to open SQL database
+#'  default is the internally stored value in private$config_db
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$UserConfig
 read_configuration_db <- function(dMeasure_obj,
-                                  config_db = dMeasure_obj$config_db) {
-  dMeasure_obj$read_configuration_db(config_db)
+                                  config_db) {
+  if (exists(config_db)) {
+    dMeasure_obj$read_configuration_db(config_db)
+  } else {
+    dMeasure_obj$read_configuration_db()
+  }
 }
-
 .public(dMeasure, "read_configuration_db", function(config_db = private$config_db) {
 
   if (!config_db$is_open()) {
