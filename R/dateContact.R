@@ -79,7 +79,9 @@ dateContact <-
 })
 .private(dateContact, "trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
-  myreactive(1 - shiny::isolate(myreactive()))
+  if (requireNamespace("shiny", quietly = TRUE)) {
+    myreactive(1 - shiny::isolate(myreactive()))
+  }
 })
 
 

@@ -350,6 +350,7 @@ report_qim_active <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
@@ -361,10 +362,11 @@ list_qim_diabetes <- function(dMeasure_obj,
                               clinicians = NA,
                               min_contact = NA,
                               min_date = NA,
+                              contact_type = NA,
                               ignoreOld = NA,
                               lazy = FALSE) {
   dMeasure_obj$list_qim_diabetes(date_from, date_to, clinicians,
-                                 min_contact, min_date,
+                                 min_contact, min_date, contact_type,
                                  ignoreOld,
                                  lazy)
 }
@@ -374,6 +376,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                                                 clinicians = NA,
                                                 min_contact = NA,
                                                 min_date = NA,
+                                                contact_type = NA,
                                                 ignoreOld = NA,
                                                 lazy = FALSE) {
 
@@ -414,6 +417,7 @@ list_qim_diabetes <- function(dMeasure_obj,
     if (!lazy) {
       self$list_contact_diabetes(date_from, date_to, clinicians,
                                  min_contact, min_date,
+                                 contact_type,
                                  lazy)
     }
 
@@ -615,6 +619,7 @@ list_qim_diabetes <- function(dMeasure_obj,
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
 #' @param demographic demographic groupings for reporting.
 #'  if not supplied, reads $qim_demographicGroup
 #'  list of available demographic groups in $qim_demographicGroupings
@@ -632,16 +637,16 @@ report_qim_diabetes <- function(dMeasure_obj,
                                 date_to = NA,
                                 clinicians = NA,
                                 min_contact = NA,
+                                contact_type = NA,
                                 min_date = NA,
                                 demographic = NA,
                                 measure = NA,
                                 ignoreOld = NA,
                                 lazy = FALSE) {
   dMeasure_obj$report_qim_diabetes(date_from, date_to, clinicians,
-                                   min_contact, min_date,
+                                   min_contact, min_date, contact_type,
                                    demographic, measure,
-                                   ignoreOld,
-                                   lazy)
+                                   ignoreOld, lazy)
 }
 
 .public(dMeasure, "report_qim_diabetes", function(date_from = NA,
@@ -649,6 +654,7 @@ report_qim_diabetes <- function(dMeasure_obj,
                                                   clinicians = NA,
                                                   min_contact = NA,
                                                   min_date = NA,
+                                                  contact_type = NA,
                                                   demographic = NA,
                                                   measure = NA,
                                                   ignoreOld = NA,
@@ -671,6 +677,9 @@ report_qim_diabetes <- function(dMeasure_obj,
   }
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
+  }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
   }
   if (is.na(demographic)) {
     demographic <- self$qim_demographicGroup
@@ -696,8 +705,8 @@ report_qim_diabetes <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_qim_diabetes(date_from, date_to, clinicians,
-                             min_contact, min_date, ignoreOld,
-                             lazy)
+                             min_contact, min_date, contact_type,
+                             ignoreOld, lazy)
     }
 
     measure <- dplyr::recode(measure,
