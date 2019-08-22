@@ -121,6 +121,7 @@ dMeasure <-
     private$db$patients <- NULL
     private$db$clinical <- NULL
     private$db$investigations <- NULL
+    private$db$papsmears <- NULL
     private$db$appointments <- NULL
     private$db$immunizations <- NULL
     private$db$preventive_health <- NULL
@@ -382,6 +383,7 @@ dMeasure <-
       private$db$patients <- NULL
       private$db$clinical <- NULL
       private$db$investigations <- NULL
+      private$db$papsmears <- NULL
       private$db$appointments <- NULL
       private$db$immunizations <- NULL
       private$db$preventive_health <- NULL
@@ -959,6 +961,18 @@ initialize_emr_tables <- function(dMeasure_obj,
   # due to some type of bug/standards non-compliance.
   # also can handle the History table. need to
   # 'Select' out just a few columns.
+
+  private$db$papsmears <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_PapSmears")) %>>%
+    dplyr::select(InternalID, PapDate, CSTType,
+                  HPV16, HPV18, HPVOther, Result,
+                  HPVChanges, EndocervicalCells, Comment) %>>%
+    dplyr::mutate(CSTType = trimws(CSTType),
+                  HPV16 = trimws(HPV16), HPV18 = trimws(HPV18), HPVOther = trimws(HPVOther),
+                  Result = trimws(Result), HPVChanges = trimws(HPVChanges),
+                  EndocervicalCells = trimws(EndocervicalCells))
+  # CSTType includes 'PAP'
+  # Result includes 'Negative'
 
   private$db$appointments <- emr_db$conn() %>>%
     # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status

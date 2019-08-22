@@ -34,7 +34,7 @@ Collate:
     'appointments.R'
     'conditions.R'
     'CDM.R'
-    'CancerScreen_bowelcancer.R'
+    'CancerScreen.R'
     'Immunization.R'
     'contact.R'
     'QualityImprovementMeasures.R'
