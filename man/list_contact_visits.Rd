@@ -10,13 +10,13 @@ list_contact_visits(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from=dMeasure_obj$date_a}{start date}
+\item{date_from}{(default NA -> dMeasure_obj$date_a) start date}
 
-\item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
+\item{date_to}{(default NA -> dMeasure_obj$date_b) end date (inclusive)}
 
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
+\item{clinicians}{(default NA -> dMeasure_obj$clinicians) list of clinicians to view}
 
-\item{visit_types=NA}{filter by 'visit_type' if not NA
+\item{visit_types}{(default NA) filter by 'visit_type' if not NA
 permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",
 "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 "Other", "Hostel", "Telehealth"

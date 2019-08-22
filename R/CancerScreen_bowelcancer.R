@@ -35,17 +35,17 @@ NULL
 #'   TestName - description of the most recent bowel cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
-fobt_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                       appointments_list = NULL,
                       lazy = FALSE,
                       action = FALSE, screentag = FALSE, screentag_print = TRUE) {
 
-  dMeasure$fobt_list(date_from, date_to, clinicians,
+  dMeasure$list_fobt(date_from, date_to, clinicians,
                      appointments_list,
                      lazy, action, screentag, screentag_print)
 }
 
-.public(dMeasure, "fobt_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_fobt", function(date_from = NA, date_to = NA, clinicians = NA,
                                         appointments_list = NULL,
                                         lazy = FALSE,
                                         action = FALSE, screentag = FALSE, screentag_print = TRUE) {

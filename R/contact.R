@@ -115,10 +115,10 @@ NULL
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param status=NA filter by 'status' if not NA
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
 #'  if NA, adopts from active $appointment_status
@@ -204,10 +204,10 @@ list_contact_appointments <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param visit_types=NA filter by 'visit_type' if not NA
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param visit_types (default NA) filter by 'visit_type' if not NA
 #'  permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",
 #'  "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 #'  "Other", "Hostel", "Telehealth"
@@ -296,9 +296,9 @@ list_contact_visits <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
 #'
 #' @return dataframe of Patient (name), InternalID, ServiceDate
 list_contact_services <- function(dMeasure_obj,

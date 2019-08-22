@@ -32,18 +32,18 @@ NULL
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of Zostavax eligible patients
-zostavax_list <- function(dMeasure_obj,
+list_zostavax <- function(dMeasure_obj,
                           date_from = NA, date_to = NA, clinicians = NA,
                           appointments_list = NULL,
                           lazy = FALSE,
                           vaxtag = FALSE, vaxtag_print = TRUE) {
-  dMeasure_obj$zostavax_list(date_from, date_to , clinicians,
+  dMeasure_obj$list_zostavax(date_from, date_to , clinicians,
                              appointments_list,
                              lazy,
                              vaxtag, vaxtag_print)
 }
 
-.public(dMeasure, "zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_zostavax", function(date_from = NA, date_to = NA, clinicians = NA,
                                             appointments_list = NULL,
                                             lazy = FALSE,
                                             vaxtag = FALSE, vaxtag_print = TRUE) {
@@ -165,17 +165,17 @@ zostavax_list <- function(dMeasure_obj,
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of influenza eligible patients
-influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
                            lazy = FALSE,
                            vaxtag = FALSE, vaxtag_print = TRUE) {
-  dMeasure_obj$influenza_list(date_from, date_to , clinicians,
+  dMeasure_obj$list_influenza(date_from, date_to , clinicians,
                               appointments_list,
                               lazy,
                               vaxtag, vaxtag_print)
 }
 
-.public(dMeasure, "influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_influenza", function(date_from = NA, date_to = NA, clinicians = NA,
                                              appointments_list = NULL,
                                              lazy = FALSE,
                                              vaxtag = FALSE, vaxtag_print = TRUE) {
@@ -468,19 +468,19 @@ vax_names <- c("Zostavax", "Influenza")
 #' @param chosen list of vaccine names (default is all)
 #'
 #' @return dataframe list of influenza eligible patients
-vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
                      lazy = FALSE,
                      vaxtag = FALSE, vaxtag_print = TRUE,
                      chosen = vax_names) {
-  dMeasure_obj$vax_list(date_from, date_to, clinicians,
+  dMeasure_obj$list_vax(date_from, date_to, clinicians,
                         appointments_list,
                         lazy,
                         vaxtag, vaxtag_print,
                         chosen)
 }
 
-.public(dMeasure, "vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_vax", function(date_from = NA, date_to = NA, clinicians = NA,
                                        appointments_list = NULL,
                                        lazy = FALSE,
                                        vaxtag = FALSE, vaxtag_print = TRUE,
@@ -513,13 +513,13 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 
   vlist <- NULL
   if ("Zostavax" %in% chosen) {
-    vlist <- rbind(vlist, self$zostavax_list(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
                                              appointments_list,
                                              lazy,
                                              vaxtag, vaxtag_print))
   }
   if ("Influenza" %in% chosen) {
-    vlist <- rbind(vlist, self$influenza_list(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_influenza(date_from, date_to, clinicians,
                                               appointments_list,
                                               lazy,
                                               vaxtag, vaxtag_print))
