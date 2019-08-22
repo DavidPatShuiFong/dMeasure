@@ -86,9 +86,10 @@ dMeasure <-
 })
 .private(dMeasure, "trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
-  myreactive(1 - shiny::isolate(myreactive()))
+  if (requireNamespace("shiny", quietly = TRUE)) {
+      myreactive(1 - shiny::isolate(myreactive()))
+  }
 })
-
 
 ##### close and finalize object ##########################
 
@@ -645,7 +646,7 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$.UserRestrictions <- config_db$conn() %>>%
     dplyr::tbl("UserRestrictions") %>>% dplyr::collect()
-  self$UserRestrictions(private$.UserRestrictions)
+  private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
   self$match_user()
   # see if 'identified' system user is matched with a configured user
