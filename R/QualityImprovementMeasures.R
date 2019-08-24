@@ -1111,12 +1111,18 @@ report_qim_cst <- function(dMeasure_obj,
                    SmokingDate = as.Date(integer(0),
                                          origin = "1970-01-01"),
                    SmokingStatus = character(),
+                   BMIDate = as.Date(integer(0),
+                                      origin = "1970-01-01"),
+                   BMIValue = numeric(),
                    WeightDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   WeightValue = numeric(),
+                   HeightDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   HeightValue = numeric(),
+                   WaistDate = as.Date(integer(0),
                                         origin = "1970-01-01"),
-                   BMI = numeric(),
-                   Weight = numeric(),
-                   Height = numeric(),
-                   Waist = numeric(),
+                   WaistValue = numeric(),
                    AlcoholDate = as.Date(integer(0),
                                          origin = "1970-01-01"),
                    AlcoholDrinker = character(),
@@ -1217,6 +1223,17 @@ list_qim_15plus <- function(dMeasure_obj,
       dplyr::pull(InternalID) %>>%
       c(-1) # add a dummy ID to prevent empty vector
 
+    measure_cols <- c(BMIDate = as.Date(NA),
+                      BMIValue = as.numeric(NA),
+                      WeightDate = as.Date(NA),
+                      WeightValue = as.numeric(NA),
+                      HeightDate = as.Date(NA),
+                      HeightValue = as.numeric(NA),
+                      WaistDate = as.Date(NA),
+                      WaistValue = as.numeric(NA))
+    # a list of columns which might (or might not) be auto-generated
+    # from the observations table
+
     self$qim_15plus_list <- self$contact_15plus_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
       dplyr::left_join(private$db$observations %>>%
@@ -1237,33 +1254,42 @@ list_qim_15plus <- function(dMeasure_obj,
                          # didn't work before collect()
                          {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring results that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age(ObservationDate, date_to) == 0 ||
-                                           ObservationName == 'Height')}
+                           dplyr::filter(., (dMeasure::calc_age(ObservationDate, date_to) == 0) |
+                                           (ObservationName == 'Height'))}
                            # throw out results which are more than twelve months old
                            # except for height, which is valid if taken after age 17 years
                            else {.}} %>>%
                          dplyr::select(InternalID, ObservationName,
                                        Date = ObservationDate, Value = ObservationValue) %>>%
                          dplyr::mutate(Value = as.double(Value)) %>>%
-                         tidyr::gather(variable, content, -(InternalID:ObservationName)) %>>%
+                         tidyr::gather(variable, content, -(InternalID:ObservationName),
+                                       convert = TRUE) %>>%
                          # this should result in InternalID, ObservationName, variable, content
                          # where variable is one of 'Date' and 'Value'
                          # and value is the values of Date or Value
-                         tidyr::unite(temp, ObservationName, variable) %>>%
+                         tidyr::unite(temp, ObservationName, variable, sep = "") %>>%
                          # this should result in InternalID, temp and content
-                         # temp will be names like BMI_Date and Height_Value
+                         # temp will be names like BMIDate and HeightValue
                          tidyr::spread(temp, content),
-                       # this should result in InternalID, (... Height_Date, Waist_Value etc.)
+                       # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-      # was a character. can't be converted to double within the MSSQL query
+      {tibble::add_column(., !!!measure_cols[!names(measure_cols) %in% names(.)])} %>>%
+      dplyr::mutate(BMIDate = as.Date(BMIDate, origin = "1970-01-01"),
+                    HeightDate = as.Date(HeightDate, origin = "1970-01-01"),
+                    WeightDate = as.Date(WeightDate, origin = "1970-01-01"),
+                    WaistDate = as.Date(WaistDate, origin = "1970-01-01")) %>>%
       dplyr::left_join(private$db$clinical %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          Updated <= date_to) %>>%
-                         dplyr::select(InternalID, Updated, SmokingStatus) %>>%
+                         dplyr::select(InternalID, SmokingDate = Updated, SmokingStatus) %>>%
                          # the table appears to have one entry per patient
                          dplyr::collect() %>>%
-                         dplyr::mutate(SmokingDate = as.Date(Updated)) %>>%
+                         dplyr::mutate(SmokingDate = as.Date(SmokingDate)) %>>%
+                         dplyr::mutate(SmokingDate = dplyr::if_else(SmokingStatus == "",
+                                                                    as.Date(-Inf, origin = "1970-01-01"),
+                                                                    as.Date(SmokingDate))) %>>%
+                         # smoking status has not actually been recorded if SmokingStatus == ""
                          # convert to R's 'standard' date format, didn't work before collect()
                          {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring smoking status recordings that don't qualify for QIM
@@ -1279,6 +1305,13 @@ list_qim_15plus <- function(dMeasure_obj,
                          dplyr::collect() %>>%
                          dplyr::mutate(AlcoholDate = as.Date(AlcoholDate)) %>>%
                          # convert to R's standard date format
+                         dplyr::mutate(AlcoholDate = dplyr::if_else(NonDrinker == "No" &
+                                                                      DaysPerweek == 0 &
+                                                                      DrinksPerday == 0,
+                                                                    as.Date(-Inf, origin = "1970-01-01"),
+                                                                    as.Date(AlcoholDate))) %>>%
+                         # if not marked as a 'non-drinker', but no drinks recorded
+                         # then this is actually a 'blank' entry
                          {if (ignoreOld && nrow(.) > 0) {
                            # if ignoring observations that don't qualify for QIM
                            dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
@@ -1290,22 +1323,27 @@ list_qim_15plus <- function(dMeasure_obj,
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity),
                        by = "InternalID",
-                       copy = TRUE)
+                       copy = TRUE) %>>%
+      dplyr::mutate(DOB = as.Date(DOB, origin = "1970-01-01"))
 
     if (nrow(self$qim_15plus_list) > 0) {
       self$qim_15plus_list <- self$qim_15plus_list %>>%
-        dplyr::mutate(Age17 = tail(seq(from = DOB, by = "year", length.out = 17), 1))}
+        dplyr::mutate(Age17 = dMeasure::add_age(DOB, 17))}
     else {
       self$qim_15plus_list <- self$qim_15plus_list %>>%
         dplyr::mutate(Age17 = as.Date(NA))
     }
 
-    browser()
-
     self$qim_15plus_list <- self$qim_15plus_list %>>%
-      dplyr::mutate(Height_Value = dplyr::if_else(Height_Date < Age17, NA, Height_Value)) %>>%
+      dplyr::mutate(HeightValue = dplyr::if_else(HeightDate < Age17,
+                                                  as.numeric(NA),
+                                                  as.numeric(HeightValue)),
+                    HeightDate = dplyr::if_else(HeightDate < Age17,
+                                                 as.Date(NA),
+                                                 as.Date(HeightDate))) %>>%
       # if ObservationDate (Height) is less than 17 years of age, then remove
       # this is not clearly specified in PIP QIM documents I have seen so far
+      dplyr::select(-Age17) %>>%
       dplyr::left_join(private$db$clinical %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
@@ -1343,7 +1381,7 @@ list_qim_15plus <- function(dMeasure_obj,
   if (!missing(value)) {
     warning("$qim_15plus_measureTypes is read-only.")
   } else {
-    return(c("Smoking", "Weight", "Alcohol"))
+    return(c("SmokingDone", "WeightDone", "AlcoholDone"))
     # vector of valid QIM measures for 15 plus (for QIM reporting)
     # QIM 02 - Proportion of patients with a smoking status result
     # QIM 03 - Proportion of patients with a weight classification (12 months)
@@ -1482,9 +1520,9 @@ report_qim_15plus <- function(dMeasure_obj,
     # add a dummy string in case there are no demographic or measure groups chosen!
 
     self$qim_15plus_report <- self$qim_15plus_list %>>%
-      dplyr::mutate(SmokingDone = !is.na(SmokingDate),
-                    WeightDone = !is.na(WeightDate),
-                    AlcoholDone = !is.na(AlcoholDate)) %>>%
+      dplyr::mutate(SmokingDone = !(is.na(SmokingDate) | SmokingDate == -Inf),
+                    WeightDone = !(is.na(WeightDate) | WeightDate == -Inf),
+                    AlcoholDone = !(is.na(AlcoholDate) | AlcoholDate == -Inf)) %>>%
       # a measure is 'done' if it exists (not NA)
       # if ignoreOld = TRUE, the the observation must fall within
       #  the required timeframe

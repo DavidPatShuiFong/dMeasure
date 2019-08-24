@@ -1087,6 +1087,7 @@ initialize_emr_tables <- function(dMeasure_obj,
                   NonDrinker, DaysPerweek, DrinksPerday, Description,
                   # NonDrinker - 'Yes' or 'No'
                   PastAlcoholLevel, YearStarted, YearStopped, Comment) %>>%
+    dplyr::mutate(NonDrinker = trimws(Nondrinker)) %>>%
     dplyr::left_join(private$db$clinical %>>%
                        dplyr::select(InternalID, Updated),
                      by = c("InternalID" = "InternalID"))

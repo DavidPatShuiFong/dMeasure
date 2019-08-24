@@ -21,7 +21,7 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 
   period <- mapply(function(x, y)
     # Arguments can be vectors, so need to use mapply
-    (ifelse(is.na(x), NA,
+    (ifelse(is.na(x) | x == -Inf, NA,
             length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
        ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
@@ -31,6 +31,33 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
   # if not converted, could return an empty list, instead of empty numeric
 
   return(period)
+}
+
+#' Add age to a given reference date
+#'
+#' Adds an interval (years) to a birthDate
+#'
+#' @param birthdate vector of dates
+#' @param years
+#'
+#' @return vector of dates
+#' @export
+add_age <- function(birthDate, years) {
+  # Calculate age at a given reference date
+
+  if (length(birthDate) == 0) {return(birthDate)}
+  # empty vector, so return empty vector
+
+  dates <- as.Date(mapply(function(x, y)
+    # Arguments can be vectors, so need to use mapply
+  {ifelse(is.na(x) | x == -Inf, as.Date(NA),
+          tail(seq(from = x, by = "year", length.out = y), 1))},
+  birthDate, years + 1), origin = "1970-01-01")
+
+  dates <- as.Date(dates, origin = "1970-01-01")
+  # if not converted, could return an empty list, instead of empty dates
+
+  return(dates)
 }
 
 #' Calculate age a given reference date, in months
@@ -50,9 +77,9 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   # empty vector, so return empty numeric
 
   period <- mapply(function(x, y)
-    (ifelse(is.na(x), NA,
+    (ifelse(is.na(x) | x == -Inf, NA,
             length(seq.Date(min(x, y), max(x, y), by = "month")) - 1) *
-      ifelse(y > x, 1, -1)),
+       ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
 
