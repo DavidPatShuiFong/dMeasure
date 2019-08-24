@@ -340,7 +340,7 @@ report_qim_active <- function(dMeasure_obj,
 #'
 #' QIM 01 - HbA1C - most recent. the QIM measure is within last twelve months
 #' QIM 05 - Influenza immunization - most recent. the QIM measure is within last 15 months
-#' QIM 10 - Blood pressure - most recent. the QIM measure is within the last six monthe
+#' QIM 10 - Blood pressure - most recent. the QIM measure is within the last six months
 #'
 #' the reference date for 'most recent' measurement is 'date_to'
 #'
@@ -1093,6 +1093,424 @@ report_qim_cst <- function(dMeasure_obj,
                         # or $clinicians are updated.
                         # or change in demographic grouping
                         self$report_qim_cst(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
+
+
+##### QIM 15+ fields ###########################################################
+.public(dMeasure, "qim_15plus_list",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   SmokingDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   SmokingStatus = character(),
+                   WeightDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   BMI = numeric(),
+                   Weight = numeric(),
+                   Height = numeric(),
+                   Waist = numeric(),
+                   AlcoholDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   AlcoholDrinker = character(),
+                   AlcoholDaysPerWeek = numeric(),
+                   AlcoholDrinksPerDay = numeric(),
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts
+
+##### QIM diabetes methods ##########################################################
+#' List of diabetics, with Quality Improvement Measures, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 02 - Proportion of patients with a smoking status result
+#' QIM 03 - Proportion of patients with a weight classification (12 months)
+#' QIM 07 - Proportionof patients with an alcohol consumption status
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+list_qim_15plus <- function(dMeasure_obj,
+                            date_from = NA,
+                            date_to = NA,
+                            clinicians = NA,
+                            min_contact = NA,
+                            min_date = NA,
+                            contact_type = NA,
+                            ignoreOld = NA,
+                            lazy = FALSE) {
+  dMeasure_obj$list_qim_15plus(date_from, date_to, clinicians,
+                               min_contact, min_date, contact_type,
+                               ignoreOld,
+                               lazy)
+}
+
+.public(dMeasure, "list_qim_15plus", function(date_from = NA,
+                                              date_to = NA,
+                                              clinicians = NA,
+                                              min_contact = NA,
+                                              min_date = NA,
+                                              contact_type = NA,
+                                              ignoreOld = NA,
+                                              lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "fifteenplus_qim",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_contact_15plus(date_from, date_to, clinicians,
+                               min_contact, min_date,
+                               contact_type,
+                               lazy)
+    }
+
+    fifteen_plusID <- self$contact_15plus_list %>>%
+      dplyr::pull(InternalID) %>>%
+      c(-1) # add a dummy ID to prevent empty vector
+
+    self$qim_15plus_list <- self$contact_15plus_list %>>%
+      dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
+      dplyr::left_join(private$db$observations %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID &&
+                                         (ObservationCode %in% c(9, 7, 8, 17)) &&
+                                         # 9 is 'BMI', 7 is 'Height',
+                                         # 8 is 'Weight' and  17 is'Waist'
+                                         # the string is in 'ObservationName'
+                                         ObservationDate <= date_to) %>>%
+                         dplyr::group_by(InternalID, ObservationCode) %>>%
+                         dplyr::filter(ObservationDate == max(ObservationDate, na.rm = TRUE)) %>>%
+                         # the most recent observation by InternalID and ObservationCode
+                         dplyr::filter(ObservationTime == max(ObservationTime, na.rm = TRUE)) %>>%
+                         dplyr::ungroup() %>>%
+                         dplyr::collect() %>>%
+                         dplyr::mutate(ObservationDate = as.Date(ObservationDate)) %>>%
+                         # convert to R's 'standard' date format
+                         # didn't work before collect()
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring results that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age(ObservationDate, date_to) == 0 ||
+                                           ObservationName == 'Height')}
+                           # throw out results which are more than twelve months old
+                           # except for height, which is valid if taken after age 17 years
+                           else {.}} %>>%
+                         dplyr::select(InternalID, ObservationName,
+                                       Date = ObservationDate, Value = ObservationValue) %>>%
+                         dplyr::mutate(Value = as.double(Value)) %>>%
+                         tidyr::gather(variable, content, -(InternalID:ObservationName)) %>>%
+                         # this should result in InternalID, ObservationName, variable, content
+                         # where variable is one of 'Date' and 'Value'
+                         # and value is the values of Date or Value
+                         tidyr::unite(temp, ObservationName, variable) %>>%
+                         # this should result in InternalID, temp and content
+                         # temp will be names like BMI_Date and Height_Value
+                         tidyr::spread(temp, content),
+                       # this should result in InternalID, (... Height_Date, Waist_Value etc.)
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      # was a character. can't be converted to double within the MSSQL query
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID &&
+                                         Updated <= date_to) %>>%
+                         dplyr::select(InternalID, Updated, SmokingStatus) %>>%
+                         # the table appears to have one entry per patient
+                         dplyr::collect() %>>%
+                         dplyr::mutate(SmokingDate = as.Date(Updated)) %>>%
+                         # convert to R's 'standard' date format, didn't work before collect()
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring smoking status recordings that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
+                           # throw out smoking stats which are twelve months or older
+                           else {.}},
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$alcohol %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID &&
+                                         Updated <= date_to) %>>%
+                         dplyr::rename(AlcoholDate = Updated) %>>%
+                         dplyr::collect() %>>%
+                         dplyr::mutate(AlcoholDate = as.Date(AlcoholDate)) %>>%
+                         # convert to R's standard date format
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring observations that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
+                           # throw out observations which are twelve months or older
+                           else {.}},
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID) %>>%
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                       by = "InternalID",
+                       copy = TRUE)
+
+    if (nrow(self$qim_15plus_list) > 0) {
+      self$qim_15plus_list <- self$qim_15plus_list %>>%
+        dplyr::mutate(Age17 = tail(seq(from = DOB, by = "year", length.out = 17), 1))}
+    else {
+      self$qim_15plus_list <- self$qim_15plus_list %>>%
+        dplyr::mutate(Age17 = as.Date(NA))
+    }
+
+    browser()
+
+    self$qim_15plus_list <- self$qim_15plus_list %>>%
+      dplyr::mutate(Height_Value = dplyr::if_else(Height_Date < Age17, NA, Height_Value)) %>>%
+      # if ObservationDate (Height) is less than 17 years of age, then remove
+      # this is not clearly specified in PIP QIM documents I have seen so far
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID) %>>%
+                         dplyr::select(InternalID, MaritalStatus, Sexuality),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      # round age group to nearest 5 years
+      dplyr::select(-DOB) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% fifteen_plusID) %>>%
+                         dplyr::select(InternalID, RecordNo),
+                       by = "InternalID", # add RecordNo
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) # drop the InternalID
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_15plus_list)
+})
+.reactive_event(dMeasure, "qim_15plus_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$contact_15plus_listR(),
+                      self$qim_ignoreOldR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_15plus(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
+
+.active(dMeasure, "qim_15plus_measureTypes", function(value) {
+  if (!missing(value)) {
+    warning("$qim_15plus_measureTypes is read-only.")
+  } else {
+    return(c("Smoking", "Weight", "Alcohol"))
+    # vector of valid QIM measures for 15 plus (for QIM reporting)
+    # QIM 02 - Proportion of patients with a smoking status result
+    # QIM 03 - Proportion of patients with a weight classification (12 months)
+    # QIM 07 - Proportionof patients with an alcohol consumption status
+  }
+})
+
+.private_init(dMeasure, ".qim_15plus_measure", quote(self$qim_15plus_measureTypes))
+.active(dMeasure, "qim_15plus_measure", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.qim_15plus_measure)
+  }
+  value <- intersect(value, self$qim_15plus_measureTypes)
+  # only valid measure types allowed
+  private$.qim_15plus_measure <- value
+  private$set_reactive(self$qim_15plus_measureR, value)
+})
+.reactive(dMeasure, "qim_15plus_measureR", quote(self$qim_15plus_measureTypes))
+
+.public(dMeasure, "qim_15plus_report",
+        data.frame(NULL,
+                   stringsAsFactors = FALSE))
+# empty data frame, number of columns dynamically change
+
+#' Age 15 plus Quality Improvement Measure report, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' Shows chosen QIM measures, and by demographic grouping
+#'
+#' QIM 02 - Proportion of patients with a smoking status result
+#' QIM 03 - Proportion of patients with a weight classification (12 months)
+#' QIM 07 - Proportionof patients with an alcohol consumption status
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param demographic demographic groupings for reporting.
+#'  if not supplied, reads $qim_demographicGroup
+#'  list of available demographic groups in $qim_demographicGroupings
+#' @param measure measures to report
+#'  if not supplied, reads $qim_15plus_measure
+#'  list of available measures in $qim_15plus_measureTypes
+#'  currently 'Smoking', 'Weight', 'Alcohol'
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+report_qim_15plus <- function(dMeasure_obj,
+                              date_from = NA,
+                              date_to = NA,
+                              clinicians = NA,
+                              min_contact = NA,
+                              contact_type = NA,
+                              min_date = NA,
+                              demographic = NA,
+                              measure = NA,
+                              ignoreOld = NA,
+                              lazy = FALSE) {
+  dMeasure_obj$report_qim_15plus(date_from, date_to, clinicians,
+                                 min_contact, min_date, contact_type,
+                                 demographic, measure,
+                                 ignoreOld, lazy)
+}
+
+.public(dMeasure, "report_qim_15plus", function(date_from = NA,
+                                                date_to = NA,
+                                                clinicians = NA,
+                                                min_contact = NA,
+                                                min_date = NA,
+                                                contact_type = NA,
+                                                demographic = NA,
+                                                measure = NA,
+                                                ignoreOld = NA,
+                                                lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(contact_type)) {
+    contact_type <- self$contact_type
+  }
+  if (is.na(demographic)) {
+    demographic <- self$qim_demographicGroup
+  }
+  if (is.na(measure)) {
+    measure <- self$qim_15plus_measure
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "qim_15plus_report",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_15plus(date_from, date_to, clinicians,
+                           min_contact, min_date, contact_type,
+                           ignoreOld, lazy)
+    }
+
+    report_groups <- c(demographic, measure, "")
+    # group by both demographic groupings and measures of interest
+    # add a dummy string in case there are no demographic or measure groups chosen!
+
+    self$qim_15plus_report <- self$qim_15plus_list %>>%
+      dplyr::mutate(SmokingDone = !is.na(SmokingDate),
+                    WeightDone = !is.na(WeightDate),
+                    AlcoholDone = !is.na(AlcoholDate)) %>>%
+      # a measure is 'done' if it exists (not NA)
+      # if ignoreOld = TRUE, the the observation must fall within
+      #  the required timeframe
+      dplyr::group_by_at(report_groups) %>>%
+      # group_by_at takes a vector of strings
+      dplyr::summarise(n = n()) %>>%
+      dplyr::ungroup() %>>%
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
+    # if no rows, then grouping will not remove unnecessary columns
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_15plus_report)
+})
+.reactive_event(dMeasure, "qim_15plus_reportR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_15plus_listR(),
+                      self$qim_demographicGroupR(),
+                      self$qim_15plus_measureR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        # or change in demographic grouping
+                        # or change in measures
+                        self$report_qim_15plus(lazy = TRUE)
                         # re-calculates the counts
                       })
                 ))
