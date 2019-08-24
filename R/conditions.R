@@ -816,3 +816,46 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::pull(InternalID) %>>%
     unique()
 })
+
+### breast cancer screen (mammogram) eligible sub-code
+#' list of patients who are breast cancer screening eligible at time of $Date
+#' age fifty to seventy-four years inclusive
+#' female
+#'
+#' https://www.cancer.org.au/about-cancer/early-detection/screening-programs/breast-cancer-screening.html
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a list of numbers, which are the InternalIDs
+mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$mammogram_eligible_list(appointments)
+}
+.public(dMeasure, "mammogram_eligible_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # returns vector of InternalID of patients who
+  # are eligible for cervical screening
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  private$db$patients %>>%
+    dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
+    dplyr::select(InternalID, DOB) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(DOB = as.Date(DOB)) %>>%
+    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 50, 74)) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
