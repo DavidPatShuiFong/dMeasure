@@ -225,7 +225,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_chroniclungdisease_contact(lazy = TRUE)
+                      self$list_contact_chroniclungdisease(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
@@ -337,7 +337,7 @@ list_contact_15plus <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_15plus_contact(lazy = TRUE)
+                      self$list_contact_15plus(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
@@ -450,7 +450,7 @@ list_contact_65plus <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_65plus_contact(lazy = TRUE)
+                      self$list_contact_65plus(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
@@ -563,7 +563,7 @@ list_contact_45_74 <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_45_74_contact(lazy = TRUE)
+                      self$list_contact_45_74(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))
@@ -683,7 +683,7 @@ list_contact_cst <- function(dMeasure_obj,
                     c(self$contact_count_listR()), {
                       # update if reactive version of $date_a $date_b
                       # or $clinicians are updated.
-                      self$list_cst_contact(lazy = TRUE)
+                      self$list_contact_cst(lazy = TRUE)
                       # re-calculates the counts
                     })
                 ))

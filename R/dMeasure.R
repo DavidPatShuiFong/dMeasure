@@ -1096,7 +1096,8 @@ initialize_emr_tables <- function(dMeasure_obj,
   private$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>>%
-    dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
+    dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID')) %>>%
+    dplyr::mutate(VaccineName = trimws(VaccineName))
 
   private$db$vaccine_disease <- emr_db$conn() %>>%
     # vaccineIDs linked to diseases
@@ -1132,7 +1133,9 @@ initialize_emr_tables <- function(dMeasure_obj,
     # InternalID, ReportDate, ResultName, LoincCode
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
-                  ResultValue, Units, Range)
+                  ResultValue, Units, Range) %>>%
+    dplyr::mutate(ResultValue = trimws(ResultValue),
+                  Units = trimws(Units))
   # BPCode
   #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
   #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
