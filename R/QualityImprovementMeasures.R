@@ -531,7 +531,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$patients %>>%
                          dplyr::filter(InternalID %in% diabetesID) %>>%
-                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$clinical %>>%
@@ -541,13 +541,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-DOB) %>>%
-      dplyr::left_join(private$db$patients %>>%
-                         dplyr::filter(InternalID %in% diabetesID) %>>%
-                         dplyr::select(InternalID, RecordNo),
-                       by = "InternalID", # add RecordNo
-                       copy = TRUE) %>>%
-      dplyr::select(-InternalID) # drop the InternalID
+      dplyr::select(-c(DOB, InternalID))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1270,15 +1264,16 @@ list_qim_15plus <- function(dMeasure_obj,
                          tidyr::unite(temp, ObservationName, variable, sep = "") %>>%
                          # this should result in InternalID, temp and content
                          # temp will be names like BMIDate and HeightValue
-                         tidyr::spread(temp, content),
+                         tidyr::spread(temp, content) %>>%
+                         {tibble::add_column(., !!!measure_cols[!names(measure_cols) %in% names(.)])} %>>%
+                         # add missing columns, because not all possible variations may have been added
+                         dplyr::mutate(BMIDate = as.Date(BMIDate, origin = "1970-01-01"),
+                                       HeightDate = as.Date(HeightDate, origin = "1970-01-01"),
+                                       WeightDate = as.Date(WeightDate, origin = "1970-01-01"),
+                                       WaistDate = as.Date(WaistDate, origin = "1970-01-01")),
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-      {tibble::add_column(., !!!measure_cols[!names(measure_cols) %in% names(.)])} %>>%
-      dplyr::mutate(BMIDate = as.Date(BMIDate, origin = "1970-01-01"),
-                    HeightDate = as.Date(HeightDate, origin = "1970-01-01"),
-                    WeightDate = as.Date(WeightDate, origin = "1970-01-01"),
-                    WaistDate = as.Date(WaistDate, origin = "1970-01-01")) %>>%
       dplyr::left_join(private$db$clinical %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          Updated <= date_to) %>>%
@@ -1321,7 +1316,7 @@ list_qim_15plus <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$patients %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
-                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::mutate(DOB = as.Date(DOB, origin = "1970-01-01"))
@@ -1343,7 +1338,6 @@ list_qim_15plus <- function(dMeasure_obj,
                                                  as.Date(HeightDate))) %>>%
       # if ObservationDate (Height) is less than 17 years of age, then remove
       # this is not clearly specified in PIP QIM documents I have seen so far
-      dplyr::select(-Age17) %>>%
       dplyr::left_join(private$db$clinical %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
@@ -1351,13 +1345,7 @@ list_qim_15plus <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-DOB) %>>%
-      dplyr::left_join(private$db$patients %>>%
-                         dplyr::filter(InternalID %in% fifteen_plusID) %>>%
-                         dplyr::select(InternalID, RecordNo),
-                       by = "InternalID", # add RecordNo
-                       copy = TRUE) %>>%
-      dplyr::select(-InternalID) # drop the InternalID
+      dplyr::select(-c(DOB, InternalID, Age17)) # drop the InternalID
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1521,7 +1509,7 @@ report_qim_15plus <- function(dMeasure_obj,
 
     self$qim_15plus_report <- self$qim_15plus_list %>>%
       dplyr::mutate(SmokingDone = !(is.na(SmokingDate) | SmokingDate == -Inf),
-                    WeightDone = !(is.na(WeightDate) | WeightDate == -Inf),
+                    WeightDone = !(is.na(WeightDate) | BMIDate == -Inf),
                     AlcoholDone = !(is.na(AlcoholDate) | AlcoholDate == -Inf)) %>>%
       # a measure is 'done' if it exists (not NA)
       # if ignoreOld = TRUE, the the observation must fall within
