@@ -752,3 +752,223 @@ report_qim_diabetes <- function(dMeasure_obj,
                         # re-calculates the counts
                       })
                 ))
+
+
+
+
+
+
+
+
+##### QIM cervical screening test (CST) fields ###########################################################
+
+.public(dMeasure, "qim_cst_list",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   CSTDate = as.Date(integer(0),
+                                     origin = "1970-01-01"),
+                   CSTName = character(),
+                   # CStName is expected to be 'CST' or 'PAP', but might
+                   # but could be a longer string containing 'Pap' if sourced from 'Investigations' table
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts
+
+##### QIM cervical screening (CST) methods ##########################################################
+#' List of CST eligible patients with Quality Improvement Measures, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 09 -Proportion of female patients with an up-to-date cervical screening
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent CST 'observation' (test) date and name
+list_qim_cst <- function(dMeasure_obj,
+                         date_from = NA,
+                         date_to = NA,
+                         clinicians = NA,
+                         min_contact = NA,
+                         min_date = NA,
+                         contact_type = NA,
+                         ignoreOld = NA,
+                         lazy = FALSE) {
+  dMeasure_obj$list_qim_cst(date_from, date_to, clinicians,
+                            min_contact, min_date, contact_type,
+                            ignoreOld,
+                            lazy)
+}
+
+.public(dMeasure, "list_qim_cst", function(date_from = NA,
+                                           date_to = NA,
+                                           clinicians = NA,
+                                           min_contact = NA,
+                                           min_date = NA,
+                                           contact_type = NA,
+                                           ignoreOld = NA,
+                                           lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {
+      log_id <- private$config_db$write_log_db(
+        query = "cst_qim",
+        data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_contact_cst(date_from, date_to, clinicians,
+                            min_contact, min_date,
+                            contact_type,
+                            lazy)}
+
+    screen_cst_id <- self$contact_cst_list %>>%
+      dplyr::pull(InternalID) %>>%
+      c(-1) # add a dummy ID to prevent empty vector
+
+    # uses BPCode == 1 in $db$reportValues for finding HbA1c results
+    #
+    # a possible alternative search mechanism for HbA1C would
+    # be to look at ResultName "HbA1C%" and "Hb A1c"
+    # https://bpsoftware.net/forums/topic/all-patients-with-a-hba1c-value-diagnostic-of-diabetes/
+
+    self$qim_cst_list <- self$contact_cst_list %>>%
+      dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
+      dplyr::left_join(
+        dplyr::bind_rows(
+          private$db$papsmears %>>%
+            # attach reports in papsmears table
+            dplyr::filter(InternalID %in% screen_cst_id) %>>%
+            dplyr::rename(TestDate = PapDate,
+                          TestName = CSTType) %>>%
+            dplyr::select(InternalID, TestDate, TestName) %>>%
+            dplyr::collect(),
+          private$db$investigations %>>%
+            # some reports might be in investigations e.g. scanned in
+            dplyr::filter(InternalID %in% screen_cst_id &&
+                            (TestName %like% "%CERVICAL SCREENING%" ||
+                               TestName %like% "%PAP SMEAR%")) %>>%
+            dplyr::rename(TestDate = Reported,
+                          TestName = TestName) %>>%
+            dplyr::select(InternalID, TestDate, TestName) %>>%
+            dplyr::collect()) %>>%
+          dplyr::mutate(TestDate = as.Date(substr(TestDate, 1, 10))),
+        by = "InternalID",
+        copy = TRUE) %>>%
+      dplyr::mutate(TestDate = as.Date(ifelse(TestDate > date_to,
+                                              -Inf,
+                                              TestDate), origin = "1970-01-01"),
+                    TestDate = as.Date(ifelse(is.na(TestDate), -Inf, TestDate),
+                                       origin = "1970-01-01")) %>>%
+      # remove tests after the appointment date, and provide -Inf value to 'no test' patients
+      dplyr::mutate(TestName = ifelse(TestDate == -Inf, NA, TestName)) %>>%
+      # only test dates (and names) less than the joined appointment date are kept
+      dplyr::group_by(InternalID) %>>%
+      # group by patient ID (need most recent investigation for each patient)
+      dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+      dplyr::ungroup() %>>%
+      dplyr::mutate(TestAge = dMeasure::interval(TestDate, date_to)$year) %>>%
+      # 'current' time is date_to
+      dplyr::mutate(OutOfDateTest =
+                      dplyr::case_when((TestDate == -Inf) ~ 1,
+                                       # if no date (no detected test)
+                                       TestAge < 2 ~ 3,
+                                       # if less than two years, always 'up-to-date'
+                                       TestAge >= 5 ~ 2,
+                                       # if old (5 years for either cervical screening HPV or Pap)
+                                       grepl('pap', TestName, ignore.case = TRUE) ~ 2,
+                                       # otherwise if 'Pap' and more than two years
+                                       # last case is 2 to 4 years (inclusive) and CST
+                                       TRUE ~ 3)) %>>%
+      (if (ignoreOld && nrow(.) > 0) {
+        # remove out-of-date tests
+        dplyr::mutate(.,
+                      TestDate = dplyr::if_else(OutOfDateTest == 2,
+                                                as.Date(-Inf, origin = "1970-01-01"),
+                                                TestDate),
+                      TestName = dplyr::if_else(OutOfDateTest == 2,
+                                                as.character(NA),
+                                                TestName))}
+       else {.}) %>>%
+      dplyr::select(-c(TestAge, OutOfDateTest)) %>>%
+      # dplyr::select(-c(TestAge, OutOfDateTest)) %>>% # don't need these columns any more
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% screen_cst_id) %>>%
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% screen_cst_id) %>>%
+                         dplyr::select(InternalID, MaritalStatus, Sexuality),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      # round age group to nearest 5 years
+      dplyr::select(-DOB) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% screen_cst_id) %>>%
+                         dplyr::select(InternalID, RecordNo),
+                       by = "InternalID", # add RecordNo
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # drop the InternalID
+      dplyr::rename(CSTDate = TestDate,
+                    CSTName = TestName)
+
+      if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_cst_list)
+})
+.reactive_event(dMeasure, "qim_cst_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$contact_cst_listR(),
+                      self$qim_ignoreOldR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_cst(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))

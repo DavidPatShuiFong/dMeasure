@@ -1056,12 +1056,13 @@ initialize_emr_tables <- function(dMeasure_obj,
                   # a name of the provider who checked
                   Notation, Action,
                   # Action includes 'Urgent Appointment' and 'Non-urgent Appointment'
-                  Comment)
-  # as of Jan/2019, the odbc engine for MSSQL can't handle the
-  # full ('Select *') Investigations table
-  # due to some type of bug/standards non-compliance.
-  # also can handle the History table. need to
-  # 'Select' out just a few columns.
+                  Comment) %>>%
+    # as of Jan/2019, the odbc engine for MSSQL can't handle the
+    # full ('Select *') Investigations table
+    # due to some type of bug/standards non-compliance.
+    # also can handle the History table. need to
+    # 'Select' out just a few columns.
+    dplyr::mutate(TestName = trimws(TestName))
 
   private$db$papsmears <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_PapSmears")) %>>%

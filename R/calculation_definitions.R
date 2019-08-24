@@ -80,7 +80,10 @@ interval <- function(date_a, date_b, unit = "none") {
 
   infinity_years <- Inf
 
-  interval <- list()
+  interval <- list(year = numeric(0), month = numeric(0), day = numeric(0))
+
+  if (length(date_a) == 0 || length(date_b) == 0) {return(interval)}
+  # empty input vector, so return list of empty vectors
 
   interval$year <- mapply(function(x, y)
     ifelse(!is.na(min(x, y)),
