@@ -500,7 +500,7 @@ list_contact_count <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 

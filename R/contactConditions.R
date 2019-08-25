@@ -74,7 +74,7 @@ list_contact_diabetes <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
@@ -185,7 +185,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
@@ -297,7 +297,7 @@ list_contact_15plus <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
@@ -410,7 +410,7 @@ list_contact_65plus <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
@@ -523,7 +523,7 @@ list_contact_45_74 <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
@@ -643,7 +643,7 @@ list_contact_cst <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 
