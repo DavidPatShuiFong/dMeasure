@@ -1297,7 +1297,11 @@ list_qim_15plus <- function(dMeasure_obj,
                          dplyr::mutate(BMIDate = as.Date(BMIDate, origin = "1970-01-01"),
                                        HeightDate = as.Date(HeightDate, origin = "1970-01-01"),
                                        WeightDate = as.Date(WeightDate, origin = "1970-01-01"),
-                                       WaistDate = as.Date(WaistDate, origin = "1970-01-01")),
+                                       WaistDate = as.Date(WaistDate, origin = "1970-01-01"),
+                                       BMIValue = as.double(BMIValue),
+                                       HeightValue = as.double(HeightValue),
+                                       WeightValue = as.double(WeightValue),
+                                       WaistValue = as.double(WaistValue)),
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
@@ -1311,12 +1315,12 @@ list_qim_15plus <- function(dMeasure_obj,
                                                 as.Date(NA),
                                                 as.Date(HeightDate)),
                     BMIValue = dplyr::if_else(is.na(BMIValue) & !is.na(HeightValue) & !is.na(WeightValue),
-                                              WeightValue / (HeightValue/100) ** 2,
-                                              BMIValue),
+                                              WeightValue / (HeightValue/100) ^ 2,
+                                              BMIValue, as.double(NA)),
                     # calculate 'missing' BMI values, if valid height and weight values are available
                     BMIDate = dplyr::if_else(is.na(BMIDate) & !is.na(HeightDate) & !is.na(WeightDate),
                                              pmax(HeightDate, WeightDate), # max() is not vectorized
-                                             BMIDate),
+                                             BMIDate, as.Date(NA)),
                     # take the date of the BMI value as the maximum (lates) of the relevant measurements
                     BMIClass = dplyr::case_when(
                       is.na(BMIValue) ~ as.character(NA),
@@ -1349,6 +1353,7 @@ list_qim_15plus <- function(dMeasure_obj,
                            else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
+
       dplyr::left_join(private$db$alcohol %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          Updated <= date_to) %>>%
@@ -1374,6 +1379,7 @@ list_qim_15plus <- function(dMeasure_obj,
                            else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
+
       dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
                     HeightDate, HeightValue, WeightDate, WeightValue, BMIDate, BMIValue, BMIClass,
                     WaistDate, WaistValue, SmokingDate, SmokingStatus,
@@ -1402,7 +1408,7 @@ list_qim_15plus <- function(dMeasure_obj,
   if (!missing(value)) {
     warning("$qim_15plus_measureTypes is read-only.")
   } else {
-    return(c("SmokingDone", "WeightDone", "AlcoholDone"))
+    return(c("Smoking", "Weight", "Alcohol"))
     # vector of valid QIM measures for 15 plus (for QIM reporting)
     # QIM 02 - Proportion of patients with a smoking status result
     # QIM 03 - Proportion of patients with a weight classification (12 months)
@@ -1535,6 +1541,11 @@ report_qim_15plus <- function(dMeasure_obj,
                            min_contact, min_date, contact_type,
                            ignoreOld, lazy)
     }
+
+    measure <- dplyr::recode(measure,
+                             'Smoking' = 'SmokingDone',
+                             'Weight' = 'WeightDone',
+                             'Alcohol' = 'AlcoholDone')
 
     report_groups <- c(demographic, measure, "")
     # group by both demographic groupings and measures of interest
