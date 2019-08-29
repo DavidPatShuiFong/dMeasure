@@ -445,12 +445,12 @@ list_qim_diabetes <- function(dMeasure_obj,
     # returns dataframe of InternalID, HbA1CDate, HbA1CValue, HbA1CUnits
 
     BPList <- self$BloodPressure_obs(diabetesID,
-                                date_from = ifelse(ignoreOld,
-                                                   NA,
-                                                   as.Date(-Inf, origin = "1970-01-01")),
-                                # if ignoreOld, then influenza_vax will (given NA)
-                                # calculate date_from as fifteen months before date_to
-                                date_to = date_to)
+                                     date_from = ifelse(ignoreOld,
+                                                        NA,
+                                                        as.Date(-Inf, origin = "1970-01-01")),
+                                     # if ignoreOld, then influenza_vax will (given NA)
+                                     # calculate date_from as fifteen months before date_to
+                                     date_to = date_to)
     # returns dataframe of InternalID, BPDate, BPValue
 
     self$qim_diabetes_list <- self$contact_diabetes_list %>>%
@@ -1521,4 +1521,288 @@ report_qim_15plus <- function(dMeasure_obj,
                         # re-calculates the counts
                       })
                 ))
+
+
+##### QIM 65 plus fields ############################################################
+.public(dMeasure, "qim_65plus_list",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   FluvaxDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   FluvaxName = character(),
+                   stringsAsFactors = FALSE))
+
+##### QIM 65 plus methods ##########################################################
+#' List of 65 years or older, with Quality Improvement Measures, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 04 - Influenza immunization - most recent. the QIM measure is within last 15 months
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the 65+ contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+list_qim_65plus <- function(dMeasure_obj,
+                            date_from = NA,
+                            date_to = NA,
+                            clinicians = NA,
+                            min_contact = NA,
+                            min_date = NA,
+                            contact_type = NA,
+                            ignoreOld = NA,
+                            lazy = FALSE) {
+  dMeasure_obj$list_qim_65plus(date_from, date_to, clinicians,
+                               min_contact, min_date, contact_type,
+                               ignoreOld,
+                               lazy)
+}
+
+.public(dMeasure, "list_qim_65plus", function(date_from = NA,
+                                              date_to = NA,
+                                              clinicians = NA,
+                                              min_contact = NA,
+                                              min_date = NA,
+                                              contact_type = NA,
+                                              ignoreOld = NA,
+                                              lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "sixtyfiveplus_qim",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_contact_65plus(date_from, date_to, clinicians,
+                               min_contact, min_date,
+                               contact_type,
+                               lazy)
+    }
+
+    sixtyfiveplusID <- self$contact_65plus_list %>>%
+      dplyr::pull(InternalID) %>>%
+      c(-1) # add a dummy ID to prevent empty vector
+
+
+    fluvaxList <- self$influenzaVax_obs(sixtyfiveplusID,
+                                        date_from = ifelse(ignoreOld,
+                                                           NA,
+                                                           as.Date(-Inf, origin = "1970-01-01")),
+                                        # if ignoreOld, then influenza_vax will (given NA)
+                                        # calculate date_from as fifteen months before date_to
+                                        date_to = date_to)
+    # returns InternalID, FluVaxName, FluvaxDate
+
+    self$qim_65plus_list <- self$contact_65plus_list %>>%
+      dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
+      dplyr::left_join(fluvaxList,
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$patients %>>%
+                         dplyr::filter(InternalID %in% sixtyfiveplusID) %>>%
+                         dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(private$db$clinical %>>%
+                         dplyr::filter(InternalID %in% sixtyfiveplusID) %>>%
+                         dplyr::select(InternalID, MaritalStatus, Sexuality),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      # round age group to nearest 5 years
+      dplyr::select(-c(DOB, InternalID))
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_65plus_list)
+})
+.reactive_event(dMeasure, "qim_65plus_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$contact_65plus_listR(),
+                      self$qim_ignoreOldR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_65plus(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
+
+#' Age 65+ Quality Improvement Measure report, in the contact list
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' Shows chosen QIM measures, and by demographic grouping
+#'
+#' QIM 04 -Proportion of patients aged 65 and over who were immunised against influenza
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param demographic demographic groupings for reporting.
+#'  if not supplied, reads $qim_demographicGroup
+#'  list of available demographic groups in $qim_demographicGroupings
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the 65+ contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+report_qim_65plus <- function(dMeasure_obj,
+                              date_from = NA,
+                              date_to = NA,
+                              clinicians = NA,
+                              min_contact = NA,
+                              contact_type = NA,
+                              min_date = NA,
+                              demographic = NA,
+                              ignoreOld = NA,
+                              lazy = FALSE) {
+  dMeasure_obj$report_qim_65plus(date_from, date_to, clinicians,
+                                 min_contact, min_date, contact_type,
+                                 demographic,
+                                 ignoreOld, lazy)
+}
+.public(dMeasure, "report_qim_65plus", function(date_from = NA,
+                                                date_to = NA,
+                                                clinicians = NA,
+                                                min_contact = NA,
+                                                min_date = NA,
+                                                contact_type = NA,
+                                                demographic = NA,
+                                                ignoreOld = NA,
+                                                lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(contact_type[[1]])) {
+    contact_type <- self$contact_type
+  }
+  if (is.na(demographic)) {
+    demographic <- self$qim_demographicGroup
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "qim_65plus_report",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_65plus(date_from, date_to, clinicians,
+                           min_contact, min_date, contact_type,
+                           ignoreOld, lazy)
+    }
+
+    report_groups <- c(demographic, "")
+    # group by both demographic groupings and measures of interest
+    # add a dummy string in case there are no demographic or measure groups chosen!
+
+    self$qim_65plus_report <- self$qim_65plus_list %>>%
+      dplyr::mutate(InfluenzaDone = !is.na(FluvaxDate)) %>>%
+      # a measure is 'done' if it exists (not NA)
+      # if ignoreOld = TRUE, the the observation must fall within
+      #  the required timeframe
+      dplyr::group_by_at(report_groups) %>>%
+      # group_by_at takes a vector of strings
+      dplyr::summarise(n = n()) %>>%
+      dplyr::ungroup() %>>%
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
+    # if no rows, then grouping will not remove unnecessary columns
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_65plus_report)
+})
+.reactive_event(dMeasure, "qim_65plus_reportR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_65plus_listR(),
+                      self$qim_demographicGroupR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        # or change in demographic grouping
+                        # or change in measures
+                        self$report_qim_65plus(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
 
