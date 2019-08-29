@@ -4,12 +4,12 @@
 \alias{HbA1C_obs}
 \title{List of HbA1C observations/recordings}
 \usage{
-HbA1C_obs(dMeasure_obj, IntID, date_from = NA, date_to = NA)
+HbA1C_obs(dMeasure_obj, intID, date_from = NA, date_to = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{IntID}{vector of InternalID}
+\item{intID}{vector of InternalID}
 
 \item{date_from}{start date. default is $date_b minus 12 months}
 

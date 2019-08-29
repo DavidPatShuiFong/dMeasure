@@ -322,14 +322,67 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-### Cardiac sub-code
-#' list of patients with cardiac conditioins
+### Cardiovascular disease sub-code
+#' list of patients with cardiovascular disease
+#'
+#' for CVD risk assessment purposes
+#'  these patients are already at high risk and
+#'  so excluded from CVD risk assessment
+#'
+#' https://www.cvdcheck.org.au/australian-absolute-cardiovascular-disease-risk-calculator
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a list of numbers, which are the InternalIDs
+#' @export
+cvd_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$cvd_list(appointments)
+}
+.public(dMeasure, "cvd_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # returns vector of InternalID of patients who
+  # have had cardiac disease
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  # Best Practice codes for cardio-vascular disease
+  cvd_codes <- c(226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847)
+  # ischaemic heart disease
+  cvd_codes <- c(cvd_codes, 1480, 3083, 777)
+  # renovascular hypertension, peripheral arterial disease, peripheral arterial disease - diabetic
+  cvd_codes <- c(cvd_codes, 1522, 677, 678, 679, 680, 681, 1522)
+  # cerebrovascular disease
+
+  private$db$history %>>%
+    dplyr::filter(ConditionID %in% cvd_codes) %>>%
+    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
+
+### Cardiac sub-code
+#' list of patients with cardiac conditions
+#'
+#' for influenza immunization purposes
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a list of numbers, which are the InternalIDs
+#' @export
 cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
 }
@@ -351,13 +404,13 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice codes for cardiac disease
-  transplant_codes <- c(7810, 226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381,
+  cardiac_codes <- c(7810, 226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381,
                         2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847,
                         1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556)
   # cyanotic congenital heart disease, ischaemic heart disease, AMI and congestive failure
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% transplant_codes) %>>%
+    dplyr::filter(ConditionID %in% cardiac_codes) %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()

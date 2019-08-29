@@ -459,7 +459,7 @@ list_contact_65plus <- function(dMeasure_obj,
 
 ##### age 45 to 74 years fields ###########################################################
 # used for Practice Incentive Program Quality Improvement Measures
-# influenza (QIM 04)
+# cardiovascular risk (QIM 08)
 
 .public(dMeasure, "contact_45_74_list",
         data.frame(Patient = character(),

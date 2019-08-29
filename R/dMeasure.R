@@ -1197,7 +1197,22 @@ initialize_emr_tables <- function(dMeasure_obj,
   # BPCode
   #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
   #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
-  #  17 - Albumin/Creatinine ratio, 19 - HbA1C (SI)
+  #  16 - eGFR
+  #  17 - Albumin/Creatinine ratio, 18 - UAE, 19 - HbA1C (SI)
+  #
+  #  16 - Diabetes Cycle of Care page records in "mL/min" units
+  #
+  #  17 variously labelled 'ACR' or 'Albumin/Creat Ratio' in SAMPLES database
+  #   units will be recorded e.g. mg/mmol
+  #
+  #  18 "UAE"
+  #  units:
+  #   "mcg/min"
+  #
+  #  7 "Microalbuminuria"
+  #   units can be "g/day" "mg/L" "mg/mmol" "mcg/min"
+  #  this might be simultaneously recorded (from the Diabetes Cycle of Care Page)
+  #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
