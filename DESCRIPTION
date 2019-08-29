@@ -45,4 +45,5 @@ Collate:
     'configuration_server.R'
     'configuration_user.R'
     'contactConditions.R'
+    'observations.R'
     'utils_pipe.R'

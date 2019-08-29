@@ -424,109 +424,46 @@ list_qim_diabetes <- function(dMeasure_obj,
     diabetesID <- self$contact_diabetes_list %>>%
       dplyr::pull(InternalID) %>>%
       c(-1) # add a dummy ID to prevent empty vector
-    fluvaxID <- unlist(private$db$vaccine_disease %>>%
-                         dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
-                         dplyr::select(VACCINEID) %>>%
-                         dplyr::collect(), use.names = FALSE)
-    # there are many, many influenza vaccine IDs, but these can be found
-    # via the db$vaccine_disease database
 
-    # uses BPCode == 1 in $db$reportValues for finding HbA1c results
-    #
-    # a possible alternative search mechanism for HbA1C would
-    # be to look at ResultName "HbA1C%" and "Hb A1c"
-    # https://bpsoftware.net/forums/topic/all-patients-with-a-hba1c-value-diagnostic-of-diabetes/
+
+    fluvaxList <- self$influenzaVax_obs(diabetesID,
+                                        date_from = ifelse(ignoreOld,
+                                                           NA,
+                                                           as.Date(-Inf, origin = "1970-01-01")),
+                                        # if ignoreOld, then influenza_vax will (given NA)
+                                        # calculate date_from as fifteen months before date_to
+                                        date_to = date_to)
+    # returns InternalID, FluVaxName, FluvaxDate
+
+    HbA1CList <- self$HbA1C_obs(diabetesID,
+                                date_from = ifelse(ignoreOld,
+                                                   NA,
+                                                   as.Date(-Inf, origin = "1970-01-01")),
+                                # if ignoreOld, then influenza_vax will (given NA)
+                                # calculate date_from as fifteen months before date_to
+                                date_to = date_to)
+    # returns dataframe of InternalID, HbA1CDate, HbA1CValue, HbA1CUnits
+
+    BPList <- self$BloodPressure_obs(diabetesID,
+                                date_from = ifelse(ignoreOld,
+                                                   NA,
+                                                   as.Date(-Inf, origin = "1970-01-01")),
+                                # if ignoreOld, then influenza_vax will (given NA)
+                                # calculate date_from as fifteen months before date_to
+                                date_to = date_to)
+    # returns dataframe of InternalID, BPDate, BPValue
 
     self$qim_diabetes_list <- self$contact_diabetes_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
-      dplyr::left_join(private$db$reportValues %>>%
-                         dplyr::filter(InternalID %in% diabetesID &&
-                                         (BPCode == 1 || BPCode == 19) &&
-                                         # BPCode 1 is HbA1C, 19 is SI units
-                                         # these reports include 'manual' entries
-                                         # in the diabetes assessment dialog
-                                         ReportDate <= date_to) %>>%
-                         dplyr::group_by(InternalID) %>>%
-                         dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
-                         # the most recent HbA1C report by InternalID
-                         dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
-                         dplyr::rename(HbA1CValue = ResultValue,
-                                       HbA1CUnits = Units,
-                                       HbA1CDate = ReportDate) %>>%
-                         dplyr::collect() %>>%
-                         dplyr::mutate(HbA1CDate = as.Date(HbA1CDate)) %>>%
-                         # convert to R's 'standard' date format
-                         # didn't work before collect()
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring results that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age(HbA1CDate, date_to) == 0)}
-                           # throw out results which are more than twelve months old
-                           else {.}},
+      dplyr::left_join(HbA1CList,
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::mutate(HbA1CValue = as.double(HbA1CValue)) %>>%
       # was a character. can't be converted to double within the MSSQL query
-      dplyr::left_join(private$db$immunizations %>>%
-                         dplyr::filter(InternalID %in% diabetesID &&
-                                         VaccineID %in% fluvaxID &&
-                                         # influenza vaccines
-                                         GivenDate <= date_to) %>>%
-                         dplyr::group_by(InternalID) %>>%
-                         dplyr::filter(GivenDate == max(GivenDate, na.rm = TRUE)) %>>%
-                         # most recent fluvax by InternalID
-                         dplyr::rename(FluvaxName = VaccineName,
-                                       FluvaxDate = GivenDate) %>>%
-                         dplyr::select(-VaccineID) %>>%
-                         dplyr::collect() %>>%
-                         dplyr::mutate(FluvaxDate = as.Date(FluvaxDate)) %>>%
-                         # convert to R's 'standard' date format, didn't work before collect()
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring vaccinations that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age_months(FluvaxDate, date_to) < 15)}
-                           # throw out vaccinations which are fifteen months or older
-                           else {.}},
+      dplyr::left_join(fluvaxList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$observations %>>%
-                         dplyr::filter(InternalID %in% diabetesID &&
-                                         ObservationCode %in% c(3,4) &&
-                                         # systolic or diastolic blood pressure
-                                         # 3 = systolic, 4 = diastolic
-                                         ObservationDate <= date_to) %>>%
-                         dplyr::group_by(InternalID) %>>%
-                         dplyr::filter(ObservationDate == max(ObservationDate,
-                                                              na.rm = TRUE)) %>>%
-                         # only the most recent recording(s) DATE
-                         dplyr::filter(ObservationTime == max(ObservationTime,
-                                                              na.rm = TRUE)) %>>%
-                         # only the most recent recording TIME
-                         dplyr::ungroup() %>>%
-                         dplyr::group_by(InternalID, ObservationCode) %>>%
-                         dplyr::filter(RECORDID == max(RECORDID,
-                                                       na.rm = TRUE)) %>>%
-                         # if still tied (this shouldn't be the case? but it happens
-                         # in the sample database), filter by most recent RECORDID
-                         dplyr::rename(BPDate = ObservationDate) %>>%
-                         dplyr::select(-c(RECORDID, ObservationName, ObservationTime)) %>>%
-                         dplyr::collect() %>>%
-                         dplyr::mutate(BPDate = as.Date(BPDate)) %>>%
-                         # convert to R's standard date format
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring observations that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age_months(BPDate, date_to) < 6)}
-                           # throw out observations which are six months or older
-                           else {.}} %>>%
-                         tidyr::spread(ObservationCode, ObservationValue) %>>%
-                         # this creates columns `3` or `4` if there are any
-                         # qualifying blood pressure observations
-                         {cols <- c(`3` = NA, `4` = NA)
-                         tibble::add_column(.,
-                                            !!!cols[!names(cols) %in% names(.)])} %>>%
-                         # add columns `3` and `4` if they don't exist at this point
-                         dplyr::mutate(BP = paste0(`3`,"/",`4`)) %>>%
-                         # create a BP column combined systolic `3` and diastolic `4` readings
-                         # and then remove those individual readings
-                         dplyr::select(-c(`3`, `4`)),
+      dplyr::left_join(BPList,
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$patients %>>%
@@ -1305,9 +1242,9 @@ list_qim_15plus <- function(dMeasure_obj,
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-      {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
-                                               dMeasure::add_age(DOB, 17),
-                                               as.Date(NA)))} %>>%
+                       {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
+                                                                dMeasure::add_age(DOB, 17),
+                                                                as.Date(NA)))} %>>%
       dplyr::mutate(HeightValue = dplyr::if_else(HeightDate < Age17,
                                                  as.numeric(NA),
                                                  as.numeric(HeightValue)),
@@ -1346,11 +1283,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(SmokingDate))) %>>%
                          # smoking status has not actually been recorded if SmokingStatus == ""
                          # convert to R's 'standard' date format, didn't work before collect()
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring smoking status recordings that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
-                           # throw out smoking stats which are twelve months or older
-                           else {.}},
+                                                                    {if (ignoreOld && nrow(.) > 0) {
+                                                                      # if ignoring smoking status recordings that don't qualify for QIM
+                                                                      dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
+                                                                      # throw out smoking stats which are twelve months or older
+                                                                      else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 
@@ -1372,11 +1309,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(AlcoholDate))) %>>%
                          # if not marked as a 'non-drinker', but no drinks recorded
                          # then this is actually a 'blank' entry
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring observations that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
-                           # throw out observations which are twelve months or older
-                           else {.}},
+                                                                    {if (ignoreOld && nrow(.) > 0) {
+                                                                      # if ignoring observations that don't qualify for QIM
+                                                                      dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
+                                                                      # throw out observations which are twelve months or older
+                                                                      else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 

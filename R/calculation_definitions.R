@@ -38,11 +38,12 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 #' Adds an interval (years) to a birthDate
 #'
 #' @param birthdate vector of dates
-#' @param years
+#' @param age numeric
+#' @param by default is "year", but can be, for example "-1 month"
 #'
 #' @return vector of dates
 #' @export
-add_age <- function(birthDate, years) {
+add_age <- function(birthDate, age, by = "year") {
   # Calculate age at a given reference date
 
   if (length(birthDate) == 0) {return(birthDate)}
@@ -51,8 +52,8 @@ add_age <- function(birthDate, years) {
   dates <- as.Date(mapply(function(x, y)
     # Arguments can be vectors, so need to use mapply
   {ifelse(is.na(x) | x == -Inf, as.Date(NA),
-          tail(seq(from = x, by = "year", length.out = y), 1))},
-  birthDate, years + 1), origin = "1970-01-01")
+          tail(seq(from = x, by = by, length.out = y), 1))},
+  birthDate, age + 1), origin = "1970-01-01")
 
   dates <- as.Date(dates, origin = "1970-01-01")
   # if not converted, could return an empty list, instead of empty dates

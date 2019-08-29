@@ -4,10 +4,12 @@
 \alias{add_age}
 \title{Add age to a given reference date}
 \usage{
-add_age(birthDate, years)
+add_age(birthDate, age, by = "year")
 }
 \arguments{
-\item{years}{}
+\item{age}{numeric}
+
+\item{by}{default is "year", but can be, for example "-1 month"}
 
 \item{birthdate}{vector of dates}
 }
