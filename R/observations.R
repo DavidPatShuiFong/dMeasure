@@ -330,3 +330,52 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
 
   return(persistentProteinuria)
 })
+
+
+#' List of eGFR observations/recordings
+#'
+#' Filtered by InternalID (vector patient numbers) and dates
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param intID vector of InternalID
+#' @param date_from start date. default is $date_b minus 12 months
+#' @param date_to end date (inclusive). default is $date_b
+#'
+#' @return dataframe of InternalID, BPDate, BP
+#'  BP will be a string of two numbers separated by "/"
+#' @export
+eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
+  dMeasure_obj$eGFR_obs(intID, date_from, date_to)
+}
+.public(dMeasure, "eGFR_obs", function(intID, date_from = NA, date_to = NA) {
+
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (is.na(date_from)) {
+    date_from <- date_to - 365
+  } else if (date_from == -Inf) {
+    date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
+  }
+
+  private$db$reportValues %>>%
+    dplyr::filter(InternalID %in% intID &&
+                    (BPCode == 16) &&
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from
+    ) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    # the most recent eGFR report by InternalID
+    dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
+    dplyr::rename(eGFRDate = ReportDate,
+                  eGFRValue = ResultValue,
+                  eGFRUnits = Units) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(eGFRDate = as.Date(eGFRDate))
+  # convert to R's 'standard' date format
+  # didn't work before collect()
+})
