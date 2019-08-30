@@ -18,6 +18,7 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
 }
 .public(dMeasure, "influenzaVax_obs", function(intID, date_from = NA, date_to = NA) {
 
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
@@ -69,6 +70,7 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 }
 .public(dMeasure, "HbA1C_obs", function(intID, date_from = NA, date_to = NA) {
 
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
@@ -126,6 +128,7 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
 }
 .public(dMeasure, "BloodPressure_obs", function(intID, date_from = NA, date_to = NA) {
 
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
@@ -192,6 +195,7 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
 }
 .public(dMeasure, "UrineAlbumin_obs", function(intID, date_from = NA, date_to = NA) {
 
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
   }
@@ -378,4 +382,73 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::mutate(eGFRDate = as.Date(eGFRDate))
   # convert to R's 'standard' date format
   # didn't work before collect()
+})
+
+
+#' List of cholesterol observations/recordings
+#'
+#' Filtered by InternalID (vector patient numbers) and dates
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param intID vector of InternalID
+#' @param date_from start date. default is $date_b minus 12 months
+#' @param date_to end date (inclusive). default is $date_b
+#'
+#' @return dataframe of InternalID, CholesterolDate,
+#'  Cholesterol, HDL, LDL, Triglycerides, CholesterolHDLRatio
+#' @export
+Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
+  dMeasure_obj$Cholesterol_obs(intID, date_from, date_to)
+}
+.public(dMeasure, "Cholesterol_obs", function(intID, date_from = NA, date_to = NA) {
+
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (is.na(date_from)) {
+    date_from <- date_to - 365
+  } else if (date_from == -Inf) {
+    date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
+  }
+
+  private$db$reportValues %>>%
+    dplyr::filter(InternalID %in% intID &&
+                    BPCode %in% c(2, 3, 4, 5) &&
+                    # systolic or diastolic blood pressure
+                    # 3 = systolic, 4 = diastolic
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::filter(ReportDate == max(ReportDate,
+                                    na.rm = TRUE)) %>>%
+    # only the most recent recording(s) DATE
+    dplyr::ungroup() %>>%
+    dplyr::group_by(InternalID, BPCode) %>>%
+    dplyr::filter(ReportID == max(ReportID,
+                                  na.rm = TRUE)) %>>%
+    # if still tied (this shouldn't be the case? but it happens
+    # in the sample database), filter by most recent ReportID
+    dplyr::ungroup() %>>%
+    dplyr::rename(CholesterolDate = ReportDate) %>>%
+    dplyr::select(InternalID, CholesterolDate, BPCode, ResultValue) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(CholesterolDate = as.Date(CholesterolDate),
+                  ResultValue = as.double(ResultValue)) %>>%
+    # convert to R's standard date format
+    tidyr::spread(BPCode, ResultValue) %>>%
+    # this creates columns `3` or `4` or `5`` or `6`if there are any
+    # qualifying blood pressure observations
+    {cols <- c(`2` = NA, `3` = NA, `4` = NA, `5` = NA)
+    tibble::add_column(.,
+                       !!!cols[!names(cols) %in% names(.)])} %>>%
+    # add columns `3` of `4` or `5` or `6`
+    # if they don't exist at this point
+    dplyr::rename(Cholesterol = `2`,
+                  HDL = `3`,
+                  LDL = `4`,
+                  Triglycerides = `5`) %>>%
+    dplyr::mutate(CholHDLRatio = Cholesterol/HDL)
 })

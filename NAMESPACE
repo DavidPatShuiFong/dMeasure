@@ -3,6 +3,7 @@
 export("%>%")
 export("%>>%")
 export(BloodPressure_obs)
+export(Cholesterol_obs)
 export(HbA1C_obs)
 export(PersistentProteinuria_obs)
 export(UrineAlbumin_obs)

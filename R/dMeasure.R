@@ -1192,11 +1192,15 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
                   ResultValue, Units, Range) %>>%
-    dplyr::mutate(ResultValue = trimws(ResultValue),
+    dplyr::mutate(LoincCode = trimws(LoincCode),
+                  ResultName = trimws(ResultName),
+                  Range = trimws(Range),
+                  ResultValue = trimws(ResultValue),
                   Units = trimws(Units))
   # BPCode
-  #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
-  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
+  #  1 - HbA1C
+  #  2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol, 5 - triglycerides
+  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Glucose (Serum)
   #  16 - eGFR
   #  17 - Albumin/Creatinine ratio, 18 - UAE, 19 - HbA1C (SI)
   #

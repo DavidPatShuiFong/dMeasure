@@ -1242,9 +1242,9 @@ list_qim_15plus <- function(dMeasure_obj,
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-                       {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
-                                                                dMeasure::add_age(DOB, 17),
-                                                                as.Date(NA)))} %>>%
+      {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
+                                               dMeasure::add_age(DOB, 17),
+                                               as.Date(NA)))} %>>%
       dplyr::mutate(HeightValue = dplyr::if_else(HeightDate < Age17,
                                                  as.numeric(NA),
                                                  as.numeric(HeightValue)),
@@ -1283,11 +1283,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(SmokingDate))) %>>%
                          # smoking status has not actually been recorded if SmokingStatus == ""
                          # convert to R's 'standard' date format, didn't work before collect()
-                                                                    {if (ignoreOld && nrow(.) > 0) {
-                                                                      # if ignoring smoking status recordings that don't qualify for QIM
-                                                                      dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
-                                                                      # throw out smoking stats which are twelve months or older
-                                                                      else {.}},
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring smoking status recordings that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
+                           # throw out smoking stats which are twelve months or older
+                           else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 
@@ -1309,11 +1309,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(AlcoholDate))) %>>%
                          # if not marked as a 'non-drinker', but no drinks recorded
                          # then this is actually a 'blank' entry
-                                                                    {if (ignoreOld && nrow(.) > 0) {
-                                                                      # if ignoring observations that don't qualify for QIM
-                                                                      dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
-                                                                      # throw out observations which are twelve months or older
-                                                                      else {.}},
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring observations that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
+                           # throw out observations which are twelve months or older
+                           else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 
@@ -2144,28 +2144,28 @@ report_qim_copd <- function(dMeasure_obj,
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 list_qim_cvdrisk <- function(dMeasure_obj,
-                          date_from = NA,
-                          date_to = NA,
-                          clinicians = NA,
-                          min_contact = NA,
-                          min_date = NA,
-                          contact_type = NA,
-                          ignoreOld = NA,
-                          lazy = FALSE) {
+                             date_from = NA,
+                             date_to = NA,
+                             clinicians = NA,
+                             min_contact = NA,
+                             min_date = NA,
+                             contact_type = NA,
+                             ignoreOld = NA,
+                             lazy = FALSE) {
   dMeasure_obj$list_qim_cvdrisk(date_from, date_to, clinicians,
-                             min_contact, min_date, contact_type,
-                             ignoreOld,
-                             lazy)
+                                min_contact, min_date, contact_type,
+                                ignoreOld,
+                                lazy)
 }
 
 .public(dMeasure, "list_qim_cvdrisk", function(date_from = NA,
-                                            date_to = NA,
-                                            clinicians = NA,
-                                            min_contact = NA,
-                                            min_date = NA,
-                                            contact_type = NA,
-                                            ignoreOld = NA,
-                                            lazy = FALSE) {
+                                               date_to = NA,
+                                               clinicians = NA,
+                                               min_contact = NA,
+                                               min_date = NA,
+                                               contact_type = NA,
+                                               ignoreOld = NA,
+                                               lazy = FALSE) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -2188,6 +2188,12 @@ list_qim_cvdrisk <- function(dMeasure_obj,
   if (is.na(ignoreOld)) {
     ignoreOld <- self$qim_ignoreOld
   }
+  if (ignoreOld) {
+    obs_from <- NA
+  } else {
+    obs_from <- as.Date(-Inf, origin = "1970-01-01")
+    # accept very old results
+  }
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -2203,37 +2209,57 @@ list_qim_cvdrisk <- function(dMeasure_obj,
 
     if (!lazy) {
       self$list_contact_45_74(date_from, date_to, clinicians,
-                                           min_contact, min_date,
-                                           contact_type,
-                                           lazy)
+                              min_contact, min_date,
+                              contact_type,
+                              lazy)
     }
 
-    copdID <- self$contact_45_74_list %>>%
+    # PastHistory ItemCode = 1446 for familial hypercholesterolaemia
+
+    cvdriskID <- self$contact_45_74_list %>>%
       dplyr::pull(InternalID) %>>%
       c(-1) # add a dummy ID to prevent empty vector
 
+    diabetesID <- self$diabetes_list(data.frame(InternalID = cvdriskID, Date = date_to))
 
-    fluvaxList <- self$influenzaVax_obs(copdID,
-                                        date_from = ifelse(ignoreOld,
-                                                           NA,
-                                                           as.Date(-Inf, origin = "1970-01-01")),
-                                        # if ignoreOld, then influenza_vax will (given NA)
-                                        # calculate date_from as fifteen months before date_to
-                                        date_to = date_to)
-    # returns InternalID, FluVaxName, FluvaxDate
 
-    self$qim_cvdrisk_list <- self$contact_45_74_list %>>%
+    self$qim_cvdRisk_list <- self$contact_45_74_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
-      dplyr::left_join(fluvaxList,
+      dplyr::mutate(Diabetes = InternalID %in% diabetesID) %>>%
+      dplyr::left_join(self$UrineAlbumin_obs(cvdriskID,
+                                             date_from = obs_from, date_to = date_to),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(self$PersistentProteinuria_obs(cvdriskID,
+                                                      date_from = obs_from, date_to = date_to),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(self$eGFR_obs(cvdriskID,
+                                     date_from = obs_from,
+                                     date_to = date_to),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::mutate(FamilialHypercholesterolaemia = InternalID %in%
+                      (private$db$history %>>%
+                         dplyr::filter(ConditionID == 1446) %>>%
+                         dplyr::pull(InternalID))) %>>%
+      dplyr::left_join(self$Cholesterol_obs(cvdriskID,
+                                            date_from = obs_from,
+                                            date_to = date_to),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
+      dplyr::left_join(self$BloodPressure_obs(cvdriskID,
+                                              date_from = obs_from,
+                                              date_to = date_to),
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$patients %>>%
-                         dplyr::filter(InternalID %in% copdID) %>>%
+                         dplyr::filter(InternalID %in% cvdriskID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::left_join(private$db$clinical %>>%
-                         dplyr::filter(InternalID %in% copdID) %>>%
+                         dplyr::filter(InternalID %in% cvdriskID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
                        copy = TRUE) %>>%
@@ -2244,7 +2270,7 @@ list_qim_cvdrisk <- function(dMeasure_obj,
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
 
-  return(self$qim_cvdrisk_list)
+  return(self$qim_cvdRisk_list)
 })
 .reactive_event(dMeasure, "qim_cvdrisk_listR",
                 quote(

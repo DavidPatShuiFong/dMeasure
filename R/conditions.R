@@ -37,8 +37,8 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
   diabetes_codes <- c(3, 775, 776, 778, 774, 7840, 11998)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% diabetes_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% diabetes_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -75,8 +75,8 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
   asthma_codes <- c(281, 285, 283, 284, 282)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% asthma_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% asthma_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -115,8 +115,8 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
 
 
   private$db$patients %>>%
-    dplyr::filter(Ethnicity %in% atsi_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(Ethnicity %in% atsi_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -163,8 +163,8 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
 
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% malignancy_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% malignancy_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -201,8 +201,8 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
   hiv_codes <- c(1727)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% hiv_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% hiv_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -239,8 +239,8 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
   haemoglobinopathy_codes <- c(205, 208, 209, 210)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% haemoglobinopathy_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% haemoglobinopathy_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -277,8 +277,8 @@ asplenia_list <- function(dMeasure_obj, appointments = NULL) {
   asplenic_codes <- c(3958, 5805, 6493, 3959)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% asplenic_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% asplenic_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -316,8 +316,8 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
   # bone marrow, heart, liver, lung, pancreas, renal, thymus
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% transplant_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% transplant_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -366,8 +366,8 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
   # cerebrovascular disease
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% cvd_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% cvd_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -410,8 +410,8 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   # cyanotic congenital heart disease, ischaemic heart disease, AMI and congestive failure
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% cardiac_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% cardiac_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -448,8 +448,8 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
   trisomy21_codes <- c(836)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% trisomy21_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% trisomy21_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -532,8 +532,8 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
   cld_codes <- c(598, 4740, 414, 702)
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% cld_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% cld_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -572,8 +572,8 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
   # multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% neuro_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% neuro_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -611,8 +611,8 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
   # liver disease (BP doesn't have 'chronic liver disease'!), cirrhosis, alcoholism
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% cld_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% cld_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -651,8 +651,8 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
   # chronic renal failure, renal impairment, dialysis
 
   private$db$history %>>%
-    dplyr::filter(ConditionID %in% crf_codes) %>>%
-    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::filter(ConditionID %in% crf_codes &&
+                    InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
