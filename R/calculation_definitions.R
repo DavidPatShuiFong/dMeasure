@@ -324,6 +324,7 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 #' @param df a dataframe
 #'  Patient (chr = character)
 #'  InternalID (numeric)
+#'  CardiovascularDisease (logical)
 #'  Diabetes (logical)
 #'  SmokingDate (date), SmokingStatus (chr)
 #'  UrineAlbuminDate (chr), UrineAlbuminValue (double), UrineAlbuminUnit (chr)
@@ -349,6 +350,7 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 framingham_riskequation <- function(df, years = 5) {
   f <- df %>>%
     tidyr::separate(BP, into = c("Systolic", "Diastolic"), sep = "/", convert = TRUE) %>>%
+    # creates new Systolic and Diastolic fields, fills with NA if not available, and converts to numeric
     dplyr::mutate(a = 11.1122 - 0.9119 * log(Systolic) - 0.2767 * (SmokingStatus == "Smoker")
                   -0.7181 * log(CholHDLRatio) - 0.5865 * LVH,
                   m = dplyr::if_else(Sex == "Female",
@@ -359,8 +361,8 @@ framingham_riskequation <- function(df, years = 5) {
                   u = (log(years) - mu)/sigma,
                   # 5 is the predicted number years
                   frisk = 1 - exp (-exp(u))) %>>%
-    # creates new Systolic and Diastolic fields, fills with NA if not available, and converts to numeric
     dplyr::mutate(friskHI = dplyr::case_when(
+      CardiovascularDisease ~ ">15%",
       Diabetes & (Age > 60) ~ ">15%",
       Diabetes & UrineAlbuminValue > 20 & UrineAlbuminUnits == "mcg/min" ~ ">15%",
       Diabetes & Sex == "Male" &
