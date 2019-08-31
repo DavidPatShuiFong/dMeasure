@@ -1160,6 +1160,14 @@ list_qim_15plus <- function(dMeasure_obj,
       dplyr::pull(InternalID) %>>%
       c(-1) # add a dummy ID to prevent empty vector
 
+    smokingList <- self$smoking_obs(fifteen_plusID,
+                                    date_from = ifelse(ignoreOld,
+                                                       NA,
+                                                       as.Date(-Inf, origin = "1970-01-01")),
+                                    # if ignoreOld, then influenza_vax will (given NA)
+                                    # calculate date_from as fifteen months before date_to
+                                    date_to = date_to)
+
     measure_cols <- c(BMIDate = as.Date(NA),
                       BMIValue = as.numeric(NA),
                       WeightDate = as.Date(NA),
@@ -1269,28 +1277,9 @@ list_qim_15plus <- function(dMeasure_obj,
 
       # if ObservationDate (Height) is less than 17 years of age, then remove
       # this is not clearly specified in PIP QIM documents I have seen so far
-      dplyr::left_join(private$db$clinical %>>%
-                         dplyr::filter(InternalID %in% fifteen_plusID &&
-                                         Updated <= date_to) %>>%
-                         dplyr::select(InternalID, SmokingDate = Updated, SmokingStatus) %>>%
-                         # the table appears to have one entry per patient
-                         dplyr::collect() %>>%
-                         dplyr::mutate(SmokingStatus = dplyr::na_if(SmokingStatus, "")) %>>%
-                         # empty string is 'no record'
-                         dplyr::mutate(SmokingDate = as.Date(SmokingDate)) %>>%
-                         dplyr::mutate(SmokingDate = dplyr::if_else(SmokingStatus == "",
-                                                                    as.Date(-Inf, origin = "1970-01-01"),
-                                                                    as.Date(SmokingDate))) %>>%
-                         # smoking status has not actually been recorded if SmokingStatus == ""
-                         # convert to R's 'standard' date format, didn't work before collect()
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring smoking status recordings that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age_months(SmokingDate, date_to) < 12)}
-                           # throw out smoking stats which are twelve months or older
-                           else {.}},
+      dplyr::left_join(smokingList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-
       dplyr::left_join(private$db$alcohol %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          Updated <= date_to) %>>%
@@ -2108,8 +2097,8 @@ report_qim_copd <- function(dMeasure_obj,
 
                    stringsAsFactors = FALSE))
 
-##### QIM chronic lung disease methods ##########################################################
-#' List of patient with chronic lung disease, with Quality Improvement Measures, in the contact list
+##### QIM cardiovascular risk assessment methods ##########################################################
+#' List of patient with information to complete cardiovascular risk assessment
 #'
 #' Filtered by date, and chosen clinicians
 #'
@@ -2222,10 +2211,19 @@ list_qim_cvdrisk <- function(dMeasure_obj,
 
     diabetesID <- self$diabetes_list(data.frame(InternalID = cvdriskID, Date = date_to))
 
+    fHypercholesterolaemiaID <-
+      self$familialHypercholesterolaemia_list(data.frame(InternalID = cvdriskID, Date = date_to))
+
+    lvhID <-
+      self$LVH_list(data.frame(InternalID = cvdriskID, Date = date_to))
 
     self$qim_cvdRisk_list <- self$contact_45_74_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
       dplyr::mutate(Diabetes = InternalID %in% diabetesID) %>>%
+      dplyr::left_join(self$smoking_obs(cvdriskID,
+                                             date_from = obs_from, date_to = date_to),
+                       by = "InternalID",
+                       copy = TRUE) %>>%
       dplyr::left_join(self$UrineAlbumin_obs(cvdriskID,
                                              date_from = obs_from, date_to = date_to),
                        by = "InternalID",
@@ -2240,9 +2238,9 @@ list_qim_cvdrisk <- function(dMeasure_obj,
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::mutate(FamilialHypercholesterolaemia = InternalID %in%
-                      (private$db$history %>>%
-                         dplyr::filter(ConditionID == 1446) %>>%
-                         dplyr::pull(InternalID))) %>>%
+                      fHypercholesterolaemiaID) %>>%
+      dplyr::mutate(LVH = InternalID %in%
+                      lvhID) %>>%
       dplyr::left_join(self$Cholesterol_obs(cvdriskID,
                                             date_from = obs_from,
                                             date_to = date_to),
@@ -2263,9 +2261,12 @@ list_qim_cvdrisk <- function(dMeasure_obj,
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
+      dplyr::mutate(Age = dMeasure::calc_age(as.Date(DOB), date_to)) %>>%
+      {dplyr::left_join(., dMeasure::framingham_riskequation(.),
+                        by = "InternalID")} %>>%
+      dplyr::mutate(Age5 = floor(Age / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-c(DOB, InternalID))
+      dplyr::select(-c(DOB, Age, InternalID))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
