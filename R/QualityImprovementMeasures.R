@@ -66,6 +66,7 @@ NULL
                    Ethnicity = character(),
                    MaritalStatus = character(),
                    Sexuality = character(),
+                   Count = integer(),
                    stringsAsFactors = FALSE))
 # filtered by chosen dates and clinicians and number of contacts
 
@@ -149,7 +150,7 @@ list_qim_active <- function(dMeasure_obj,
       c(-1) # add a dummy ID to prevent empty vector
 
     self$qim_active_list <- self$contact_count_list %>>%
-      dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
+      dplyr::select(-c(Latest)) %>>% # don't need these fields
       dplyr::left_join(private$db$patients %>>%
                          dplyr::filter(InternalID %in% activeID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity),
