@@ -1643,7 +1643,8 @@ list_qim_65plus <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-c(DOB, InternalID))
+      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+                    FluvaxDate, FluvaxName)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1929,7 +1930,8 @@ list_qim_copd <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-c(DOB, InternalID))
+      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+                    FluvaxDate, FluvaxName)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1939,7 +1941,7 @@ list_qim_copd <- function(dMeasure_obj,
 .reactive_event(dMeasure, "qim_copd_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$contact_copd_listR(),
+                    c(self$contact_chroniclungdisease_listR(),
                       self$qim_ignoreOldR()), {
                         # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
@@ -2344,7 +2346,13 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                         by = "InternalID")} %>>%
       dplyr::mutate(Age5 = floor(Age / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-c(DOB, Age, InternalID))
+      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+                    CardiovascularDisease, Diabetes, SmokingDate, SmokingStatus,
+                    UrineAlbuminDate, UrineAlbuminValue, UrineAlbuminUnits,
+                    PersistentProteinuria, eGFRDate, eGFRValue, eGFRUnits,
+                    FamilialHypercholesterolaemia, LVH,
+                    CholesterolDate, Cholesterol, HDL, LDL, Triglycerides, CholHDLRatio,
+                    BPDate, BP, frisk, friskHI)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
