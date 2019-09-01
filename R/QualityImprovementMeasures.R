@@ -2103,7 +2103,7 @@ report_qim_copd <- function(dMeasure_obj,
                    UrineAlbuminUnit = character(),
                    PersistentProteinuria = logical(),
                    eGFRDate = as.Date(integer(0),
-                                     origin = "1970-01-01"),
+                                      origin = "1970-01-01"),
                    eGFRValue = double(),
                    eGFRUnits = character(),
                    FamilialHypercholesterolaemia = logical(),
@@ -2122,17 +2122,45 @@ report_qim_copd <- function(dMeasure_obj,
                    stringsAsFactors = FALSE))
 
 ##### QIM cardiovascular risk assessment methods ##########################################################
+
+
+.active(dMeasure, "qim_cvdRisk_measureTypes", function(value) {
+  if (!missing(value)) {
+    warning("$qim_cvdRisk_measureTypes is read-only.")
+  } else {
+    return(c("Include ATSI 35-44", "Exclude 75+", "Exclude known CVD"))
+    # vector of valid QIM measures options for 15 plus (for QIM reporting)
+  }
+})
+
+.private_init(dMeasure, ".qim_cvdRisk_measure", quote(self$qim_cvdRisk_measureTypes))
+.active(dMeasure, "qim_cvdRisk_measure", function(value) {
+  if (missing(value)) {
+    return(private$.qim_cvdRisk_measure)
+  }
+  value <- intersect(value, self$qim_cvdRisk_measureTypes)
+  # only valid measure types allowed
+  private$.qim_cvdRisk_measure <- value
+  private$set_reactive(self$qim_cvdRisk_measureR, value)
+})
+.reactive(dMeasure, "qim_cvdRisk_measureR", quote(self$qim_cvdRisk_measureTypes))
+
 #' List of patient with information to complete cardiovascular risk assessment
 #'
 #' Filtered by date, and chosen clinicians
 #'
-#' QIM 08.Proportion of patients with the necessary risk factors assessed to enable CVD assessment
+#' QIM 08.Proportion of patients with the necessary risk factors assessed
+#'  to enable CVD assessment
 #'
 #' required parameters
 #'  Age, Ethnicity (especially ATSI status)
-#'   included - Age 45 or older
-#'    OR Age 35 or older + AtSI
-#'  Known cardiovascular disease (excluded)
+#'   included - Age 45 to 74 years or older
+#'    OR Age 35 or older + ATSI
+#'     (ATSI 35+ optional - included by default - see $qim_cvdRisk_measure)
+#'    Age 75+ excluded
+#'     (Option to include - see $qim_cvdRisk_measure)
+#'  Known cardiovascular disease
+#'     (optional - excluded by default - see $qim_cvdRisk_measure)
 #'  Presence of diabetes. Diabetes and microalbuminuria
 #'  eGFR
 #'  previous diagnosis of familial hypercholesterolaemia
@@ -2225,23 +2253,48 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                               min_contact, min_date,
                               contact_type,
                               lazy)
+      if ("Include ATSI 35-44" %in% self$qim_cvdRisk_measure) {
+        self$list_contact_ATSI_35_44(date_from, date_to, clinicians,
+                                     min_contact, min_date,
+                                     contact_type,
+                                     lazy)
+      }
+      if (!("Exclude 75+" %in% self$qim_cvdRisk_measure)) {
+        self$list_contact_75plus(date_from, date_to, clinicians,
+                                 min_contact, min_date,
+                                 contact_type,
+                                 lazy)
+      }
     }
 
-    # PastHistory ItemCode = 1446 for familial hypercholesterolaemia
+    cvdRisk_list <- self$contact_45_74_list
+    if ("Include ATSI 35-44" %in% self$qim_cvdRisk_measure) {
+      cvdRisk_list <- rbind(cvdRisk_list, self$contact_ATSI_35_44_list)}
+    if (!("Exclude 75+" %in% self$qim_cvdRisk_measure)) {
+      cvdRisk_list <- rbind(cvdRisk_list, self$contact_75plus_list)}
+    cvdRisk_list <- dplyr::distinct(cvdRisk_list) # remove duplicates
 
-    cvdRiskID <- self$contact_45_74_list %>>%
+    cvdRiskID <- cvdRisk_list %>>%
       dplyr::pull(InternalID) %>>%
       c(-1) # add a dummy ID to prevent empty vector
-
-    # various history items which are already at high risk of cardiovascular disease
     cvdID <- self$cvd_list(data.frame(InternalID = cvdRiskID, Date = date_to))
+    # known cardiovascular disease is excluded by default
+    if ("Exclude known CVD" %in% self$qim_cvdRisk_measure) {
+      cvdRisk_list <- cvdRisk_list %>>%
+        dplyr::filter(!(InternalID %in% cvdID))
+      cvdRiskID <- cvdRisk_list %>>% # re-calculate valid ID
+        dplyr::pull(InternalID) %>>%
+        c(-1) # add a dummy ID to prevent empty vector
+    }
+
+    # various other history items which are already at high risk of cardiovascular disease
     diabetesID <- self$diabetes_list(data.frame(InternalID = cvdRiskID, Date = date_to))
     fHypercholesterolaemiaID <-
       self$familialHypercholesterolaemia_list(data.frame(InternalID = cvdRiskID, Date = date_to))
     lvhID <-
       self$LVH_list(data.frame(InternalID = cvdRiskID, Date = date_to))
 
-    self$qim_cvdRisk_list <- self$contact_45_74_list %>>%
+    self$qim_cvdRisk_list <- cvdRisk_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
       dplyr::mutate(CardiovascularDisease = InternalID %in% cvdID) %>>%
       dplyr::mutate(Diabetes = InternalID %in% diabetesID) %>>%
@@ -2302,7 +2355,10 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                 quote(
                   shiny::eventReactive(
                     c(self$contact_45_74_listR(),
-                      self$qim_ignoreOldR()), {
+                      self$contact_75plus_listR(),
+                      self$contact_ATSI_35_44_listR(),
+                      self$qim_ignoreOldR(),
+                      self$qim_cvdRisk_measureR()), {
                         # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
                         self$list_qim_cvdRisk(lazy = TRUE)

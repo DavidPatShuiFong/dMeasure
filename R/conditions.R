@@ -405,8 +405,8 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
 
   # Best Practice codes for cardiac disease
   cardiac_codes <- c(7810, 226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381,
-                        2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847,
-                        1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556)
+                     2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847,
+                     1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556)
   # cyanotic congenital heart disease, ischaemic heart disease, AMI and congestive failure
 
   private$db$history %>>%
@@ -776,6 +776,94 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
+### seventy-five plus age sub-code
+#' list of patients who are seventy-five years or more in age at time of $Date
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a list of numbers, which are the InternalIDs
+seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$seventyfiveplus_list(appointments)
+}
+.public(dMeasure, "seventyfiveplus_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # returns vector of InternalID of patients who
+  # are seventy-five (65) or more years of age
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  private$db$patients %>>%
+    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::select(InternalID, DOB) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(DOB = as.Date(DOB)) %>>%
+    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::filter(dMeasure::calc_age(DOB, Date) >= 75) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
+
+### thirty-five to forty-four years ATSI age sub-code
+#' list of patients who are 35 to 44 years, and ATSI, at time of $Date
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a list of numbers, which are the InternalIDs
+ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$ATSI_35_44_list(appointments)
+}
+.public(dMeasure, "ATSI_35_44_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # returns vector of InternalID of patients who
+  # are 35 or more years of age, and ATSI
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  # Best Practice Aboriginal or Torres Strait Islander codes
+  atsi_codes <- c("Aboriginal", "Torres Strait Islander",
+                  "Aboriginal/Torres Strait Islander")
+
+  private$db$patients %>>%
+    dplyr::filter(InternalID %in% intID) %>>%
+    dplyr::select(InternalID, DOB) %>>%
+    dplyr::inner_join(private$db$patients %>>%
+                        dplyr::filter(Ethnicity %in% atsi_codes &&
+                                        InternalID %in% intID) %>>%
+                        dplyr::select(InternalID),
+                      by = "InternalID") %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(DOB = as.Date(DOB)) %>>%
+    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 35, 44)) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
+
+
 ### forty-five to seventy-four plus age sub-code
 #' list of patients who are 45 to 74 years age at time of $Date
 #'
@@ -861,7 +949,7 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::select(InternalID, Date) %>>%
     dplyr::left_join(private$db$history %>>%
                        dplyr::filter(InternalID %in% intID &&
-                                ConditionID %in% hysterectomy_codes),
+                                       ConditionID %in% hysterectomy_codes),
                      by = "InternalID", copy = TRUE) %>>%
     dplyr::filter(is.na(ConditionID)) %>>%
     # remove all who have a hysterectomy code

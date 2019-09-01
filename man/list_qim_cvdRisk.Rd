@@ -35,13 +35,18 @@ dataframe of Patient (name), InternalID, Count, and most recent contact date
 Filtered by date, and chosen clinicians
 }
 \details{
-QIM 08.Proportion of patients with the necessary risk factors assessed to enable CVD assessment
+QIM 08.Proportion of patients with the necessary risk factors assessed
+ to enable CVD assessment
 
 required parameters
  Age, Ethnicity (especially ATSI status)
-  included - Age 45 or older
-   OR Age 35 or older + AtSI
- Known cardiovascular disease (excluded)
+  included - Age 45 to 74 years or older
+   OR Age 35 or older + ATSI
+    (ATSI 35+ optional - included by default - see $qim_cvdRisk_measure)
+   Age 75+ excluded
+    (Option to include - see $qim_cvdRisk_measure)
+ Known cardiovascular disease
+    (optional - excluded by default - see $qim_cvdRisk_measure)
  Presence of diabetes. Diabetes and microalbuminuria
  eGFR
  previous diagnosis of familial hypercholesterolaemia
