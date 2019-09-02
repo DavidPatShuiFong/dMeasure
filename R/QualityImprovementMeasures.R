@@ -287,10 +287,10 @@ report_qim_active <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns,
-    # so
-
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
