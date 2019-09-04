@@ -39,7 +39,8 @@ if not supplied, reads $qim_ignoreOld}
 \item{lazy}{recalculate the diabetes contact list?}
 }
 \value{
-dataframe of Patient (name), InternalID, Count, and most recent contact date
+dataframe of Patient (name), demographics, measures (done or not),
+ Count (n), and proportion
 }
 \description{
 Filtered by date, and chosen clinicians

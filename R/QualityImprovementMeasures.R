@@ -209,7 +209,7 @@ list_qim_active <- function(dMeasure_obj,
 #'  list of available demographic groups in $qim_demographicGroupings
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographics, Count, Proportion
 report_qim_active <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -559,7 +559,7 @@ list_qim_diabetes <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographics, measure (done or not), InternalID, Count, proportion
 report_qim_diabetes <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -576,7 +576,6 @@ report_qim_diabetes <- function(dMeasure_obj,
                                    demographic, measure,
                                    ignoreOld, lazy)
 }
-
 .public(dMeasure, "report_qim_diabetes", function(date_from = NA,
                                                   date_to = NA,
                                                   clinicians = NA,
@@ -656,8 +655,10 @@ report_qim_diabetes <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -920,7 +921,7 @@ list_qim_cst <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographics, measure (done or not), Count, Proportion
 report_qim_cst <- function(dMeasure_obj,
                            date_from = NA,
                            date_to = NA,
@@ -1006,10 +1007,10 @@ report_qim_cst <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns,
-    # so
-
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1251,9 +1252,9 @@ list_qim_15plus <- function(dMeasure_obj,
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-      {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
-                                               dMeasure::add_age(DOB, 17),
-                                               as.Date(NA)))} %>>%
+                       {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
+                                                                dMeasure::add_age(DOB, 17),
+                                                                as.Date(NA)))} %>>%
       dplyr::mutate(HeightValue = dplyr::if_else(HeightDate < Age17,
                                                  as.numeric(NA),
                                                  as.numeric(HeightValue)),
@@ -1299,11 +1300,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(AlcoholDate))) %>>%
                          # if not marked as a 'non-drinker', but no drinks recorded
                          # then this is actually a 'blank' entry
-                         {if (ignoreOld && nrow(.) > 0) {
-                           # if ignoring observations that don't qualify for QIM
-                           dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
-                           # throw out observations which are twelve months or older
-                           else {.}},
+                                                                    {if (ignoreOld && nrow(.) > 0) {
+                                                                      # if ignoring observations that don't qualify for QIM
+                                                                      dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
+                                                                      # throw out observations which are twelve months or older
+                                                                      else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 
@@ -1391,7 +1392,8 @@ list_qim_15plus <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographics, measures (done or not),
+#'  Count (n), and proportion
 report_qim_15plus <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -1408,7 +1410,6 @@ report_qim_15plus <- function(dMeasure_obj,
                                  demographic, measure,
                                  ignoreOld, lazy)
 }
-
 .public(dMeasure, "report_qim_15plus", function(date_from = NA,
                                                 date_to = NA,
                                                 clinicians = NA,
@@ -1489,8 +1490,10 @@ report_qim_15plus <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1692,7 +1695,7 @@ list_qim_65plus <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the 65+ contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographic, Count, proportion
 report_qim_65plus <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -1777,8 +1780,10 @@ report_qim_65plus <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -1978,7 +1983,7 @@ list_qim_copd <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the copd contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), demographic, measure (done or not), Count, Proportion
 report_qim_copd <- function(dMeasure_obj,
                             date_from = NA,
                             date_to = NA,
@@ -2063,8 +2068,11 @@ report_qim_copd <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
+
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -2401,7 +2409,7 @@ list_qim_cvdRisk <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the cvdRisk contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), Demographic, Measure (done or not), Count, Proportion
 report_qim_cvdRisk <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,
@@ -2486,8 +2494,10 @@ report_qim_cvdRisk <- function(dMeasure_obj,
       # group_by_at takes a vector of strings
       dplyr::summarise(n = n()) %>>%
       dplyr::ungroup() %>>%
-      {dplyr::select(., intersect(names(.), c(report_groups, "n")))}
-    # if no rows, then grouping will not remove unnecessary columns
+      {dplyr::select(., intersect(names(.), c(report_groups, "n")))} %>>%
+      # if no rows, then grouping will not remove unnecessary columns
+      dplyr::mutate(Proportion = prop.table(n))
+    # proportion (an alternative would be proportion = n / sum(n))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }

@@ -28,7 +28,7 @@ list of available demographic groups in $qim_demographicGroupings}
 \item{lazy}{recalculate the diabetes contact list?}
 }
 \value{
-dataframe of Patient (name), InternalID, Count, and most recent contact date
+dataframe of Patient (name), demographics, Count, Proportion
 }
 \description{
 Filtered by date, and chosen clinicians
