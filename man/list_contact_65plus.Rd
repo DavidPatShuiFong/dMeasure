@@ -5,20 +5,23 @@
 \title{List of those aged 65 plus (as of 'date_to') in the contact list}
 \usage{
 list_contact_65plus(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, min_contact = NA, min_date = NA, lazy = FALSE)
+  clinicians = NA, min_contact = NA, min_date = NA,
+  contact_type = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{start date. default is $dateContact$date_a}
+\item{date_from}{start date. default is $date_a}
 
-\item{date_to}{end date (inclusive). default is $dateContact$date_b}
+\item{date_to}{end date (inclusive). default is $date_b}
 
 \item{clinicians}{list of clinicians to view. default is $clinicians}
 
 \item{min_contact}{minimum number of contacts. default is $contact_min, initially one (1)}
 
 \item{min_date}{most recent contact must be at least min_date. default is $contact_minDate, initially -Inf}
+
+\item{contact_type}{contact types which are accepted. default is $contact_type}
 }
 \value{
 dataframe of Patient (name), InternalID, Count, and most recent contact date

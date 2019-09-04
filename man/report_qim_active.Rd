@@ -11,9 +11,9 @@ report_qim_active(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{start date. default is $dateContact$date_a}
+\item{date_from}{start date. default is $date_a}
 
-\item{date_to}{end date (inclusive). default is $dateContact$date_b}
+\item{date_to}{end date (inclusive). default is $date_b}
 
 \item{clinicians}{list of clinicians to view. default is $clinicians}
 
@@ -28,7 +28,7 @@ list of available demographic groups in $qim_demographicGroupings}
 \item{lazy}{recalculate the diabetes contact list?}
 }
 \value{
-dataframe of Patient (name), InternalID, Count, and most recent contact date
+dataframe of Patient (name), demographics, Count, Proportion
 }
 \description{
 Filtered by date, and chosen clinicians

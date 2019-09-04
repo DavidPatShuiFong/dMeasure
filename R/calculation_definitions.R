@@ -21,7 +21,7 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 
   period <- mapply(function(x, y)
     # Arguments can be vectors, so need to use mapply
-    (ifelse(is.na(x), NA,
+    (ifelse(is.na(x) | x == -Inf, NA,
             length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
        ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
@@ -31,6 +31,34 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
   # if not converted, could return an empty list, instead of empty numeric
 
   return(period)
+}
+
+#' Add age to a given reference date
+#'
+#' Adds an interval (years) to a birthDate
+#'
+#' @param birthdate vector of dates
+#' @param age numeric
+#' @param by default is "year", but can be, for example "-1 month"
+#'
+#' @return vector of dates
+#' @export
+add_age <- function(birthDate, age, by = "year") {
+  # Calculate age at a given reference date
+
+  if (length(birthDate) == 0) {return(birthDate)}
+  # empty vector, so return empty vector
+
+  dates <- as.Date(mapply(function(x, y)
+    # Arguments can be vectors, so need to use mapply
+  {ifelse(is.na(x) | x == -Inf, as.Date(NA),
+          tail(seq(from = x, by = by, length.out = y), 1))},
+  birthDate, age + 1), origin = "1970-01-01")
+
+  dates <- as.Date(dates, origin = "1970-01-01")
+  # if not converted, could return an empty list, instead of empty dates
+
+  return(dates)
 }
 
 #' Calculate age a given reference date, in months
@@ -50,9 +78,9 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   # empty vector, so return empty numeric
 
   period <- mapply(function(x, y)
-    (ifelse(is.na(x), NA,
+    (ifelse(is.na(x) | x == -Inf, NA,
             length(seq.Date(min(x, y), max(x, y), by = "month")) - 1) *
-      ifelse(y > x, 1, -1)),
+       ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
     birthDate, refDate)
 
@@ -80,7 +108,10 @@ interval <- function(date_a, date_b, unit = "none") {
 
   infinity_years <- Inf
 
-  interval <- list()
+  interval <- list(year = numeric(0), month = numeric(0), day = numeric(0))
+
+  if (length(date_a) == 0 || length(date_b) == 0) {return(interval)}
+  # empty input vector, so return list of empty vectors
 
   interval$year <- mapply(function(x, y)
     ifelse(!is.na(min(x, y)),
@@ -277,4 +308,74 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
   # 'all' checks that that all the elements of the comparison vector are TRUE
 
   return(result)
+}
+
+#' Framingham Risk Equation
+#'
+#' sourced from National Vascular Disease Prevention Alliance (Australia)
+#' http://cvdcheck.org.au/pdf/Absolute_CVD_Risk-Quick_Reference_Guide.pdf
+#'
+#' and from "An Updated Coronary Risk Profile - A Statement for Health Professionals"
+#' Keaven M. Anderson, Peter W.F. Wilson, Patricia M. Odell, William B. Kannel
+#'
+#' AHA (American Heart Association) Medical/Scientific Statment
+#' sourced from http://ahajournals.org
+#'
+#' @param df a dataframe
+#'  Patient (chr = character)
+#'  InternalID (numeric)
+#'  CardiovascularDisease (logical)
+#'  Diabetes (logical)
+#'  SmokingDate (date), SmokingStatus (chr)
+#'  UrineAlbuminDate (chr), UrineAlbuminValue (double), UrineAlbuminUnit (chr)
+#'  PersistentProteinuria (logical)
+#'  eGFRDate (date), eGFRValue (double), eGFRUnits (chr)
+#'  FamilialHypercholesterolaemia (logical)
+#'  LVH (logical) = left ventricular hyp0ertrophy
+#'  CholesterolDate (date), Cholesterol (double), HDL (double), LDL (double),
+#'   Triglycerides (double), CholHDLRatio (double)
+#'  BPDate (date), BP (character, two numbers separated by "/")
+#'  Sex (character), Ethnicity (character)
+#'  RecordNo (character), MaritalStatus (character), Sexuality (character)
+#'  DOB (character), Age (double)
+#' @param years number of years to predict (from 4 to 12)
+#'
+#' @return dataframe
+#'  InternalID
+#'  frisk : numeric
+#'  friskHI : either 'NA' or '>15%'
+#'    '>15%' are groups considered equivalent risk to already having IHD
+#'
+#' @export
+framingham_riskequation <- function(df, years = 5) {
+  f <- df %>>%
+    tidyr::separate(BP, into = c("Systolic", "Diastolic"), sep = "/", convert = TRUE) %>>%
+    # creates new Systolic and Diastolic fields, fills with NA if not available, and converts to numeric
+    dplyr::mutate(a = 11.1122 - 0.9119 * log(Systolic) - 0.2767 * (SmokingStatus == "Smoker")
+                  -0.7181 * log(CholHDLRatio) - 0.5865 * LVH,
+                  m = dplyr::if_else(Sex == "Female",
+                                     a - 5.8549 + 1.8515 * (log(Age/74))**2 - 0.3758 * Diabetes,
+                                     a - 1.4792 * log(Age) - 0.1759 * Diabetes),
+                  mu = 4.4181 + m,
+                  sigma = exp(-0.3155 - 0.2784 * m),
+                  u = (log(years) - mu)/sigma,
+                  # 5 is the predicted number years
+                  frisk = 1 - exp (-exp(u))) %>>%
+    dplyr::mutate(friskHI = dplyr::case_when(
+      CardiovascularDisease ~ ">15%",
+      Diabetes & (Age > 60) ~ ">15%",
+      Diabetes & UrineAlbuminValue > 20 & UrineAlbuminUnits == "mcg/min" ~ ">15%",
+      Diabetes & Sex == "Male" &
+        UrineAlbuminValue > 2.5 & UrineAlbuminUnits == "mg/mmol" ~ ">15%",
+      Diabetes & Sex == "Female" &
+        UrineAlbuminValue > 3.5 & UrineAlbuminUnits == "mg/mmol" ~ ">15%",
+      PersistentProteinuria == TRUE ~ ">15%",
+      eGFRValue < 45 & eGFRUnits == "mL/min" ~ ">15%",
+      FamilialHypercholesterolaemia == TRUE ~ ">15%",
+      Systolic >= 180 | Diastolic >= 110 ~ '>15%',
+      Cholesterol > 7.5 ~ ">15%",
+      Ethnicity %in% c("Aboriginal", "Torres Strait Islander", "Aboriginal/Torres Strait Islander") &
+        Age > 74 ~ ">15%",
+      TRUE ~ as.character(NA))) %>>%
+    dplyr::select(InternalID, frisk, friskHI)
 }

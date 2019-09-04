@@ -23,8 +23,8 @@ NULL
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$dateContact$date_a)
-#' @param date_to to date range (default self$dateContact$date_b)
+#' @param date_from from date range (default self$date_a)
+#' @param date_to to date range (default self$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -32,28 +32,28 @@ NULL
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of Zostavax eligible patients
-zostavax_list <- function(dMeasure_obj,
+list_zostavax <- function(dMeasure_obj,
                           date_from = NA, date_to = NA, clinicians = NA,
                           appointments_list = NULL,
                           lazy = FALSE,
                           vaxtag = FALSE, vaxtag_print = TRUE) {
-  dMeasure_obj$zostavax_list(date_from, date_to , clinicians,
+  dMeasure_obj$list_zostavax(date_from, date_to , clinicians,
                              appointments_list,
                              lazy,
                              vaxtag, vaxtag_print)
 }
 
-.public(dMeasure, "zostavax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_zostavax", function(date_from = NA, date_to = NA, clinicians = NA,
                                             appointments_list = NULL,
                                             lazy = FALSE,
                                             vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where Zostavax is recommended (might already be given)
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -156,8 +156,8 @@ zostavax_list <- function(dMeasure_obj,
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$dateContact$date_a)
-#' @param date_to to date range (default self$dateContact$date_b)
+#' @param date_from from date range (default self$date_a)
+#' @param date_to to date range (default self$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -165,27 +165,27 @@ zostavax_list <- function(dMeasure_obj,
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of influenza eligible patients
-influenza_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
                            lazy = FALSE,
                            vaxtag = FALSE, vaxtag_print = TRUE) {
-  dMeasure_obj$influenza_list(date_from, date_to , clinicians,
+  dMeasure_obj$list_influenza(date_from, date_to , clinicians,
                               appointments_list,
                               lazy,
                               vaxtag, vaxtag_print)
 }
 
-.public(dMeasure, "influenza_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_influenza", function(date_from = NA, date_to = NA, clinicians = NA,
                                              appointments_list = NULL,
                                              lazy = FALSE,
                                              vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where influenza is recommended (might already be given)
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -458,8 +458,8 @@ vax_names <- c("Zostavax", "Influenza")
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$dateContact$date_a)
-#' @param date_to to date range (default self$dateContact$date_b)
+#' @param date_from from date range (default self$date_a)
+#' @param date_to to date range (default self$date_b)
 #' @param clinicians list of clinicians (default self$clinicians)
 #' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
@@ -468,29 +468,29 @@ vax_names <- c("Zostavax", "Influenza")
 #' @param chosen list of vaccine names (default is all)
 #'
 #' @return dataframe list of influenza eligible patients
-vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
+list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
                      lazy = FALSE,
                      vaxtag = FALSE, vaxtag_print = TRUE,
                      chosen = vax_names) {
-  dMeasure_obj$vax_list(date_from, date_to, clinicians,
+  dMeasure_obj$list_vax(date_from, date_to, clinicians,
                         appointments_list,
                         lazy,
                         vaxtag, vaxtag_print,
                         chosen)
 }
 
-.public(dMeasure, "vax_list", function(date_from = NA, date_to = NA, clinicians = NA,
+.public(dMeasure, "list_vax", function(date_from = NA, date_to = NA, clinicians = NA,
                                        appointments_list = NULL,
                                        lazy = FALSE,
                                        vaxtag = FALSE, vaxtag_print = TRUE,
                                        chosen = vax_names) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (all(is.na(clinicians))) {
     clinicians <- self$clinicians
@@ -513,13 +513,13 @@ vax_list <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 
   vlist <- NULL
   if ("Zostavax" %in% chosen) {
-    vlist <- rbind(vlist, self$zostavax_list(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
                                              appointments_list,
                                              lazy,
                                              vaxtag, vaxtag_print))
   }
   if ("Influenza" %in% chosen) {
-    vlist <- rbind(vlist, self$influenza_list(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_influenza(date_from, date_to, clinicians,
                                               appointments_list,
                                               lazy,
                                               vaxtag, vaxtag_print))

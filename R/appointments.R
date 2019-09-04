@@ -60,8 +60,8 @@ NULL
 #' Stores result in $appointments_filtered
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param status filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
@@ -85,10 +85,10 @@ filter_appointments <- function(dMeasure_obj,
                  status = NA) {
 
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -133,7 +133,7 @@ filter_appointments <- function(dMeasure_obj,
 .reactive_event(dMeasure, "appointments_filteredR",
                 quote(
                   shiny::eventReactive(
-                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
+                    c(self$date_aR(), self$date_bR(),
                       self$cliniciansR(), self$appointment_statusR()), {
                         # update if reactive version of $date_a Rdate_b
                         # or $clinicians are updated.
@@ -173,10 +173,10 @@ filter_appointments_time <- function(dMeasure_obj,
                  lazy = FALSE) {
 
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             clinicians <- self$clinicians
@@ -248,10 +248,10 @@ list_appointments <- function(dMeasure_obj,
                  lazy = FALSE) {
 
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (all(is.na(clinicians))) {
             clinicians <- self$clinicians
@@ -329,10 +329,10 @@ billed_appointments <- function(dMeasure_obj,
                  status = NA,
                  lazy = FALSE) {
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (all(is.na(clinicians))) {
             clinicians <- self$clinicians

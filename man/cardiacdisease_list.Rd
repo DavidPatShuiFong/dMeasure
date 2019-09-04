@@ -2,7 +2,7 @@
 % Please edit documentation in R/conditions.R
 \name{cardiacdisease_list}
 \alias{cardiacdisease_list}
-\title{list of patients with cardiac conditioins}
+\title{list of patients with cardiac conditions}
 \usage{
 cardiacdisease_list(dMeasure_obj, appointments = NULL)
 }
@@ -16,5 +16,5 @@ if no parameter provided, derives from $appointments_filtered}
 a list of numbers, which are the InternalIDs
 }
 \description{
-list of patients with cardiac conditioins
+for influenza immunization purposes
 }

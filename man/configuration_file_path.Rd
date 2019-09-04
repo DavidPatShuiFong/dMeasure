@@ -2,9 +2,17 @@
 % Please edit documentation in R/dMeasure.R
 \name{configuration_file_path}
 \alias{configuration_file_path}
-\title{read configuration filepaths}
+\title{read (or set) configuration filepath}
+\usage{
+configuration_file_path(dMeasure_obj, value)
+}
+\arguments{
+\item{dMeasure_obj}{dMeasure R6 object}
+
+\item{value}{(opt) filepath to set}
+}
 \value{
-SQL filepath
+SQL filepath (only returned if no 'value' provided)
 }
 \description{
 By default, the YAML configuration is either in the working
@@ -12,7 +20,9 @@ directory (where a local installation of R lives),
 or the user's home directory
 }
 \details{
-this method will set $yaml_config_filepath and $sql_config_filepath
+'~/.DailyMeasure_cfg.yaml'
+
+this method will read or set $sql_config_filepath
 it will read the YAML configuration filepath, which if already
 existing might contain the 'real' location of the $sql_config_filepath
 

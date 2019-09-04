@@ -115,10 +115,10 @@ NULL
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param status=NA filter by 'status' if not NA
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
 #'  if NA, adopts from active $appointment_status
@@ -139,10 +139,10 @@ list_contact_appointments <- function(dMeasure_obj,
                  status = NA) {
 
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -187,8 +187,8 @@ list_contact_appointments <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_appointments_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$dateContact$date_aR(),
-                      self$dateContact$date_bR(),
+                    c(self$date_aR(),
+                      self$date_bR(),
                       self$cliniciansR(),
                       self$appointment_statusR()),
                     ignoreNULL = FALSE, {
@@ -204,10 +204,10 @@ list_contact_appointments <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param visit_types=NA filter by 'visit_type' if not NA
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param visit_types (default NA) filter by 'visit_type' if not NA
 #'  permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",
 #'  "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 #'  "Other", "Hostel", "Telehealth"
@@ -229,10 +229,10 @@ list_contact_visits <- function(dMeasure_obj,
                  visit_type = NA) {
 
           if (is.na(date_from)) {
-            date_from <- self$dateContact$date_a
+            date_from <- self$date_a
           }
           if (is.na(date_to)) {
-            date_to <- self$dateContact$date_b
+            date_to <- self$date_b
           }
           if (length(clinicians) == 1 && is.na(clinicians)) {
             # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -279,7 +279,7 @@ list_contact_visits <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_visits_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
+                    c(self$date_aR(), self$date_bR(),
                       self$cliniciansR(),
                       self$visit_typeR()),
                     ignoreNULL = FALSE, {
@@ -296,9 +296,9 @@ list_contact_visits <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param date_from (default NA -> dMeasure_obj$date_a) start date
+#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
 #'
 #' @return dataframe of Patient (name), InternalID, ServiceDate
 list_contact_services <- function(dMeasure_obj,
@@ -313,10 +313,10 @@ list_contact_services <- function(dMeasure_obj,
                                                     clinicians = NA) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -370,7 +370,7 @@ list_contact_services <- function(dMeasure_obj,
 .reactive_event(dMeasure, "contact_services_listR",
                 quote(
                   shiny::eventReactive(
-                    c(self$dateContact$date_aR(), self$dateContact$date_bR(),
+                    c(self$date_aR(), self$date_bR(),
                       self$cliniciansR()), {
                         # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
@@ -453,8 +453,8 @@ list_contact_services <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $dateContact$date_a
-#' @param date_to end date (inclusive). default is $dateContact$date_b
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
 #' @param clinicians list of clinicians to view. default is $clinicians
 #' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
@@ -483,10 +483,10 @@ list_contact_count <- function(dMeasure_obj,
                                                  lazy = FALSE) {
 
   if (is.na(date_from)) {
-    date_from <- self$dateContact$date_a
+    date_from <- self$date_a
   }
   if (is.na(date_to)) {
-    date_to <- self$dateContact$date_b
+    date_to <- self$date_b
   }
   if (length(clinicians) == 1 && is.na(clinicians)) {
     # sometimes clinicians is a list, in which case it cannot be a single NA!
@@ -500,7 +500,7 @@ list_contact_count <- function(dMeasure_obj,
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
   }
-  if (is.na(contact_type)) {
+  if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
 

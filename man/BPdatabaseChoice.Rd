@@ -3,12 +3,22 @@
 \name{BPdatabaseChoice}
 \alias{BPdatabaseChoice}
 \title{choose (or read) database choice}
+\usage{
+BPdatabaseChoice(dMeasure_obj, choice)
+}
+\arguments{
+\item{dMeasure_obj}{dMeasure R6 object}
+
+\item{choice}{(optional) name of database choice
+
+ posible value includes "None", which will close any current database}
+}
 \value{
-the current database choice
+the current database choice, if choice not provided
 }
 \description{
 This must be one of 'None' or one of the defined databases.
-Tries to open the databse. If fails, will be set to 'None'.
+Tries to open the database. If fails, will be set to 'None'.
 }
 \details{
 Sets $BPdatabasechoiceR reactive, if shiny/reactive
