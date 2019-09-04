@@ -1025,9 +1025,27 @@ initialize_emr_tables <- function(dMeasure_obj,
   # has the fields SEXUALITYCODE (a number)
   # and SEXUALITYNAME (a string)
 
+  private$db$SMOKINGSTATUS <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "SMOKINGSTATUS")) %>>%
+    dplyr::mutate(SMOKINGTEXT = trimws(SMOKINGTEXT))
+  # has fields SMOKINGCODE (a number)
+  # and SMOKINGTEXT (a string)
+
+  private$db$ALCOHOLSTATUS <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ALCOHOLSTATUS")) %>>%
+    dplyr::mutate(ALCOHOLTEXT = trimws(ALCOHOLTEXT))
+  # has fields ALCOHOLCODE (a number)
+  # and ALCOHOLTEXT (a string)
+  # 0 - no entry, 1 = Nil, 2 = Occasional
+  # 3 - Moderate, 4 = Heavy
+  # note that '0' in the CLINICAL will be the case
+  # if either current or **Past** alcohol consumption not entered
+
   private$db$clinical <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
-    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY) %>>%
+    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY,
+                  SMOKINGSTATUS, ALCOHOLSTATUS,
+                  CREATED, UPDATED) %>>%
     dplyr::left_join(private$db$MARITALSTATUS,
                      by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
     dplyr::left_join(private$db$SEXUALITY,
@@ -1037,13 +1055,53 @@ initialize_emr_tables <- function(dMeasure_obj,
                   MaritalStatus = MARITALSTATUSNAME,
                   Sexuality = SEXUALITYNAME) %>>%
     dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
-                  Sexuality = trimws(Sexuality))
-  # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
-  #  (which are not dated or given additional identifiers)
-  # MaritalStatusName and SexualityName provided as strings
-  # 'codes' can be found in dbo.CLINICAL
-  # and interpretation of codes can be found in dbo.MARITALSTATUS
-  # and dbo.SEXUALITY
+                  Sexuality = trimws(Sexuality)) %>>%
+    # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
+    #  (which are not dated or given additional identifiers)
+    # MaritalStatusName and SexualityName provided as strings
+    # 'codes' can be found in dbo.CLINICAL
+    # and interpretation of codes can be found in dbo.MARITALSTATUS
+    # and dbo.SEXUALITY
+    #
+    # this table appears to have one entry per patient
+    dplyr::left_join(private$db$SMOKINGSTATUS,
+                    by = c("SMOKINGSTATUS" = "SMOKINGCODE")) %>>%
+    # current SMOKINGCODE is 0 - nothing, 1 = "Non smoker",
+    # 2 - "Ex smoker", 3 - "Smoker"
+    dplyr::select(-c(SMOKINGSTATUS)) %>>%
+    dplyr::rename(SmokingStatus = SMOKINGTEXT) %>>%
+    dplyr::left_join(private$db$ALCOHOLSTATUS,
+                     by = c("ALCOHOLSTATUS" = "ALCOHOLCODE")) %>>%
+    dplyr::select(-c(ALCOHOLSTATUS)) %>>%
+    dplyr::rename(AlcoholStatus = ALCOHOLTEXT,
+                  Created = CREATED,
+                  Updated = UPDATED)
+  # 0 - no entry, 1 = Nil, 2 = Occasional
+  # 3 - Moderate, 4 = Heavy
+  # note that '0' in the CLINICAL will be the case
+  # if either current or **Past** alcohol consumption not entered
+
+  private$db$alcohol <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Alcohol')) %>>%
+    dplyr::select(InternalID,
+                  NonDrinker, DaysPerweek, DrinksPerday, Description,
+                  # NonDrinker - 'Yes' or 'No'
+                  PastAlcoholLevel, YearStarted, YearStopped, Comment) %>>%
+    dplyr::mutate(NonDrinker = trimws(Nondrinker)) %>>%
+    dplyr::left_join(private$db$clinical %>>%
+                       dplyr::select(InternalID, Updated),
+                     by = c("InternalID" = "InternalID"))
+  # strangely 'by' needs to be explicit, perhaps because of lazy eval?
+  # to tell if the patient has a alcohol history requires...
+  # NonDrinker = 'Yes' OR DaysPerweek/DrinksPerday to be non-zero
+  # unfortunately, no date is attached to this alcohol history
+  #
+  # this table appears to have one entry per patient
+  #
+  # there IS a date attached to AlcoholStatus in 'clinical' table,
+  # but this requires entries in both Present and Past alcohol intake.
+  # the 'UPDATED' field in clinical appears to have the correct update
+  # date for BPS_Alcohol
 
   private$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
@@ -1134,12 +1192,31 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
                   ResultValue, Units, Range) %>>%
-    dplyr::mutate(ResultValue = trimws(ResultValue),
+    dplyr::mutate(LoincCode = trimws(LoincCode),
+                  ResultName = trimws(ResultName),
+                  Range = trimws(Range),
+                  ResultValue = trimws(ResultValue),
                   Units = trimws(Units))
   # BPCode
-  #  1 - HbA1C, 2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol
-  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Gluccse (Serum)
-  #  17 - Albumin/Creatinine ratio, 19 - HbA1C (SI)
+  #  1 - HbA1C
+  #  2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol, 5 - triglycerides
+  #  6 - Creatinine, 7 - Urine Albumin, 12 - INR, 14 - Glucose (Serum)
+  #  16 - eGFR
+  #  17 - Albumin/Creatinine ratio, 18 - UAE, 19 - HbA1C (SI)
+  #
+  #  16 - Diabetes Cycle of Care page records in "mL/min" units
+  #
+  #  17 variously labelled 'ACR' or 'Albumin/Creat Ratio' in SAMPLES database
+  #   units will be recorded e.g. mg/mmol
+  #
+  #  18 "UAE"
+  #  units:
+  #   "mcg/min"
+  #
+  #  7 "Microalbuminuria"
+  #   units can be "g/day" "mg/L" "mg/mmol" "mcg/min"
+  #  this might be simultaneously recorded (from the Diabetes Cycle of Care Page)
+  #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
   private$db$services <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
