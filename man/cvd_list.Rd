@@ -13,7 +13,7 @@ cvd_list(dMeasure_obj, appointments = NULL)
 if no parameter provided, derives from $appointments_filtered}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs
 }
 \description{
 for CVD risk assessment purposes

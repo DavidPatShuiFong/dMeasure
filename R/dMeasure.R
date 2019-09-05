@@ -177,6 +177,7 @@ dMeasure <-
 #' dMeasure_obj$configuration_file_path # read filepath
 #' dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
 #'  # sets filepath
+#' @export
 configuration_file_path <- function(dMeasure_obj, value) {
   if (missing(value)) {
     return(dMeasure_obj$configuration_file_path)
@@ -279,6 +280,7 @@ configuration_file_path <- function(dMeasure_obj, value) {
 #' dMeasure_obj$open_configuration_db()
 #' dMeasure_obj$read_configuration_db()
 #' dMeasure_obj$BPdatabase
+#' @export
 BPdatabase <- function(dMeasure_obj) {
   return(dMeasure_obj$BPdatabase)
 }
@@ -316,6 +318,7 @@ BPdatabase <- function(dMeasure_obj) {
 #' dMeasure_obj$open_configuration_db()
 #' dMeasure_obj$read_configuration_db()
 #' dMeasure_obj$BPdatabaseNames
+#' @export
 BPdatabaseNames <- function(dMeasure_obj) {
   return(dMeasure_obj$BPdatabaseNames)
 }
@@ -361,6 +364,7 @@ BPdatabaseNames <- function(dMeasure_obj) {
 #' dMeasure_obj$open_configuration_db()
 #' dMeasure_obj$read_configuration_db()
 #' dMeasure_obj$UserConfig
+#' @export
 UserConfig <- function(dMeasure_obj) {
   return(dMeasure_obj$UserConfig)
 }
@@ -419,6 +423,7 @@ UserConfig <- function(dMeasure_obj) {
 #' @examples
 #' dMeasure_obj$BPdatabaseChoice # returns the current choice
 #' dMeasure_obj$BPdatabaseChoice <- "None" # sets database to none
+#' @export
 BPdatabaseChoice <- function(dMeasure_obj, choice) {
   if (missing(choice)) {
     return(dMeasure_obj$BPdatabaseChoice)
@@ -551,6 +556,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 #' dMeasure_obj$open_configuration_db()
 #' dMeasure_obj$read_configuration_db()
 #' dMeasure_obj$UserConfig
+#' @export
 open_configuration_db <-
   function(dMeasure_obj,
            configuration_file_path = dMeasure_obj$configuration_file_path) {
@@ -705,6 +711,7 @@ open_configuration_db <-
 #' dMeasure_obj$open_configuration_db()
 #' dMeasure_obj$read_configuration_db()
 #' dMeasure_obj$UserConfig
+#' @export
 read_configuration_db <- function(dMeasure_obj,
                                   config_db) {
   if (exists(config_db)) {
@@ -853,6 +860,7 @@ match_user <- function(dMeasure_obj) {
 #' @param location location. default is whatever is already set
 #'
 #' @return the clinician choice list
+#' @export
 clinician_list <- function(dMeasure_obj,
                            view_name = "All",
                            location = NULL) {
@@ -914,6 +922,7 @@ clinician_list <- function(dMeasure_obj,
 #'
 #' @return list of clinicians chosen
 #' this will be 'checked' against actual available clinicians ($clinicians_list)
+#' @export
 choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
   dMeasure_obj$choose_clinicians(choices, view_name)
 }
@@ -951,6 +960,7 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 #'
 #' if no arguments passed, the defaults are what is stored in
 #' the  object
+#' @export
 open_emr_db <- function(dMeasure_obj,
                         BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
   dMeasure_obj$open_emr_db(BPdatabaseChoice)
@@ -985,6 +995,7 @@ open_emr_db <- function(dMeasure_obj,
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param emr_db R6 object connecting to EMR database
+#' @export
 initialize_emr_tables <- function(dMeasure_obj,
                                   emr_db = dMeasure_obj$emr_db) {
   dMeasure_obj$initialize_emr_tables(emr_db)
@@ -1293,7 +1304,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' who have been configured (in SQLite), including passwords
 #'
 #' @name UserFullConfig
-#'
+#' @export
 .active(dMeasure, "UserFullConfig", function(value) {
   if (!missing(value)) {
     stop("Can't set `$UserFullConfig`", call. = FALSE)
@@ -1338,6 +1349,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return the list of locations, including 'All'
+#' @export
 location_list <- function(dMeasure_obj) {
   dMeasure_obj$location_list()
 }
@@ -1418,6 +1430,7 @@ choose_location <- function(dMeasure_obj,
 #'
 #' if date_a is later than date_b, a warning is returned,
 #' and the dates are NOT changed
+#' @export
 choose_date <- function(dMeasure_obj,
                         date_from = dMeasure_obj$date_a,
                         date_to = dMeasure_obj$date_b) {

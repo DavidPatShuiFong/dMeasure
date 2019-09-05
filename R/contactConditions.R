@@ -35,6 +35,7 @@ NULL
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_diabetes <- function(dMeasure_obj,
                                   date_from = NA,
                                   date_to = NA,
@@ -146,6 +147,7 @@ list_contact_diabetes <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_chroniclungdisease <- function(dMeasure_obj,
                                             date_from = NA,
                                             date_to = NA,
@@ -258,6 +260,7 @@ list_contact_chroniclungdisease <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_15plus <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -371,6 +374,7 @@ list_contact_15plus <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_65plus <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -484,6 +488,7 @@ list_contact_65plus <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_45_74 <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,
@@ -597,6 +602,7 @@ list_contact_45_74 <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_75plus <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -709,6 +715,7 @@ list_contact_75plus <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_ATSI_35_44 <- function(dMeasure_obj,
                                     date_from = NA,
                                     date_to = NA,
@@ -831,6 +838,7 @@ list_contact_ATSI_35_44 <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_cst <- function(dMeasure_obj,
                              date_from = NA,
                              date_to = NA,

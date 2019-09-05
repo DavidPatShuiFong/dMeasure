@@ -85,6 +85,7 @@ NULL
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_qim_active <- function(dMeasure_obj,
                             date_from = NA,
                             date_to = NA,
@@ -210,6 +211,7 @@ list_qim_active <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), demographics, Count, Proportion
+#' @export
 report_qim_active <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -357,6 +359,7 @@ report_qim_active <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_qim_diabetes <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -560,6 +563,7 @@ list_qim_diabetes <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), demographics, measure (done or not), InternalID, Count, proportion
+#' @export
 report_qim_diabetes <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -720,6 +724,7 @@ report_qim_diabetes <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent CST 'observation' (test) date and name
+#' @export
 list_qim_cst <- function(dMeasure_obj,
                          date_from = NA,
                          date_to = NA,
@@ -922,6 +927,7 @@ list_qim_cst <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), demographics, measure (done or not), Count, Proportion
+#' @export
 report_qim_cst <- function(dMeasure_obj,
                            date_from = NA,
                            date_to = NA,
@@ -1093,6 +1099,7 @@ report_qim_cst <- function(dMeasure_obj,
 #' @param lazy recalculate the diabetes contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_qim_15plus <- function(dMeasure_obj,
                             date_from = NA,
                             date_to = NA,
@@ -1394,6 +1401,7 @@ list_qim_15plus <- function(dMeasure_obj,
 #'
 #' @return dataframe of Patient (name), demographics, measures (done or not),
 #'  Count (n), and proportion
+#' @export
 report_qim_15plus <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -1551,6 +1559,7 @@ report_qim_15plus <- function(dMeasure_obj,
 #' @param lazy recalculate the 65+ contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_qim_65plus <- function(dMeasure_obj,
                             date_from = NA,
                             date_to = NA,
@@ -1696,6 +1705,7 @@ list_qim_65plus <- function(dMeasure_obj,
 #' @param lazy recalculate the 65+ contact list?
 #'
 #' @return dataframe of Patient (name), demographic, Count, proportion
+#' @export
 report_qim_65plus <- function(dMeasure_obj,
                               date_from = NA,
                               date_to = NA,
@@ -1839,7 +1849,8 @@ report_qim_65plus <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the copd contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID, Count, and most recent contact
+#' @export
 list_qim_copd <- function(dMeasure_obj,
                           date_from = NA,
                           date_to = NA,
@@ -1984,6 +1995,7 @@ list_qim_copd <- function(dMeasure_obj,
 #' @param lazy recalculate the copd contact list?
 #'
 #' @return dataframe of Patient (name), demographic, measure (done or not), Count, Proportion
+#' @export
 report_qim_copd <- function(dMeasure_obj,
                             date_from = NA,
                             date_to = NA,
@@ -2195,6 +2207,7 @@ report_qim_copd <- function(dMeasure_obj,
 #' @param lazy recalculate the copd contact list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_qim_cvdRisk <- function(dMeasure_obj,
                              date_from = NA,
                              date_to = NA,
@@ -2410,6 +2423,7 @@ list_qim_cvdRisk <- function(dMeasure_obj,
 #' @param lazy recalculate the cvdRisk contact list?
 #'
 #' @return dataframe of Patient (name), Demographic, Measure (done or not), Count, Proportion
+#' @export
 report_qim_cvdRisk <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,

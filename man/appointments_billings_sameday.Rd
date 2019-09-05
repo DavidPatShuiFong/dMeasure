@@ -10,17 +10,17 @@ appointments_billings_sameday(dMeasure_obj, date_from, date_to, clinicians,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
+\item{date_from}{(default dMeasure_obj$date_a) start date}
+
+\item{date_to}{(default dMeasure_obj$date_b) end date (inclusive)}
+
+\item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
+
 \item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
 
-\item{date_from=dMeasure_obj$date_a}{start date}
+\item{screentag}{(default FALSE) optionally add a fomantic/semantic HTML description of 'action'}
 
-\item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
-
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
-
-\item{screentag=FALSE}{optionally add a fomantic/semantic HTML description of 'action'}
-
-\item{screentag_print=TRUE}{optionally add a 'printable' description of 'action'}
+\item{screentag_print}{(default TRUE) optionally add a 'printable' description of 'action'}
 }
 \value{
 list of appointments (with patient details)

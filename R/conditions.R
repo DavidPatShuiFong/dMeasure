@@ -13,7 +13,8 @@ NULL
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 diabetes_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$diabetes_list(appointments)
 }
@@ -51,7 +52,8 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 asthma_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$asthma_list(appointments)
 }
@@ -88,7 +90,8 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 atsi_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$atsi_list(appointments)
 }
@@ -128,7 +131,8 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$malignancy_list(appointments)
 }
@@ -176,7 +180,8 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 hiv_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$hiv_list(appointments)
 }
@@ -214,7 +219,8 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$haemoglobinopathy_list(appointments)
 }
@@ -252,7 +258,8 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 asplenia_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$asplenia_list(appointments)
 }
@@ -290,7 +297,8 @@ asplenia_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 transplant_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$transplant_list(appointments)
 }
@@ -335,7 +343,7 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
 #' @export
 cvd_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cvd_list(appointments)
@@ -381,7 +389,7 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
 #' @export
 cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
@@ -423,7 +431,8 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$trisomy21_list(appointments)
 }
@@ -461,7 +470,8 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments list of appointments. default is $appointments_filtered
 #'  needs appointments, as looks for recording prior to the appointment time
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 bmi30_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
 }
@@ -506,7 +516,8 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chroniclungdisease_list(appointments)
 }
@@ -545,7 +556,8 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 neurologic_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$neurologic_list(appointments)
 }
@@ -585,7 +597,8 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chronicliverdisease_list(appointments)
 }
@@ -624,7 +637,8 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chronicrenaldisease_list(appointments)
 }
@@ -665,7 +679,8 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 pregnant_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$pregnant_list(appointments)
 }
@@ -704,7 +719,8 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$fifteenplus_list(appointments)
 }
@@ -744,7 +760,8 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$sixtyfiveplus_list(appointments)
 }
@@ -783,7 +800,8 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$seventyfiveplus_list(appointments)
 }
@@ -822,7 +840,8 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$ATSI_35_44_list(appointments)
 }
@@ -871,7 +890,8 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$fortyfiveseventyfour_list(appointments)
 }
@@ -913,7 +933,8 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cst_eligible_list(appointments)
 }
@@ -969,7 +990,8 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$mammogram_eligible_list(appointments)
 }
@@ -1007,7 +1029,8 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$familialHypercholesterolaemia_list(appointments)
 }
@@ -1040,7 +1063,8 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 LVH_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$LVH_list(appointments)
 }

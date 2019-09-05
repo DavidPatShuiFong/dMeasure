@@ -124,6 +124,7 @@ NULL
 #'  if NA, adopts from active $appointment_status
 #'
 #' @return dataframe of Patient (name), InternalID, AppointmentDate
+#' @export
 list_contact_appointments <- function(dMeasure_obj,
                                       date_from = NA,
                                       date_to = NA,
@@ -214,6 +215,7 @@ list_contact_appointments <- function(dMeasure_obj,
 #'  if NA, adopts value from active $visit_type
 #'
 #' @return dataframe of Patient (name), InternalID, VisitDate
+#' @export
 list_contact_visits <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -301,6 +303,7 @@ list_contact_visits <- function(dMeasure_obj,
 #' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
 #'
 #' @return dataframe of Patient (name), InternalID, ServiceDate
+#' @export
 list_contact_services <- function(dMeasure_obj,
                                   date_from = NA,
                                   date_to = NA,
@@ -461,6 +464,7 @@ list_contact_services <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_count <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,

@@ -207,19 +207,20 @@ NULL
 #' Stores result in $investigations_filtered
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
-#'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#'  if NA, will adopt the value of dMeasure_obj$filter_incoming_Action
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
-#'  if NA, will adopt the value of $filter_incoming_Actioned
+#'  if NA, will adopt the value of dMeasure_obj$filter_incoming_Actioned
 #'
 #' @return list of investigations
+#' @export
 filter_investigations <- function(dMeasure_obj,
                                   date_from = NA,
                                   date_to = NA,
@@ -328,23 +329,24 @@ filter_investigations <- function(dMeasure_obj,
 #' Stores result in $investigations_filtered_appointments
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
-#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#' @param ignorePast (default NA) don't include appointments before current Sys.Date()
 #'  if NA, adopts $filter_incoming_ignorePast
-#' @param lazy=FALSE if TRUE, don't 'call' filter_investigations
-#'  to re-calculate
+#' @param lazy (default FALSE)
+#'  if TRUE, don't 'call' filter_investigations to re-calculate
 #'
 #' @return list of investigations with relevant appointments
+#' @export
 filter_investigations_appointment <- function(dMeasure_obj,
                                               date_from = NA,
                                               date_to = NA,
@@ -445,23 +447,25 @@ filter_investigations_appointment <- function(dMeasure_obj,
 #' Stores result in $investigations_filtered_named
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
-#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#' @param ignorePast (default NA) don't include appointments before current Sys.Date()
 #'  if NA, adopts $filter_incoming_ignorePast
-#' @param lazy=FALSE only re-calculate $invesigations_filtered_appointment
+#' @param lazy (default FALSE)
+#'  only re-calculate $invesigations_filtered_appointment
 #'  if lazy is TRUE
 #'
 #' @return list of investigations
+#' @export
 filter_investigations_named <- function(dMeasure_obj,
                                         date_from = NA,
                                         date_to = NA,
@@ -564,19 +568,20 @@ filter_investigations_named <- function(dMeasure_obj,
 #' Stores result in $correspondence_filtered
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
 #'
 #' @return list of correspondence
+#' @export
 filter_correspondence <- function(dMeasure_obj,
                                   date_from = NA,
                                   date_to = NA,
@@ -712,23 +717,24 @@ filter_correspondence <- function(dMeasure_obj,
 #' Stores result in $correspondence_filtered_appointments
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
-#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#' @param ignorePast (default NA) don't include appointments before current Sys.Date()
 #'  if NA, will adopts value of $filter_incoming_ignorePast
-#' @param lazy=FALSE if TRUE, don't 'call' filter_correspondence
+#' @param lazy (default FALSE) if TRUE, don't 'call' filter_correspondence
 #'  to re-calculate
 #'
 #' @return list of correspondence with relevant appointments
+#' @export
 filter_correspondence_appointment <- function(dMeasure_obj,
                                               date_from = NA,
                                               date_to = NA,
@@ -834,23 +840,24 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 #' are changed to 'human-readable' character strings e.g. ACTION
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians list) of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
-#' @param ignorePast=NA don't include appointments before current Sys.Date()
+#' @param ignorePast (default NA) don't include appointments before current Sys.Date()
 #'  if NA, will adopt the value of $filter_incoming_ignorePast
-#' @param lazy=FALSE if TRUE, don't 'call' filter_correspondence_appointment
+#' @param lazy (default FALSE) if TRUE, don't 'call' filter_correspondence_appointment
 #'  to re-calculate
 #'
 #' @return list of correspondence
+#' @export
 filter_correspondence_named <- function(dMeasure_obj,
                                         date_from = NA,
                                         date_to = NA,
@@ -982,24 +989,25 @@ filter_correspondence_named <- function(dMeasure_obj,
 #' and clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param Action=NA Filter by action?
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param Action (default NA) Filter by action?
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
-#' @param Actioned=NA Filter by having been 'actioned?' i.e. notified
+#' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
 #'  if NA, will adopt the value of $filter_incoming_Actioned
-#' @param ignorePast=NA ignore appointments before current Sys.Date() date?
+#' @param ignorePast (default NA) ignore appointments before current Sys.Date() date?
 #'  retrieves from $filter_incoming_ignorePast if NA
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
-#' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print=TRUE optionally add a 'printable' description of 'action'
+#' @param screentag (default FALSE) optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print (default TRUE) optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
+#' @export
 incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
                           clinicians = NA,
                           Action = NA,

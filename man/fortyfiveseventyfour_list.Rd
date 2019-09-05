@@ -13,7 +13,7 @@ fortyfiveseventyfour_list(dMeasure_obj, appointments = NULL)
 if no parameter provided, derives from $appointments_filtered}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs
 }
 \description{
 list of patients who are 45 to 74 years age at time of $Date

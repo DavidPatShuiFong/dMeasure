@@ -17,6 +17,7 @@ NULL
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 server.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$server.insert(description)
 }
@@ -84,6 +85,7 @@ server.insert <- function(dMeasure_obj, description) {
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 server.update <- function(dMeasure_obj, description) {
   dMeasure_obj$server.update(description)
 }
@@ -174,6 +176,7 @@ server.update <- function(dMeasure_obj, description) {
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 server.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$server.delete(description)
 }
@@ -219,6 +222,7 @@ server.delete <- function(dMeasure_obj, description) {
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 server.list <- function(dMeasure_obj) {
   dMeasure_obj$server.list()
 }
@@ -256,6 +260,7 @@ server.list <- function(dMeasure_obj) {
 #'
 #' @return TRUE or FALSE
 #'  additionally returns a warning if permission is FALSE
+#' @export
 server.permission <- function(dMeasure_obj) {
   dMeasure_obj$server.permission()
 }
@@ -420,6 +425,7 @@ server.permission <- function(dMeasure_obj) {
 #' @param message
 #'
 #' @return nothing
+#' @export
 WriteLog <- function(dMeasure_obj, message) {
   dMeasure_obj$WriteLog(message)
 }

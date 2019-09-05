@@ -15,6 +15,8 @@ userrestriction.change(dMeasure_obj, restriction, state)
 }
 \value{
 list (newstate, error, warn)  : returns 'state', if permissible
+                                      error$message and error$title
+                                      warn$message and warn$title
 }
 \description{
 Change user restrictions

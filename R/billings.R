@@ -14,14 +14,15 @@ NULL
 #' filter to billings which are done on the same day as displayed appointments
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
-#' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print=TRUE optionally add a 'printable' description of 'action'
+#' @param screentag (default FALSE) optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print (default TRUE) optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
+#' @export
 appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clinicians,
                                           lazy, screentag, screentag_print) {
   dMeasure_obj$appointments_billlings_sameday(date_from, date_to, clinicians,
@@ -85,14 +86,15 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
 #' billings are aggregated/group to patient/day
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date
-#' @param date_to=dMeasure_obj$date_b end date (inclusive)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
+#' @param date_from (default dMeasure_obj$date_a) start date
+#' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
-#' @param screentag=FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print=TRUE optionally add a 'printable' description of 'action'
+#' @param screentag (default FALSE) optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print (default TRUE) optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
+#' @export
 billings_list <- function(dMeasure_obj, date_from, date_to, clinicians,
                           lazy, screentag, screentag_print) {
   dMeasure_obj$billings_list(date_from, date_to, clinicians,

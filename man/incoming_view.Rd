@@ -11,30 +11,30 @@ incoming_view(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
+\item{date_from}{(default dMeasure_obj$date_a) start date}
 
-\item{date_from=dMeasure_obj$date_a}{start date}
+\item{date_to}{(default dMeasure_obj$date_b) end date (inclusive)}
 
-\item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
+\item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
 
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
-
-\item{Action=NA}{Filter by action?
+\item{Action}{(default NA) Filter by action?
 a vector of actions (in string form) or NULL
 e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 if NA, will adopt the value of $filter_incoming_Action}
 
-\item{Actioned=NA}{Filter by having been 'actioned?' i.e. notified
+\item{Actioned}{(default NA) Filter by having been 'actioned?' i.e. notified
 can be logical (TRUE or FALSE), a NULL
 or a Date (actioned prior to or by 'Actioned' Date)
 if NA, will adopt the value of $filter_incoming_Actioned}
 
-\item{ignorePast=NA}{ignore appointments before current Sys.Date() date?
+\item{ignorePast}{(default NA) ignore appointments before current Sys.Date() date?
 retrieves from $filter_incoming_ignorePast if NA}
 
-\item{screentag=FALSE}{optionally add a fomantic/semantic HTML description of 'action'}
+\item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
 
-\item{screentag_print=TRUE}{optionally add a 'printable' description of 'action'}
+\item{screentag}{(default FALSE) optionally add a fomantic/semantic HTML description of 'action'}
+
+\item{screentag_print}{(default TRUE) optionally add a 'printable' description of 'action'}
 }
 \value{
 list of appointments (with patient details)

@@ -34,7 +34,7 @@ NULL
 #'   TestDate (date object) - date and
 #'   TestName - description of the most recent bowel cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
-#'
+#' @export
 list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                       appointments_list = NULL,
                       lazy = FALSE,
@@ -232,7 +232,7 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 #'   TestDate (date object) - date and
 #'   TestName - description of the most recent cervical cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
-#'
+#' @export
 list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
                      lazy = FALSE,
@@ -389,7 +389,7 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 #'   TestDate (date object) - date and
 #'   TestName - description of the most recent breast cancer screening test (if any)
 #'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
-#'
+#' @export
 list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
                            lazy = FALSE,

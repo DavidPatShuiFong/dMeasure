@@ -24,7 +24,6 @@ NULL
 #' no paramters
 #'
 #' @return a list
-#'
 #' @export
 restrictionTypes_list <- function() {
   return(
@@ -218,8 +217,9 @@ restrictionTypes_list <- function() {
 #' @param state new state (TRUE or FALSE)
 #'
 #' @return list (newstate, error, warn)  : returns 'state', if permissible
-#                                       error$message and error$title
-#                                       warn$message and warn$title
+#'                                       error$message and error$title
+#'                                       warn$message and warn$title
+#' @export
 userrestriction.change <- function(dMeasure_obj, restriction, state) {
   dMeasure_obj$userrestriction.change(restriction, state)
 }
@@ -426,6 +426,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'         Location = list(c("Jemena", "Lakeside")),
 #'         Attributes = list(c("UserAdmin", "ServerAdmin")))
 #'
+#' @export
 userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
 }
@@ -538,7 +539,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'    list(Fullname = "Mrs. Diabetes Educator",
 #'         Location = list(c("Jemena", "Lakeside")),
 #'         Attributes = list(c("UserAdmin", "ServerAdmin")))
-#'
+#' @export
 userconfig.update <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.update(description)
 }
@@ -638,6 +639,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 #' @param description list $Fullname
 #'
 #' @return self$UserConfig
+#' @export
 userconfig.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.delete(description)
 }
@@ -693,6 +695,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return $UserConfig
+#' @export
 userconfig.list <- function(dMeasure_obj) {
   dMeasure_obj$userconfig.list()
 }
@@ -738,6 +741,7 @@ userrestriction.list <- function(dMeasure_obj) {
 #'
 #' @return TRUE or FALSE
 #'  additionally returns a warning if permission is FALSE
+#' @export
 useradmin.permission <- function(dMeasure_obj) {
   dMeasure_obj$useradmin.permission()
 }

@@ -13,7 +13,7 @@ bmi30_list(dMeasure_obj, appointments = NULL)
 needs appointments, as looks for recording prior to the appointment time}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs
 }
 \description{
 list of patients with BMI>=30 (obesity)

@@ -70,6 +70,7 @@ NULL
 #'   $appointment_status_types
 #'
 #' @return list of appointments
+#' @export
 filter_appointments <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -157,6 +158,7 @@ filter_appointments <- function(dMeasure_obj,
 #'  'Waiting', 'With doctor'
 #'
 #' @return list of appointments
+#' @export
 filter_appointments_time <- function(dMeasure_obj,
                                      date_from = NA, date_to = NA,
                                      clinicians = NA,
@@ -232,6 +234,7 @@ filter_appointments_time <- function(dMeasure_obj,
 #'
 #'
 #' @return list of appointments
+#' @export
 list_appointments <- function(dMeasure_obj,
                               date_from = NA, date_to = NA,
                               clinicians = NA,
@@ -298,22 +301,22 @@ list_appointments <- function(dMeasure_obj,
 #'
 #' Filtered by date, and chosen clinicians
 #' Modified $appointments_billings
+#' Billings for patients who have displayed appointments
+#'
+#' collects ALL billings for patients who have displayed appointments
+#' used by billings view, and CDM billings view
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date, inclusive (date object)
-#' @param date_to=dMeasure_obj$date_b end date, inclusive (date object)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param status=NA filter by 'status' if not NA
+#' @param date_from (default dMeasure_obj$date_a) start date, inclusive (date object)
+#' @param date_to (default dMeasure_obj$date_b) end date, inclusive (date object)
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
-#' @param lazy=FALSE if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
 #'
 #' @return list of appointments
-
-# Billings for patients who have displayed appointments
-
-# collects ALL billings for patients who have displayed appointments
-# used by billings view, and CDM billings view
+#' @export
 billed_appointments <- function(dMeasure_obj,
                                 date_from = NA, date_to = NA,
                                 clinicians = NA,

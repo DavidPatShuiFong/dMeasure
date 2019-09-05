@@ -32,6 +32,7 @@ NULL
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of Zostavax eligible patients
+#' @export
 list_zostavax <- function(dMeasure_obj,
                           date_from = NA, date_to = NA, clinicians = NA,
                           appointments_list = NULL,
@@ -165,6 +166,7 @@ list_zostavax <- function(dMeasure_obj,
 #' @param vaxtag_print = TRUE
 #'
 #' @return dataframe list of influenza eligible patients
+#' @export
 list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
                            lazy = FALSE,
@@ -468,6 +470,7 @@ vax_names <- c("Zostavax", "Influenza")
 #' @param chosen list of vaccine names (default is all)
 #'
 #' @return dataframe list of influenza eligible patients
+#' @export
 list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
                      lazy = FALSE,
