@@ -276,8 +276,8 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   ##### search proper #####################
 
   screen_cst_id <- c(self$cst_eligible_list(appointments_list %>>%
-                                            dplyr::select(InternalID,
-                                                          Date = AppointmentDate)), -1)
+                                              dplyr::select(InternalID,
+                                                            Date = AppointmentDate)), -1)
   # include dummy in case of empty list
 
   screen_cst_list <- appointments_list %>>%
@@ -286,13 +286,13 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   screen_cst_ix <- screen_cst_list %>>%
     dplyr::left_join(
       dplyr::bind_rows(dplyr::inner_join(screen_cst_list,
-                                         private$db$papsmears %>>%
+                                         self$db$papsmears %>>%
                                            dplyr::filter(InternalID %in% screen_cst_id) %>>%
                                            dplyr::rename(TestDate = PapDate,
                                                          TestName = CSTType),
                                          by = 'InternalID', copy = TRUE),
                        dplyr::inner_join(screen_cst_list,
-                                         private$db$investigations %>>%
+                                         self$db$investigations %>>%
                                            dplyr::filter(InternalID %in% screen_cst_id &&
                                                            (TestName %like% "%CERVICAL SCREENING%" ||
                                                               TestName %like% "%PAP SMEAR%")) %>>%
@@ -433,8 +433,8 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   ##### search proper #####################
 
   screen_mammogram_id <- c(self$mammogram_eligible_list(appointments_list %>>%
-                                                        dplyr::select(InternalID,
-                                                                      Date = AppointmentDate)),
+                                                          dplyr::select(InternalID,
+                                                                        Date = AppointmentDate)),
                            -1) # include dummy in case of empty list
 
   screen_mammogram_list <- appointments_list %>>%
@@ -443,7 +443,7 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   screen_mammogram_ix <- screen_mammogram_list %>>%
     dplyr::left_join(
       dplyr::inner_join(screen_mammogram_list,
-                        private$db$investigations %>>%
+                        self$db$investigations %>>%
                           dplyr::filter(InternalID %in% screen_mammogram_id &&
                                           TestName %like% "%mammogram%") %>>%
                           dplyr::rename(TestDate = Reported),

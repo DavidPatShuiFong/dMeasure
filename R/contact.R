@@ -166,12 +166,12 @@ list_contact_appointments <- function(dMeasure_obj,
               query = "contact_appointments",
               data = list(date_from, date_to, clinicians))}
 
-            self$contact_appointments_list <- private$db$appointments %>>%
+            self$contact_appointments_list <- self$db$appointments %>>%
               dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
               dplyr::filter(Provider %in% clinicians) %>>%
               dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
               dplyr::filter(Status %in% status) %>>%
-              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               # need patients database to access date-of-birth
               dplyr::group_by(Patient, InternalID, AppointmentDate) %>>%
               dplyr::summarise() %>>% # plucks out unique appointment dates
@@ -256,14 +256,14 @@ list_contact_visits <- function(dMeasure_obj,
               query = "contact_visits",
               data = list(date_from, date_to, clinicians))}
 
-            self$contact_visits_list <- private$db$visits %>>%
+            self$contact_visits_list <- self$db$visits %>>%
               dplyr::filter(VisitDate >= date_from & VisitDate <= date_to) %>>%
               dplyr::filter(DrName %in% clinicians) %>>% # not just doctors!
               dplyr::filter(VisitType %in% visit_type) %>>%
               dplyr::group_by(InternalID, VisitDate) %>>%
               dplyr::summarise() %>>% # plucks out unique visit dates
               dplyr::ungroup() %>>%
-              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               dplyr::select(Firstname, Surname, InternalID, VisitDate) %>>%
               dplyr::collect() %>>%
               dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
@@ -347,14 +347,14 @@ list_contact_services <- function(dMeasure_obj,
       query = "contact_services",
       data = list(date_from, date_to, clinicians))}
 
-    self$contact_services_list <- private$db$servicesRaw %>>%
+    self$contact_services_list <- self$db$servicesRaw %>>%
       dplyr::filter(ServiceDate >= date_from & ServiceDate <= date_to) %>>%
-      dplyr::left_join(private$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
+      dplyr::left_join(self$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
       dplyr::filter(UserID %in% clinicians) %>>% # not just doctors!
       dplyr::group_by(InternalID, ServiceDate) %>>%
       dplyr::summarise() %>>% # plucks out unique service dates
       dplyr::ungroup() %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
       dplyr::select(Firstname, Surname, InternalID, ServiceDate) %>>%
       dplyr::collect() %>>%
       dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),

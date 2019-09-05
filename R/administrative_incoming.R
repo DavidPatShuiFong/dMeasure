@@ -270,7 +270,7 @@ filter_investigations <- function(dMeasure_obj,
       query = "filter_investigations",
       data = list(date_from, date_to, clinicians))}
 
-    investigations <- private$db$investigations %>>%
+    investigations <- self$db$investigations %>>%
       dplyr::filter(Checked >= date_from & Checked <= date_to) %>>%
       dplyr::filter(CheckedBy %in% clinicians) %>>%
       dplyr::mutate(TestName = trimws(TestName))
@@ -409,7 +409,7 @@ filter_investigations_appointment <- function(dMeasure_obj,
     today <- Sys.Date() # later used if ignorePast is true
 
     self$investigations_filtered_appointment <- self$investigations_filtered %>>%
-      dplyr::left_join(private$db$appointments %>>%
+      dplyr::left_join(self$db$appointments %>>%
                          # only check against appointments after date_from
                          dplyr::filter(AppointmentDate > date_from) %>>%
                          {if (ignorePast) # ignore appointments before 'today'?
@@ -521,7 +521,7 @@ filter_investigations_named <- function(dMeasure_obj,
     }
 
     self$investigations_filtered_named <- self$investigations_filtered_appointment %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
       # need patients database to access date-of-birth
       dplyr::select(Firstname, Surname,
                     DOB, InternalID, RecordNo, TestName, ReportID,
@@ -637,7 +637,7 @@ filter_correspondence <- function(dMeasure_obj,
       query = "filter_correspondence",
       data = list(date_from, date_to, clinicians))}
 
-    correspondence <- private$db$correspondenceInRaw %>>%
+    correspondence <- self$db$correspondenceInRaw %>>%
       dplyr::filter(CHECKDATE >= date_from & CHECKDATE <= date_to) %>>%
       dplyr::filter(CHECKEDBY %in% clinician_n) %>>%
       dplyr::select(INTERNALID, DOCUMENTID,
@@ -794,7 +794,7 @@ filter_correspondence_appointment <- function(dMeasure_obj,
     today <- Sys.Date() # required if ignorePast is TRUE
 
     self$correspondence_filtered_appointment <- self$correspondence_filtered %>>%
-      dplyr::left_join(private$db$appointments %>>%
+      dplyr::left_join(self$db$appointments %>>%
                          # only check against appointments after date_from
                          dplyr::filter(AppointmentDate > date_from) %>>%
                          {if (ignorePast) # ignore appointments before 'today'?
@@ -909,7 +909,7 @@ filter_correspondence_named <- function(dMeasure_obj,
     # needed later for changing CHECKEDBY to a user name
 
     self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
       # need patients database to access date-of-birth
       dplyr::select(Firstname, Surname,
                     DOB, InternalID, RecordNo, DocumentID,

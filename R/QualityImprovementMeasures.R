@@ -151,12 +151,12 @@ list_qim_active <- function(dMeasure_obj,
 
     self$qim_active_list <- self$contact_count_list %>>%
       dplyr::select(-c(Latest)) %>>% # don't need these fields
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% activeID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% activeID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -164,7 +164,7 @@ list_qim_active <- function(dMeasure_obj,
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
       dplyr::select(-DOB) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% activeID) %>>%
                          dplyr::select(InternalID, RecordNo),
                        by = "InternalID", # add RecordNo
@@ -467,12 +467,12 @@ list_qim_diabetes <- function(dMeasure_obj,
       dplyr::left_join(BPList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% diabetesID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% diabetesID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -793,14 +793,14 @@ list_qim_cst <- function(dMeasure_obj,
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
       dplyr::left_join(
         dplyr::bind_rows(
-          private$db$papsmears %>>%
+          self$db$papsmears %>>%
             # attach reports in papsmears table
             dplyr::filter(InternalID %in% screen_cst_id) %>>%
             dplyr::rename(TestDate = PapDate,
                           TestName = CSTType) %>>%
             dplyr::select(InternalID, TestDate, TestName) %>>%
             dplyr::collect(),
-          private$db$investigations %>>%
+          self$db$investigations %>>%
             # some reports might be in investigations e.g. scanned in
             dplyr::filter(InternalID %in% screen_cst_id &&
                             (TestName %like% "%CERVICAL SCREENING%" ||
@@ -852,12 +852,12 @@ list_qim_cst <- function(dMeasure_obj,
        else {.}) %>>%
       dplyr::select(-c(TestAge, OutOfDateTest)) %>>%
       # dplyr::select(-c(TestAge, OutOfDateTest)) %>>% # don't need these columns any more
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% screen_cst_id) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% screen_cst_id) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -865,7 +865,7 @@ list_qim_cst <- function(dMeasure_obj,
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
       dplyr::select(-DOB) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% screen_cst_id) %>>%
                          dplyr::select(InternalID, RecordNo),
                        by = "InternalID", # add RecordNo
@@ -1183,14 +1183,14 @@ list_qim_15plus <- function(dMeasure_obj,
 
     self$qim_15plus_list <- self$contact_15plus_list %>>%
       dplyr::select(-c(Count, Latest)) %>>% # don't need these fields
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
       dplyr::mutate(Ethnicity = dplyr::na_if(Ethnicity, "")) %>>%
       dplyr::mutate(DOB = as.Date(DOB, origin = "1970-01-01")) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -1199,7 +1199,7 @@ list_qim_15plus <- function(dMeasure_obj,
                     MaritalStatus = dplyr::na_if(MaritalStatus, ""),
                     Sexuality = dplyr::na_if(Sexuality, "")) %>>%
       # round age group to lower 5 year group
-      dplyr::left_join(private$db$observations %>>%
+      dplyr::left_join(self$db$observations %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          (ObservationCode %in% c(9, 7, 8, 17)) &&
                                          # 9 is 'BMI', 7 is 'Height',
@@ -1252,9 +1252,9 @@ list_qim_15plus <- function(dMeasure_obj,
                        # this should result in InternalID, (... HeightDate, WaistValue etc.)
                        by = "InternalID",
                        copy = TRUE) %>>%
-                       {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
-                                                                dMeasure::add_age(DOB, 17),
-                                                                as.Date(NA)))} %>>%
+      {dplyr::mutate(., Age17 = dplyr::if_else(!is.na(DOB) > 0,
+                                               dMeasure::add_age(DOB, 17),
+                                               as.Date(NA)))} %>>%
       dplyr::mutate(HeightValue = dplyr::if_else(HeightDate < Age17,
                                                  as.numeric(NA),
                                                  as.numeric(HeightValue)),
@@ -1282,7 +1282,7 @@ list_qim_15plus <- function(dMeasure_obj,
       dplyr::left_join(smokingList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$alcohol %>>%
+      dplyr::left_join(self$db$alcohol %>>%
                          dplyr::filter(InternalID %in% fifteen_plusID &&
                                          Updated <= date_to) %>>%
                          dplyr::rename(AlcoholDate = Updated,
@@ -1300,11 +1300,11 @@ list_qim_15plus <- function(dMeasure_obj,
                                                                     as.Date(AlcoholDate))) %>>%
                          # if not marked as a 'non-drinker', but no drinks recorded
                          # then this is actually a 'blank' entry
-                                                                    {if (ignoreOld && nrow(.) > 0) {
-                                                                      # if ignoring observations that don't qualify for QIM
-                                                                      dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
-                                                                      # throw out observations which are twelve months or older
-                                                                      else {.}},
+                         {if (ignoreOld && nrow(.) > 0) {
+                           # if ignoring observations that don't qualify for QIM
+                           dplyr::filter(., dMeasure::calc_age(AlcoholDate, date_to) < 1)}
+                           # throw out observations which are twelve months or older
+                           else {.}},
                        by = "InternalID",
                        copy = TRUE) %>>%
 
@@ -1635,12 +1635,12 @@ list_qim_65plus <- function(dMeasure_obj,
       dplyr::left_join(fluvaxList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% sixtyfiveplusID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% sixtyfiveplusID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -1924,12 +1924,12 @@ list_qim_copd <- function(dMeasure_obj,
       dplyr::left_join(fluvaxList,
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% copdID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% copdID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
@@ -2340,12 +2340,12 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                                               date_to = date_to),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$patients %>>%
+      dplyr::left_join(self$db$patients %>>%
                          dplyr::filter(InternalID %in% cvdRiskID) %>>%
                          dplyr::select(InternalID, DOB, Sex, Ethnicity, RecordNo),
                        by = "InternalID",
                        copy = TRUE) %>>%
-      dplyr::left_join(private$db$clinical %>>%
+      dplyr::left_join(self$db$clinical %>>%
                          dplyr::filter(InternalID %in% cvdRiskID) %>>%
                          dplyr::select(InternalID, MaritalStatus, Sexuality),
                        by = "InternalID",
