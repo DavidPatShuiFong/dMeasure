@@ -1304,7 +1304,6 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' who have been configured (in SQLite), including passwords
 #'
 #' @name UserFullConfig
-#' @export
 .active(dMeasure, "UserFullConfig", function(value) {
   if (!missing(value)) {
     stop("Can't set `$UserFullConfig`", call. = FALSE)

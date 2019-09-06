@@ -24,7 +24,9 @@ Imports:
     R6,
     stringi
 Suggests:
-    shiny
+    shiny,
+    knitr,
+    rmarkdown
 RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'
@@ -47,3 +49,4 @@ Collate:
     'contactConditions.R'
     'observations.R'
     'utils_pipe.R'
+VignetteBuilder: knitr

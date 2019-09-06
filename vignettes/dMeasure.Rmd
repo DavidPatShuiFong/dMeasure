@@ -1,0 +1,46 @@
+---
+title: "dMeasure"
+author: "David Fong"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{dMeasure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Create a dMeasure object
+
+```{r setup}
+library(dMeasure)
+
+a <- dMeasure$new() # creates an dMeasure object named 'a'. Could be named something else.
+```
+
+# Configuration file location
+
+The location of the .sqlite file is stored in ""~/.DailyMeasure_cfg.yaml"
+
+The .sqlite file contains information required to access the Best Practice database.
+By default, the .sqlite file location is "~/.DailyMeasure_cfg.sqlite"
+
+```{r config_file_path_default}
+a$configuration_file_path
+
+```
+
+But the location of the .sqlite file can be changed.
+If the specified file does not exist, the file will be created.
+
+```{r}
+a$configuration_file_path <- "~/.MySpecialConfig.sqlite"
+a$configuration_file_path
+```
+
