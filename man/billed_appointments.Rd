@@ -10,9 +10,10 @@ billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{(default dMeasure_obj$date_a) start date, inclusive (date object)}
+\item{date_from}{start date, inclusive (date object)}
 
-\item{date_to}{(default dMeasure_obj$date_b) end date, inclusive (date object)}
+\item{date_to}{end date, inclusive (date object)
+default of date_from and date_to defined by choose_date method.}
 
 \item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
 
@@ -20,7 +21,7 @@ billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 permissible values are 'Booked', 'Completed', 'At billing',
 'Waiting', 'With doctor'}
 
-\item{lazy}{(default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
+\item{lazy}{(default FALSE) if lazy=TRUE, then don't re-calculate appointments_filtered to calculate}
 }
 \value{
 list of appointments

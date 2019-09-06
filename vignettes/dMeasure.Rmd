@@ -2,11 +2,17 @@
 title: "dMeasure"
 author: "David Fong"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{dMeasure}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float:
+        collapsed: true
+        smooth_scroll: true
+    number_sections: true
+    theme: lumen
+vignette: |
+  %\VignetteIndexEntry{dMeasure} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
@@ -14,6 +20,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+```
+
+```{r echo = FALSE, results = 'hide', message = FALSE}
+library(printr)
 ```
 
 # Create a dMeasure object
@@ -24,23 +34,213 @@ library(dMeasure)
 a <- dMeasure$new() # creates an dMeasure object named 'a'. Could be named something else.
 ```
 
-# Configuration file location
+# Configuration file
 
-The location of the .sqlite file is stored in ""~/.DailyMeasure_cfg.yaml"
+## Configuration file location
+
+The location of the .sqlite configuration file is stored in ""~/.DailyMeasure_cfg.yaml"
 
 The .sqlite file contains information required to access the Best Practice database.
 By default, the .sqlite file location is "~/.DailyMeasure_cfg.sqlite"
 
-```{r config_file_path_default}
-a$configuration_file_path
-
+```{r echo = FALSE, results = 'hide', message = FALSE}
+a$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite" # set quietly to default!
 ```
 
-But the location of the .sqlite file can be changed.
-If the specified file does not exist, the file will be created.
+```{r config_file_path_default}
+a$configuration_file_path
+```
+
+The location of the .sqlite file can be changed.
+If the specified file does not exist, the .sqlite file will be created.
 
 ```{r}
 a$configuration_file_path <- "~/.MySpecialConfig.sqlite"
 a$configuration_file_path
 ```
 
+## Opening and reading the configuration file
+
+```{r}
+a$open_configuration_db()
+a$read_configuration_db()
+```
+
+# Best Practice Database Server configuration
+
+Add a server definition, and show server definitions.
+
+```{r echo = FALSE, results = 'hide', message = FALSE}
+# quietly remove any current server description whic is called 'Myserver'!
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id) %>% unique()
+if (length(id) == 1) {
+  a$server.delete(list(id = id[[1]]))
+}
+```
+
+
+```{r}
+a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
+                     Database = "BPSSAMPLES", UserID = "bpsrawdata",
+                     dbPassword = "mypassword"))
+a$server.list()
+```
+
+A description of many methods can be shown using the package's help
+documentation, as shown for **server.insert** below.
+Note that the *function* **server.insert**
+includes an initial argument `dMeasure_obj` which is not used in
+the *method* **server.insert**.
+
+```{r}
+?dMeasure::server.insert
+```
+
+## Modify and delete server descriptions
+
+Current server descriptions can be modified
+
+```{r}
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id)
+a$server.update(list(id = id, Database = "BPSPATIENTS"))
+```
+
+or deleted
+
+```{r}
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id)
+if (length(id) == 1) {
+  a$server.delete(list(id = id))
+}
+```
+
+## Use server descriptions
+
+The server description can be chosen, which will automatically try to use the chosen server description.
+
+```{r}
+a$BPdatabaseChoice <- "None" # set to null choice
+```
+
+```{r}
+a$BPdatabaseChoice # returns the current database description choice
+```
+
+```{r}
+a$BPdatabaseChoice <- "Main" # this will also open the 'Main' database description, if possible
+```
+
+Database connections can be 'manually' closed.
+
+The most recent Best Practice database choice will be 'remembered' in the .sqlite configuration file.
+
+```{r}
+a$close() # closes the database connections
+```
+
+# Opening the Best Practice database connection, and appointment list examples
+
+```{r}
+a <- dMeasure$new()
+a$open_emr_db() # this will try to open the most recent database description choice, in this case, 'Main'
+```
+
+By default, no clinicans are selected, and the date of searches will be the current date (in this case `r Sys.Date()`).
+
+```{r}
+a$choose_clinicians()
+a$choose_date()
+```
+
+The list of available clinicians can be shown...
+
+```{r}
+a$clinician_choice_list
+```
+
+...some clinicians chosen:
+
+```{r}
+a$choose_clinicians(c("Ms Nadine Nurse", "Mrs. Psychology Specialist",
+                      "Dr Frederick Findacure", "Dr Ivor Cure"))
+```
+
+...and dates chosen:
+
+```{r}
+a$choose_date(date_from = as.Date("2000-01-01"), date_to = as.Date("2020-01-01"))
+```
+
+Just one of `date_from` or `date_to` can be defined.
+
+It is also assumed (if the argument are not 'named'), that the first argument of **choose_date**
+will be `date_from`, and the second argument (if supplied) will be `date_to`.
+
+Subsequent calls to many methods, such as those named `list_*` will, by default,
+assume the chosen clinicians and dates are those defined by the **choose_clinicians**
+and **choose_date** methods above.
+
+```{r}
+a$list_appointments() %>% head() # 'head' just displays the first few appointments
+```
+
+## Billed appointments list
+
+```{r}
+?dMeasure::billed_appointments
+```
+
+```{r}
+a$billed_appointments() %>% 
+  dplyr::mutate(Description = iconv(Description, "latin1", "ASCII", sub = "")) %>%
+  # removes an invalid ASCII character from Description
+  head()
+```
+
+# Billings methods
+
+Billings done on same day of appointment
+
+```{r}
+a$billings_list() %>% head() # an aggregated version of $appointments_billings_sameday()
+```
+
+# Chronic disease management
+
+```{r}
+a$appointments_billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
+```
+
+Chronic disease management opportunities based on a a large number of condition lists, such `diabetes_list_cdm`.
+These active condition lists look at `appointments_list` (which is set by **list_appointments** method), and
+determine if a chronic disease management billing has occurred in a time period prior to the appointment.
+
+```{r}
+a$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
+```
+
+# Cancer screening methods
+
+## Breast cancer screening
+
+```{r}
+a$list_mammogram() %>% head()
+```
+
+## Cervical cancer screening
+
+```{r}
+a$list_cst() %>% tail()
+```
+
+## Bowel cancer screening
+
+```{r}
+a$list_fobt() %>% head()
+```
+
+# Close the database.
+
+```{r}
+a$close()
+```

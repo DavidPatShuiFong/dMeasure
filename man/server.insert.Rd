@@ -9,7 +9,17 @@ server.insert(dMeasure_obj, description)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{description}{list object : $Name, $Address, $Database, $UserID, $dbPassword}
+\item{description}{list object : $Name, $Address, $Database, $UserID, $dbPassword
+
+ 'Address' will usually be of the form "COMPUTERNAME\\\\BPSINSTANCE"
+ There are 'two' backslashes in the address, because the backslash '\\' needs
+  to be 'escaped' with a preceding backslash
+
+ 'Database' will typically be BPSPATIENTS. the samples database will be BPSSAMPLES
+
+ 'UserID' will always be 'bpsrawdata'
+
+ dbPassword will be immediately encrypted}
 }
 \value{
 dataframe - full list of database descriptions
@@ -17,4 +27,12 @@ dataframe - full list of database descriptions
 }
 \description{
 insert a new server description
+}
+\examples{
+a <- dMeasure::dMeasure$new()
+a$open_configuration_db()
+a$read_configuration_db()
+a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\\\BPSINSTANCE",
+                     Database = "BPSSAMPLES", UserID = "bpsrawdata",
+                     dbPassword = "mypassword"))
 }

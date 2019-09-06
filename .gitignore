@@ -7,3 +7,5 @@ DailyMeasure_cfg\.sqlite
 
 DailyMeasure_cfg\.yaml
 inst/doc
+
+vignettes/dMeasure.log

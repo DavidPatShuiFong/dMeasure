@@ -278,7 +278,7 @@ list_appointments <- function(dMeasure_obj,
               dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               # need patients database to access date-of-birth
               dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
-                              'AppointmentTime', 'Provider', 'DOB')) %>>%
+                              'AppointmentTime', 'Status', 'Provider', 'DOB')) %>>%
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, AppointmentDate))
 
@@ -307,13 +307,14 @@ list_appointments <- function(dMeasure_obj,
 #' used by billings view, and CDM billings view
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from (default dMeasure_obj$date_a) start date, inclusive (date object)
-#' @param date_to (default dMeasure_obj$date_b) end date, inclusive (date object)
+#' @param date_from start date, inclusive (date object)
+#' @param date_to end date, inclusive (date object)
+#'  default of date_from and date_to defined by choose_date method.
 #' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
 #' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
-#' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate appointments_filtered to calculate
 #'
 #' @return list of appointments
 #' @export

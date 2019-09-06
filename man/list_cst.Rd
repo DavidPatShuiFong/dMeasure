@@ -11,11 +11,11 @@ list_cst(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default 'date_a' field)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default 'date_b' field)}
 
-\item{clinicians}{list of clinicians (default self$clinicians)}
+\item{clinicians}{list of clinicians (default 'clinicians' field)}
 
 \item{appointments_list}{dataframe, list of appointments to search
 (as opposed to using self$appointments_list)

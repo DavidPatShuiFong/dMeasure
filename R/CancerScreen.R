@@ -17,11 +17,11 @@ NULL
 #' Bowel cancer screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default 'date_a' field)
+#' @param date_to to date range (default 'date_b' field)
+#' @param clinicians list of clinicians (default 'clinicians' field)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
+#'  (as opposed to using 'appointments_list' method)
 #'  needs Age (presumably at time of appointment),
 #'        InternalID (the EMR's identification code fo the patient)
 #' @param lazy = FALSE recalculate an appointment list
@@ -215,9 +215,9 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 #' Cervical screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default 'date_a' field)
+#' @param date_to to date range (default 'date_b' field)
+#' @param clinicians list of clinicians (default 'clinicians' field)
 #' @param appointments_list dataframe, list of appointments to search
 #'  (as opposed to using self$appointments_list)
 #'  needs Age (presumably at time of appointment),

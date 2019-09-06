@@ -11,14 +11,14 @@ list_fobt(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default 'date_a' field)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default 'date_b' field)}
 
-\item{clinicians}{list of clinicians (default self$clinicians)}
+\item{clinicians}{list of clinicians (default 'clinicians' field)}
 
 \item{appointments_list}{dataframe, list of appointments to search
-(as opposed to using self$appointments_list)
+(as opposed to using 'appointments_list' method)
 needs Age (presumably at time of appointment),
       InternalID (the EMR's identification code fo the patient)}
 

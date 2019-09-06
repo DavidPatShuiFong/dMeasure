@@ -15,8 +15,25 @@ NULL
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list object : $Name, $Address, $Database, $UserID, $dbPassword
 #'
+#'  'Address' will usually be of the form "COMPUTERNAME\\\\BPSINSTANCE"
+#'  There are 'two' backslashes in the address, because the backslash '\\' needs
+#'   to be 'escaped' with a preceding backslash
+#'
+#'  'Database' will typically be BPSPATIENTS. the samples database will be BPSSAMPLES
+#'
+#'  'UserID' will always be 'bpsrawdata'
+#'
+#'  dbPassword will be immediately encrypted
+#'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
+#' @examples
+#' a <- dMeasure::dMeasure$new()
+#' a$open_configuration_db()
+#' a$read_configuration_db()
+#' a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
+#'                      Database = "BPSSAMPLES", UserID = "bpsrawdata",
+#'                      dbPassword = "mypassword"))
 #' @export
 server.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$server.insert(description)
@@ -82,6 +99,8 @@ server.insert <- function(dMeasure_obj, description) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
+#'  any of $Name, $Address, $Database, $UserID and/or $dbPassword can
+#'  be defined
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
@@ -160,7 +179,8 @@ server.update <- function(dMeasure_obj, description) {
   # so use the object's method
   private$trigger(self$config_db_trigR)
 
-  private$.BPdatabase <- rbind(private$.BPdatabase[-(id = description$id),], description,
+  private$.BPdatabase <- rbind(private$.BPdatabase %>>% dplyr::filter(id != description$id),
+                               description,
                                stringsAsFactors = FALSE)
   # store new values in copy of settings in memory
   return(private$.BPdatabase %>>%
@@ -172,7 +192,8 @@ server.update <- function(dMeasure_obj, description) {
 #' remove a server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description $id
+#' @param description list, with '$id'
+#'  the server description to be deleted identified by '$id'
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
@@ -206,7 +227,7 @@ server.delete <- function(dMeasure_obj, description) {
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
 
-  private$.BPdatabase <- private$.BPdatabase[-c(id = description$id),]
+  private$.BPdatabase <- private$.BPdatabase %>>% dplyr::filter(id != description$id)
 
   return(private$.BPdatabase %>>%
            dplyr::select(-dbPassword))
