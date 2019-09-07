@@ -1011,7 +1011,11 @@ initialize_emr_tables <- function(dMeasure_obj,
     # output - Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Users')) %>>%
     dplyr::select(c('UserID', 'Surname', 'Firstname',
-                    'LocationName', 'Title', 'ProviderNo'))
+                    'LocationName', 'Title', 'ProviderNo')) %>>%
+    dplyr::mutate(Surname = trimws(Surname),
+                  Firstname = trimws(Firstname),
+                  Title = trimws(Title),
+                  ProviderNo = trimws(ProviderNo))
   invisible(self$UserConfig)
   # will also set $UserConfigR reactive
   # does not include password in public/reactive

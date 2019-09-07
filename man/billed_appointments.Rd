@@ -2,7 +2,7 @@
 % Please edit documentation in R/appointments.R
 \name{billed_appointments}
 \alias{billed_appointments}
-\title{List of appointments and visits with billings}
+\title{List of appointments with billings}
 \usage{
 billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
   clinicians = NA, status = NA, lazy = FALSE)
@@ -30,8 +30,8 @@ list of appointments
 Filtered by date, and chosen clinicians
 }
 \details{
-Billings for patients who have displayed appointments OR visits
+Billings for patients who have displayed appointments
 
 collects ALL billings for patients who have displayed appointments
-used by billings view, and CDM billings view
+used by CDM billings view
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/billings.R
 \name{billings_list}
 \alias{billings_list}
-\title{Billings done on same day as appointments}
+\title{Billings, appointments and visit combined view}
 \usage{
-billings_list(dMeasure_obj, date_from, date_to, clinicians, lazy,
-  screentag, screentag_print)
+billings_list(dMeasure_obj, date_from, date_to, clinicians, own_billings,
+  lazy, screentag, screentag_print)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -15,6 +15,8 @@ billings_list(dMeasure_obj, date_from, date_to, clinicians, lazy,
 \item{date_to}{(default dMeasure_obj$date_b) end date (inclusive)}
 
 \item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
+
+\item{own_billings}{(default dMeasure_obj$own_billings) only view own billings?}
 
 \item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
 
@@ -26,6 +28,8 @@ billings_list(dMeasure_obj, date_from, date_to, clinicians, lazy,
 list of appointments (with patient details)
 }
 \description{
-filter to billings which are done on the same day as displayed appointments
+filter to chosen date range and practitioners
+}
+\details{
 billings are aggregated/group to patient/day
 }

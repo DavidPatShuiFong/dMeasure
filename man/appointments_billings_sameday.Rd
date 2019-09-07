@@ -2,7 +2,7 @@
 % Please edit documentation in R/billings.R
 \name{appointments_billings_sameday}
 \alias{appointments_billings_sameday}
-\title{Billings done on same day as appointments}
+\title{Billings done on same day as appointments or visit}
 \usage{
 appointments_billings_sameday(dMeasure_obj, date_from, date_to, clinicians,
   lazy, screentag, screentag_print)
