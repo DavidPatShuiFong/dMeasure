@@ -3,9 +3,6 @@ title: "dMeasure"
 author: "David Fong"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
   html_document:
     number_sections: yes
     theme: lumen
@@ -14,6 +11,9 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   rmarkdown::html_vignette: null
 vignette: |
   %\VignetteIndexEntry{dMeasure} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
@@ -223,7 +223,7 @@ determine if a chronic disease management billing has occurred in a time period 
 a$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
 ```
 
-The **diabetes_list_CDM** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`
+The **diabetes_list_cdm** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`
 and `$Date` returns a vector of `InternalID` which corresponds to the `$InternalID` which have a history of diabetes.
 
 ```{r}
@@ -236,6 +236,7 @@ a$diabetes_list()
 ## Breast cancer screening
 
 ```{r}
+?dMeasure::list_mammogram
 a$list_mammogram() %>% head()
 ```
 
@@ -250,6 +251,113 @@ a$list_cst() %>% tail()
 ```{r}
 a$list_fobt() %>% head()
 ```
+
+# Conditions
+
+**diabetes_list** method described in Chronic Disease Management section.
+
+```{r}
+?dMeasure::asthma_list
+a$asthma_list()
+```
+
+```{r}
+?dMeasure::atsi_list
+```
+
+```{r}
+?dMeasure::malignancy_list
+```
+
+```{r}
+?dMeasure::hiv_list
+```
+
+```{r}
+?dMeasure::haemoglobinopathy_list
+```
+
+```{r}
+?dMeasure::asplenia_list
+```
+
+```{r}
+?dMeasure::haemoglobinopathy_list
+```
+
+```{r}
+?dMeasure::transplant_list
+```
+
+```{r}
+?dMeasure::cvd_list
+```
+
+```{r}
+?dMeasure::cardiacdisease_list
+```
+
+```{r}
+?dMeasure::trisomy21_list
+```
+
+```{r}
+?dMeasure::bmi30_list
+```
+
+```{r}
+?dMeasure::neurologic_list
+```
+
+```{r}
+?dMeasure::chronicliverdisease_list
+```
+
+```{r}
+?dMeasure::chronicrenaldisease_list
+```
+
+```{r}
+?dMeasure::pregnancy_list
+```
+
+```{r}
+?dMeasure::fifteenplus_list
+```
+
+```{r}
+?dMeasure::sixtyfiveplus_list
+```
+
+```{r}
+?dMeasure::seventyfiveplus_list
+```
+
+```{r}
+?dMeasure::ATSI_35_44_list
+```
+
+```{r}
+?dMeasure::fortyfiveseventyfour_list
+```
+
+```{r}
+?dMeasure::cst_eligible_list
+```
+
+```{r}
+?dMeasure::mammogram_eligible_list
+```
+
+```{r}
+?dMeasure::familialHypercholesterolaemia_list
+```
+
+```{r}
+?dMeasure::LVH_list
+```
+
+
 
 # Close the database.
 

@@ -10,16 +10,23 @@ cvd_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a vector of numbers, which are the InternalIDs
 }
 \description{
+ischaemic heart disease
+}
+\details{
+renovascular hypertension, peripheral arterial disease, peripheral arterial disease - diabetic
+
+cerebrovascular disease
+
 for CVD risk assessment purposes
  these patients are already at high risk and
  so excluded from CVD risk assessment
-}
-\details{
+
 https://www.cvdcheck.org.au/australian-absolute-cardiovascular-disease-risk-calculator
 }

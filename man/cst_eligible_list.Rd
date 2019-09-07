@@ -2,10 +2,7 @@
 % Please edit documentation in R/conditions.R
 \name{cst_eligible_list}
 \alias{cst_eligible_list}
-\title{list of patients who are cervical screneing eligible at time of $Date
-age twenty-five to seventy-four years inclusive
-female
-no history of hysterectomy}
+\title{list of patients who are cervical screening eligible at time of $Date}
 \usage{
 cst_eligible_list(dMeasure_obj, appointments = NULL)
 }
@@ -13,14 +10,16 @@ cst_eligible_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a vector of numbers, which are the InternalIDs
 }
 \description{
-list of patients who are cervical screneing eligible at time of $Date
-age twenty-five to seventy-four years inclusive
-female
-no history of hysterectomy
+\itemize{
+ \item age twenty-five to seventy-four years inclusive
+ \item female
+ \item no history of hysterectomy
+}
 }

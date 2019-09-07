@@ -47,10 +47,11 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 
 
 ### Asthma sub-code
-#' list of patients with diabetes
+#' list of patients with asthma
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -89,7 +90,8 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
-#'  if no parameter provided, derives from $appointments_filtered
+#'
+#'   if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
 #' @export
@@ -130,6 +132,7 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -218,6 +221,7 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -257,6 +261,7 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -294,8 +299,11 @@ asplenia_list <- function(dMeasure_obj, appointments = NULL) {
 ### Transplant sub-code
 #' list of patients with transplant
 #'
+#' bone marrow, heart, liver, lung, pancreas, renal, thymus
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -334,6 +342,12 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 ### Cardiovascular disease sub-code
 #' list of patients with cardiovascular disease
 #'
+#' ischaemic heart disease
+#'
+#' renovascular hypertension, peripheral arterial disease, peripheral arterial disease - diabetic
+#'
+#' cerebrovascular disease
+#'
 #' for CVD risk assessment purposes
 #'  these patients are already at high risk and
 #'  so excluded from CVD risk assessment
@@ -342,6 +356,7 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -384,10 +399,14 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
 ### Cardiac sub-code
 #' list of patients with cardiac conditions
 #'
+#' cyanotic congenital heart disease, ischaemic heart disease,
+#' acute myocardial infarct (AMI) and congestive failure
+#'
 #' for influenza immunization purposes
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -430,6 +449,7 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -469,9 +489,11 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments list of appointments. default is $appointments_filtered
+#'
 #'  needs appointments, as looks for recording prior to the appointment time
 #'
-#' @return a vector of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs of patients who have
+#'  BMI 30 or more (obesity)
 #' @export
 bmi30_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
@@ -553,8 +575,11 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
 ### neurologic diseaes sub-code
 #' list of patients with neurologic disease
 #'
+#' multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -594,8 +619,11 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
 ### chronic liver disease sub-code
 #' list of patients with chronic liver disease
 #'
+#' liver disease (BP doesn't have 'chronic liver disease'!), cirrhosis, alcoholism
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -634,8 +662,11 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
 ### chronic renal diseaes sub-code
 #' list of patients with chronic lung disease
 #'
+#' chronic renal failure, renal impairment, dialysis
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -678,6 +709,7 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -718,6 +750,7 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -759,6 +792,7 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -799,6 +833,7 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -839,6 +874,7 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -883,12 +919,12 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-
 ### forty-five to seventy-four plus age sub-code
 #' list of patients who are 45 to 74 years age at time of $Date
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -925,13 +961,17 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
 })
 
 ### cervical screen (cst) eligible sub-code
-#' list of patients who are cervical screneing eligible at time of $Date
-#' age twenty-five to seventy-four years inclusive
-#' female
-#' no history of hysterectomy
+#' list of patients who are cervical screening eligible at time of $Date
+#'
+#' \itemize{
+#'  \item age twenty-five to seventy-four years inclusive
+#'  \item female
+#'  \item no history of hysterectomy
+#' }
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -982,13 +1022,17 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 
 ### breast cancer screen (mammogram) eligible sub-code
 #' list of patients who are breast cancer screening eligible at time of $Date
-#' age fifty to seventy-four years inclusive
-#' female
+#'
+#' \itemize{
+#'  \item age fifty to seventy-four years inclusive
+#'  \item female
+#' }
 #'
 #' https://www.cancer.org.au/about-cancer/early-detection/screening-programs/breast-cancer-screening.html
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -1028,6 +1072,7 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
@@ -1062,6 +1107,7 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs

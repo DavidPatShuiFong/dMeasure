@@ -2,7 +2,7 @@
 % Please edit documentation in R/conditions.R
 \name{asthma_list}
 \alias{asthma_list}
-\title{list of patients with diabetes}
+\title{list of patients with asthma}
 \usage{
 asthma_list(dMeasure_obj, appointments = NULL)
 }
@@ -10,11 +10,12 @@ asthma_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a vector of numbers, which are the InternalIDs
 }
 \description{
-list of patients with diabetes
+list of patients with asthma
 }

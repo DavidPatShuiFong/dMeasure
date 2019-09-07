@@ -2,9 +2,7 @@
 % Please edit documentation in R/conditions.R
 \name{mammogram_eligible_list}
 \alias{mammogram_eligible_list}
-\title{list of patients who are breast cancer screening eligible at time of $Date
-age fifty to seventy-four years inclusive
-female}
+\title{list of patients who are breast cancer screening eligible at time of $Date}
 \usage{
 mammogram_eligible_list(dMeasure_obj, appointments = NULL)
 }
@@ -12,11 +10,18 @@ mammogram_eligible_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ if no parameter provided, derives from $appointments_filtered}
 }
 \value{
 a vector of numbers, which are the InternalIDs
 }
 \description{
+\itemize{
+ \item age fifty to seventy-four years inclusive
+ \item female
+}
+}
+\details{
 https://www.cancer.org.au/about-cancer/early-detection/screening-programs/breast-cancer-screening.html
 }

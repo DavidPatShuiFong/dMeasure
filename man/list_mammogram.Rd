@@ -11,31 +11,35 @@ list_mammogram(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default $date_a)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default $date_b)}
 
-\item{clinicians}{list of clinicians (default self$clinicians)}
+\item{clinicians}{list of clinicians (default $clinicians)}
 
 \item{appointments_list}{dataframe, list of appointments to search
-(as opposed to using self$appointments_list)
-needs Age (presumably at time of appointment),
-      InternalID (the EMR's identification code fo the patient)}
 
-\item{lazy}{= FALSE recalculate an appointment list}
+ if not provided, use $appointments_list
 
-\item{action}{= FALSE includes 'OutOfDate' field}
+ needs fields Age, InternalID}
 
-\item{screentag}{= FALSE optionally add a fomantic/semantic HTML description of 'action'}
+\item{lazy}{recalculate an appointment list}
 
-\item{screentag_print}{= TRUE optionally add a 'printable' description of 'action'}
+\item{action}{includes 'OutOfDate' field}
+
+\item{screentag}{optionally add a fomantic/semantic HTML description of 'action'}
+
+\item{screentag_print}{optionally add a 'printable' description of 'action'}
 }
 \value{
 list of appointments (with patient details)
  adds the following fields
-  TestDate (date object) - date and
-  TestName - description of the most recent breast cancer screening test (if any)
-  OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
+
+ \describe{
+  \item{TestDate}{(date object) - date}
+  \item{TestName}{description of the most recent breast cancer screening test (if any)}
+  \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+ }
 }
 \description{
 Breast cancer  screening list

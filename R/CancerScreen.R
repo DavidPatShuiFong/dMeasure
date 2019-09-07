@@ -17,23 +17,28 @@ NULL
 #' Bowel cancer screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default 'date_a' field)
-#' @param date_to to date range (default 'date_b' field)
-#' @param clinicians list of clinicians (default 'clinicians' field)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using 'appointments_list' method)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent bowel cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
+#'
+#'   \describe{
+#'    \item{TestDate}{(date object) - date}
+#'    \item{TestName}{description of the most recent bowel cancer screening test (if any)}
+#'    \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'   }
 #' @export
 list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                       appointments_list = NULL,
@@ -215,23 +220,28 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 #' Cervical screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default 'date_a' field)
-#' @param date_to to date range (default 'date_b' field)
-#' @param clinicians list of clinicians (default 'clinicians' field)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent cervical cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
+#'
+#'  \describe{
+#'   \item{TestDate}{(date object) - date}
+#'   \item{TestName}{description of the most recent cervical cancer screening test (if any)}
+#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'  }
 #' @export
 list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
@@ -372,23 +382,28 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 #' Breast cancer  screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent breast cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
+#'
+#'  \describe{
+#'   \item{TestDate}{(date object) - date}
+#'   \item{TestName}{description of the most recent breast cancer screening test (if any)}
+#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'  }
 #' @export
 list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
