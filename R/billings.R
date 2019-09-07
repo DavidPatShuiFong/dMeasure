@@ -92,6 +92,13 @@ list_services <- function(dMeasure_obj,
             clinicians <- self$clinicians
           }
           # no additional clinician filtering based on privileges or user restrictions
+
+          clinicians <- intersect(clinicians,
+                                  self$clinician_list(view_name = "billings"))
+          # this view is potentially restricted. if 'GlobalBillView' restriction
+          # is enabled, reduce the number of clinicians shown, if the authorized
+          # user does not have 'GlobalBillView' attribute
+
           if (all(is.na(clinicians)) || length(clinicians) == 0) {
             clinicians <- c("")
           }
@@ -277,6 +284,8 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
                                                             lazy = FALSE,
                                                             screentag = FALSE,
                                                             screentag_print = TRUE) {
+  # as of 2019-Sep-08, this method's functionality has been replaced
+  # by $list_billings
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -291,33 +300,8 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
 
   if (!lazy) {
     self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
-    self$list_visits(date_from, date_to, clinicians, lazy = FALSE)
-    self$list_services(date_from, date_to, clinicians,
-                       screentag, screentag_print, lazy = FALSE)
     # if not 'lazy' evaluation, then re-calculate
-    #  self$appointments_list and self$list_visits
     # (that is automatically done by calling the above methods)
-  }
-
-  df <- self$appointments_list %>>%
-    dplyr::rename(Date = AppointmentDate) %>>%
-    dplyr::full_join(self$visits_list %>>%
-                       dplyr::rename(Date = VisitDate),
-                     by = c("Patient", "InternalID", "Date", "DOB", "Age", "Provider")) %>>%
-    dplyr::full_join(self$services_list %>>%
-                       dplyr::rename(Date = ServiceDate),
-                     by = c("Patient", "InternalID", "Date", "DOB", "Age", "Provider"))
-  # merges appointments and visit and services lists
-
-  if (screentag) {
-    df <- df %>>%
-      dplyr::select(Patient, InternalID, Date, AppointmentTime,
-                    Status, VisitType, Provider, DOB, Age, billingtag)
-  }
-  if (screentag_print) {
-    df <- df %>>%
-      dplyr::select(Patient, InternalID, Date, AppointmentTime,
-                    Status, VisitType, Provider, DOB, Age, billingtag_print)
   }
 
   billings_sameday <- self$appointments_billings %>>%
@@ -348,6 +332,19 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
   return(billings_sameday)
 })
 
+.public(dMeasure, "billings_list",
+        data.frame(Patient = character(), InternalID = integer(),
+                   Date = as.Date(integer(0), origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Status = character(0),
+                   VisitType = character(0),
+                   Provider = character(0),
+                   DOB = as.Date(integer(0), origin = "1970-01-01"),
+                   Age = numeric(0),
+                   billingtag = character(0),
+                   billingtag_print = character(0))
+)
+
 #' Billings, appointments and visit combined view
 #'
 #' filter to chosen date range and practitioners
@@ -358,19 +355,22 @@ appointments_billings_sameday <- function(dMeasure_obj, date_from, date_to, clin
 #' @param date_from (default dMeasure_obj$date_a) start date
 #' @param date_to (default dMeasure_obj$date_b) end date (inclusive)
 #' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
-#' @param own_billings (default dMeasure_obj$own_billings) only view own billings?
+#' @param own_billings (default dMeasure_obj$own_billings) logical TRUE/FALSE
+#'  only show billings done by the specified provider on the
+#'  contact (visit/appointment/biling) day. if FALSE, the all billings
+#'  done on the patient on that day are shown.
 #' @param lazy if TRUE, then do not recalculate appointment list. otherwise, re-calculate
 #' @param screentag (default FALSE) optionally add a fomantic/semantic HTML description of 'action'
 #' @param screentag_print (default TRUE) optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #' @export
-billings_list <- function(dMeasure_obj, date_from, date_to, clinicians, own_billings,
+list_billings <- function(dMeasure_obj, date_from, date_to, clinicians, own_billings,
                           lazy, screentag, screentag_print) {
-  dMeasure_obj$billings_list(date_from, date_to, clinicians, own_billings,
+  dMeasure_obj$list_billings(date_from, date_to, clinicians, own_billings,
                              lazy, screentag, screentag_print)
 }
-.public(dMeasure, "billings_list", function(date_from = NA,
+.public(dMeasure, "list_billings", function(date_from = NA,
                                             date_to = NA,
                                             clinicians = NA,
                                             own_billings = NA,
@@ -392,17 +392,15 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians, own_bill
     own_billings <- self$own_billings
   }
 
-  if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  }
-
-  self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
-  self$list_visits(date_from, date_to, clinicians, lazy = FALSE)
-  self$list_services(date_from, date_to, clinicians,
-                     screentag, screentag_print, lazy = FALSE)
-  if (!own_billings) {
-    self$list_services_allclinicians(date_from, date_to,
-                                     screentag, screentag_print, lazy = FALSE)
+  if (!lazy) {
+    self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
+    self$list_visits(date_from, date_to, clinicians, lazy = FALSE)
+    self$list_services(date_from, date_to, clinicians,
+                       screentag, screentag_print, lazy = FALSE)
+    if (!own_billings) {
+      self$list_services_allclinicians(date_from, date_to,
+                                       screentag, screentag_print, lazy = FALSE)
+    }
   }
 
   df <- self$appointments_list %>>%
@@ -414,12 +412,14 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians, own_bill
                        dplyr::rename(Date = ServiceDate),
                      by = c("Patient", "InternalID", "Date","DOB", "Age", "Provider")) %>>%
     {if (!own_billings)
+      # if displaying 'all' billings for the contacted patient (on the 'contact' day)
+      # if own_billings is TRUE, then only billings done by the listed
+      # provider is displayed
     {dplyr::full_join(. %>>% dplyr::select(-c(dplyr::contains("billingtag"))),
                       self$services_list_allclinicians %>>%
                         dplyr::rename(Date = ServiceDate),
                       by = c("Patient", "InternalID", "Date", "DOB", "Age"))}
       else {.}}
-
   # merges appointments and visit and services lists
 
   if (screentag) {
@@ -433,5 +433,17 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians, own_bill
                     Status, VisitType, Provider, DOB, Age, billingtag_print)
   }
 
-  return(df)
+  self$billings_list <- df
+
+  return(self$billings_list)
 })
+.reactive_event(dMeasure, "billings_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$appointments_listR(),
+                      self$services_listR(),
+                      self$visits_listR(),
+                      self$own_billingsR()), {
+                        self$list_billings(lazy = FALSE)
+                      })
+                ))

@@ -319,10 +319,10 @@ list_appointments <- function(dMeasure_obj,
 #' @return list of visits
 #' @export
 list_visits <- function(dMeasure_obj,
-                              date_from = NA, date_to = NA,
-                              clinicians = NA,
-                              visit_type = NA,
-                              lazy = FALSE) {
+                        date_from = NA, date_to = NA,
+                        clinicians = NA,
+                        visit_type = NA,
+                        lazy = FALSE) {
   dMeasure_obj$list_visits(date_from, date_to, clinicians, visit_type, lazy)
 }
 .public(dMeasure, "list_visits",
@@ -385,8 +385,8 @@ list_visits <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(c(self$date_aR(), self$date_bR(),
                         self$cliniciansR(), self$visit_typeR())), {
-                      self$list_visits()
-                    })
+                          self$list_visits()
+                        })
                 ))
 
 #' List of appointments with billings
@@ -452,13 +452,13 @@ billed_appointments <- function(dMeasure_obj,
               # (that is automatically done by calling the $list_appointments method)
             }
 
-            intID <- self$appointments_list %>>% dplyr::pull(InternalID)
+            intID <- c(self$appointments_list %>>% dplyr::pull(InternalID), -1)
 
             self$appointments_billings <-
               self$appointments_list %>>%
               dplyr::left_join(self$db$services %>>%
-                                 filter(InternalID %in% intID,
-                                        ServiceDate <= date_to),
+                                 dplyr::filter(InternalID %in% intID,
+                                               ServiceDate <= date_to),
                                by = "InternalID", copy=TRUE) %>>%
               dplyr::collect() %>>%
               dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
