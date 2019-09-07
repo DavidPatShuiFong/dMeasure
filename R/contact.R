@@ -223,7 +223,6 @@ list_contact_visits <- function(dMeasure_obj,
                                 visit_type = NA) {
   dMeasure_obj$list_contact_visits(date_from, date_to, clinicians, visit_types)
 }
-
 .public(dMeasure, "list_contact_visits",
         function(date_from = NA,
                  date_to = NA,

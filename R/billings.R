@@ -131,16 +131,20 @@ billings_list <- function(dMeasure_obj, date_from, date_to, clinicians,
   if (is.null(billingslist)) {
     # no valid appointments
   } else {
-    billingslist <- billingslist %>>%
-      dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
-      # gathers vaccination notifications on the same appointment into a single row
-      {if (screentag) {
-        dplyr::summarise(., billingtag = paste(billingtag, collapse = ""))
-      } else {.} } %>>%
-      {if (screentag_print) {
-        dplyr::summarise(., billingtag_print = paste(billingtag_print, collapse = ", "))
-      } else {.} } %>>%
-      dplyr::ungroup()
+    billingslist <-
+      self$appointments_list %>>%
+      dplyr::select(Patient, InternalID, AppointmentDate, AppointmentTime, Status, Provider) %>>%
+      # include appointments whether or not there has been billings on the same day
+      dplyr::left_join(billingslist %>>%
+                         dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
+                         # gathers vaccination notifications on the same appointment into a single row
+                         {if (screentag) {
+                           dplyr::summarise(., billingtag = paste(billingtag, collapse = ""))
+                         } else {.} } %>>%
+                         {if (screentag_print) {
+                           dplyr::summarise(., billingtag_print = paste(billingtag_print, collapse = ", "))
+                         } else {.} } %>>%
+                         dplyr::ungroup())
   }
   return(billingslist)
 })

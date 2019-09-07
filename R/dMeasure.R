@@ -1018,7 +1018,10 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$patients <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
-    dplyr::mutate(Ethnicity = trimws(Ethnicity),
+    dplyr::mutate(Firstname = trimws(Firstname),
+                  Middlename = trimws(Middlename),
+                  Surname = trimws(Surname),
+                  Ethnicity = trimws(Ethnicity),
                   Sex = trimws(Sex),
                   RecordNo = trimws(RecordNo))
 
