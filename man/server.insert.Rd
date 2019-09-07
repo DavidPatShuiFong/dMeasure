@@ -11,9 +11,11 @@ server.insert(dMeasure_obj, description)
 
 \item{description}{list object : $Name, $Address, $Database, $UserID, $dbPassword
 
- 'Address' will usually be of the form "COMPUTERNAME\\\\BPSINSTANCE"
- There are 'two' backslashes in the address, because the backslash '\\' needs
-  to be 'escaped' with a preceding backslash
+ 'Address' will typically be of the form COMPUTERNAME and BPSINSTANCE, with two
+ backslashes in between.
+
+ 'Address' will require 'two' backslashes in the address, because the backslash
+  needs to be 'escaped' with a preceding backslash (see examples).
 
  'Database' will typically be BPSPATIENTS. the samples database will be BPSSAMPLES
 

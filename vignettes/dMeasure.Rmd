@@ -3,14 +3,18 @@ title: "dMeasure"
 author: "David Fong"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
-    toc: true
+    number_sections: yes
+    theme: lumen
+    toc: yes
     toc_depth: 3
     toc_float:
-        collapsed: true
-        smooth_scroll: true
-    number_sections: true
-    theme: lumen
+      collapsed: yes
+      smooth_scroll: yes
+  rmarkdown::html_vignette: null
 vignette: |
   %\VignetteIndexEntry{dMeasure} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
 ---
@@ -217,6 +221,14 @@ determine if a chronic disease management billing has occurred in a time period 
 
 ```{r}
 a$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
+```
+
+The **diabetes_list_CDM** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`
+and `$Date` returns a vector of `InternalID` which corresponds to the `$InternalID` which have a history of diabetes.
+
+```{r}
+?dMeasure::diabetes_list
+a$diabetes_list()
 ```
 
 # Cancer screening methods

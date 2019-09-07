@@ -11,7 +11,8 @@ NULL
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
-#'  if no parameter provided, derives from $appointments_filtered
+#'
+#'  If no dataframe provided, derives from $appointments_filtered
 #'
 #' @return a vector of numbers, which are the InternalIDs
 #' @export
