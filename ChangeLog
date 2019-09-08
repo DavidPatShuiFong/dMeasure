@@ -1,5 +1,21 @@
 Changelog
 
+0.4.99 - 8th September 2019
+===========================
+
+Added vignette
+
+* Change billings_list method to list_billings
+* Integrates appointments, visits and billing contacts into single view
+* Add 'own_billings' active field, if FALSE, then all of the patient's
+  billings for the day are shown (not just those attributed to the
+  same provider listed for that contact)
+
+* Include 'status' in list_appointments return dataframe
+
+* Fixes to server.delete and server.update methods
+
+
 0.4.0 - 4th September 2019
 ==========================
 

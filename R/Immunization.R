@@ -241,7 +241,8 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::ungroup() %>>%
     # (one) item with latest vaccinedate (prior to appointmentdate)
     dplyr::mutate(Reason = paste0("Given : ", GivenDate)) %>>%
-    dplyr::select(c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Status", "Provider",
+    dplyr::select(c("Patient", "InternalID",
+                    "AppointmentDate", "AppointmentTime", "Status", "Provider",
                     "DOB", "Age",
                     "GivenDate", "Reason"))
 
@@ -360,7 +361,8 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     ) %>>%
     dplyr::mutate(GivenDate = as.Date(-Inf, origin = '1970-01-01'),
                   Reason = "Child aged 6 months to 10 years on long-term aspirin") %>>%
-    dplyr::select(c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Provider",
+    dplyr::select(c("Patient", "InternalID",
+                    "AppointmentDate", "AppointmentTime", "Status", "Provider",
                     "DOB", "Age",
                     "GivenDate", "Reason"))
 

@@ -35,8 +35,10 @@ library(printr)
 
 ```{r setup}
 library(dMeasure)
+packageVersion("dMeasure")
 
-a <- dMeasure$new() # creates an dMeasure object named 'a'. Could be named something else.
+# creates a dMeasure object named 'a'. Could be named something else.
+a <- dMeasure::dMeasure$new()
 ```
 
 # Configuration file
