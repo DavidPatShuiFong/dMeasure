@@ -28,14 +28,14 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
 
-  fluvaxID <- unlist(private$db$vaccine_disease %>>%
+  fluvaxID <- unlist(self$db$vaccine_disease %>>%
                        dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
                        dplyr::select(VACCINEID) %>>%
                        dplyr::collect(), use.names = FALSE)
   # there are many, many influenza vaccine IDs, but these can be found
   # via the db$vaccine_disease database
 
-  private$db$immunizations %>>%
+  self$db$immunizations %>>%
     dplyr::filter(InternalID %in% intID &&
                     VaccineID %in% fluvaxID &&
                     # influenza vaccines
@@ -91,7 +91,7 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   # be to look at ResultName "HbA1C%" and "Hb A1c"
   # https://bpsoftware.net/forums/topic/all-patients-with-a-hba1c-value-diagnostic-of-diabetes/
 
-  private$db$reportValues %>>%
+  self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     (BPCode == 1 || BPCode == 19) &&
                     # BPCode 1 is HbA1C, 19 is SI units
@@ -142,7 +142,7 @@ smoking_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
 
-  private$db$clinical %>>%
+  self$db$clinical %>>%
     dplyr::filter(InternalID %in% intID &&
                     as.Date(Updated) <= date_to &&
                     as.Date(Updated) >= date_from) %>>%
@@ -153,8 +153,8 @@ smoking_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     # empty string is 'no record'
     dplyr::mutate(SmokingDate = as.Date(SmokingDate)) %>>%
     dplyr::mutate(SmokingDate = dplyr::if_else(SmokingStatus == "",
-                                             as.Date(-Inf, origin = "1970-01-01"),
-                                             as.Date(SmokingDate)))
+                                               as.Date(-Inf, origin = "1970-01-01"),
+                                               as.Date(SmokingDate)))
 })
 
 #' List of blood pressure observations/recordings
@@ -186,7 +186,7 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
 
-  private$db$observations %>>%
+  self$db$observations %>>%
     dplyr::filter(InternalID %in% intID &&
                     ObservationCode %in% c(3,4) &&
                     # systolic or diastolic blood pressure
@@ -268,7 +268,7 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
 
-  private$db$reportValues %>>%
+  self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     (BPCode == 17 || BPCode == 7 || BPCode == 18) &&
                     as.Date(ReportDate) <= date_to &&
@@ -341,8 +341,8 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
   #  this might be simultaneously recorded (from the Diabetes Cycle of Care Page)
   #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
-  results <- private$db$reportValues %>>%
-    dplyr::left_join(private$db$patients %>>%
+  results <- self$db$reportValues %>>%
+    dplyr::left_join(self$db$patients %>>%
                        dplyr::filter(InternalID %in% intID) %>>%
                        dplyr::select(InternalID, Sex), # add 'Sex', a character string
                      by = "InternalID") %>>%
@@ -414,7 +414,7 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
 
-  private$db$reportValues %>>%
+  self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     (BPCode == 16) &&
                     as.Date(ReportDate) <= date_to &&
@@ -464,7 +464,7 @@ Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
 
-  private$db$reportValues %>>%
+  self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     BPCode %in% c(2, 3, 4, 5) &&
                     # systolic or diastolic blood pressure

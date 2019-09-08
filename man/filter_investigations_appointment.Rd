@@ -11,27 +11,27 @@ filter_investigations_appointment(dMeasure_obj, date_from = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from=dMeasure_obj$date_a}{start date}
+\item{date_from}{(default dMeasure_obj$date_a) start date}
 
-\item{date_to=dMeasure_obj$date_b}{end date (inclusive)}
+\item{date_to}{(default dMeasure_obj$date_b) end date (inclusive)}
 
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
+\item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
 
-\item{Action=NA}{Filter by action?
+\item{Action}{(default NA) Filter by action?
 a vector of actions (in string form) or NULL
 e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 if NA, will adopt the value of $filter_incoming_Action}
 
-\item{Actioned=NA}{Filter by having been 'actioned?' i.e. notified
+\item{Actioned}{(default NA) Filter by having been 'actioned?' i.e. notified
 can be logical (TRUE or FALSE), a NULL
 or a Date (actioned prior to or by 'Actioned' Date)
 if NA, will adopt the value of $filter_incoming_Actioned}
 
-\item{ignorePast=NA}{don't include appointments before current Sys.Date()
+\item{ignorePast}{(default NA) don't include appointments before current Sys.Date()
 if NA, adopts $filter_incoming_ignorePast}
 
-\item{lazy=FALSE}{if TRUE, don't 'call' filter_investigations
-to re-calculate}
+\item{lazy}{(default FALSE)
+if TRUE, don't 'call' filter_investigations to re-calculate}
 }
 \value{
 list of investigations with relevant appointments

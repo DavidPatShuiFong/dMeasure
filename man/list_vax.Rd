@@ -2,7 +2,7 @@
 % Please edit documentation in R/Immunization.R
 \name{list_vax}
 \alias{list_vax}
-\title{List of patients potentailly eligible for vaccines}
+\title{List of patients potentially eligible for vaccines}
 \usage{
 list_vax(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
   appointments_list = NULL, lazy = FALSE, vaxtag = FALSE,
@@ -11,19 +11,19 @@ list_vax(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default $date_a)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default $date_b)}
 
-\item{clinicians}{list of clinicians (default self$clinicians)}
+\item{clinicians}{list of clinicians (default $clinicians)}
 
-\item{appointments_list}{provide an appointment list (as opposed to using self$appointments_list)}
+\item{appointments_list}{provide an appointment list (default $appointments_list)}
 
-\item{lazy}{= FALSE recalculate an appointment list}
+\item{lazy}{(default FALSE) recalculate an appointment list}
 
-\item{vaxtag}{= FALSE}
+\item{vaxtag}{(default FALSE) HTML/browser version of tags}
 
-\item{vaxtag_print}{= TRUE}
+\item{vaxtag_print}{(default TRUE) printable version of tags}
 
 \item{chosen}{list of vaccine names (default is all)}
 }

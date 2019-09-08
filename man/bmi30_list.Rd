@@ -10,10 +10,12 @@ bmi30_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{list of appointments. default is $appointments_filtered
-needs appointments, as looks for recording prior to the appointment time}
+
+ needs appointments, as looks for recording prior to the appointment time}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs of patients who have
+ BMI 30 or more (obesity)
 }
 \description{
 list of patients with BMI>=30 (obesity)

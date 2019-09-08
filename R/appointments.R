@@ -30,12 +30,22 @@ NULL
 .public(dMeasure, "appointments_list",
         data.frame(Patient = character(), InternalID = integer(),
                    AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
-                   AppointmentTime = character(), Provider = character(),
+                   AppointmentTime = character(0), Provider = character(0),
+                   Status = character(0),
                    DOB = as.Date(integer(0), origin = "1970-01-01"),
                    Age = numeric())
 )
 # add date of birth to appointments list
 # requires appointments_filtered_time
+
+.public(dMeasure, "visits_list",
+        data.frame(Patient = character(), InternalID = integer(),
+                   VisitDate = as.Date(integer(0), origin = "1970-01-01"),
+                   VisitType = character(0),
+                   Provider = character(0),
+                   DOB = as.Date(integer(0), origin = "1970-01-01"),
+                   Age = numeric())
+)
 
 .public(dMeasure, "appointments_billings",
         data.frame(Patient = character(), InternalID = integer(),
@@ -70,6 +80,7 @@ NULL
 #'   $appointment_status_types
 #'
 #' @return list of appointments
+#' @export
 filter_appointments <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -115,7 +126,7 @@ filter_appointments <- function(dMeasure_obj,
               query = "filter_appointments",
               data = list(date_from, date_to, clinicians))}
 
-            self$appointments_filtered <- private$db$appointments %>>%
+            self$appointments_filtered <- self$db$appointments %>>%
               dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
               dplyr::filter(Provider %in% clinicians) %>>%
               dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
@@ -157,6 +168,7 @@ filter_appointments <- function(dMeasure_obj,
 #'  'Waiting', 'With doctor'
 #'
 #' @return list of appointments
+#' @export
 filter_appointments_time <- function(dMeasure_obj,
                                      date_from = NA, date_to = NA,
                                      clinicians = NA,
@@ -232,12 +244,13 @@ filter_appointments_time <- function(dMeasure_obj,
 #'
 #'
 #' @return list of appointments
+#' @export
 list_appointments <- function(dMeasure_obj,
                               date_from = NA, date_to = NA,
                               clinicians = NA,
                               status = NA,
                               lazy = FALSE) {
-  dMeasure_obj$list_appointments(date_from, date_to, clinicians, status)
+  dMeasure_obj$list_appointments(date_from, date_to, clinicians, status, lazy)
 }
 
 .public(dMeasure, "list_appointments",
@@ -272,10 +285,10 @@ list_appointments <- function(dMeasure_obj,
 
             self$appointments_list <-
               self$appointments_filtered_time %>>%
-              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               # need patients database to access date-of-birth
               dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
-                              'AppointmentTime', 'Provider', 'DOB')) %>>%
+                              'AppointmentTime', 'Status', 'Provider', 'DOB')) %>>%
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, AppointmentDate))
 
@@ -294,26 +307,111 @@ list_appointments <- function(dMeasure_obj,
                     })
                 ))
 
+#' List of visits with date of birth
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from default is $date_a. start date, inclusive (date object)
+#' @param date_to default is $date_b end date, inclusive (date object)
+#' @param clinicians default is $clinicians. list of clinicians to view
+#' @param visit_type  default is $visit_type. filter by 'visittype' if not NA
+#' @param lazy if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#'
+#' @return list of visits
+#' @export
+list_visits <- function(dMeasure_obj,
+                        date_from = NA, date_to = NA,
+                        clinicians = NA,
+                        visit_type = NA,
+                        lazy = FALSE) {
+  dMeasure_obj$list_visits(date_from, date_to, clinicians, visit_type, lazy)
+}
+.public(dMeasure, "list_visits",
+        function(date_from = NA,
+                 date_to = NA,
+                 clinicians = NA,
+                 visit_type = NA,
+                 lazy = FALSE) {
+
+          if (is.na(date_from)) {
+            date_from <- self$date_a
+          }
+          if (is.na(date_to)) {
+            date_to <- self$date_b
+          }
+          if (all(is.na(clinicians))) {
+            clinicians <- self$clinicians
+          }
+          # no additional clinician filtering based on privileges or user restrictions
+          if (all(is.na(clinicians)) || length(clinicians) == 0) {
+            clinicians <- c("")
+          }
+          if (is.na(visit_type)) {
+            visit_type <- self$visit_type
+          }
+
+          if (private$emr_db$is_open()) {
+            # only if EMR database is open
+
+            df <- self$db$visits %>>%
+              dplyr::filter(VisitDate >= date_from & VisitDate <= date_to) %>>%
+              dplyr::filter(DrName %in% clinicians) %>>% # not just doctors!
+              dplyr::filter(VisitType %in% visit_type) %>>%
+              dplyr::collect() %>>%
+              dplyr::group_by(InternalID, VisitDate, DrName) %>>%
+              dplyr::summarise(VisitType = paste(VisitType, collapse = ", ")) %>>% # plucks out unique visit dates
+              dplyr::ungroup() %>>%
+              dplyr::mutate(VisitDate = as.Date(VisitDate))
+
+            intID <- c(dplyr::pull(df, InternalID), -1)
+
+            self$visits_list <- df %>>%
+              dplyr::left_join(self$db$patients %>>%
+                                 dplyr::filter(InternalID %in% intID) %>>%
+                                 dplyr::select(InternalID, Firstname, Surname, DOB),
+                               by = 'InternalID',
+                               copy = TRUE) %>>%
+              # need patients database to access date-of-birth
+              dplyr::mutate(Patient = paste(Firstname, Surname)) %>>%
+              dplyr::select(Patient, InternalID, VisitDate,
+                            VisitType, Provider = DrName, DOB) %>>%
+              dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
+              dplyr::mutate(Age = dMeasure::calc_age(DOB, VisitDate))
+
+          }
+          return(self$visits_list)
+        })
+.reactive_event(dMeasure, "visits_listR",
+                quote(
+                  shiny::eventReactive(
+                    c(c(self$date_aR(), self$date_bR(),
+                        self$cliniciansR(), self$visit_typeR())), {
+                          self$list_visits()
+                        })
+                ))
+
 #' List of appointments with billings
 #'
 #' Filtered by date, and chosen clinicians
-#' Modified $appointments_billings
+#'
+#' Billings for patients who have displayed appointments
+#'
+#' collects ALL billings for patients who have displayed appointments
+#' used by CDM billings view
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from=dMeasure_obj$date_a start date, inclusive (date object)
-#' @param date_to=dMeasure_obj$date_b end date, inclusive (date object)
-#' @param clinicians=dMeasure_obj$clinicians list of clinicians to view
-#' @param status=NA filter by 'status' if not NA
+#' @param date_from start date, inclusive (date object)
+#' @param date_to end date, inclusive (date object)
+#'  default of date_from and date_to defined by choose_date method.
+#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
+#' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
-#' @param lazy=FALSE if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
+#' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate appointments_filtered to calculate
 #'
 #' @return list of appointments
-
-# Billings for patients who have displayed appointments
-
-# collects ALL billings for patients who have displayed appointments
-# used by billings view, and CDM billings view
+#' @export
 billed_appointments <- function(dMeasure_obj,
                                 date_from = NA, date_to = NA,
                                 clinicians = NA,
@@ -356,9 +454,14 @@ billed_appointments <- function(dMeasure_obj,
               # (that is automatically done by calling the $list_appointments method)
             }
 
+            intID <- c(self$appointments_list %>>% dplyr::pull(InternalID), -1)
+
             self$appointments_billings <-
               self$appointments_list %>>%
-              dplyr::left_join(private$db$services, by = "InternalID", copy=TRUE) %>>%
+              dplyr::left_join(self$db$services %>>%
+                                 dplyr::filter(InternalID %in% intID,
+                                               ServiceDate <= date_to),
+                               by = "InternalID", copy=TRUE) %>>%
               dplyr::collect() %>>%
               dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
           }

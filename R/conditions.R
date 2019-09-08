@@ -11,9 +11,11 @@ NULL
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
-#'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#'  If no dataframe provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 diabetes_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$diabetes_list(appointments)
 }
@@ -36,7 +38,7 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice Diabetes code
   diabetes_codes <- c(3, 775, 776, 778, 774, 7840, 11998)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% diabetes_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -45,13 +47,15 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 
 
 ### Asthma sub-code
-#' list of patients with diabetes
+#' list of patients with asthma
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 asthma_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$asthma_list(appointments)
 }
@@ -74,7 +78,7 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice Asthma code
   asthma_codes <- c(281, 285, 283, 284, 282)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% asthma_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -86,9 +90,11 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
-#'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#'   if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 atsi_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$atsi_list(appointments)
 }
@@ -114,7 +120,7 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
                   "Aboriginal/Torres Strait Islander")
 
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(Ethnicity %in% atsi_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -126,9 +132,11 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$malignancy_list(appointments)
 }
@@ -162,7 +170,7 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
                         2178, 2179, 1440)
 
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% malignancy_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -176,7 +184,8 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 hiv_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$hiv_list(appointments)
 }
@@ -200,7 +209,7 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice codes for HIV
   hiv_codes <- c(1727)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% hiv_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -212,9 +221,11 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$haemoglobinopathy_list(appointments)
 }
@@ -238,7 +249,7 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice codes for haemoglobinopathy
   haemoglobinopathy_codes <- c(205, 208, 209, 210)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% haemoglobinopathy_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -250,9 +261,11 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 asplenia_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$asplenia_list(appointments)
 }
@@ -276,7 +289,7 @@ asplenia_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice codes for asplenia
   asplenic_codes <- c(3958, 5805, 6493, 3959)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% asplenic_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -286,11 +299,15 @@ asplenia_list <- function(dMeasure_obj, appointments = NULL) {
 ### Transplant sub-code
 #' list of patients with transplant
 #'
+#' bone marrow, heart, liver, lung, pancreas, renal, thymus
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 transplant_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$transplant_list(appointments)
 }
@@ -315,7 +332,7 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
   transplant_codes <- c(4160, 3691, 3814, 3826, 12026, 3765, 3989)
   # bone marrow, heart, liver, lung, pancreas, renal, thymus
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% transplant_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -325,6 +342,12 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 ### Cardiovascular disease sub-code
 #' list of patients with cardiovascular disease
 #'
+#' ischaemic heart disease
+#'
+#' renovascular hypertension, peripheral arterial disease, peripheral arterial disease - diabetic
+#'
+#' cerebrovascular disease
+#'
 #' for CVD risk assessment purposes
 #'  these patients are already at high risk and
 #'  so excluded from CVD risk assessment
@@ -333,9 +356,10 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
 #' @export
 cvd_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cvd_list(appointments)
@@ -365,7 +389,7 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
   cvd_codes <- c(cvd_codes, 1522, 677, 678, 679, 680, 681, 1522)
   # cerebrovascular disease
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% cvd_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -375,13 +399,17 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
 ### Cardiac sub-code
 #' list of patients with cardiac conditions
 #'
+#' cyanotic congenital heart disease, ischaemic heart disease,
+#' acute myocardial infarct (AMI) and congestive failure
+#'
 #' for influenza immunization purposes
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
 #' @export
 cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
@@ -409,7 +437,7 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
                      1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556)
   # cyanotic congenital heart disease, ischaemic heart disease, AMI and congestive failure
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% cardiac_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -421,9 +449,11 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$trisomy21_list(appointments)
 }
@@ -447,7 +477,7 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice codes for trisomy 21
   trisomy21_codes <- c(836)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% trisomy21_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -459,9 +489,12 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments list of appointments. default is $appointments_filtered
+#'
 #'  needs appointments, as looks for recording prior to the appointment time
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs of patients who have
+#'  BMI 30 or more (obesity)
+#' @export
 bmi30_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cardiacdisease_list(appointments)
 }
@@ -481,7 +514,7 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
   }
 
   appointments %>>% dplyr::collect() %>>%
-    dplyr::inner_join(private$db$observations %>>%
+    dplyr::inner_join(self$db$observations %>>%
                         dplyr::filter(ObservationCode == 9),
                       # this is BMI. also in DATANAME, but different spellings/cases
                       by = "InternalID", copy = TRUE) %>>%
@@ -506,7 +539,8 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param appointments dataframe of appointments $InternalID and $Date
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chroniclungdisease_list(appointments)
 }
@@ -531,7 +565,7 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
   # Best Practice codes for lung disease
   cld_codes <- c(598, 4740, 414, 702)
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% cld_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -541,11 +575,15 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
 ### neurologic diseaes sub-code
 #' list of patients with neurologic disease
 #'
+#' multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 neurologic_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$neurologic_list(appointments)
 }
@@ -571,7 +609,7 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
                    2022, 2630, 3093)
   # multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% neuro_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -581,11 +619,15 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
 ### chronic liver disease sub-code
 #' list of patients with chronic liver disease
 #'
+#' liver disease (BP doesn't have 'chronic liver disease'!), cirrhosis, alcoholism
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chronicliverdisease_list(appointments)
 }
@@ -610,7 +652,7 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
   cld_codes <- c(11763, 584, 81)
   # liver disease (BP doesn't have 'chronic liver disease'!), cirrhosis, alcoholism
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% cld_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -620,11 +662,15 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
 ### chronic renal diseaes sub-code
 #' list of patients with chronic lung disease
 #'
+#' chronic renal failure, renal impairment, dialysis
+#'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$chronicrenaldisease_list(appointments)
 }
@@ -650,7 +696,7 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
                  7502, 7503, 7504, 7505, 7506, 2882)
   # chronic renal failure, renal impairment, dialysis
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID %in% crf_codes &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -663,9 +709,11 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 pregnant_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$pregnant_list(appointments)
 }
@@ -687,7 +735,7 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   appointments %>>% dplyr::collect() %>>%
-    dplyr::inner_join(private$db$pregnancies %>>%
+    dplyr::inner_join(self$db$pregnancies %>>%
                         dplyr::filter(InternalID %in% intID),
                       by = "InternalID", copy = TRUE) %>>%
     dplyr::filter(is.null(ENDDATE) | as.Date(ENDDATE) > as.Date(Date)) %>>%
@@ -702,9 +750,11 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$fifteenplus_list(appointments)
 }
@@ -725,7 +775,7 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -742,9 +792,11 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$sixtyfiveplus_list(appointments)
 }
@@ -765,7 +817,7 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -781,9 +833,11 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$seventyfiveplus_list(appointments)
 }
@@ -804,7 +858,7 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -820,9 +874,11 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$ATSI_35_44_list(appointments)
 }
@@ -847,10 +903,10 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
   atsi_codes <- c("Aboriginal", "Torres Strait Islander",
                   "Aboriginal/Torres Strait Islander")
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
-    dplyr::inner_join(private$db$patients %>>%
+    dplyr::inner_join(self$db$patients %>>%
                         dplyr::filter(Ethnicity %in% atsi_codes &&
                                         InternalID %in% intID) %>>%
                         dplyr::select(InternalID),
@@ -863,15 +919,16 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-
 ### forty-five to seventy-four plus age sub-code
 #' list of patients who are 45 to 74 years age at time of $Date
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$fortyfiveseventyfour_list(appointments)
 }
@@ -892,7 +949,7 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -904,16 +961,21 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
 })
 
 ### cervical screen (cst) eligible sub-code
-#' list of patients who are cervical screneing eligible at time of $Date
-#' age twenty-five to seventy-four years inclusive
-#' female
-#' no history of hysterectomy
+#' list of patients who are cervical screening eligible at time of $Date
+#'
+#' \itemize{
+#'  \item age twenty-five to seventy-four years inclusive
+#'  \item female
+#'  \item no history of hysterectomy
+#' }
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$cst_eligible_list(appointments)
 }
@@ -939,7 +1001,7 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   # "hysterectomy, laparoscopic", "hysterectomy, vaginal"
   # does NOT include "hysterectomy, subtotal" = 7521
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -947,7 +1009,7 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::left_join(appointments, by = "InternalID") %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 25, 74)) %>>%
     dplyr::select(InternalID, Date) %>>%
-    dplyr::left_join(private$db$history %>>%
+    dplyr::left_join(self$db$history %>>%
                        dplyr::filter(InternalID %in% intID &&
                                        ConditionID %in% hysterectomy_codes),
                      by = "InternalID", copy = TRUE) %>>%
@@ -960,16 +1022,21 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 
 ### breast cancer screen (mammogram) eligible sub-code
 #' list of patients who are breast cancer screening eligible at time of $Date
-#' age fifty to seventy-four years inclusive
-#' female
+#'
+#' \itemize{
+#'  \item age fifty to seventy-four years inclusive
+#'  \item female
+#' }
 #'
 #' https://www.cancer.org.au/about-cancer/early-detection/screening-programs/breast-cancer-screening.html
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$mammogram_eligible_list(appointments)
 }
@@ -990,7 +1057,7 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$patients %>>%
+  self$db$patients %>>%
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::collect() %>>%
@@ -1005,9 +1072,11 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$familialHypercholesterolaemia_list(appointments)
 }
@@ -1027,7 +1096,7 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID == 1446 &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
@@ -1038,9 +1107,11 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param appointments dataframe of appointments $InternalID and $Date
+#'
 #'  if no parameter provided, derives from $appointments_filtered
 #'
-#' @return a list of numbers, which are the InternalIDs
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
 LVH_list <- function(dMeasure_obj, appointments = NULL) {
   dMeasure_obj$LVH_list(appointments)
 }
@@ -1060,7 +1131,7 @@ LVH_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  private$db$history %>>%
+  self$db$history %>>%
     dplyr::filter(ConditionID == 2214 &&
                     InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%

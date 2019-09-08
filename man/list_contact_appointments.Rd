@@ -10,11 +10,11 @@ list_contact_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{(default NA -> dMeasure_obj$date_a) start date}
+\item{date_from}{(default NA -> date_a field) start date}
 
-\item{date_to}{(default NA -> dMeasure_obj$date_b) end date (inclusive)}
+\item{date_to}{(default NA -> date_b field) end date (inclusive)}
 
-\item{clinicians}{(default NA -> dMeasure_obj$clinicians) list of clinicians to view}
+\item{clinicians}{(default NA -> clinicians field) list of clinicians to view}
 
 \item{status}{(default NA) filter by 'status' if not NA
 permissible values are 'Booked', 'Completed', 'At billing',

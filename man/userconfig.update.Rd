@@ -38,5 +38,4 @@ The description to update is defined by $Fullname
    list(Fullname = "Mrs. Diabetes Educator",
         Location = list(c("Jemena", "Lakeside")),
         Attributes = list(c("UserAdmin", "ServerAdmin")))
-
 }

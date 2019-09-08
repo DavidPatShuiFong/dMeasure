@@ -10,10 +10,11 @@ diabetes_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ If no dataframe provided, derives from $appointments_filtered}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs
 }
 \description{
 list of patients with diabetes
