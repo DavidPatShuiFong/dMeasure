@@ -203,10 +203,11 @@ a$billed_appointments() %>%
 
 # Billings methods
 
-Billings done on same day of appointment
+Billings matched up to appointments and visits
 
 ```{r}
-a$billings_list() %>% head() # an aggregated version of $appointments_billings_sameday()
+?dMeasure::list_billings
+a$list_billings() %>% head() # an aggregated version of $appointments_billings_sameday()
 ```
 
 # Chronic disease management

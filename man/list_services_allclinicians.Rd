@@ -5,7 +5,7 @@
 \title{List of services with date of birth}
 \usage{
 list_services_allclinicians(dMeasure_obj, date_from = NA, date_to = NA,
-  screentag = FALSE, screentag_print = TRUE, lazy = FALSE)
+  lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -13,10 +13,6 @@ list_services_allclinicians(dMeasure_obj, date_from = NA, date_to = NA,
 \item{date_from}{default is $date_a. start date, inclusive (date object)}
 
 \item{date_to}{default is $date_b end date, inclusive (date object)}
-
-\item{screentag}{(default FALSE) optionally add a fomantic/semantic HTML description of 'action'}
-
-\item{screentag_print}{(default TRUE) optionally add a 'printable' description of 'action'}
 
 \item{lazy}{if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
 }

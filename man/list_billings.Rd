@@ -10,16 +10,19 @@ list_billings(dMeasure_obj, date_from, date_to, clinicians, own_billings,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{(default dMeasure_obj$date_a) start date}
+\item{date_from}{(default date_a field) start date}
 
-\item{date_to}{(default dMeasure_obj$date_b) end date (inclusive)}
+\item{date_to}{(default date_b field) end date (inclusive)}
 
-\item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
+\item{clinicians}{(default clinicians field) list of clinicians to view}
 
-\item{own_billings}{(default dMeasure_obj$own_billings) logical TRUE/FALSE
-only show billings done by the specified provider on the
-contact (visit/appointment/biling) day. if FALSE, the all billings
-done on the patient on that day are shown.}
+\item{own_billings}{(default own_billings field) logical TRUE/FALSE
+
+ only show billings done by the specified provider on the
+ contact (visit/appointment/billing) day.
+
+ if FALSE, the all billings
+ done on the patient on that day are shown.}
 
 \item{lazy}{if TRUE, then do not recalculate appointment list. otherwise, re-calculate}
 

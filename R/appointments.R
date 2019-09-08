@@ -30,7 +30,8 @@ NULL
 .public(dMeasure, "appointments_list",
         data.frame(Patient = character(), InternalID = integer(),
                    AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
-                   AppointmentTime = character(), Provider = character(),
+                   AppointmentTime = character(0), Provider = character(0),
+                   Status = character(0),
                    DOB = as.Date(integer(0), origin = "1970-01-01"),
                    Age = numeric())
 )
@@ -41,6 +42,7 @@ NULL
         data.frame(Patient = character(), InternalID = integer(),
                    VisitDate = as.Date(integer(0), origin = "1970-01-01"),
                    VisitType = character(0),
+                   Provider = character(0),
                    DOB = as.Date(integer(0), origin = "1970-01-01"),
                    Age = numeric())
 )
