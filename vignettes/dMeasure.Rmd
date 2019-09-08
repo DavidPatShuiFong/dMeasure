@@ -16,8 +16,10 @@ output:
     toc: yes
     toc_depth: '3'
   rmarkdown::html_vignette: null
-vignette: |
-  %\VignetteIndexEntry{dMeasure} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+vignette: >
+  %\VignetteIndexEntry{dMeasure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
