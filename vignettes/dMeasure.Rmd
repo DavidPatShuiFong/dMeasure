@@ -503,16 +503,20 @@ a$report_qim_active()
 ## Diabetes Quality Improvement Measures
 
 ```{r}
-a$list_qim_diabetes()
+DT::datatable(a$list_qim_diabetes(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
 a$report_qim_diabetes()
 ```
 
 By default, 'old' results (as defined by the Quality Improvement Measures) are ignored.
-Old results can be included by setting **qim_ignoreOld** to *TRUE*.
+Old results can be included by setting **qim_ignoreOld** to *FALSE*.
 
 ```{r}
 a$qim_ignoreOld <- FALSE
-a$list_qim_diabetes()
+DT::datatable(a$list_qim_diabetes(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
 a$report_qim_diabetes()
 ```
 
@@ -584,7 +588,7 @@ Please report any required corrections to me!
 ```{r code = capture.output(dMeasure::framingham_riskequation), eval = FALSE}
 ```
 
-# Close the database.
+# Close the database connections
 
 ```{r}
 a$close()
