@@ -2176,21 +2176,31 @@ report_qim_copd <- function(dMeasure_obj,
 #'  to enable CVD assessment
 #'
 #' required parameters
+#'
 #'  Age, Ethnicity (especially ATSI status)
+#'
 #'   included - Age 45 to 74 years or older
+#'
 #'    OR Age 35 or older + ATSI
 #'     (ATSI 35+ optional - included by default - see $qim_cvdRisk_measure)
+#'
 #'    Age 75+ excluded
 #'     (Option to include - see $qim_cvdRisk_measure)
+#'
 #'  Known cardiovascular disease
 #'     (optional - excluded by default - see $qim_cvdRisk_measure)
+#'
 #'  Presence of diabetes. Diabetes and microalbuminuria
+#'
 #'  eGFR
+#'
 #'  previous diagnosis of familial hypercholesterolaemia
+#'
 #'  systolic blood pressure. Diastolic blood pressure
+#'
 #'  Serum total cholesterol. Serum HDL cholesterol
 #'
-#' National Vascular Disease Prevention Alliance (NVDPA) guidelines
+#' source : National Vascular Disease Prevention Alliance (NVDPA) guidelines
 #' https://www.cvdcheck.org.au/australian-absolute-cardiovascular-disease-risk-calculator
 #'
 #' the reference date for 'most recent' measurement is 'date_to'

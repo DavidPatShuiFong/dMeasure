@@ -23,10 +23,10 @@ NULL
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
-#' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
+#' @param appointments_list provide an appointment list (default $appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
 #' @param vaxtag_print = TRUE
@@ -157,10 +157,10 @@ list_zostavax <- function(dMeasure_obj,
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
-#' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
+#' @param appointments_list provide an appointment list (default $appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
 #' @param vaxtag_print = TRUE
@@ -241,7 +241,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::ungroup() %>>%
     # (one) item with latest vaccinedate (prior to appointmentdate)
     dplyr::mutate(Reason = paste0("Given : ", GivenDate)) %>>%
-    dplyr::select(c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Provider",
+    dplyr::select(c("Patient", "InternalID", "AppointmentDate", "AppointmentTime", "Status", "Provider",
                     "DOB", "Age",
                     "GivenDate", "Reason"))
 
@@ -452,7 +452,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
 vax_names <- c("Zostavax", "Influenza")
 
-#' List of patients potentailly eligible for vaccines
+#' List of patients potentially eligible for vaccines
 #'
 #' Includes patients who may have already had the vaccine,
 #' date of previous vaccine is included.
@@ -460,13 +460,13 @@ vax_names <- c("Zostavax", "Influenza")
 #' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
-#' @param appointments_list provide an appointment list (as opposed to using self$appointments_list)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param vaxtag = FALSE
-#' @param vaxtag_print = TRUE
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
+#' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param lazy (default FALSE) recalculate an appointment list
+#' @param vaxtag (default FALSE) HTML/browser version of tags
+#' @param vaxtag_print (default TRUE) printable version of tags
 #' @param chosen list of vaccine names (default is all)
 #'
 #' @return dataframe list of influenza eligible patients

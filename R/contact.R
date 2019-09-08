@@ -115,9 +115,9 @@ NULL
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from (default NA -> dMeasure_obj$date_a) start date
-#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
-#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param date_from (default NA -> date_a field) start date
+#' @param date_to (default NA -> date_b field) end date (inclusive)
+#' @param clinicians (default NA -> clinicians field) list of clinicians to view
 #' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'

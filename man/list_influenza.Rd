@@ -11,13 +11,13 @@ list_influenza(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default self$date_a)}
+\item{date_from}{from date range (default $date_a)}
 
-\item{date_to}{to date range (default self$date_b)}
+\item{date_to}{to date range (default $date_b)}
 
-\item{clinicians}{list of clinicians (default self$clinicians)}
+\item{clinicians}{list of clinicians (default $clinicians)}
 
-\item{appointments_list}{provide an appointment list (as opposed to using self$appointments_list)}
+\item{appointments_list}{provide an appointment list (default $appointments_list)}
 
 \item{lazy}{= FALSE recalculate an appointment list}
 
