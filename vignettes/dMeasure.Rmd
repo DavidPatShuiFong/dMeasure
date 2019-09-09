@@ -412,7 +412,7 @@ Services are billings.
 ?dMeasure::list_contact_appointments
 a$list_contact_appointments() %>>% head()
 x <- a$appointment_status # temporary store
-a$appointment_status <- "Completed" # choose all appointment status
+a$appointment_status <- "Completed" # choose appointment status "Completed" only
 a$list_contact_appointments() %>>% head()
 a$appointment_status <- x # restore previous appointment status setting
 ```
