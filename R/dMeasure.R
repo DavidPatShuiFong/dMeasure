@@ -463,6 +463,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
                              server = server$Address, database = server$Database,
                              uid = server$UserID,
                              pwd = dMeasure::simple_decode(server$dbPassword))
+      # the open ports required at the Best Practice database server are:
+      #  TCP - 139    : File & Print Sharing - Subnet
+      #  TCP - 54968  : BP Dynamic - SQL Express
+      #  UDP - 137    : File & Print Sharing - Subnet
+      #  UDP - 1434   : SQL Browser - Scope Sensitive
     }
 
     if (!private$emr_db$is_open() || !DBI::dbIsValid(private$emr_db$conn())) {
