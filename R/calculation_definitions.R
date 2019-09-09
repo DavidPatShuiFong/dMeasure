@@ -312,45 +312,74 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 
 #' Framingham Risk Equation
 #'
+#' Calculate cardiovascular disease risk according to Framingham Risk Equation
+#'
+#' @details
+#'
 #' sourced from National Vascular Disease Prevention Alliance (Australia)
+#'
 #' http://cvdcheck.org.au/pdf/Absolute_CVD_Risk-Quick_Reference_Guide.pdf
 #'
-#' and from "An Updated Coronary Risk Profile - A Statement for Health Professionals"
+#' and "An Updated Coronary Risk Profile - A Statement for Health Professionals"
 #' Keaven M. Anderson, Peter W.F. Wilson, Patricia M. Odell, William B. Kannel
 #'
-#' AHA (American Heart Association) Medical/Scientific Statment
+#' AHA (American Heart Association) Medical/Scientific Statement
+#'
 #' sourced from http://ahajournals.org
 #'
 #' @param df a dataframe
+#'
 #'  Patient (chr = character)
+#'
 #'  InternalID (numeric)
+#'
 #'  CardiovascularDisease (logical)
+#'
 #'  Diabetes (logical)
-#'  SmokingDate (date), SmokingStatus (chr)
+#'
+#'  SmokingDate (date) - not actually used in this equation
+#'
+#'  SmokingStatus (chr) - "Smoker" if a smoker. All other values ignored
+#'
 #'  UrineAlbuminDate (chr), UrineAlbuminValue (double), UrineAlbuminUnit (chr)
+#'
 #'  PersistentProteinuria (logical)
+#'
 #'  eGFRDate (date), eGFRValue (double), eGFRUnits (chr)
+#'
 #'  FamilialHypercholesterolaemia (logical)
+#'
 #'  LVH (logical) = left ventricular hyp0ertrophy
+#'
 #'  CholesterolDate (date), Cholesterol (double), HDL (double), LDL (double),
 #'   Triglycerides (double), CholHDLRatio (double)
+#'
 #'  BPDate (date), BP (character, two numbers separated by "/")
+#'
 #'  Sex (character), Ethnicity (character)
+#'
 #'  RecordNo (character), MaritalStatus (character), Sexuality (character)
+#'
 #'  DOB (character), Age (double)
+#'
 #' @param years number of years to predict (from 4 to 12)
 #'
 #' @return dataframe
+#'
 #'  InternalID
+#'
 #'  frisk : numeric
-#'  friskHI : either 'NA' or '>15%'
-#'    '>15%' are groups considered equivalent risk to already having IHD
+#'
+#'  friskHI : either 'NA' or '>15\%'
+#'
+#'  '>15\%' are groups considered equivalent risk to already having IHD
 #'
 #' @export
 framingham_riskequation <- function(df, years = 5) {
   f <- df %>>%
     tidyr::separate(BP, into = c("Systolic", "Diastolic"), sep = "/", convert = TRUE) %>>%
-    # creates new Systolic and Diastolic fields, fills with NA if not available, and converts to numeric
+    # creates new Systolic and Diastolic fields,
+    # fills with NA if not available, and converts to numeric
     dplyr::mutate(a = 11.1122 - 0.9119 * log(Systolic) - 0.2767 * (SmokingStatus == "Smoker")
                   -0.7181 * log(CholHDLRatio) - 0.5865 * LVH,
                   m = dplyr::if_else(Sex == "Female",
@@ -374,7 +403,8 @@ framingham_riskequation <- function(df, years = 5) {
       FamilialHypercholesterolaemia == TRUE ~ ">15%",
       Systolic >= 180 | Diastolic >= 110 ~ '>15%',
       Cholesterol > 7.5 ~ ">15%",
-      Ethnicity %in% c("Aboriginal", "Torres Strait Islander", "Aboriginal/Torres Strait Islander") &
+      Ethnicity %in% c("Aboriginal", "Torres Strait Islander",
+                       "Aboriginal/Torres Strait Islander") &
         Age > 74 ~ ">15%",
       TRUE ~ as.character(NA))) %>>%
     dplyr::select(InternalID, frisk, friskHI)

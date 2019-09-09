@@ -10,11 +10,16 @@ cardiacdisease_list(dMeasure_obj, appointments = NULL)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{appointments}{dataframe of appointments $InternalID and $Date
-if no parameter provided, derives from $appointments_filtered}
+
+ if no parameter provided, derives from $appointments_filtered}
 }
 \value{
-a list of numbers, which are the InternalIDs
+a vector of numbers, which are the InternalIDs
 }
 \description{
+cyanotic congenital heart disease, ischaemic heart disease,
+acute myocardial infarct (AMI) and congestive failure
+}
+\details{
 for influenza immunization purposes
 }

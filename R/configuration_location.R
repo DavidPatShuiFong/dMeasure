@@ -17,6 +17,7 @@ NULL
 #'
 #' @return dataframe - full list of location descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 location.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$location.insert(description)
 }
@@ -71,6 +72,7 @@ location.insert <- function(dMeasure_obj, description) {
 #'
 #' @return dataframe - full list of location descriptions
 #'  can also return error (stop) if description is invalid
+#' @export
 location.update <- function(dMeasure_obj, description) {
   dMeasure_obj$location.update(description)
 }
@@ -128,6 +130,7 @@ location.update <- function(dMeasure_obj, description) {
 #'
 #' @return dataframe - full list of location descriptions
 #'  can also return error (stop) if deletion if cannot delete
+#' @export
 location.delete <- function(dMeasure_obj, description) {
   dMeasure_obj$location.delete(description)
 }
@@ -177,6 +180,7 @@ location.delete <- function(dMeasure_obj, description) {
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe - full list of location descriptions
+#' @export
 location.list <- function(dMeasure_obj) {
   dMeasure_obj$location.list()
 }
@@ -207,6 +211,7 @@ location.list <- function(dMeasure_obj) {
 #'
 #' @return TRUE or FALSE
 #'  additionally returns a warning if permission is FALSE
+#' @export
 location.permission <- function(dMeasure_obj) {
   dMeasure_obj$location.permission()
 }

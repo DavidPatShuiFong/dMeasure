@@ -15,6 +15,7 @@ NULL
 #'
 #' @return TRUE if password is correct
 #' otherwise stops with error
+#' @export
 user_login <- function(dMeasure_obj, password) {
   dMeasure_obj$user_login(password)
 }
@@ -41,6 +42,7 @@ user_login <- function(dMeasure_obj, password) {
 #' @param dMeasure_obj dMeasure object
 #'
 #' @return TRUE if password is not available
+#' @export
 empty_password <- function(dMeasure_obj) {
   dMeasure_obj$empty_password()
 }
@@ -124,6 +126,7 @@ user_logout <- function(dMeasure_obj) {
 #'
 #' @return TRUE if password is successfully set
 #' otherwise, stops with error
+#' @export
 password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   dMeasure_obj$password.set(newpassword, oldpassword)
 }
@@ -179,6 +182,7 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
 #' No return value
 #'  Error (stop) if trying to reset a user which
 #'  doesn't exist, or trying to reset own password
+#' @export
 password.reset <- function(dMeasure_obj, user, newpassword = "") {
   dMeasure_obj$password.reset(user, newpassword = "")
 }

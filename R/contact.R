@@ -115,15 +115,16 @@ NULL
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from (default NA -> dMeasure_obj$date_a) start date
-#' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
-#' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param date_from (default NA -> date_a field) start date
+#' @param date_to (default NA -> date_b field) end date (inclusive)
+#' @param clinicians (default NA -> clinicians field) list of clinicians to view
 #' @param status (default NA) filter by 'status' if not NA
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
 #'  if NA, adopts from active $appointment_status
 #'
 #' @return dataframe of Patient (name), InternalID, AppointmentDate
+#' @export
 list_contact_appointments <- function(dMeasure_obj,
                                       date_from = NA,
                                       date_to = NA,
@@ -166,12 +167,12 @@ list_contact_appointments <- function(dMeasure_obj,
               query = "contact_appointments",
               data = list(date_from, date_to, clinicians))}
 
-            self$contact_appointments_list <- private$db$appointments %>>%
+            self$contact_appointments_list <- self$db$appointments %>>%
               dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
               dplyr::filter(Provider %in% clinicians) %>>%
               dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
               dplyr::filter(Status %in% status) %>>%
-              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               # need patients database to access date-of-birth
               dplyr::group_by(Patient, InternalID, AppointmentDate) %>>%
               dplyr::summarise() %>>% # plucks out unique appointment dates
@@ -214,6 +215,7 @@ list_contact_appointments <- function(dMeasure_obj,
 #'  if NA, adopts value from active $visit_type
 #'
 #' @return dataframe of Patient (name), InternalID, VisitDate
+#' @export
 list_contact_visits <- function(dMeasure_obj,
                                 date_from = NA,
                                 date_to = NA,
@@ -221,7 +223,6 @@ list_contact_visits <- function(dMeasure_obj,
                                 visit_type = NA) {
   dMeasure_obj$list_contact_visits(date_from, date_to, clinicians, visit_types)
 }
-
 .public(dMeasure, "list_contact_visits",
         function(date_from = NA,
                  date_to = NA,
@@ -256,14 +257,14 @@ list_contact_visits <- function(dMeasure_obj,
               query = "contact_visits",
               data = list(date_from, date_to, clinicians))}
 
-            self$contact_visits_list <- private$db$visits %>>%
+            self$contact_visits_list <- self$db$visits %>>%
               dplyr::filter(VisitDate >= date_from & VisitDate <= date_to) %>>%
               dplyr::filter(DrName %in% clinicians) %>>% # not just doctors!
               dplyr::filter(VisitType %in% visit_type) %>>%
               dplyr::group_by(InternalID, VisitDate) %>>%
               dplyr::summarise() %>>% # plucks out unique visit dates
               dplyr::ungroup() %>>%
-              dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
               dplyr::select(Firstname, Surname, InternalID, VisitDate) %>>%
               dplyr::collect() %>>%
               dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
@@ -301,6 +302,7 @@ list_contact_visits <- function(dMeasure_obj,
 #' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
 #'
 #' @return dataframe of Patient (name), InternalID, ServiceDate
+#' @export
 list_contact_services <- function(dMeasure_obj,
                                   date_from = NA,
                                   date_to = NA,
@@ -347,14 +349,14 @@ list_contact_services <- function(dMeasure_obj,
       query = "contact_services",
       data = list(date_from, date_to, clinicians))}
 
-    self$contact_services_list <- private$db$servicesRaw %>>%
+    self$contact_services_list <- self$db$servicesRaw %>>%
       dplyr::filter(ServiceDate >= date_from & ServiceDate <= date_to) %>>%
-      dplyr::left_join(private$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
+      dplyr::left_join(self$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
       dplyr::filter(UserID %in% clinicians) %>>% # not just doctors!
       dplyr::group_by(InternalID, ServiceDate) %>>%
       dplyr::summarise() %>>% # plucks out unique service dates
       dplyr::ungroup() %>>%
-      dplyr::left_join(private$db$patients, by = 'InternalID', copy = TRUE) %>>%
+      dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
       dplyr::select(Firstname, Surname, InternalID, ServiceDate) %>>%
       dplyr::collect() %>>%
       dplyr::mutate(Patient = paste(trimws(Firstname), trimws(Surname)),
@@ -461,6 +463,7 @@ list_contact_services <- function(dMeasure_obj,
 #' @param contact_type contact types which are accepted. default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @export
 list_contact_count <- function(dMeasure_obj,
                                date_from = NA,
                                date_to = NA,

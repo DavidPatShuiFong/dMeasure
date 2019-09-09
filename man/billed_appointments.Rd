@@ -10,22 +10,28 @@ billed_appointments(dMeasure_obj, date_from = NA, date_to = NA,
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from=dMeasure_obj$date_a}{start date, inclusive (date object)}
+\item{date_from}{start date, inclusive (date object)}
 
-\item{date_to=dMeasure_obj$date_b}{end date, inclusive (date object)}
+\item{date_to}{end date, inclusive (date object)
+default of date_from and date_to defined by choose_date method.}
 
-\item{clinicians=dMeasure_obj$clinicians}{list of clinicians to view}
+\item{clinicians}{(default dMeasure_obj$clinicians) list of clinicians to view}
 
-\item{status=NA}{filter by 'status' if not NA
+\item{status}{(default NA) filter by 'status' if not NA
 permissible values are 'Booked', 'Completed', 'At billing',
 'Waiting', 'With doctor'}
 
-\item{lazy=FALSE}{if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
+\item{lazy}{(default FALSE) if lazy=TRUE, then don't re-calculate appointments_filtered to calculate}
 }
 \value{
 list of appointments
 }
 \description{
 Filtered by date, and chosen clinicians
-Modified $appointments_billings
+}
+\details{
+Billings for patients who have displayed appointments
+
+collects ALL billings for patients who have displayed appointments
+used by CDM billings view
 }

@@ -17,24 +17,29 @@ NULL
 #' Bowel cancer screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent bowel cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
+#'   \describe{
+#'    \item{TestDate}{(date object) - date}
+#'    \item{TestName}{description of the most recent bowel cancer screening test (if any)}
+#'    \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'   }
+#' @export
 list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                       appointments_list = NULL,
                       lazy = FALSE,
@@ -215,24 +220,29 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 #' Cervical screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent cervical cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
+#'  \describe{
+#'   \item{TestDate}{(date object) - date}
+#'   \item{TestName}{description of the most recent cervical cancer screening test (if any)}
+#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'  }
+#' @export
 list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      appointments_list = NULL,
                      lazy = FALSE,
@@ -276,8 +286,8 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   ##### search proper #####################
 
   screen_cst_id <- c(self$cst_eligible_list(appointments_list %>>%
-                                            dplyr::select(InternalID,
-                                                          Date = AppointmentDate)), -1)
+                                              dplyr::select(InternalID,
+                                                            Date = AppointmentDate)), -1)
   # include dummy in case of empty list
 
   screen_cst_list <- appointments_list %>>%
@@ -286,13 +296,13 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   screen_cst_ix <- screen_cst_list %>>%
     dplyr::left_join(
       dplyr::bind_rows(dplyr::inner_join(screen_cst_list,
-                                         private$db$papsmears %>>%
+                                         self$db$papsmears %>>%
                                            dplyr::filter(InternalID %in% screen_cst_id) %>>%
                                            dplyr::rename(TestDate = PapDate,
                                                          TestName = CSTType),
                                          by = 'InternalID', copy = TRUE),
                        dplyr::inner_join(screen_cst_list,
-                                         private$db$investigations %>>%
+                                         self$db$investigations %>>%
                                            dplyr::filter(InternalID %in% screen_cst_id &&
                                                            (TestName %like% "%CERVICAL SCREENING%" ||
                                                               TestName %like% "%PAP SMEAR%")) %>>%
@@ -372,24 +382,29 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 #' Breast cancer  screening list
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default self$date_a)
-#' @param date_to to date range (default self$date_b)
-#' @param clinicians list of clinicians (default self$clinicians)
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
 #' @param appointments_list dataframe, list of appointments to search
-#'  (as opposed to using self$appointments_list)
-#'  needs Age (presumably at time of appointment),
-#'        InternalID (the EMR's identification code fo the patient)
-#' @param lazy = FALSE recalculate an appointment list
-#' @param action = FALSE includes 'OutOfDate' field
-#' @param screentag = FALSE optionally add a fomantic/semantic HTML description of 'action'
-#' @param screentag_print = TRUE optionally add a 'printable' description of 'action'
+#'
+#'  if not provided, use $appointments_list
+#'
+#'  needs fields Age, InternalID
+#'
+#' @param lazy recalculate an appointment list
+#' @param action includes 'OutOfDate' field
+#' @param screentag optionally add a fomantic/semantic HTML description of 'action'
+#' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
 #'  adds the following fields
-#'   TestDate (date object) - date and
-#'   TestName - description of the most recent breast cancer screening test (if any)
-#'   OutOfDateTest - 1 = never done, 2 = overdue, 3 = 'up-to-date'
 #'
+#'  \describe{
+#'   \item{TestDate}{(date object) - date}
+#'   \item{TestName}{description of the most recent breast cancer screening test (if any)}
+#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'  }
+#' @export
 list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            appointments_list = NULL,
                            lazy = FALSE,
@@ -433,8 +448,8 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   ##### search proper #####################
 
   screen_mammogram_id <- c(self$mammogram_eligible_list(appointments_list %>>%
-                                                        dplyr::select(InternalID,
-                                                                      Date = AppointmentDate)),
+                                                          dplyr::select(InternalID,
+                                                                        Date = AppointmentDate)),
                            -1) # include dummy in case of empty list
 
   screen_mammogram_list <- appointments_list %>>%
@@ -443,7 +458,7 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   screen_mammogram_ix <- screen_mammogram_list %>>%
     dplyr::left_join(
       dplyr::inner_join(screen_mammogram_list,
-                        private$db$investigations %>>%
+                        self$db$investigations %>>%
                           dplyr::filter(InternalID %in% screen_mammogram_id &&
                                           TestName %like% "%mammogram%") %>>%
                           dplyr::rename(TestDate = Reported),

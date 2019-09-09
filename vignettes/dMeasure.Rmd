@@ -1,0 +1,599 @@
+---
+title: "dMeasure"
+author: "David Fong : vkelim at bigpond dot com"
+date: "`r Sys.Date()`"
+abstract: "Interface to Best Practice Electronic Medical Record database to provide information about opportunities for preventative health activities, screening and chronic condition cycles of care and care planning and billings. Part of the \"Daily Measure\" software suite and the backend to \"GP Stat!\"."
+output:
+  html_document:
+    number_sections: yes
+    theme: lumen
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  rmarkdown::html_vignette: null
+vignette: >
+  %\VignetteIndexEntry{dMeasure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r echo = FALSE, results = 'hide', message = FALSE}
+library(printr)
+```
+
+# Create a dMeasure object
+
+```{r setup}
+library(dMeasure)
+packageVersion("dMeasure")
+
+# creates a dMeasure object named 'a'. Could be named something else.
+a <- dMeasure::dMeasure$new()
+```
+
+# Configuration file
+
+## Configuration file location
+
+The location of the .sqlite configuration file is stored in ""~/.DailyMeasure_cfg.yaml"
+
+The .sqlite file contains information required to access the Best Practice database.
+By default, the .sqlite file location is "~/.DailyMeasure_cfg.sqlite"
+
+```{r echo = FALSE, results = 'hide', message = FALSE}
+a$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite" # set quietly to default!
+```
+
+```{r config_file_path_default}
+a$configuration_file_path
+```
+
+The location of the .sqlite file can be changed.
+If the specified file does not exist, the .sqlite file will be created.
+
+```{r}
+a$configuration_file_path <- "~/.MySpecialConfig.sqlite"
+a$configuration_file_path
+```
+
+## Opening and reading the configuration file
+
+```{r}
+a$open_configuration_db()
+a$read_configuration_db()
+```
+
+# Best Practice Database Server configuration
+
+Add a server definition, and show server definitions.
+
+```{r echo = FALSE, results = 'hide', message = FALSE}
+# quietly remove any current server description whic is called 'Myserver'!
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id) %>% unique()
+if (length(id) == 1) {
+  a$server.delete(list(id = id[[1]]))
+}
+```
+
+
+```{r}
+a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
+                     Database = "BPSSAMPLES", UserID = "bpsrawdata",
+                     dbPassword = "mypassword"))
+a$server.list()
+```
+
+A description of many methods can be shown using the package's help
+documentation, as shown for **server.insert** below.
+Note that the *function* **server.insert**
+includes an initial argument `dMeasure_obj` which is not used in
+the *method* **server.insert**.
+
+```{r}
+?dMeasure::server.insert
+```
+
+## Modify and delete server descriptions
+
+Current server descriptions can be modified
+
+```{r}
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id)
+a$server.update(list(id = id, Database = "BPSPATIENTS"))
+```
+
+or deleted
+
+```{r}
+id <- a$server.list() %>% dplyr::filter(Name == "MyServer") %>% dplyr::pull(id)
+if (length(id) == 1) {
+  a$server.delete(list(id = id))
+}
+```
+
+## Use server descriptions
+
+The server description can be chosen, which will automatically try to use the chosen server description.
+
+```{r}
+a$BPdatabaseChoice <- "None" # set to null choice
+```
+
+```{r}
+a$BPdatabaseChoice # returns the current database description choice
+```
+
+```{r}
+a$BPdatabaseChoice <- "Main" # this will also open the 'Main' database description, if possible
+```
+
+Database connections can be 'manually' closed.
+
+The most recent Best Practice database choice will be 'remembered' in the .sqlite configuration file.
+
+```{r}
+a$close() # closes the database connections
+```
+
+# Opening the Best Practice database connection, and appointment list examples
+
+```{r}
+a <- dMeasure$new()
+a$open_emr_db() # this will try to open the most recent database description choice, in this case, 'Main'
+```
+
+By default, no clinicans are selected, and the date of searches will be the current date (in this case `r Sys.Date()`).
+
+```{r}
+a$choose_clinicians()
+a$choose_date()
+```
+
+The list of available clinicians can be shown...
+
+```{r}
+a$clinician_choice_list
+```
+
+...some clinicians chosen:
+
+```{r}
+a$choose_clinicians(c("Ms Nadine Nurse", "Mrs. Psychology Specialist",
+                      "Dr Frederick Findacure", "Dr Ivor Cure"))
+```
+
+...and dates chosen:
+
+```{r}
+a$choose_date(date_from = as.Date("2000-01-01"), date_to = as.Date("2020-01-01"))
+```
+
+Just one of `date_from` or `date_to` can be defined.
+
+It is also assumed (if the argument are not 'named'), that the first argument of **choose_date**
+will be `date_from`, and the second argument (if supplied) will be `date_to`.
+
+Subsequent calls to many methods, such as those named `list_*` will, by default,
+assume the chosen clinicians and dates are those defined by the **choose_clinicians**
+and **choose_date** methods above.
+
+```{r}
+a$list_appointments() %>% head() # 'head' just displays the first few appointments
+```
+
+## Billed appointments list
+
+```{r}
+?dMeasure::billed_appointments
+```
+
+```{r}
+a$billed_appointments() %>% 
+  dplyr::mutate(Description = iconv(Description, "latin1", "ASCII", sub = "")) %>%
+  # removes an invalid ASCII character from Description
+  head()
+```
+
+# Billings methods
+
+Billings matched up to appointments and visits
+
+```{r}
+?dMeasure::list_billings
+a$own_billings # by default is TRUE, and shows only billings attributable to the provider
+a$choose_date(date_from = as.Date("2019-05-01"), date_to = as.Date("2019-05-30")) # restrict date range
+a$choose_clinicians(a$clinician_choice_list) # choose all clinicians
+a$list_billings() %>% head() # an aggregated version of $appointments_billings_sameday()
+```
+
+
+Show ALL billings for the patient on that day, whether or not attributable to
+the provider.
+
+```{r}
+a$own_billings <- FALSE
+a$list_billings() %>% head()
+a$choose_date(as.Date("2001-01-01"), Sys.Date()) # reset dates
+```
+
+
+# Chronic disease management
+
+```{r}
+a$appointments_billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
+```
+
+Chronic disease management opportunities based on a a large number of condition lists, such `diabetes_list_cdm`.
+These active condition lists look at `appointments_list` (which is set by **list_appointments** method), and
+determine if a chronic disease management billing has occurred in a time period prior to the appointment.
+
+```{r}
+a$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
+```
+
+The **diabetes_list_cdm** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`
+and `$Date` returns a vector of `InternalID` which corresponds to the `$InternalID` which have a history of diabetes.
+
+```{r}
+?dMeasure::diabetes_list
+a$diabetes_list()
+```
+
+# Immunization methods
+
+```{r}
+?dMeasure::list_vax()
+a$list_vax() %>% head()
+a$list_influenza() %>% head()
+a$list_zostavax() %>% head()
+```
+
+# Cancer screening methods
+
+## Breast cancer screening
+
+```{r}
+?dMeasure::list_mammogram
+a$list_mammogram() %>% head()
+```
+
+## Cervical cancer screening
+
+```{r}
+a$list_cst() %>% tail()
+```
+
+## Bowel cancer screening
+
+```{r}
+a$list_fobt() %>% head()
+```
+
+# Conditions
+
+**diabetes_list** method described in Chronic Disease Management section.
+
+```{r}
+?dMeasure::asthma_list
+a$asthma_list()
+```
+
+```{r}
+?dMeasure::atsi_list
+```
+
+```{r}
+?dMeasure::malignancy_list
+```
+
+```{r}
+?dMeasure::hiv_list
+```
+
+```{r}
+?dMeasure::haemoglobinopathy_list
+```
+
+```{r}
+?dMeasure::asplenia_list
+```
+
+```{r}
+?dMeasure::haemoglobinopathy_list
+```
+
+```{r}
+?dMeasure::transplant_list
+```
+
+```{r}
+?dMeasure::cvd_list
+```
+
+```{r}
+?dMeasure::cardiacdisease_list
+```
+
+```{r}
+?dMeasure::trisomy21_list
+```
+
+```{r}
+?dMeasure::bmi30_list
+```
+
+```{r}
+?dMeasure::neurologic_list
+```
+
+```{r}
+?dMeasure::chronicliverdisease_list
+```
+
+```{r}
+?dMeasure::chronicrenaldisease_list
+```
+
+```{r}
+?dMeasure::pregnancy_list
+```
+
+```{r}
+?dMeasure::fifteenplus_list
+```
+
+```{r}
+?dMeasure::sixtyfiveplus_list
+```
+
+```{r}
+?dMeasure::seventyfiveplus_list
+```
+
+```{r}
+?dMeasure::ATSI_35_44_list
+```
+
+```{r}
+?dMeasure::fortyfiveseventyfour_list
+```
+
+```{r}
+?dMeasure::cst_eligible_list
+```
+
+```{r}
+?dMeasure::mammogram_eligible_list
+```
+
+```{r}
+?dMeasure::familialHypercholesterolaemia_list
+```
+
+```{r}
+?dMeasure::LVH_list
+```
+
+# Contacts
+
+There are three kinds of contacts : Appointments, Visits and Services.
+
+Appointments are in the Appointment Book, and can be one of several 'Status'
+
+```{r}
+a$appointment_status_types
+a$appointment_status # the appointment status type which are seen with 'contact' methods
+```
+
+Visits are records in the patient progress notes. These can be of several types.
+
+```{r}
+a$visit_types
+a$visit_type # the visit types which are seen with 'contact' methods
+```
+
+Services are billings.
+
+## List contacts
+
+```{r}
+?dMeasure::list_contact_appointments
+a$list_contact_appointments() %>>% head()
+x <- a$appointment_status # temporary store
+a$appointment_status <- "Completed" # choose appointment status "Completed" only
+a$list_contact_appointments() %>>% head()
+a$appointment_status <- x # restore previous appointment status setting
+```
+
+```{r}
+a$list_contact_visits() %>% head()
+```
+
+```{r}
+a$list_contact_services() %>% head()
+```
+
+## Counting contacts
+
+A list of 'contacted' patients can be restricted by contact types, number of contacts
+within the specified time period (which can be chosen with **$choose_date**), and the
+date of the most recent contact.
+
+```{r}
+a$contact_type # current contact types which are counted
+a$contact_types # all available contact types
+a$contact_min # number of 'minimum' contact within the specified time period
+a$contact_minDate # 'minimum' date of most recent contact
+# note that 'NA' is actually as.Date(-Inf, origin = "1970-01-01")
+# which is infinitely into the past
+a$contact_minDate <- as.Date("2019-01-01")
+a$contact_minDate
+a$contact_minDate <- as.Date(-Inf, origin = "1970-01-01")
+a$contact_minDate
+```
+
+```{r}
+a$list_contact_count() %>% head()
+a$contact_min <- 5
+a$list_contact_count() %>% head()
+a$contact_min <- 1
+```
+
+## Contact conditions
+
+The **list_contact_count** list can be further restricted by conditions.
+
+These 'conditions' include those relevant to the Practice Improvement Program
+[Quality Improvement Measures](https://www1.health.gov.au/internet/main/publishing.nsf/Content/PIP-QI_Incentive_guidance).
+
+```{r}
+?dMeasure::list_contact_diabetes
+a$list_contact_diabetes() %>% head()
+a$list_contact_15plus() %>% head()
+a$list_contact_45_74() %>% head()
+a$list_contact_65plus() %>% head()
+a$list_contact_75plus() %>% head()
+a$list_contact_ATSI_35_44() %>% head()
+a$list_contact_chroniclungdisease() %>% head()
+a$list_contact_cst() %>% head()
+```
+
+# Practice Incentive Program [Quality Improvement Measures](https://www1.health.gov.au/internet/main/publishing.nsf/Content/PIP-QI_Incentive_guidance)
+
+These methods assist in reporting and monitoring of Quality Improvement Measures.
+
+One group of methods *list* patients relevant to the Quality Improvement Measures.
+
+The most basic list is of *active* patients (as defined by the *contact* methods, such as **list_contact_count**).
+
+In the example below, 'all' contact types are counted. This is a very broad definition,
+and is only used because the 'samples' database used to create this document is very small.
+
+```{r}
+?dMeasure::list_qim_active
+a$contact_type <- a$contact_types # includes 'all' contact types as valid (appointment, visit, billing)
+a$list_qim_active() # the list of patients, with Quality Improvement Measure specified groupings
+```
+
+The other group of methods provide aggregated/anonymized *report* of the relevant patients.
+
+```{r}
+a$report_qim_active() # an 'anonymized'/aggregated report of the active patients
+# 'n' is the number of patients in the category
+# 'Proportion' is the proportion of patients in the category
+```
+
+The demographic groupings for *report* can be changed from the default
+
+```{r}
+a$qim_demographicGroup # the default setting
+a$qim_demographicGroupings
+a$qim_demographicGroup <- c("Sex", "Ethnicity")
+a$report_qim_active()
+```
+
+## Diabetes Quality Improvement Measures
+
+```{r}
+DT::datatable(a$list_qim_diabetes(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
+a$report_qim_diabetes()
+```
+
+By default, 'old' results (as defined by the Quality Improvement Measures) are ignored.
+Old results can be included by setting **qim_ignoreOld** to *FALSE*.
+
+```{r}
+a$qim_ignoreOld <- FALSE
+DT::datatable(a$list_qim_diabetes(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
+a$report_qim_diabetes()
+```
+
+## Cervical screening
+
+```{r}
+a$list_qim_cst()
+a$report_qim_cst()
+```
+
+## Fifteen plus
+
+```{r}
+# very wide table! use scroller to see to the right...
+DT::datatable(a$list_qim_15plus(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
+DT::datatable(a$report_qim_15plus())
+```
+
+## Sixty-five plus
+
+```{r}
+a$list_qim_65plus()
+a$report_qim_65plus()
+```
+
+## Chronic obstructive pulmonary disease
+
+```{r}
+a$list_qim_copd()
+a$report_qim_copd()
+```
+
+## Cardiovascular risk
+
+```{r}
+?dMeasure::list_qim_cvdRisk
+# remove some demographics and alcohol recordings because the table is very wide...
+# note that the framingham risk equation calculation result 'frisk' is on the
+# extreme right hand side
+DT::datatable(a$list_qim_cvdRisk() %>%
+                dplyr::select(-c(RecordNo, MaritalStatus, Sexuality)),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
+a$report_qim_cvdRisk()
+```
+
+### Cardiovascular risk inclusion/exclusion groups
+
+```{r}
+a$qim_cvdRisk_measureTypes
+a$qim_cvdRisk_measure # default group settings
+```
+
+Note that current Quality Improvement Measures guidelines appear to exclude ATSI 35-44 age group,
+which is different to the current default setting.
+
+### Framingham Risk Equation used for calculation
+
+```{r}
+?dMeasure::framingham_riskequation
+```
+
+In the interest of openness and reproducability
+the actual equation and function is reproduced below.
+Please report any required corrections to me!
+
+```{r code = capture.output(dMeasure::framingham_riskequation), eval = FALSE}
+```
+
+# Close the database connections
+
+```{r}
+a$close()
+```
