@@ -443,8 +443,8 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                                                      # no GPMP R/V since the last GPMP/TCA
                                                      dplyr::if_else(dMeasure::interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
                                                                     # GPMP R/V. Less than or more than 3 months?
-                                                                    'green',
-                                                                    'yellow')),
+                                                                    'yellow',
+                                                                    'green')),
                                     popuphtml =
                                       paste0("<h4>Date : ", ServiceDate,
                                              "</h4><h6>Item : ", MBSItem,
@@ -458,8 +458,8 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
                                          dplyr::if_else(MBSName %in% c("GPMP", "TCA"),
                                                         paste0("(", MBSName, ": ", ServiceDate, ") Overdue"),
                                                         dplyr::if_else(dMeasure::interval(ServiceDate, AppointmentDate, unit = "month")$month >= 3,
-                                                                       paste0("(", ServiceDate, ")"),
-                                                                       paste0("(", ServiceDate, ") Overdue")))))
+                                                                       paste0("(", ServiceDate, ") Overdue"),
+                                                                       paste0("(", ServiceDate, ")")))))
               }
 
             } else {

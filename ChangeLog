@@ -1,5 +1,17 @@
 Changelog
 
+
+Improvement
+
+* Framingham risk equation function
+
+  Default is now cardiovascular (instead of coronary heart disease) risk
+
+Bugfix
+
+* GPMP R/V in CDM had reversed colours (yellow/green)
+  and actions ('Overdue'). Fixed
+
 0.5.0 - 9th September 2019
 ===========================
 
