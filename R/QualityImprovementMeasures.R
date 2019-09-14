@@ -664,7 +664,6 @@ list_qim_diabetes_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
@@ -1168,7 +1167,6 @@ list_qim_cst_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
@@ -1796,7 +1794,6 @@ list_qim_15plus_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
@@ -2241,7 +2238,6 @@ list_qim_65plus_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
@@ -2663,7 +2659,6 @@ list_qim_copd_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
@@ -3284,7 +3279,6 @@ list_qim_cvdRisk_appointments <- function(dMeasure_obj,
       dplyr::left_join(self$appointments_filtered_time,
                        by = c("InternalID", "Patient"),
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # no longer need InternalID
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
