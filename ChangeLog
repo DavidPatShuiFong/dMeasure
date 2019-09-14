@@ -1,6 +1,11 @@
 Changelog
 
 
+New
+
+* Addition of appointment versions of list_qim
+  e.g. list_qim_cvdRisk_appointments
+
 Improvement
 
 * Framingham risk equation function

@@ -29,7 +29,7 @@ if not supplied, reads $qim_ignoreOld}
 \item{lazy}{recalculate the copd contact list?}
 }
 \value{
-dataframe of Patient (name), InternalID, Count, and most recent contact
+dataframe of Patient (name), InternalID, measures
 }
 \description{
 Filtered by date, and chosen clinicians

@@ -55,6 +55,22 @@ NULL
 })
 .reactive(dMeasure, "qim_demographicGroupR", quote(self$qim_demographicGroupings))
 
+##### attach appointments date/time/provider to QIM lists ###########################
+
+.private(dMeasure, ".qim_appointmentDetails", FALSE)
+.active(dMeasure, "qim_appointmentDetails", function(value) {
+  # minimum number of contacts listed in $list_contact_count
+  if (missing(value)) {
+    return(private$.qim_appointmentDetails)
+  }
+  if (is.logical(value)) {
+    private$.qim_appointmentDetails <- value
+    private$set_reactive(self$qim_appointmentDetailsR, value)
+  } else {
+    warning("$qim_appointmentDetails only accepts logical values (TRUE/FALSE).")
+  }
+})
+.reactive(dMeasure, "qim_appointmentDetailsR", FALSE)
 
 ##### QIM active fields #############################################################
 
@@ -84,7 +100,7 @@ NULL
 #' @param contact_type contact types which are accepted. default is $contact_type
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID and demographics
 #' @export
 list_qim_active <- function(dMeasure_obj,
                             date_from = NA,
@@ -169,8 +185,7 @@ list_qim_active <- function(dMeasure_obj,
                          dplyr::filter(InternalID %in% activeID) %>>%
                          dplyr::select(InternalID, RecordNo),
                        by = "InternalID", # add RecordNo
-                       copy = TRUE) %>>%
-      dplyr::select(-InternalID) # drop the InternalID
+                       copy = TRUE)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -318,6 +333,7 @@ report_qim_active <- function(dMeasure_obj,
 .public(dMeasure, "qim_diabetes_list",
         data.frame(Patient = character(),
                    RecordNo = character(),
+                   InternalID = integer(),
                    Age5 = integer(),
                    Sex = character(),
                    Ethnicity = character(),
@@ -358,7 +374,7 @@ report_qim_active <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID and measures
 #' @export
 list_qim_diabetes <- function(dMeasure_obj,
                               date_from = NA,
@@ -482,7 +498,7 @@ list_qim_diabetes <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(-c(DOB, InternalID))
+      dplyr::select(-c(DOB))
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
   }
@@ -501,7 +517,6 @@ list_qim_diabetes <- function(dMeasure_obj,
                       })
                 ))
 
-
 .active(dMeasure, "qim_diabetes_measureTypes", function(value) {
   if (!missing(value)) {
     warning("$qim_diabetes_measureTypes is read-only.")
@@ -516,7 +531,9 @@ list_qim_diabetes <- function(dMeasure_obj,
 
 .private_init(dMeasure, ".qim_diabetes_measure", quote(self$qim_diabetes_measureTypes))
 .active(dMeasure, "qim_diabetes_measure", function(value) {
-  # minimum number of contacts listed in $list_contact_count
+  # which measures to include
+  # this is ignored by dMeasure qim_diabetes_list, but used by qim_diabetes_report
+  # the GPstat! frontend uses this to filter the results of qim_diabetes_list
   if (missing(value)) {
     return(private$.qim_diabetes_measure)
   }
@@ -526,6 +543,145 @@ list_qim_diabetes <- function(dMeasure_obj,
   private$set_reactive(self$qim_diabetes_measureR, value)
 })
 .reactive(dMeasure, "qim_diabetes_measureR", quote(self$qim_diabetes_measureTypes))
+
+.public(dMeasure, "qim_diabetes_list_appointments",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   Age5 = integer(0),
+                   Sex = character(0),
+                   Ethnicity = character(0),
+                   MaritalStatus = character(0),
+                   Sexuality = character(0),
+                   HbA1CDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+                   HbA1CValue = double(0),
+                   HbA1CUnits = character(0),
+                   FluvaxDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   FluvaxName = character(),
+                   BPDate = as.Date(integer(0),
+                                    origin = "1970-01-01"),
+                   BP = character(0),
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts)
+#' List of diabetics, with Quality Improvement Measures, in contact list plus appointment details
+#'
+#' Filtered by date, and chosen clinicians.
+#' Note that a 'contact' could potentially be defined as something else other than
+#' an appointment! (e.g. billing, or record of visit)
+#'
+#' QIM 01 - HbA1C - most recent. the QIM measure is within last twelve months
+#' QIM 05 - Influenza immunization - most recent. the QIM measure is within last 15 months
+#' QIM 10 - Blood pressure - most recent. the QIM measure is within the last six months
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, appointment details and measures
+#' @export
+list_qim_diabetes_appointments <- function(dMeasure_obj,
+                                           date_from = NA,
+                                           date_to = NA,
+                                           clinicians = NA,
+                                           min_contact = NA,
+                                           min_date = NA,
+                                           contact_type = NA,
+                                           ignoreOld = NA,
+                                           lazy = FALSE) {
+  dMeasure_obj$list_qim_diabetes_appointments(date_from, date_to, clinicians,
+                                              min_contact, min_date, contact_type,
+                                              ignoreOld,
+                                              lazy)
+}
+.public(dMeasure, "list_qim_diabetes_appointments", function(date_from = NA,
+                                                             date_to = NA,
+                                                             clinicians = NA,
+                                                             min_contact = NA,
+                                                             min_date = NA,
+                                                             contact_type = NA,
+                                                             ignoreOld = NA,
+                                                             lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "diabetes_qim_appointments",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_diabetes(date_from, date_to, clinicians,
+                             min_contact, min_date,
+                             contact_type, ignoreOld,
+                             lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_diabetes_list_appointments <- self$qim_diabetes_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_diabetes_list_appointments)
+})
+.reactive_event(dMeasure, "qim_diabetes_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_diabetes_listR(),
+                      self$appointments_filtered_timeR()), {
+                        self$list_qim_diabetes_appointments(lazy = TRUE)
+                        # re-calculates the appointments
+                      })
+                ))
 
 .public(dMeasure, "qim_diabetes_report",
         data.frame(NULL,
@@ -689,6 +845,7 @@ report_qim_diabetes <- function(dMeasure_obj,
 
 .public(dMeasure, "qim_cst_list",
         data.frame(Patient = character(),
+                   InternalID = integer(),
                    RecordNo = character(),
                    Age5 = integer(),
                    Sex = character(),
@@ -875,7 +1032,6 @@ list_qim_cst <- function(dMeasure_obj,
                          dplyr::select(InternalID, RecordNo),
                        by = "InternalID", # add RecordNo
                        copy = TRUE) %>>%
-      dplyr::select(-InternalID) %>>% # drop the InternalID
       dplyr::rename(CSTDate = TestDate,
                     CSTName = TestName)
 
@@ -892,6 +1048,143 @@ list_qim_cst <- function(dMeasure_obj,
                         # update if reactive version of $date_a $date_b
                         # or $clinicians are updated.
                         self$list_qim_cst(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
+
+
+.public(dMeasure, "qim_cst_list_appointments",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   CSTDate = as.Date(integer(0),
+                                     origin = "1970-01-01"),
+                   CSTName = character(),
+                   # CStName is expected to be 'CST' or 'PAP', but might
+                   # but could be a longer string containing 'Pap' if sourced from 'Investigations' table
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts
+
+#' List of CST eligible patients with Quality Improvement Measures,
+#' in the contact list, with appointment details
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 09 -Proportion of female patients with an up-to-date cervical screening
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, appointment details and measures
+#' @export
+list_qim_cst_appointments <- function(dMeasure_obj,
+                                      date_from = NA,
+                                      date_to = NA,
+                                      clinicians = NA,
+                                      min_contact = NA,
+                                      min_date = NA,
+                                      contact_type = NA,
+                                      ignoreOld = NA,
+                                      lazy = FALSE) {
+  dMeasure_obj$list_qim_cst_appointments(date_from, date_to, clinicians,
+                                         min_contact, min_date, contact_type,
+                                         ignoreOld,
+                                         lazy)
+}
+
+.public(dMeasure, "list_qim_cst_appointments", function(date_from = NA,
+                                                        date_to = NA,
+                                                        clinicians = NA,
+                                                        min_contact = NA,
+                                                        min_date = NA,
+                                                        contact_type = NA,
+                                                        ignoreOld = NA,
+                                                        lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {
+      log_id <- private$config_db$write_log_db(
+        query = "cst_qim_appointments",
+        data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_cst(date_from, date_to, clinicians,
+                        min_contact, min_date,
+                        contact_type, ignoreOld,
+                        lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_cst_list_appointments <- self$qim_cst_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_cst_list_appointments)
+})
+.reactive_event(dMeasure, "qim_cst_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_cst_listR(),
+                      self$appointments_filtered_timeR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_cst_appointments(lazy = TRUE)
                         # re-calculates the counts
                       })
                 ))
@@ -1041,6 +1334,7 @@ report_qim_cst <- function(dMeasure_obj,
 ##### QIM 15+ fields ###########################################################
 .public(dMeasure, "qim_15plus_list",
         data.frame(Patient = character(),
+                   InternalID = integer(),
                    RecordNo = character(),
                    Age5 = integer(),
                    Sex = character(),
@@ -1098,7 +1392,7 @@ report_qim_cst <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the diabetes contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID, measures
 #' @export
 list_qim_15plus <- function(dMeasure_obj,
                             date_from = NA,
@@ -1315,7 +1609,7 @@ list_qim_15plus <- function(dMeasure_obj,
                        by = "InternalID",
                        copy = TRUE) %>>%
 
-      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+      dplyr::select(Patient, InternalID, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
                     HeightDate, HeightValue, WeightDate, WeightValue, BMIDate, BMIValue, BMIClass,
                     WaistDate, WaistValue, SmokingDate, SmokingStatus,
                     AlcoholDate, NonDrinker, DaysPerWeek, DrinksPerDay, AlcoholDescription,
@@ -1363,6 +1657,165 @@ list_qim_15plus <- function(dMeasure_obj,
   private$set_reactive(self$qim_15plus_measureR, value)
 })
 .reactive(dMeasure, "qim_15plus_measureR", quote(self$qim_15plus_measureTypes))
+
+
+.public(dMeasure, "qim_15plus_list_appointments",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   WeightDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   WeightValue = numeric(),
+                   HeightDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   HeightValue = numeric(),
+                   BMIDate = as.Date(integer(0),
+                                     origin = "1970-01-01"),
+                   BMIValue = numeric(),
+                   BMIClass = character(),
+                   WaistDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+                   WaistValue = numeric(),
+                   SmokingDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   SmokingStatus = character(),
+                   AlcoholDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   NonDrinker = character(),
+                   AlcoholDaysPerWeek = numeric(),
+                   AlcoholDrinksPerDay = numeric(),
+                   AlcoholDescription = character(),
+                   PastAlcoholLevel = character(),
+                   YearStarted = integer(),
+                   YearStopped = integer(),
+                   AlcoholComment = character(),
+                   stringsAsFactors = FALSE))
+# filtered by chosen dates and clinicians and number of contacts
+
+##### QIM diabetes methods ##########################################################
+#' List of diabetics, with Quality Improvement Measures, in the contact list, with appoinments
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 02 - Proportion of patients with a smoking status result
+#' QIM 03 - Proportion of patients with a weight classification (12 months)
+#' QIM 07 - Proportionof patients with an alcohol consumption status
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the diabetes contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, appointment details and measures
+#' @export
+list_qim_15plus_appointments <- function(dMeasure_obj,
+                                         date_from = NA,
+                                         date_to = NA,
+                                         clinicians = NA,
+                                         min_contact = NA,
+                                         min_date = NA,
+                                         contact_type = NA,
+                                         ignoreOld = NA,
+                                         lazy = FALSE) {
+  dMeasure_obj$list_qim_15plus_appointments(date_from, date_to, clinicians,
+                                            min_contact, min_date, contact_type,
+                                            ignoreOld,
+                                            lazy)
+}
+
+.public(dMeasure, "list_qim_15plus_appointments", function(date_from = NA,
+                                                           date_to = NA,
+                                                           clinicians = NA,
+                                                           min_contact = NA,
+                                                           min_date = NA,
+                                                           contact_type = NA,
+                                                           ignoreOld = NA,
+                                                           lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "fifteenplus_qim_appointments",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_15plus(date_from, date_to, clinicians,
+                           min_contact, min_date,
+                           contact_type, ignoreOld,
+                           lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_15plus_list_appointments <- self$qim_15plus_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_15plus_list_appointments)
+})
+.reactive_event(dMeasure, "qim_15plus_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_15plus_listR(),
+                      self$appointments_filtered_timeR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_15plus_appointments(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
 
 .public(dMeasure, "qim_15plus_report",
         data.frame(NULL,
@@ -1527,6 +1980,7 @@ report_qim_15plus <- function(dMeasure_obj,
 ##### QIM 65 plus fields ############################################################
 .public(dMeasure, "qim_65plus_list",
         data.frame(Patient = character(),
+                   InternalID = integer(),
                    RecordNo = character(),
                    Age5 = integer(),
                    Sex = character(),
@@ -1558,7 +2012,7 @@ report_qim_15plus <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the 65+ contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID and measures
 #' @export
 list_qim_65plus <- function(dMeasure_obj,
                             date_from = NA,
@@ -1656,7 +2110,8 @@ list_qim_65plus <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+      dplyr::select(Patient, InternalID, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality,
+                    Age5,
                     FluvaxDate, FluvaxName)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
@@ -1676,6 +2131,136 @@ list_qim_65plus <- function(dMeasure_obj,
                       })
                 ))
 
+.public(dMeasure, "qim_65plus_list_appointments",
+        data.frame(Patient = character(),
+                   RecordNo = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   FluvaxDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   FluvaxName = character(),
+                   stringsAsFactors = FALSE))
+
+#' List of 65 years or older, with Quality Improvement Measures, in the contact list, with appointments
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 04 - Influenza immunization - most recent. the QIM measure is within last 15 months
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the 65+ contact list?
+#'
+#' @return dataframe of Patient (name), InternalID and measures
+#' @export
+list_qim_65plus_appointments <- function(dMeasure_obj,
+                                         date_from = NA,
+                                         date_to = NA,
+                                         clinicians = NA,
+                                         min_contact = NA,
+                                         min_date = NA,
+                                         contact_type = NA,
+                                         ignoreOld = NA,
+                                         lazy = FALSE) {
+  dMeasure_obj$list_qim_65plus_appointments(date_from, date_to, clinicians,
+                                            min_contact, min_date, contact_type,
+                                            ignoreOld,
+                                            lazy)
+}
+
+.public(dMeasure, "list_qim_65plus_appointments", function(date_from = NA,
+                                                           date_to = NA,
+                                                           clinicians = NA,
+                                                           min_contact = NA,
+                                                           min_date = NA,
+                                                           contact_type = NA,
+                                                           ignoreOld = NA,
+                                                           lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "sixtyfiveplus_qim_appointments",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_65plus(date_from, date_to, clinicians,
+                           min_contact, min_date,
+                           contact_type, ignoreOld,
+                           lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_65plus_list_appointments <- self$qim_65plus_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_65plus_list_appointments)
+})
+.reactive_event(dMeasure, "qim_65plus_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_65plus_listR(),
+                      self$appointments_filtered_timeR()), {
+                        # update if reactive version of $date_a $date_b
+                        # or $clinicians are updated.
+                        self$list_qim_65plus_appointments(lazy = TRUE)
+                        # re-calculates the counts
+                      })
+                ))
 
 .public(dMeasure, "qim_65plus_report",
         data.frame(NULL,
@@ -1818,6 +2403,7 @@ report_qim_65plus <- function(dMeasure_obj,
 ##### QIM chronic lung disease plus fields ############################################################
 .public(dMeasure, "qim_copd_list",
         data.frame(Patient = character(),
+                   InternalID = integer(),
                    RecordNo = character(),
                    Age5 = integer(),
                    Sex = character(),
@@ -1849,7 +2435,7 @@ report_qim_65plus <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the copd contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact
+#' @return dataframe of Patient (name), InternalID, measures
 #' @export
 list_qim_copd <- function(dMeasure_obj,
                           date_from = NA,
@@ -1947,7 +2533,7 @@ list_qim_copd <- function(dMeasure_obj,
                        copy = TRUE) %>>%
       dplyr::mutate(Age5 = floor(dMeasure::calc_age(as.Date(DOB), date_to) / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+      dplyr::select(Patient, InternalID, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
                     FluvaxDate, FluvaxName)
 
     if (self$Log) {private$config_db$duration_log_db(log_id)}
@@ -1964,6 +2550,134 @@ list_qim_copd <- function(dMeasure_obj,
                         # or $clinicians are updated.
                         self$list_qim_copd(lazy = TRUE)
                         # re-calculates the counts
+                      })
+                ))
+
+.public(dMeasure, "qim_copd_list_appointments",
+        data.frame(Patient = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   FluvaxDate = as.Date(integer(0),
+                                        origin = "1970-01-01"),
+                   FluvaxName = character(),
+                   stringsAsFactors = FALSE))
+
+#' List of patient with chronic lung disease, with Quality Improvement Measures, in the contact list, with appointments
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 06 -Proportion of patients with COPD who were immunised against influenza
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the copd contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, appointment details and measures
+#' @export
+list_qim_copd_appointments <- function(dMeasure_obj,
+                                       date_from = NA,
+                                       date_to = NA,
+                                       clinicians = NA,
+                                       min_contact = NA,
+                                       min_date = NA,
+                                       contact_type = NA,
+                                       ignoreOld = NA,
+                                       lazy = FALSE) {
+  dMeasure_obj$list_qim_copd_appointments(date_from, date_to, clinicians,
+                                          min_contact, min_date, contact_type,
+                                          ignoreOld,
+                                          lazy)
+}
+
+.public(dMeasure, "list_qim_copd_appointments", function(date_from = NA,
+                                                         date_to = NA,
+                                                         clinicians = NA,
+                                                         min_contact = NA,
+                                                         min_date = NA,
+                                                         contact_type = NA,
+                                                         ignoreOld = NA,
+                                                         lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "copd_qim_appointments",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_copd(date_from, date_to, clinicians,
+                         min_contact, min_date,
+                         contact_type,
+                         lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_copd_list_appointments <- self$qim_copd_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_copd_list_appointments)
+})
+.reactive_event(dMeasure, "qim_copd_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_copd_listR(),
+                      self$appointments_filtered_timeR()), {
+                        self$list_qim_copd_appointments(lazy = TRUE)
                       })
                 ))
 
@@ -2096,12 +2810,8 @@ report_qim_copd <- function(dMeasure_obj,
                   shiny::eventReactive(
                     c(self$qim_copd_listR(),
                       self$qim_demographicGroupR()), {
-                        # update if reactive version of $date_a $date_b
-                        # or $clinicians are updated.
-                        # or change in demographic grouping
-                        # or change in measures
+                        # react to change in demographic grouping
                         self$report_qim_copd(lazy = TRUE)
-                        # re-calculates the counts
                       })
                 ))
 
@@ -2109,6 +2819,7 @@ report_qim_copd <- function(dMeasure_obj,
 ##### QIM cardiovascular risk fields ############################################################
 .public(dMeasure, "qim_cvdRisk_list",
         data.frame(Patient = character(),
+                   InternalID = integer(),
                    RecordNo = character(),
                    Age5 = integer(),
                    Sex = character(),
@@ -2216,7 +2927,7 @@ report_qim_copd <- function(dMeasure_obj,
 #'  if not supplied, reads $qim_ignoreOld
 #' @param lazy recalculate the copd contact list?
 #'
-#' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
+#' @return dataframe of Patient (name), InternalID and measures
 #' @export
 list_qim_cvdRisk <- function(dMeasure_obj,
                              date_from = NA,
@@ -2378,7 +3089,7 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                         by = "InternalID")} %>>%
       dplyr::mutate(Age5 = floor(Age / 5) * 5) %>>%
       # round age group to nearest 5 years
-      dplyr::select(Patient, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
+      dplyr::select(Patient, InternalID, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
                     CardiovascularDisease, Diabetes, SmokingDate, SmokingStatus,
                     UrineAlbuminDate, UrineAlbuminValue, UrineAlbuminUnits,
                     PersistentProteinuria, eGFRDate, eGFRValue, eGFRUnits,
@@ -2399,10 +3110,195 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                       self$contact_ATSI_35_44_listR(),
                       self$qim_ignoreOldR(),
                       self$qim_cvdRisk_measureR()), {
-                        # update if reactive version of $date_a $date_b
-                        # or $clinicians are updated.
                         self$list_qim_cvdRisk(lazy = TRUE)
-                        # re-calculates the counts
+                      })
+                ))
+
+
+.public(dMeasure, "qim_cvdRisk_list_appointments",
+        data.frame(Patient = character(),
+                   AppointmentDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   AppointmentTime = character(0),
+                   Provider = character(0),
+                   Status = character(0),
+                   RecordNo = character(),
+                   Age5 = integer(),
+                   Sex = character(),
+                   Ethnicity = character(),
+                   MaritalStatus = character(),
+                   Sexuality = character(),
+                   CardiovascularDisease = logical(),
+                   Diabetes = logical(),
+                   SmokingDate = as.Date(integer(0),
+                                         origin = "1970-01-01"),
+                   SmokingStatus = character(),
+                   UrineAlbuminDate = as.Date(integer(0),
+                                              origin = "1970-01-01"),
+                   UrineAlbuminValue = double(),
+                   UrineAlbuminUnit = character(),
+                   PersistentProteinuria = logical(),
+                   eGFRDate = as.Date(integer(0),
+                                      origin = "1970-01-01"),
+                   eGFRValue = double(),
+                   eGFRUnits = character(),
+                   FamilialHypercholesterolaemia = logical(),
+                   LVH = logical(),
+                   CholesterolDate = as.Date(integer(0),
+                                             origin = "1970-01-01"),
+                   Cholesterol = double(), HDL = double(), LDL = double(),
+                   Triglycerides = double(), CholHDLRatio = double(),
+                   BPDate = as.Date(integer(0),
+                                    origin = "1970-01-01"),
+                   BP  = character(),
+                   Sex = character(), Ethnicity = character(),
+                   RecordNo = character(), MaritalStatus = character(), Sexuality = character(),
+                   frisk = double(), friskHI = character(),
+                   Age5 = numeric(),
+                   stringsAsFactors = FALSE))
+
+#' List of patient with information to complete cardiovascular risk assessment and appointment details
+#'
+#' Filtered by date, and chosen clinicians
+#'
+#' QIM 08.Proportion of patients with the necessary risk factors assessed
+#'  to enable CVD assessment
+#'
+#' required parameters
+#'
+#'  Age, Ethnicity (especially ATSI status)
+#'
+#'   included - Age 45 to 74 years or older
+#'
+#'    OR Age 35 or older + ATSI
+#'     (ATSI 35+ optional - included by default - see $qim_cvdRisk_measure)
+#'
+#'    Age 75+ excluded
+#'     (Option to include - see $qim_cvdRisk_measure)
+#'
+#'  Known cardiovascular disease
+#'     (optional - excluded by default - see $qim_cvdRisk_measure)
+#'
+#'  Presence of diabetes. Diabetes and microalbuminuria
+#'
+#'  eGFR
+#'
+#'  previous diagnosis of familial hypercholesterolaemia
+#'
+#'  systolic blood pressure. Diastolic blood pressure
+#'
+#'  Serum total cholesterol. Serum HDL cholesterol
+#'
+#' source : National Vascular Disease Prevention Alliance (NVDPA) guidelines
+#' https://www.cvdcheck.org.au/australian-absolute-cardiovascular-disease-risk-calculator
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from start date. default is $date_a
+#' @param date_to end date (inclusive). default is $date_b
+#' @param clinicians list of clinicians to view. default is $clinicians
+#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
+#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param ignoreOld ignore results/observatioins that don't qualify for quality improvement measures
+#'  if not supplied, reads $qim_ignoreOld
+#' @param lazy recalculate the copd contact list?
+#'
+#' @return dataframe of Patient (name), InternalID, appointment details and measures
+#' @export
+list_qim_cvdRisk_appointments <- function(dMeasure_obj,
+                                          date_from = NA,
+                                          date_to = NA,
+                                          clinicians = NA,
+                                          min_contact = NA,
+                                          min_date = NA,
+                                          contact_type = NA,
+                                          ignoreOld = NA,
+                                          lazy = FALSE) {
+  dMeasure_obj$list_qim_cvdRisk_appointments(date_from, date_to, clinicians,
+                                             min_contact, min_date, contact_type,
+                                             ignoreOld,
+                                             lazy)
+}
+
+.public(dMeasure, "list_qim_cvdRisk_appointments", function(date_from = NA,
+                                                            date_to = NA,
+                                                            clinicians = NA,
+                                                            min_contact = NA,
+                                                            min_date = NA,
+                                                            contact_type = NA,
+                                                            ignoreOld = NA,
+                                                            lazy = FALSE) {
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+  if (is.na(ignoreOld)) {
+    ignoreOld <- self$qim_ignoreOld
+  }
+  if (ignoreOld) {
+    obs_from <- NA
+  } else {
+    obs_from <- as.Date(-Inf, origin = "1970-01-01")
+    # accept very old results
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  if (private$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {log_id <- private$config_db$write_log_db(
+      query = "cvdRisk_qim_appointments",
+      data = list(date_from, date_to, clinicians))}
+
+    if (!lazy) {
+      self$list_qim_cvdRisk(date_from, date_to, clinicians,
+                            min_contact, min_date,
+                            contact_type, ignoreOld,
+                            lazy)
+      self$filter_appointments_time(date_from, date_to, clinicians,
+                                    lazy = lazy)
+    }
+
+    self$qim_cvdRisk_list_appointments <- self$qim_cvdRisk_list %>>%
+      dplyr::left_join(self$appointments_filtered_time,
+                       by = c("InternalID", "Patient"),
+                       copy = TRUE) %>>%
+      dplyr::select(-InternalID) %>>% # no longer need InternalID
+      dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
+                    Provider, Status, tidyselect::everything())
+
+    if (self$Log) {private$config_db$duration_log_db(log_id)}
+  }
+
+  return(self$qim_cvdRisk_list_appointments)
+})
+.reactive_event(dMeasure, "qim_cvdRisk_list_appointmentsR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$qim_cvdRisk_listR(),
+                      self$appointments_filtered_timeR()), {
+                        self$list_qim_cvdRisk_appointments(lazy = TRUE)
                       })
                 ))
 
@@ -2541,5 +3437,3 @@ report_qim_cvdRisk <- function(dMeasure_obj,
                         # re-calculates the counts
                       })
                 ))
-
-

@@ -556,7 +556,8 @@ list_contact_count <- function(dMeasure_obj,
                            Latest = max(c(AppointmentDate, -Inf))) %>>%
           # plucks out unique appointment dates
           dplyr::ungroup()}
-        else {.}} %>>%
+        else {dplyr::select(., -AppointmentDate)} # removed (just as if nrow>0)
+      } %>>%
       dplyr::filter(Count >= min_contact) %>>%
       dplyr::filter(Latest >= min_date)
 

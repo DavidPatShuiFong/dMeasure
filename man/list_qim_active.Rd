@@ -26,7 +26,7 @@ list_qim_active(dMeasure_obj, date_from = NA, date_to = NA,
 \item{lazy}{recalculate the diabetes contact list?}
 }
 \value{
-dataframe of Patient (name), InternalID, Count, and most recent contact date
+dataframe of Patient (name), InternalID and demographics
 }
 \description{
 Filtered by date, and chosen clinicians
