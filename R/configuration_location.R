@@ -48,7 +48,7 @@ location.insert <- function(dMeasure_obj, description) {
     query <- "INSERT INTO Location (id, Name, Description) VALUES (?, ?, ?)"
     data_for_sql <- as.list.data.frame(c(newid, description$Name, description$Description))
 
-    private$config_db$dbSendQuery(query, data_for_sql)
+    self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
     private$trigger(self$config_db_trigR) # send a trigger signal
@@ -108,7 +108,7 @@ location.update <- function(dMeasure_obj, description) {
     data_for_sql <- as.list.data.frame(c(description$Name, description$Description,
                                          description$id))
 
-    private$config_db$dbSendQuery(query, data_for_sql)
+    self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
     private$trigger(self$config_db_trigR) # send a trigger signal
@@ -160,7 +160,7 @@ location.delete <- function(dMeasure_obj, description) {
     query <- "DELETE FROM Location WHERE id = ?"
     data_for_sql <- as.list.data.frame(c(description$id))
 
-    private$config_db$dbSendQuery(query, data_for_sql)
+    self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
     private$trigger(self$config_db_trigR) # send a trigger signal

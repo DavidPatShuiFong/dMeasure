@@ -97,13 +97,13 @@ dMeasure <-
   if (!is.null(private$.identified_user)) {
     self$user_logout()
   }
-  if (private$config_db$is_open()) {
-    if (private$config_db$keep_log) { # if currently logging
-      log_id <- private$config_db$write_log_db(
+  if (self$config_db$is_open()) {
+    if (self$config_db$keep_log) { # if currently logging
+      log_id <- self$config_db$write_log_db(
         query = "Closing databases")
-      private$config_db$close_log_db() # close logging database
+      self$config_db$close_log_db() # close logging database
     }
-    private$config_db$close()
+    self$config_db$close()
 
     # empty the configuration fields
     private$.BPdatabase <- private$BPdatabase[0,]
@@ -112,11 +112,11 @@ dMeasure <-
     private$.UserConfig <- private$.UserConfig[0,]
     private$.UserRestrictions <- private$.UserRestrictions[0,]
   }
-  if (private$emr_db$is_open()) {
-    if (private$emr_db$keep_log) { # if currently logging
-      private$emr_db$close_log_db() # close logging database
+  if (self$emr_db$is_open()) {
+    if (self$emr_db$keep_log) { # if currently logging
+      self$emr_db$close_log_db() # close logging database
     }
-    private$emr_db$close()
+    self$emr_db$close()
     self$db$users <- NULL
     self$db$patients <- NULL
     self$db$clinical <- NULL
@@ -245,7 +245,7 @@ configuration_file_path <- function(dMeasure_obj, value) {
 ##### Configuration details - databases, locations, users ###########
 
 ## Fields
-.private_init(dMeasure, "config_db", quote(dbConnection::dbConnection$new()))
+.public_init(dMeasure, "config_db", quote(dbConnection::dbConnection$new()))
 # R6 connection to database
 # using either DBI or pool
 .reactive(dMeasure, "config_db_trigR", 0)
@@ -450,7 +450,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     }
     # the chosen database is not the current database,
     # so close the current database
-    private$emr_db$close()
+    self$emr_db$close()
 
     if (choice == "None") {
       # do nothing
@@ -459,7 +459,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         dplyr::filter(Name == choice) %>>%
         dplyr::collect()
       print("Opening EMR database")
-      private$emr_db$connect(odbc::odbc(), driver = "SQL Server",
+      self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
                              server = server$Address, database = server$Database,
                              uid = server$UserID,
                              pwd = dMeasure::simple_decode(server$dbPassword))
@@ -470,7 +470,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       #  UDP - 1434   : SQL Browser - Scope Sensitive
     }
 
-    if (!private$emr_db$is_open() || !DBI::dbIsValid(private$emr_db$conn())) {
+    if (!self$emr_db$is_open() || !DBI::dbIsValid(self$emr_db$conn())) {
       # || 'short-circuits' the evaluation, so if not an environment,
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
@@ -493,7 +493,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       choice <- "None" # set choice of database to 'None'
     } else {
       if (self$Log) {
-        log_id <- private$config_db$write_log_db(
+        log_id <- self$config_db$write_log_db(
           query = "opened EMR database",
           data = choice)
       }
@@ -508,23 +508,23 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
     invisible(self$BPdatabase) # will also set $BPdatabaseR
 
-    if (nrow(private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+    if (nrow(self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
              dplyr::filter(id == 1) %>>% dplyr::collect()) == 0) {
       # create a new entry
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
-      private$config_db$dbSendQuery(query, data_for_sql)
+      self$config_db$dbSendQuery(query, data_for_sql)
       # write to SQLite configuration database
     }
 
-    if ((private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+    if ((self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
          dplyr::filter(id == 1) %>>%
          dplyr::pull(Name)) != private$.BPdatabaseChoice) {
       # if new choice is not recorded in current configuration database
       # already an entry in the ServerChoice table
       query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
       data_for_sql <- as.list.data.frame(c(private$.BPdatabaseChoice, 1))
-      private$config_db$dbSendQuery(query, data_for_sql)
+      self$config_db$dbSendQuery(query, data_for_sql)
       # write to SQLite configuration database
     }
     private$trigger(self$config_db_trigR) # send a trigger signal
@@ -576,7 +576,7 @@ open_configuration_db <-
     configuration_file_path <- self$configuration_file_path
   }
 
-  config_db <- private$config_db # for convenience
+  config_db <- self$config_db # for convenience
 
   if (file.exists(configuration_file_path)) {
     # open config database file
@@ -709,7 +709,7 @@ open_configuration_db <-
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param config_db R6 object to open SQL database
-#'  default is the internally stored value in private$config_db
+#'  default is the internally stored value in self$config_db
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
@@ -725,13 +725,13 @@ read_configuration_db <- function(dMeasure_obj,
     dMeasure_obj$read_configuration_db()
   }
 }
-.public(dMeasure, "read_configuration_db", function(config_db = private$config_db) {
+.public(dMeasure, "read_configuration_db", function(config_db = self$config_db) {
 
   if (!config_db$is_open()) {
     # if config_db is not yet opened/defined
     # then try to open configuration database
     self$open_configuration_db()
-    config_db <- private$config_db
+    config_db <- self$config_db
   }
 
   private$.BPdatabase <- config_db$conn() %>>%
@@ -771,9 +771,9 @@ read_configuration_db <- function(dMeasure_obj,
   invisible(self)
 })
 .public(dMeasure, "BPdatabaseChoice_new", function() {
-  if (private$config_db$is_open()) {
+  if (self$config_db$is_open()) {
     # config database is open
-    new <- private$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+    new <- self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
       dplyr::filter(id == 1) %>>% dplyr::pull(Name)
   } else {
     # config database is not open
@@ -946,7 +946,7 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 ##### Electronic Medical Record (EMR) database configuration ######
 
 ## fields
-.private_init(dMeasure, "emr_db", quote(dbConnection::dbConnection$new()))
+.public_init(dMeasure, "emr_db", quote(dbConnection::dbConnection$new()))
 # R6 object containing database object
 .public(dMeasure, "db", list(dbversion = 0)) # later will be the EMR databases.
 # $db$dbversion is number of EMR database openings
@@ -973,7 +973,7 @@ open_emr_db <- function(dMeasure_obj,
 
 .public(dMeasure, "open_emr_db",function(BPdatabaseChoice = NULL) {
 
-  if (!private$config_db$is_open() || length(self$BPdatabaseChoice) == 0) {
+  if (!self$config_db$is_open() || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
     self$read_configuration_db()
@@ -1006,7 +1006,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
-.public(dMeasure, "initialize_emr_tables", function(emr_db = private$emr_db) {
+.public(dMeasure, "initialize_emr_tables", function(emr_db = self$emr_db) {
 
   print("Re-initializing databases")
 

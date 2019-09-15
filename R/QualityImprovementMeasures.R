@@ -150,9 +150,9 @@ list_qim_active <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "active_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -187,7 +187,7 @@ list_qim_active <- function(dMeasure_obj,
                        by = "InternalID", # add RecordNo
                        copy = TRUE)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_active_list)
@@ -283,9 +283,9 @@ report_qim_active <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_active_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -309,7 +309,7 @@ report_qim_active <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_active_report)
@@ -428,9 +428,9 @@ list_qim_diabetes <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "diabetes_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -500,7 +500,7 @@ list_qim_diabetes <- function(dMeasure_obj,
       # round age group to nearest 5 years
       dplyr::select(-c(DOB))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_diabetes_list)
@@ -645,9 +645,9 @@ list_qim_diabetes_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "diabetes_qim_appointments",
       data = list(date_from, date_to, clinicians))}
 
@@ -667,7 +667,7 @@ list_qim_diabetes_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_diabetes_list_appointments)
@@ -783,9 +783,9 @@ report_qim_diabetes <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_diabetes_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -819,7 +819,7 @@ report_qim_diabetes <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_diabetes_report)
@@ -933,10 +933,10 @@ list_qim_cst <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
     if (self$Log) {
-      log_id <- private$config_db$write_log_db(
+      log_id <- self$config_db$write_log_db(
         query = "cst_qim",
         data = list(date_from, date_to, clinicians))}
 
@@ -1034,7 +1034,7 @@ list_qim_cst <- function(dMeasure_obj,
       dplyr::rename(CSTDate = TestDate,
                     CSTName = TestName)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cst_list)
@@ -1147,10 +1147,10 @@ list_qim_cst_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
     if (self$Log) {
-      log_id <- private$config_db$write_log_db(
+      log_id <- self$config_db$write_log_db(
         query = "cst_qim_appointments",
         data = list(date_from, date_to, clinicians))}
 
@@ -1170,7 +1170,7 @@ list_qim_cst_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cst_list_appointments)
@@ -1279,9 +1279,9 @@ report_qim_cst <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_cst_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -1309,7 +1309,7 @@ report_qim_cst <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cst_report)
@@ -1444,9 +1444,9 @@ list_qim_15plus <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "fifteenplus_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -1613,7 +1613,7 @@ list_qim_15plus <- function(dMeasure_obj,
                     AlcoholDate, NonDrinker, DaysPerWeek, DrinksPerDay, AlcoholDescription,
                     PastAlcoholLevel, YearStarted, YearStopped, AlcoholComment) # drop the InternalID
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_15plus_list)
@@ -1775,9 +1775,9 @@ list_qim_15plus_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "fifteenplus_qim_appointments",
       data = list(date_from, date_to, clinicians))}
 
@@ -1797,7 +1797,7 @@ list_qim_15plus_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_15plus_list_appointments)
@@ -1916,9 +1916,9 @@ report_qim_15plus <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_15plus_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -1953,7 +1953,7 @@ report_qim_15plus <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_15plus_report)
@@ -2063,9 +2063,9 @@ list_qim_65plus <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "sixtyfiveplus_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -2111,7 +2111,7 @@ list_qim_65plus <- function(dMeasure_obj,
                     Age5,
                     FluvaxDate, FluvaxName)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_65plus_list)
@@ -2219,9 +2219,9 @@ list_qim_65plus_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "sixtyfiveplus_qim_appointments",
       data = list(date_from, date_to, clinicians))}
 
@@ -2241,7 +2241,7 @@ list_qim_65plus_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_65plus_list_appointments)
@@ -2346,9 +2346,9 @@ report_qim_65plus <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_65plus_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -2376,7 +2376,7 @@ report_qim_65plus <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_65plus_report)
@@ -2485,9 +2485,9 @@ list_qim_copd <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "copd_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -2532,7 +2532,7 @@ list_qim_copd <- function(dMeasure_obj,
       dplyr::select(Patient, InternalID, RecordNo, Sex, Ethnicity, MaritalStatus, Sexuality, Age5,
                     FluvaxDate, FluvaxName)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_copd_list)
@@ -2640,9 +2640,9 @@ list_qim_copd_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "copd_qim_appointments",
       data = list(date_from, date_to, clinicians))}
 
@@ -2662,7 +2662,7 @@ list_qim_copd_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_copd_list_appointments)
@@ -2764,9 +2764,9 @@ report_qim_copd <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_copd_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -2795,7 +2795,7 @@ report_qim_copd <- function(dMeasure_obj,
     # proportion (an alternative would be proportion = n / sum(n))
 
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_copd_report)
@@ -2982,9 +2982,9 @@ list_qim_cvdRisk <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "cvdRisk_qim",
       data = list(date_from, date_to, clinicians))}
 
@@ -3092,7 +3092,7 @@ list_qim_cvdRisk <- function(dMeasure_obj,
                     CholesterolDate, Cholesterol, HDL, LDL, Triglycerides, CholHDLRatio,
                     BPDate, BP, frisk, friskHI)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cvdRisk_list)
@@ -3260,9 +3260,9 @@ list_qim_cvdRisk_appointments <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "cvdRisk_qim_appointments",
       data = list(date_from, date_to, clinicians))}
 
@@ -3282,7 +3282,7 @@ list_qim_cvdRisk_appointments <- function(dMeasure_obj,
       dplyr::select(Patient, RecordNo, AppointmentDate, AppointmentTime,
                     Provider, Status, tidyselect::everything())
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cvdRisk_list_appointments)
@@ -3383,9 +3383,9 @@ report_qim_cvdRisk <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "qim_cvdRisk_report",
       data = list(date_from, date_to, clinicians))}
 
@@ -3413,7 +3413,7 @@ report_qim_cvdRisk <- function(dMeasure_obj,
       dplyr::mutate(Proportion = prop.table(n))
     # proportion (an alternative would be proportion = n / sum(n))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$qim_cvdRisk_report)

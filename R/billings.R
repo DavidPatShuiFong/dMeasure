@@ -98,7 +98,7 @@ list_services <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
 
             self$services_list <- self$db$servicesRaw %>>%
@@ -171,7 +171,7 @@ list_services_allclinicians <- function(dMeasure_obj,
             date_to <- self$date_b
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
 
             self$services_list_allclinicians <- self$db$servicesRaw %>>%

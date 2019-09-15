@@ -161,9 +161,9 @@ list_contact_appointments <- function(dMeasure_obj,
             clinicians <- c("") # dplyr::filter does not work on zero-length list()
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
-            if (self$Log) {log_id <- private$config_db$write_log_db(
+            if (self$Log) {log_id <- self$config_db$write_log_db(
               query = "contact_appointments",
               data = list(date_from, date_to, clinicians))}
 
@@ -180,7 +180,7 @@ list_contact_appointments <- function(dMeasure_obj,
               dplyr::collect() %>>%
               dplyr::mutate(AppointmentDate = as.Date(AppointmentDate))
 
-            if (self$Log) {private$config_db$duration_log_db(log_id)}
+            if (self$Log) {self$config_db$duration_log_db(log_id)}
           }
 
           return(self$contact_appointments_list)
@@ -251,9 +251,9 @@ list_contact_visits <- function(dMeasure_obj,
             clinicians <- c("") # dplyr::filter does not work on zero-length list()
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
-            if (self$Log) {log_id <- private$config_db$write_log_db(
+            if (self$Log) {log_id <- self$config_db$write_log_db(
               query = "contact_visits",
               data = list(date_from, date_to, clinicians))}
 
@@ -272,7 +272,7 @@ list_contact_visits <- function(dMeasure_obj,
               dplyr::select(Patient, InternalID, VisitDate)
 
             if (self$Log)
-            {private$config_db$duration_log_db(log_id)}
+            {self$config_db$duration_log_db(log_id)}
           }
 
           return(self$contact_visits_list)
@@ -343,9 +343,9 @@ list_contact_services <- function(dMeasure_obj,
     # open EMR database
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "contact_services",
       data = list(date_from, date_to, clinicians))}
 
@@ -364,7 +364,7 @@ list_contact_services <- function(dMeasure_obj,
       dplyr::select(Patient, InternalID, ServiceDate)
 
     if (self$Log)
-    {private$config_db$duration_log_db(log_id)}
+    {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$contact_services_list)
@@ -513,9 +513,9 @@ list_contact_count <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "contact_count",
       data = list(date_from, date_to, clinicians))}
 
@@ -561,7 +561,7 @@ list_contact_count <- function(dMeasure_obj,
       dplyr::filter(Count >= min_contact) %>>%
       dplyr::filter(Latest >= min_date)
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$contact_count_list)

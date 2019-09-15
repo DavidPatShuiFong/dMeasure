@@ -265,9 +265,9 @@ filter_investigations <- function(dMeasure_obj,
   investigations <- self$investigations_filtered
   # this will normally be replaced in code below, unless no EMR database is open
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "filter_investigations",
       data = list(date_from, date_to, clinicians))}
 
@@ -304,7 +304,7 @@ filter_investigations <- function(dMeasure_obj,
     self$investigations_filtered <- investigations
     # this reactive is not "collect()"ed because it is joined to other
     # filtered database lists prior to 'collection'
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(investigations)
@@ -396,9 +396,9 @@ filter_investigations_appointment <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "filter_incoming_appointment",
       data = list(date_from, date_to, clinicians))}
 
@@ -423,7 +423,7 @@ filter_investigations_appointment <- function(dMeasure_obj,
       dplyr::mutate(Status = trimws(Status),
                     TestName = trimws(TestName))
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$investigations_filtered_appointment)
@@ -513,7 +513,7 @@ filter_investigations_named <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
 
     if (!lazy) {
@@ -636,9 +636,9 @@ filter_correspondence <- function(dMeasure_obj,
   correspondence <- self$correspondence_filtered
   # this should usually be replaced by subsequent code, unless no EMR is open
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "filter_correspondence",
       data = list(date_from, date_to, clinicians))}
 
@@ -692,7 +692,7 @@ filter_correspondence <- function(dMeasure_obj,
     self$correspondence_filtered <- correspondence
     # this reactive is not "collect()"ed because it is joined to other
     # filtered database lists prior to 'collection'
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(correspondence)
@@ -784,9 +784,9 @@ filter_correspondence_appointment <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
-    if (self$Log) {log_id <- private$config_db$write_log_db(
+    if (self$Log) {log_id <- self$config_db$write_log_db(
       query = "filter_correspondence_appointment",
       data = list(date_from, date_to, clinicians))}
 
@@ -812,7 +812,7 @@ filter_correspondence_appointment <- function(dMeasure_obj,
       dplyr::mutate(Status = trimws(Status))
     # further filter against the 'checked' date for each correspondence
 
-    if (self$Log) {private$config_db$duration_log_db(log_id)}
+    if (self$Log) {self$config_db$duration_log_db(log_id)}
   }
 
   return(self$correspondence_filtered_appointment)
@@ -902,7 +902,7 @@ filter_correspondence_named <- function(dMeasure_obj,
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
-  if (private$emr_db$is_open()) {
+  if (self$emr_db$is_open()) {
     # only if EMR database is open
 
     if (!lazy) {
@@ -1092,7 +1092,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
     incoming <- cbind(incoming, data.frame(labeltag_print = character()))
   }
 
-  if (!private$emr_db$is_open()) {
+  if (!self$emr_db$is_open()) {
     # EMR database is not open
     # empty data-frame already created to return
   } else {

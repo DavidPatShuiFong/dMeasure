@@ -120,9 +120,9 @@ filter_appointments <- function(dMeasure_obj,
             clinicians <- c("") # dplyr::filter does not work on zero-length list()
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
-            if (self$Log) {log_id <- private$config_db$write_log_db(
+            if (self$Log) {log_id <- self$config_db$write_log_db(
               query = "filter_appointments",
               data = list(date_from, date_to, clinicians))}
 
@@ -136,7 +136,7 @@ filter_appointments <- function(dMeasure_obj,
             #
             # this reactive is not "collect()"ed because it is joined to other
             # filtered database lists prior to 'collection'
-            if (self$Log) {private$config_db$duration_log_db(log_id)}
+            if (self$Log) {self$config_db$duration_log_db(log_id)}
           }
 
           return(self$appointments_filtered)
@@ -199,7 +199,7 @@ filter_appointments_time <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
             if (!lazy) {
               self$filter_appointments(date_from, date_to, clinicians, status)
@@ -275,7 +275,7 @@ list_appointments <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
             if (!lazy) {
               self$filter_appointments_time(date_from, date_to, clinicians, status, lazy = FALSE)
@@ -351,7 +351,7 @@ list_visits <- function(dMeasure_obj,
             visit_type <- self$visit_type
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
 
             df <- self$db$visits %>>%
@@ -446,7 +446,7 @@ billed_appointments <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
             if (!lazy) {
               self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
