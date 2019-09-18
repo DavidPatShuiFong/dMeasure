@@ -17,13 +17,13 @@ framingham_riskequation(df, years = 5, outcome = "CVD")
 
  SmokingDate (date) - not actually used in this equation
 
- SmokingStatus (chr) - "Smoker" if a smoker. All other values ignored
+ SmokingStatus (character) - "Smoker" if a smoker. All other values ignored
 
- UrineAlbuminDate (chr), UrineAlbuminValue (double), UrineAlbuminUnit (chr)
+ UrineAlbuminDate (character), UrineAlbuminValue (double), UrineAlbuminUnit (character)
 
  PersistentProteinuria (logical)
 
- eGFRDate (date), eGFRValue (double), eGFRUnits (chr)
+ eGFRDate (date), eGFRValue (double), eGFRUnits (character)
 
  FamilialHypercholesterolaemia (logical)
 

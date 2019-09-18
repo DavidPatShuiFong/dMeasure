@@ -495,7 +495,7 @@ a$contact_type <- a$contact_types # includes 'all' contact types as valid (appoi
 qim$list_qim_active() # the list of patients, with Quality Improvement Measure specified groupings
 ```
 
-The other group of methods provide aggregated/anonymized *report* of the relevant patients.
+Another group of methods provide aggregated/anonymized *report* of the relevant patients.
 
 ```{r}
 qim$report_qim_active() # an 'anonymized'/aggregated report of the active patients
@@ -534,11 +534,12 @@ qim$report_qim_diabetes()
 
 ### Appointment view
 
-Instead of using the 'contact' list it is possible to use the 'appointment' list view,
+Instead of using the *contact* list it is possible to use the *appointment* list view,
 which derives the patient list purely from the appointment book, without regard to
 the appointment status.
 
-In this case, a **list_qim_diabetes_appointments** method is used, which attaches
+The *appointment* list view is designed to be used with the **list...appointments**
+methods. For example, **list_qim_diabetes_appointments** method attaches
 any appointment in the chosen date-range to the patient listing.
 
 This method will usually be most useful when looking at just one day of appointments.
@@ -546,7 +547,10 @@ This method will usually be most useful when looking at just one day of appointm
 ```{r}
 qim$qim_contact <- FALSE # use 'appointment' list, not 'contact' list
 a$choose_date(as.Date("2019-01-01"))
-qim$list_qim_diabetes_appointments()
+
+DT::datatable(qim$list_qim_diabetes_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, scrollX = TRUE))
 
 ?dMeasureQIM::list_qim_diabetes_appointments
 ```
@@ -615,8 +619,7 @@ which is different to the current default setting.
 ?dMeasure::framingham_riskequation
 ```
 
-In the interest of openness and reproducability
-the actual equation and function is reproduced below.
+The framingham risk equation function is reproduced below.
 Please report any required corrections to me!
 
 ```{r code = capture.output(dMeasure::framingham_riskequation), eval = FALSE}
