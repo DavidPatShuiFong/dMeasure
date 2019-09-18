@@ -377,7 +377,7 @@ appointments_billings_cdm <- function(dMeasure_obj, date_from = NA, date_to = NA
             clinicians <- c("") # dplyr::filter cannot handle empty list()
           }
 
-          if (!private$emr_db$is_open()) {
+          if (!self$emr_db$is_open()) {
             # EMR database is not open
             # create empty data-frame to return
             appointments <- data.frame(InternalID = integer(),
