@@ -27,7 +27,10 @@ Suggests:
     shiny,
     knitr,
     printr,
-    rmarkdown
+    rmarkdown,
+    dMeasureQIM,
+    dMeasureBillings,
+    dMeasureCDM
 RoxygenNote: 6.1.1
 Collate: 
     'fomantic_definitions_tags.R'
@@ -35,12 +38,10 @@ Collate:
     'dMeasure.R'
     'calculation_definitions.R'
     'appointments.R'
-    'conditions.R'
-    'CDM.R'
     'CancerScreen.R'
+    'conditions.R'
     'Immunization.R'
     'administrative_incoming.R'
-    'billings.R'
     'configuration_location.R'
     'configuration_password.R'
     'configuration_server.R'
