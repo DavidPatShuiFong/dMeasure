@@ -615,14 +615,16 @@ which is different to the current default setting.
 
 ### Framingham Risk Equation used for calculation
 
+This equation is in package framinghamRiskEquation https://github.com/DavidPatShuiFong/framinghamRiskEquation.
+
 ```{r}
-?dMeasure::framingham_riskequation
+?framinghamRiskEquation::framingham_riskequation
 ```
 
 The framingham risk equation function is reproduced below.
 Please report any required corrections to me!
 
-```{r code = capture.output(dMeasure::framingham_riskequation), eval = FALSE}
+```{r code = capture.output(framinghamRiskEquation::framingham_riskequation), eval = FALSE}
 ```
 
 # Close the database connections

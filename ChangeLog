@@ -1,6 +1,11 @@
 Changelog
 
 
+Breaking changes
+
+* Moved framingham_riskequation to package framinghamRiskEquation
+  at https://github.com/DavidPatShuiFong/framinghamRiskEquation
+
 0.6.0 - 18th September 2019
 ===========================
 
