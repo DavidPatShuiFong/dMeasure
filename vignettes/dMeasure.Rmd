@@ -561,7 +561,8 @@ a$choose_date(as.Date("2019-01-01"))
 
 DT::datatable(qim$list_qim_diabetes_appointments(),
               extension = "Scroller",
-              options = list(scroller = TRUE, scrollX = TRUE))
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
 
 ?dMeasureQIM::list_qim_diabetes_appointments
 ```
@@ -573,6 +574,12 @@ qim$qim_contact <- TRUE # return to 'contact' list
 a$choose_date(as.Date("2001-01-01")) # expand date list
 
 qim$list_qim_cst()
+
+DT::datatable(qim$list_qim_cst_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
 qim$report_qim_cst()
 ```
 
@@ -583,6 +590,13 @@ qim$report_qim_cst()
 DT::datatable(qim$list_qim_15plus(),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
+
+DT::datatable(qim$list_qim_15plus_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+
 DT::datatable(qim$report_qim_15plus())
 ```
 
@@ -590,6 +604,12 @@ DT::datatable(qim$report_qim_15plus())
 
 ```{r}
 qim$list_qim_65plus()
+
+DT::datatable(qim$list_qim_65plus_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
 qim$report_qim_65plus()
 ```
 
@@ -597,6 +617,12 @@ qim$report_qim_65plus()
 
 ```{r}
 qim$list_qim_copd()
+
+DT::datatable(qim$list_qim_copd_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
 qim$report_qim_copd()
 ```
 
@@ -604,6 +630,7 @@ qim$report_qim_copd()
 
 ```{r}
 ?dMeasureQIM::list_qim_cvdRisk
+
 # remove some demographics and alcohol recordings because the table is very wide...
 # note that the framingham risk equation calculation result 'frisk' is on the
 # extreme right hand side
@@ -611,6 +638,12 @@ DT::datatable(qim$list_qim_cvdRisk() %>%
                 dplyr::select(-c(RecordNo, MaritalStatus, Sexuality)),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
+
+DT::datatable(qim$list_qim_cvdRisk_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
 qim$report_qim_cvdRisk()
 ```
 
