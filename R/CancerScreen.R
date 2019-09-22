@@ -119,14 +119,14 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
   screen_fobt_ix <- screen_fobt_list %>>%
     dplyr::left_join(
       dplyr::bind_rows(dplyr::inner_join(screen_fobt_list,
-                                         private$emr_db$dbGetQuery(
+                                         self$emr_db$dbGetQuery(
                                            fobt_investigation_query
                                          ) %>>%
                                            dplyr::collect() %>>%
                                            dplyr::rename(TestDate = Collected),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         private$emr_db$dbGetQuery(
+                                         self$emr_db$dbGetQuery(
                                            fobt_letter_subject_query
                                          ) %>>%
                                            dplyr::collect() %>>%
@@ -134,7 +134,7 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
                                                          TestName = Subject),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         private$emr_db$dbGetQuery(
+                                         self$emr_db$dbGetQuery(
                                            fobt_letter_detail_query
                                          ) %>>%
                                            dplyr::collect() %>>%
@@ -142,7 +142,7 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
                                                          TestName = Detail),
                                          by = 'InternalID'),
                        dplyr::inner_join(screen_fobt_list,
-                                         private$emr_db$dbGetQuery(
+                                         self$emr_db$dbGetQuery(
                                            fobt_result_query
                                          ) %>>%
                                            dplyr::collect() %>>%

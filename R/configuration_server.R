@@ -81,7 +81,7 @@ server.insert <- function(dMeasure_obj, description) {
                                          description$Database, description$UserID,
                                          description$dbPassword))
 
-    private$config_db$dbSendQuery(query, data_for_sql)
+    self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
     private$trigger(self$config_db_trigR)
@@ -176,7 +176,7 @@ server.update <- function(dMeasure_obj, description) {
                                        description$Database, description$UserID,
                                        description$dbPassword, description$id))
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR)
@@ -224,7 +224,7 @@ server.delete <- function(dMeasure_obj, description) {
   query <- "DELETE FROM Server WHERE id = ?"
   data_for_sql <- as.list.data.frame(c(description$id))
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
@@ -323,12 +323,12 @@ server.permission <- function(dMeasure_obj) {
              return(NULL)
            })
 
-  if (!private$config_db$is_open()) {
+  if (!self$config_db$is_open()) {
     warning("Unable to read or set logging status. Configuration database is not open")
     return(NULL)
   }
 
-  current_setting <- private$config_db$conn() %>>%
+  current_setting <- self$config_db$conn() %>>%
     # read directly from configuration database
     dplyr::tbl("LogSettings") %>>%
     dplyr::pull(Log) %>>% as.logical()
@@ -345,24 +345,24 @@ server.permission <- function(dMeasure_obj) {
       warning("No logging database file has been selected.")
       setting <- FALSE
     } else {
-      if (!private$config_db$keep_log) {
+      if (!self$config_db$keep_log) {
         # configuration database is open (from earlier check),
         # but not currently logging
-        private$config_db$open_log_db(filename = self$LogFile,
+        self$config_db$open_log_db(filename = self$LogFile,
                                       tag = Sys.info()[["user"]])
         # tries to open the logging database
-        if (is.null(private$config_db$log_db)) {
+        if (is.null(self$config_db$log_db)) {
           # log database not successfully opened
           warning("Failed to open logging database file.")
           setting <- FALSE
         }
       }
-      if (private$emr_db$is_open() & !private$emr_db$keep_log) {
+      if (self$emr_db$is_open() & !self$emr_db$keep_log) {
         # EMR database is open, but not currently logging
-        private$emr_db$open_log_db(filename = self$LogFile,
+        self$emr_db$open_log_db(filename = self$LogFile,
                                    tag = Sys.info()[["user"]])
         # tries to open the logging database
-        if (is.null(private$emr_db$log_db)) {
+        if (is.null(self$emr_db$log_db)) {
           # log database not successfully opened
           warning("Failed to open logging database file.")
           setting <- FALSE
@@ -371,14 +371,14 @@ server.permission <- function(dMeasure_obj) {
     }
   } else {
     # stop logging
-    if (private$config_db$keep_log) {
+    if (self$config_db$keep_log) {
       # configuration database is open (from earlier check),
       # and currently logging
-      private$config_db$close_log_db()
+      self$config_db$close_log_db()
     }
-    if (private$emr_db$is_open() & private$emr_db$keep_log) {
+    if (self$emr_db$is_open() & self$emr_db$keep_log) {
       # EMR database is open, and currently logging
-      private$emr_db$close_log_db()
+      self$emr_db$close_log_db()
     }
   }
 
@@ -386,7 +386,7 @@ server.permission <- function(dMeasure_obj) {
     # change in setting.record to configuration database
     query <- "UPDATE LogSettings SET Log = ? WHERE id = 1"
     data_for_sql <- as.list.data.frame(c(as.numeric(setting)))
-    private$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+    self$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
   }
 
   private$set_reactive(self$LogR, setting)
@@ -409,12 +409,12 @@ server.permission <- function(dMeasure_obj) {
              return(NULL)
            })
 
-  if (!private$config_db$is_open()) {
+  if (!self$config_db$is_open()) {
     warning("Unable to read or set logging filename. Configuration database is not open")
     return(NULL)
   }
 
-  current_filename <- private$config_db$conn() %>>%
+  current_filename <- self$config_db$conn() %>>%
     # read directly from configuration database
     dplyr::tbl("LogSettings") %>>%
     dplyr::pull(Filename) %>>% as.character() %>>% paste0("")
@@ -431,7 +431,7 @@ server.permission <- function(dMeasure_obj) {
     } else {
       query <- "UPDATE LogSettings SET Filename = ? WHERE id = 1"
       data_for_sql <- as.list.data.frame(c(as.character(filename)))
-      private$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+      self$config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
     }
   }
 
@@ -456,12 +456,12 @@ WriteLog <- function(dMeasure_obj, message) {
 .public(dMeasure, "WriteLog", function(message) {
   # write message to logfile database
 
-  if(!private$config_db$is_open()) {
+  if(!self$config_db$is_open()) {
     warning("Unable to write log message, configuration database is not open.")
-  } else if (!private$config_db$keep_log) {
+  } else if (!self$config_db$keep_log) {
     warning("Unable to write log message, logging database is not open.")
   } else {
-    private$config_db$write_log_db(message)
+    self$config_db$write_log_db(message)
   }
 })
 
@@ -487,22 +487,22 @@ WriteLog <- function(dMeasure_obj, message) {
              return(NULL)
            })
 
-  if (!private$config_db$is_open()) {
+  if (!self$config_db$is_open()) {
     warning("Unable to read logs. Configuration database is not open")
     return(NULL)
   }
 
-  if (is.null(private$config_db$log_db)) {
+  if (is.null(self$config_db$log_db)) {
     warning("Unable to read logs. Log database is not open")
     return(NULL)
   }
 
-  if (!private$config_db$log_db$is_open()) {
+  if (!self$config_db$log_db$is_open()) {
     warning("Unable to read logs. Log database is not open")
     return(NULL)
   }
 
-  return(private$config_db$log_db$conn() %>>% dplyr::tbl("logs") %>>%
+  return(self$config_db$log_db$conn() %>>% dplyr::tbl("logs") %>>%
            dplyr::collect())
 
 })

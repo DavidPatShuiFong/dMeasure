@@ -778,9 +778,13 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
+    # initially Date is a dttm (POSIXt) object,
+    # which makes the subsequent calc_age very slow,
+    # and throws up warnings
     dplyr::filter(dMeasure::calc_age(DOB, Date) >= 15) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -820,9 +824,11 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB),
+                  Date = as.Date(Date)) %>>%
     dplyr::filter(dMeasure::calc_age(DOB, Date) >= 65) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -861,9 +867,10 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dMeasure::calc_age(DOB, Date) >= 75) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -911,9 +918,10 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
                                         InternalID %in% intID) %>>%
                         dplyr::select(InternalID),
                       by = "InternalID") %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 35, 44)) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -952,9 +960,10 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 45, 74)) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -1004,9 +1013,11 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB),
+                  Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 25, 74)) %>>%
     dplyr::select(InternalID, Date) %>>%
     dplyr::left_join(self$db$history %>>%
@@ -1060,9 +1071,10 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
+    dplyr::left_join(appointments,
+                     by = "InternalID", copy = TRUE) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB)) %>>%
-    dplyr::left_join(appointments, by = "InternalID") %>>%
+    dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 50, 74)) %>>%
     dplyr::pull(InternalID) %>>%
     unique()

@@ -47,21 +47,6 @@ NULL
                    Age = numeric())
 )
 
-.public(dMeasure, "appointments_billings",
-        data.frame(Patient = character(), InternalID = integer(),
-                   AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
-                   AppointmentTime = character(), Provider = character(),
-                   DOB = as.Date(integer(0), origin = "1970-01-01"),
-                   Age = numeric(),
-                   ServiceDate = as.Date(integer(0), origin = "1970-01-01"),
-                   MBSItem = integer(), Description = character())
-)
-
-# appointment list with billings
-# collects ALL billings for patients who have displayed appointments
-# used by billings view, and CDM billings view
-# requires appointments_list
-
 ## Methods
 
 #' List of appointments
@@ -120,9 +105,9 @@ filter_appointments <- function(dMeasure_obj,
             clinicians <- c("") # dplyr::filter does not work on zero-length list()
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
-            if (self$Log) {log_id <- private$config_db$write_log_db(
+            if (self$Log) {log_id <- self$config_db$write_log_db(
               query = "filter_appointments",
               data = list(date_from, date_to, clinicians))}
 
@@ -136,7 +121,7 @@ filter_appointments <- function(dMeasure_obj,
             #
             # this reactive is not "collect()"ed because it is joined to other
             # filtered database lists prior to 'collection'
-            if (self$Log) {private$config_db$duration_log_db(log_id)}
+            if (self$Log) {self$config_db$duration_log_db(log_id)}
           }
 
           return(self$appointments_filtered)
@@ -199,7 +184,7 @@ filter_appointments_time <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
             if (!lazy) {
               self$filter_appointments(date_from, date_to, clinicians, status)
@@ -275,7 +260,7 @@ list_appointments <- function(dMeasure_obj,
             clinicians <- c("")
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
             if (!lazy) {
               self$filter_appointments_time(date_from, date_to, clinicians, status, lazy = FALSE)
@@ -351,7 +336,7 @@ list_visits <- function(dMeasure_obj,
             visit_type <- self$visit_type
           }
 
-          if (private$emr_db$is_open()) {
+          if (self$emr_db$is_open()) {
             # only if EMR database is open
 
             df <- self$db$visits %>>%
@@ -389,92 +374,4 @@ list_visits <- function(dMeasure_obj,
                         self$cliniciansR(), self$visit_typeR())), {
                           self$list_visits()
                         })
-                ))
-
-#' List of appointments with billings
-#'
-#' Filtered by date, and chosen clinicians
-#'
-#' Billings for patients who have displayed appointments
-#'
-#' collects ALL billings for patients who have displayed appointments
-#' used by CDM billings view
-#'
-#' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date, inclusive (date object)
-#' @param date_to end date, inclusive (date object)
-#'  default of date_from and date_to defined by choose_date method.
-#' @param clinicians (default dMeasure_obj$clinicians) list of clinicians to view
-#' @param status (default NA) filter by 'status' if not NA
-#'  permissible values are 'Booked', 'Completed', 'At billing',
-#'  'Waiting', 'With doctor'
-#' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate appointments_filtered to calculate
-#'
-#' @return list of appointments
-#' @export
-billed_appointments <- function(dMeasure_obj,
-                                date_from = NA, date_to = NA,
-                                clinicians = NA,
-                                status = NA,
-                                lazy = FALSE) {
-  dMeasure_obj$billed_appointments(dMeasure_obj, date_from, date_to, clinicians, status, lazy)
-}
-
-.public(dMeasure, "billed_appointments",
-        function(date_from = NA,
-                 date_to = NA,
-                 clinicians = NA,
-                 status = NA,
-                 lazy = FALSE) {
-          if (is.na(date_from)) {
-            date_from <- self$date_a
-          }
-          if (is.na(date_to)) {
-            date_to <- self$date_b
-          }
-          if (all(is.na(clinicians))) {
-            clinicians <- self$clinicians
-          }
-
-          clinicians <- intersect(clinicians,
-                                  self$clinician_list(view_name = "billings"))
-          # this view is potentially restricted. if 'GlobalBillView' restriction
-          # is enabled, reduce the number of clinicians shown, if the authorized
-          # user does not have 'GlobalBillView' attribute
-
-          if (is.null(clinicians) || length(clinicians) == 0) {
-            clinicians <- c("")
-          }
-
-          if (private$emr_db$is_open()) {
-            # only if EMR database is open
-            if (!lazy) {
-              self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
-              # if not 'lazy' evaluation, then re-calculate self$appointments_list
-              # (that is automatically done by calling the $list_appointments method)
-            }
-
-            intID <- c(self$appointments_list %>>% dplyr::pull(InternalID), -1)
-
-            self$appointments_billings <-
-              self$appointments_list %>>%
-              dplyr::left_join(self$db$services %>>%
-                                 dplyr::filter(InternalID %in% intID,
-                                               ServiceDate <= date_to),
-                               by = "InternalID", copy=TRUE) %>>%
-              dplyr::collect() %>>%
-              dplyr::mutate(ServiceDate = as.Date(substr(ServiceDate, 1, 10)))
-          }
-          return(self$appointments_billings)
-        })
-.reactive_event(dMeasure, "appointments_billingsR",
-                quote(
-                  shiny::eventReactive(
-                    c(self$appointments_listR()), {
-                      # update if reactive version of $appointments_list
-                      # is updated
-                      self$billed_appointments(lazy = TRUE)
-                      # re-calculates, but don't need to re-calculate
-                      # $appointments_list
-                    })
                 ))

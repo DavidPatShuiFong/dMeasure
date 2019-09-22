@@ -239,7 +239,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     # update UserRestrictions database
     # this is manually called when (one) restriction is added or removed
     # so only has to find 'one' row of difference between the 'new' list and the 'old' list
-    originalRestrictions <- private$config_db$conn() %>>%
+    originalRestrictions <- self$config_db$conn() %>>%
       dplyr::tbl("UserRestrictions") %>>%
       dplyr::collect()
     newRestrictions <- private$.UserRestrictions
@@ -250,7 +250,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       query <- "INSERT INTO UserRestrictions (uid, Restriction) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(new_row$uid, new_row$Restriction))
 
-      private$config_db$dbSendQuery(query, data_for_sql)
+      self$config_db$dbSendQuery(query, data_for_sql)
       # if the connection is a pool, can't send write query (a statement) directly
       # so use the object's method
       private$trigger(self$config_db_trigR) # send a trigger signal
@@ -261,7 +261,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
         query <- "DELETE FROM UserRestrictions WHERE uid = ?"
         data_for_sql <- as.list.data.frame(c(deleted_row$uid))
 
-        private$config_db$dbSendQuery(query, data_for_sql)
+        self$config_db$dbSendQuery(query, data_for_sql)
         # if the connection is a pool, can't send write query (a statement) directly
         # so use the object's method
         private$trigger(self$config_db_trigR) # send a trigger signal
@@ -486,7 +486,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # behaviour which *sometimes* results in a string being created in the form
   # of 'c("ServerAdmin", "UserAdmin")'
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
@@ -615,7 +615,7 @@ userconfig.update <- function(dMeasure_obj, description) {
                             description$id))
   # note extra "" within paste0 is required in the case of empty data
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
@@ -676,7 +676,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
   query <- "DELETE FROM Users WHERE id = ?"
   data_for_sql <- as.list.data.frame(UserConfigRow$id)
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal

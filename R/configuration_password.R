@@ -108,7 +108,7 @@ user_logout <- function(dMeasure_obj) {
   # write to configuration database
   data_for_sql <- list(newpassword, id)
 
-  private$config_db$dbSendQuery(query, data_for_sql)
+  self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal

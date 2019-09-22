@@ -150,7 +150,7 @@ a$close() # closes the database connections
 # Opening the Best Practice database connection, and appointment list examples
 
 ```{r}
-a <- dMeasure$new()
+a <- dMeasure::dMeasure$new()
 a$open_emr_db() # this will try to open the most recent database description choice, in this case, 'Main'
 ```
 
@@ -195,12 +195,17 @@ a$list_appointments() %>% head() # 'head' just displays the first few appointmen
 
 ## Billed appointments list
 
+Billing methods and fields are provided by the billings module https://github.com/DavidPatShuiFong/dMeasureBillings.
+
+
 ```{r}
-?dMeasure::billed_appointments
+?dMeasureBillings::billed_appointments
 ```
 
 ```{r}
-a$billed_appointments() %>% 
+billings <- dMeasureBillings::dMeasureBillings$new(a)
+
+billings$billed_appointments() %>% 
   dplyr::mutate(Description = iconv(Description, "latin1", "ASCII", sub = "")) %>%
   # removes an invalid ASCII character from Description
   head()
@@ -208,31 +213,37 @@ a$billed_appointments() %>%
 
 # Billings methods
 
-Billings matched up to appointments and visits
+Billings matched up to appointments and visits.
 
 ```{r}
-?dMeasure::list_billings
-a$own_billings # by default is TRUE, and shows only billings attributable to the provider
+?dMeasureBillings::list_billings
+print(billings$own_billings) # by default is TRUE, and shows only billings attributable to the provider
+
 a$choose_date(date_from = as.Date("2019-05-01"), date_to = as.Date("2019-05-30")) # restrict date range
 a$choose_clinicians(a$clinician_choice_list) # choose all clinicians
-a$list_billings() %>% head() # an aggregated version of $appointments_billings_sameday()
-```
 
+billings$list_billings() %>% head() # an aggregated version of $appointments_billings_sameday()
+```
 
 Show ALL billings for the patient on that day, whether or not attributable to
 the provider.
 
 ```{r}
-a$own_billings <- FALSE
-a$list_billings() %>% head()
+billings$own_billings <- FALSE
+billings$list_billings() %>% head()
 a$choose_date(as.Date("2001-01-01"), Sys.Date()) # reset dates
 ```
 
 
 # Chronic disease management
 
+Chronic disease management methods are contained within the dMeasureCDM module https://github.com/DavidPatShuiFong/dMeasureCDM.
+
 ```{r}
-a$appointments_billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
+cdm <- dMeasureCDM::dMeasureCDM$new(a, billings)
+# the dMeasureCDM object requires access to both the dMeasure ('a') object
+# and the dMeasureBillings ('billings') object
+cdm$appointments_billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
 ```
 
 Chronic disease management opportunities based on a a large number of condition lists, such `diabetes_list_cdm`.
@@ -240,7 +251,7 @@ These active condition lists look at `appointments_list` (which is set by **list
 determine if a chronic disease management billing has occurred in a time period prior to the appointment.
 
 ```{r}
-a$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
+cdm$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
 ```
 
 The **diabetes_list_cdm** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`
@@ -472,6 +483,14 @@ a$list_contact_cst() %>% head()
 
 # Practice Incentive Program [Quality Improvement Measures](https://www1.health.gov.au/internet/main/publishing.nsf/Content/PIP-QI_Incentive_guidance)
 
+Quality Improvement Measures are provided by the *dMeasureQIM* object.
+
+```{r}
+qim <- dMeasureQIM::dMeasureQIM$new(a)
+# the dMeasureQIM object is created
+# with 'access' to the dMeasure object, in this case 'a'
+```
+
 These methods assist in reporting and monitoring of Quality Improvement Measures.
 
 One group of methods *list* patients relevant to the Quality Improvement Measures.
@@ -482,15 +501,15 @@ In the example below, 'all' contact types are counted. This is a very broad defi
 and is only used because the 'samples' database used to create this document is very small.
 
 ```{r}
-?dMeasure::list_qim_active
+?dMeasureQIM::list_qim_active
 a$contact_type <- a$contact_types # includes 'all' contact types as valid (appointment, visit, billing)
-a$list_qim_active() # the list of patients, with Quality Improvement Measure specified groupings
+qim$list_qim_active() # the list of patients, with Quality Improvement Measure specified groupings
 ```
 
-The other group of methods provide aggregated/anonymized *report* of the relevant patients.
+Another group of methods provide aggregated/anonymized *report* of the relevant patients.
 
 ```{r}
-a$report_qim_active() # an 'anonymized'/aggregated report of the active patients
+qim$report_qim_active() # an 'anonymized'/aggregated report of the active patients
 # 'n' is the number of patients in the category
 # 'Proportion' is the proportion of patients in the category
 ```
@@ -498,82 +517,141 @@ a$report_qim_active() # an 'anonymized'/aggregated report of the active patients
 The demographic groupings for *report* can be changed from the default
 
 ```{r}
-a$qim_demographicGroup # the default setting
-a$qim_demographicGroupings
-a$qim_demographicGroup <- c("Sex", "Ethnicity")
-a$report_qim_active()
+qim$qim_demographicGroup # the default setting
+qim$qim_demographicGroupings
+qim$qim_demographicGroup <- c("Sex", "Ethnicity")
+qim$report_qim_active()
 ```
 
 ## Diabetes Quality Improvement Measures
 
 ```{r}
-DT::datatable(a$list_qim_diabetes(),
+DT::datatable(qim$list_qim_diabetes(),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
-a$report_qim_diabetes()
+qim$report_qim_diabetes()
 ```
 
 By default, 'old' results (as defined by the Quality Improvement Measures) are ignored.
 Old results can be included by setting **qim_ignoreOld** to *FALSE*.
 
 ```{r}
-a$qim_ignoreOld <- FALSE
-DT::datatable(a$list_qim_diabetes(),
+qim$qim_ignoreOld <- FALSE
+DT::datatable(qim$list_qim_diabetes(),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
-a$report_qim_diabetes()
+qim$report_qim_diabetes()
+```
+
+### Appointment view
+
+Instead of using the *contact* list it is possible to use the *appointment* list view,
+which derives the patient list purely from the appointment book, without regard to
+the appointment status.
+
+The *appointment* list view is designed to be used with the **list...appointments**
+methods. For example, **list_qim_diabetes_appointments** method attaches
+any appointment in the chosen date-range to the patient listing.
+
+This method will usually be most useful when looking at just one day of appointments.
+
+```{r}
+qim$qim_contact <- FALSE # use 'appointment' list, not 'contact' list
+a$choose_date(as.Date("2019-01-01"))
+
+DT::datatable(qim$list_qim_diabetes_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+?dMeasureQIM::list_qim_diabetes_appointments
 ```
 
 ## Cervical screening
 
 ```{r}
-a$list_qim_cst()
-a$report_qim_cst()
+qim$qim_contact <- TRUE # return to 'contact' list
+a$choose_date(as.Date("2001-01-01")) # expand date list
+
+qim$list_qim_cst()
+
+DT::datatable(qim$list_qim_cst_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+qim$report_qim_cst()
 ```
 
 ## Fifteen plus
 
 ```{r}
 # very wide table! use scroller to see to the right...
-DT::datatable(a$list_qim_15plus(),
+DT::datatable(qim$list_qim_15plus(),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
-DT::datatable(a$report_qim_15plus())
+
+DT::datatable(qim$list_qim_15plus_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+
+DT::datatable(qim$report_qim_15plus())
 ```
 
 ## Sixty-five plus
 
 ```{r}
-a$list_qim_65plus()
-a$report_qim_65plus()
+qim$list_qim_65plus()
+
+DT::datatable(qim$list_qim_65plus_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+qim$report_qim_65plus()
 ```
 
 ## Chronic obstructive pulmonary disease
 
 ```{r}
-a$list_qim_copd()
-a$report_qim_copd()
+qim$list_qim_copd()
+
+DT::datatable(qim$list_qim_copd_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+qim$report_qim_copd()
 ```
 
 ## Cardiovascular risk
 
 ```{r}
-?dMeasure::list_qim_cvdRisk
+?dMeasureQIM::list_qim_cvdRisk
+
 # remove some demographics and alcohol recordings because the table is very wide...
 # note that the framingham risk equation calculation result 'frisk' is on the
 # extreme right hand side
-DT::datatable(a$list_qim_cvdRisk() %>%
+DT::datatable(qim$list_qim_cvdRisk() %>%
                 dplyr::select(-c(RecordNo, MaritalStatus, Sexuality)),
               extension = "Scroller",
               options = list(scroller = TRUE, scrollX = TRUE))
-a$report_qim_cvdRisk()
+
+DT::datatable(qim$list_qim_cvdRisk_appointments(),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+qim$report_qim_cvdRisk()
 ```
 
 ### Cardiovascular risk inclusion/exclusion groups
 
 ```{r}
-a$qim_cvdRisk_measureTypes
-a$qim_cvdRisk_measure # default group settings
+qim$qim_cvdRisk_measureTypes
+qim$qim_cvdRisk_measure # default group settings
 ```
 
 Note that current Quality Improvement Measures guidelines appear to exclude ATSI 35-44 age group,
@@ -581,15 +659,16 @@ which is different to the current default setting.
 
 ### Framingham Risk Equation used for calculation
 
+This equation is in package framinghamRiskEquation https://github.com/DavidPatShuiFong/framinghamRiskEquation.
+
 ```{r}
-?dMeasure::framingham_riskequation
+?framinghamRiskEquation::framingham_riskequation
 ```
 
-In the interest of openness and reproducability
-the actual equation and function is reproduced below.
+The framingham risk equation function is reproduced below.
 Please report any required corrections to me!
 
-```{r code = capture.output(dMeasure::framingham_riskequation), eval = FALSE}
+```{r code = capture.output(framinghamRiskEquation::framingham_riskequation), eval = FALSE}
 ```
 
 # Close the database connections
