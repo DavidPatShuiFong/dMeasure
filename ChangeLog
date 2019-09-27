@@ -1,6 +1,16 @@
 Changelog
 
 
+0.7.1 - 27th September 2019
+===========================
+
+Bugfix
+
+* process ReportDate to as.Date() in observeValues at table level
+  failure to convert to as.Date will result in invalid dates being compared
+
+  other date fields in other tables also converted to as.Date() at table level
+
 0.7.0 - 21st September 2019
 ===========================
 

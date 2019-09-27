@@ -1178,7 +1178,8 @@ initialize_emr_tables <- function(dMeasure_obj,
     # InternalID, GivenDate, VaccineName, VaccineID
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>>%
     dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID')) %>>%
-    dplyr::mutate(VaccineName = trimws(VaccineName))
+    dplyr::mutate(GivenDate = as.Date(GivenDate),
+                  VaccineName = trimws(VaccineName))
 
   self$db$vaccine_disease <- emr_db$conn() %>>%
     # vaccineIDs linked to diseases
@@ -1215,7 +1216,8 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
                   ResultValue, Units, Range) %>>%
-    dplyr::mutate(LoincCode = trimws(LoincCode),
+    dplyr::mutate(ReportDate = as.Date(ReportDate),
+                  LoincCode = trimws(LoincCode),
                   ResultName = trimws(ResultName),
                   Range = trimws(Range),
                   ResultValue = trimws(ResultValue),
@@ -1266,7 +1268,8 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
     dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
                   ObservationDate, ObservationTime, ObservationValue) %>>%
-    dplyr::mutate(ObservationName = trimws(ObservationName),
+    dplyr::mutate(ObservationDate = as.Date(ObservationDate),
+                  ObservationName = trimws(ObservationName),
                   ObservationValue = trimws(ObservationValue))
 
   # ObservationCode
