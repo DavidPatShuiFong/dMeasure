@@ -39,13 +39,13 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
     dplyr::filter(InternalID %in% intID &&
                     VaccineID %in% fluvaxID &&
                     # influenza vaccines
-                    as.Date(GivenDate) <= date_to &&
+                    GivenDate <= date_to &&
                     # the database GivenDate field is a dttm object
                     # which includes the time
                     # this works for >= in the case below, but fails in the <=
                     # case above, as GivenDate dttm object will be 'greater'
                     # than the as.Date object 'date_to' with the same date
-                    as.Date(GivenDate) >= date_from) %>>%
+                    GivenDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(GivenDate == max(GivenDate, na.rm = TRUE)) %>>%
     # most recent fluvax by InternalID
@@ -97,8 +97,8 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
                     # BPCode 1 is HbA1C, 19 is SI units
                     # these reports include 'manual' entries
                     # in the diabetes assessment dialog
-                    as.Date(ReportDate) <= date_to &&
-                    as.Date(ReportDate) >= date_from
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
@@ -271,8 +271,8 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     (BPCode == 17 || BPCode == 7 || BPCode == 18) &&
-                    as.Date(ReportDate) <= date_to &&
-                    as.Date(ReportDate) >= date_from
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
@@ -351,8 +351,8 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
                     # two possible ways the result might be recorded
                     (ResultValue > 35 || (ResultValue > 25 && Sex == "Male")) &&
                     # more than 35 for females, more than 25 for males
-                    as.Date(ReportDate) <= date_to &&
-                    as.Date(ReportDate) >= date_from
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from
     )
 
   earliest_result <- results %>>%
@@ -417,8 +417,8 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
                     (BPCode == 16) &&
-                    as.Date(ReportDate) <= date_to &&
-                    as.Date(ReportDate) >= date_from
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
@@ -469,8 +469,8 @@ Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
                     BPCode %in% c(2, 3, 4, 5) &&
                     # systolic or diastolic blood pressure
                     # 3 = systolic, 4 = diastolic
-                    as.Date(ReportDate) <= date_to &&
-                    as.Date(ReportDate) >= date_from) %>>%
+                    ReportDate <= date_to &&
+                    ReportDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate,
                                     na.rm = TRUE)) %>>%
