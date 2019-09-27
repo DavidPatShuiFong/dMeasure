@@ -1,7 +1,7 @@
 Package: dMeasure
 Type: Package
 Title: case finding in the EMR (Best Practice)
-Version: 0.7.0
+Version: 0.7.1
 Author: David Fong
 Maintainer: David Fong <vkelim@bigpond.com>
 Description: Search for health interventions in the Best Practice EMR database.

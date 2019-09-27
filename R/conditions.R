@@ -518,7 +518,12 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
                         dplyr::filter(ObservationCode == 9),
                       # this is BMI. also in DATANAME, but different spellings/cases
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter(as.Date(ObservationDate) <= as.Date(Date)) %>>%
+    dplyr::mutate(ObservationDate = as.Date(ObservationDate)) %>>%
+    # although defined 'as.Date' in self$db$observations,
+    # it needs to be explicitly converted to as.Date again
+    # because the 'in SQL table' as.Date did not actually convert to Date
+    # for the purposes of R
+    dplyr::filter(ObservationDate <= as.Date(Date)) %>>%
     # observation done before the appointment date
     dplyr::group_by(InternalID, Date) %>>%
     dplyr::slice(which.max(ObservationDate)) %>>%
