@@ -1,5 +1,23 @@
 Changelog
 
+0.7.2 - 28th September 2019
+===========================
+
+Bugfixes
+
+* add "Invoice" to appointment_status_types
+
+* fix error if empty $contact_type when in $list_contact_count
+
+0.7.1 - 27th September 2019
+===========================
+
+Bugfix
+
+* process ReportDate to as.Date() in observeValues at table level
+  failure to convert to as.Date will result in invalid dates being compared
+
+  other date fields in other tables also converted to as.Date() at table level
 
 0.7.0 - 21st September 2019
 ===========================

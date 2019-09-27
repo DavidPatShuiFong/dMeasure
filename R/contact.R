@@ -14,12 +14,12 @@ NULL
   if (!missing(value)) {
     warning("'appointment_status_types' cannot be set.")
   }
-  return (c("Booked", "Completed", "At billing", "Waiting", "With doctor"))
+  return (c("Booked",  "Waiting", "With doctor", "At billing", "Invoiced", "Completed"))
 })
 
 # valid appointment states. note that 'with doctor' applies to any health provider type!
 .private_init(dMeasure, ".appointment_status",
-              quote(c("With doctor", "At billing", "Completed")))
+              quote(c("With doctor", "At billing", "Invoiced", "Completed")))
 # by default, all status types are valid
 .active(dMeasure, "appointment_status", function(value) {
   if (missing(value)) {
@@ -534,6 +534,8 @@ list_contact_count <- function(dMeasure_obj,
     self$contact_count_list <- data.frame(Patient = character(),
                                           InternalID = integer(),
                                           Count = integer(),
+                                          AppointmentDate = as.Date(integer(0),
+                                                                    origin = "1970-01-01"),
                                           Latest = as.Date(integer(0),
                                                            origin = "1970-01-01"),
                                           stringsAsFactors = FALSE) %>>%
