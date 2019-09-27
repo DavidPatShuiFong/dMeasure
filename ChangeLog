@@ -1,5 +1,13 @@
 Changelog
 
+0.7.2 - 28th September 2019
+===========================
+
+Bugfixes
+
+* add "Invoice" to appointment_status_types
+
+* fix error if empty $contact_type when in $list_contact_count
 
 0.7.1 - 27th September 2019
 ===========================
