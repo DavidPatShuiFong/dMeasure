@@ -120,6 +120,7 @@ dMeasure <-
     self$db$users <- NULL
     self$db$patients <- NULL
     self$db$clinical <- NULL
+    self$db$reactions <- NULL
     self$db$investigations <- NULL
     self$db$papsmears <- NULL
     self$db$appointments <- NULL
@@ -478,6 +479,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$users <- NULL
       self$db$patients <- NULL
       self$db$clinical <- NULL
+      self$db$reactions <- NULL
       self$db$investigations <- NULL
       self$db$papsmears <- NULL
       self$db$appointments <- NULL
@@ -1066,7 +1068,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$clinical <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
-    dplyr::select(INTERNALID, MARITALSTATUS, SEXUALITY,
+    dplyr::select(INTERNALID, KNOWNALLERGIES, MARITALSTATUS, SEXUALITY,
                   SMOKINGSTATUS, ALCOHOLSTATUS,
                   CREATED, UPDATED) %>>%
     dplyr::left_join(self$db$MARITALSTATUS,
@@ -1075,6 +1077,7 @@ initialize_emr_tables <- function(dMeasure_obj,
                      by = c("SEXUALITY" = "SEXUALITYCODE")) %>>%
     dplyr::select(-c(MARITALSTATUS, SEXUALITY)) %>>%
     dplyr::rename(InternalID = INTERNALID,
+                  KnownAllergies = KNOWNALLERGIES, # 0 = not recorded, 1 = unknown, 2 = some recorded
                   MaritalStatus = MARITALSTATUSNAME,
                   Sexuality = SEXUALITYNAME) %>>%
     dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
@@ -1103,6 +1106,14 @@ initialize_emr_tables <- function(dMeasure_obj,
   # 3 - Moderate, 4 = Heavy
   # note that '0' in the CLINICAL will be the case
   # if either current or **Past** alcohol consumption not entered
+
+  self$db$reactions <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Reactions')) %>>%
+    dplyr::select(InternalID, ItemName, Reaction, Severity, Comment) %>>%
+    # for some reason, error when selecting 'Created'
+    dplyr::mutate(ItemName = trimws(ItemName),
+                  Reaction = trimws(Reaction),
+                  Severity = trimws(Severity))
 
   self$db$alcohol <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Alcohol')) %>>%

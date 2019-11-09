@@ -1,5 +1,16 @@
 Changelog
 
+New
+
+* dataQuality module - list_dataQuality. currently includes list_allergy
+
+  Data quality assessment. Are allergies recorded for the listed patients?
+
+* paste2 - a version of paste which ignores NA, empty strings and character(0)
+
+* addition of db$reactions
+  addition of KnownAllergies to db$clinical
+
 0.7.2 - 28th September 2019
 ===========================
 

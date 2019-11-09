@@ -48,6 +48,7 @@ Collate:
     'configuration_user.R'
     'contact.R'
     'contactConditions.R'
+    'dataQuality.R'
     'observations.R'
     'utils_pipe.R'
 VignetteBuilder: knitr

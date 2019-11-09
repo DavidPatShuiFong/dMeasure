@@ -309,3 +309,36 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 
   return(result)
 }
+
+#' paste which can ignore NA and empty strings
+#'
+#' Acts the same as regular paste, unless na.rm = TRUE,
+#' in which case empty strings and NA are removed
+#'
+#' based on code by Moody_Mudskipper at
+#' https://stackoverflow.com/questions/13673894/suppress-nas-in-paste
+#' with additional code from
+#' https://stackoverflow.com/questions/14270950/suppress-separator-in-paste-when-values-are-missing
+#'
+#' @param ... the list of strings to paste
+#' @param sep the separator string, " " by default
+#' @param collapse the collapse string, NULL by default
+#' @param na.rm whether to remove NA and empty strings
+#'
+#' @return string
+#' @export
+paste2 <- function(..., sep = " ", collapse = NULL, na.rm = FALSE){
+  # in default case, use paste
+  if(!na.rm) return(paste(..., sep = sep, collapse = collapse))
+  # cbind is convenient to recycle, it warns though so use suppressWarnings
+  dots <- suppressWarnings(cbind(...))
+  res <- apply(dots, 1, function(...) {
+    x <- c(...)
+    x <- x[nchar(x) > 0] # get rid of empty strings
+    x <- x[length(x) > 0] # get rid of character(0)
+    if (all(is.na(x))) return(c(""))
+    do.call(paste, as.list(c(na.omit(x), sep = sep)))
+  })
+  if(is.null(collapse)) res else
+    paste(na.omit(res), collapse = collapse)
+}
