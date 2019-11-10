@@ -56,10 +56,6 @@ list_allergy <- function(dMeasure_obj,
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  }
-
   if (is.null(appointments_list) & !lazy) {
     self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
     # if not 'lazy' evaluation, then re-calculate self$appointments_billings
@@ -98,7 +94,10 @@ list_allergy <- function(dMeasure_obj,
     # demanding same datatype for TRUE/FALSE alternatives
     # 'ifelse' does not preserve date type in this circumstance
     {if (qualitytag)
-      {dplyr::mutate(., reaction_string = paste0("<b>", ItemName , "</b> : ", Reaction))} else {.}} %>>%
+    {dplyr::mutate(., reaction_string = paste0("<b>", ItemName , "</b> : ", Reaction)) %>>%
+        dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider, DOB, Age, Created, KnownAllergies) %>>%
+        dplyr::summarise(reaction_string = paste(reaction_string, collapse = "<br>")) %>>%
+      dplyr::ungroup()} else {.}} %>>%
     {if (qualitytag_print)
     {dplyr::mutate(., reaction_string = paste2(ItemName,
                                                paste2(Reaction, Severity, Comment, sep = " - ", na.rm = TRUE),
@@ -122,8 +121,8 @@ list_allergy <- function(dMeasure_obj,
                                  dplyr::if_else(is.na(Created) | KnownAllergies == 0,
                                                 "No recording",
                                                 dplyr::if_else(KnownAllergies == 1,
-                                                        "Nil known",
-                                                        reaction_string)),
+                                                               "Nil known",
+                                                               reaction_string)),
                                  "</h4>")))
   }
 
@@ -134,8 +133,8 @@ list_allergy <- function(dMeasure_obj,
                              dplyr::if_else(is.na(Created) | KnownAllergies == 0,
                                             "(No recording)",
                                             dplyr::if_else(KnownAllergies == 1,
-                                                    "(Nil known)",
-                                                    paste0("(", reaction_string, ")")))
+                                                           "(Nil known)",
+                                                           paste0("(", reaction_string, ")")))
                       ))
   }
 
@@ -147,7 +146,14 @@ list_allergy <- function(dMeasure_obj,
   return(allergy_list)
 })
 
-dataQuality_names <- c("Adverse Reactions")
+.active(dMeasure, "dataQuality_choices", function(value) {
+  if (!missing(value)) {
+    warning("$dataQuality_choices is read-only.")
+  } else {
+    return(c("Allergies"))
+    # vector of valid dataQuality choices
+  }
+})
 
 #' List of patients for data quality check
 #'
@@ -181,7 +187,7 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
                                                appointments_list = NULL,
                                                lazy = FALSE,
                                                qualitytag = FALSE, qualitytag_print = TRUE,
-                                               chosen = dataQuality_names) {
+                                               chosen = self$dataQuality_choices) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -194,10 +200,6 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
   }
   # no additional clinician filtering based on privileges or user restrictions
 
-  if (all(is.na(clinicians)) || length(clinicians) == 0) {
-    stop("Choose at least one clinicians\'s appointment to view")
-  }
-
   if (is.null(appointments_list) & !lazy) {
     self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
     # if not 'lazy' evaluation, then re-calculate self$appointments_billings
@@ -208,15 +210,26 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
     appointments_list <- self$appointments_list
   }
 
-  vlist <- NULL
-  if ("Adverse Reactions" %in% chosen) {
+  vlist <- data.frame(Patient = character(), InternalID = integer(),
+                      AppointmentDate = as.Date(integer(), origin = "1970-01-01"),
+                      AppointmentTime = character(), Provider = character(),
+                      DOB = as.Date(integer(), origin = "1970-01-01"), Age = double())
+
+  if (qualitytag) {
+    vlist <- cbind(vlist, qualitytag = character())
+  }
+  if (qualitytag_print) {
+    vlist <- cbind(vlist, qualitytag_print = character())
+  }
+
+  if ("Allergies" %in% chosen) {
     vlist <- rbind(vlist, self$list_allergy(date_from, date_to, clinicians,
                                             appointments_list,
                                             lazy,
                                             qualitytag, qualitytag_print))
   }
 
-  if (!is.null(vlist)) {
+  if (nrow(vlist) > 0) {
     vlist <- vlist %>>%
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%

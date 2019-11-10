@@ -6,6 +6,8 @@ New
 
   Data quality assessment. Are allergies recorded for the listed patients?
 
+  list of quality choices in $dataQuality_choices
+
 * paste2 - a version of paste which ignores NA, empty strings and character(0)
 
 * addition of db$reactions
