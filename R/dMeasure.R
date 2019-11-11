@@ -1069,7 +1069,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$clinical <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
     dplyr::select(INTERNALID, KNOWNALLERGIES, MARITALSTATUS, SEXUALITY,
-                  SMOKINGSTATUS, ALCOHOLSTATUS,
+                  SOCIALHX, SMOKINGSTATUS, ALCOHOLSTATUS,
                   CREATED, UPDATED) %>>%
     dplyr::left_join(self$db$MARITALSTATUS,
                      by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
@@ -1079,9 +1079,13 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::rename(InternalID = INTERNALID,
                   KnownAllergies = KNOWNALLERGIES, # 0 = not recorded, 1 = unknown, 2 = some recorded
                   MaritalStatus = MARITALSTATUSNAME,
+                  SocialHx = SOCIALHX,
+                  # note that social history details are also available in other fields
+                  # such as ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
                   Sexuality = SEXUALITYNAME) %>>%
     dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
-                  Sexuality = trimws(Sexuality)) %>>%
+                  Sexuality = trimws(Sexuality),
+                  SocialHx = trimws(SocialHx)) %>>%
     # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
     #  (which are not dated or given additional identifiers)
     # MaritalStatusName and SexualityName provided as strings
