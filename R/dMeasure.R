@@ -1069,7 +1069,8 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$clinical <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
     dplyr::select(INTERNALID, KNOWNALLERGIES, MARITALSTATUS, SEXUALITY,
-                  SOCIALHX, SMOKINGSTATUS, ALCOHOLSTATUS,
+                  SOCIALHX, ACCOMODATION, LIVESWITH, HASCARER, ISCARER,
+                  SMOKINGSTATUS, ALCOHOLSTATUS, RECREATION,
                   CREATED, UPDATED) %>>%
     dplyr::left_join(self$db$MARITALSTATUS,
                      by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
@@ -1082,9 +1083,16 @@ initialize_emr_tables <- function(dMeasure_obj,
                   SocialHx = SOCIALHX,
                   # note that social history details are also available in other fields
                   # such as ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
+                  # HASCARER = 0 '', 1 - 'Yes', 2 - 'No', 3 - 'Self' (?)
+                  # ISCARER = 0 '', 1 - 'Yes, 2 - 'No'
+                  Accomodation = ACCOMODATION,
+                  LivesWith = LIVESWITH,
+                  HasCarer = HASCARER, IsCarer = ISCARER,
+                  Recreation = RECREATION,
                   Sexuality = SEXUALITYNAME) %>>%
     dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
                   Sexuality = trimws(Sexuality),
+                  Recreation = trimws(Recreation),
                   SocialHx = trimws(SocialHx)) %>>%
     # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
     #  (which are not dated or given additional identifiers)
@@ -1110,6 +1118,45 @@ initialize_emr_tables <- function(dMeasure_obj,
   # 3 - Moderate, 4 = Heavy
   # note that '0' in the CLINICAL will be the case
   # if either current or **Past** alcohol consumption not entered
+
+  # two tables providing 'decoding' for social history elements in db$clinical
+  self$db$accomodation <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'ACCOMODATION')) %>>%
+    dplyr::rename(AccomodationCode = ACCOMODATIONCODE,
+                  AccomodationText = ACCOMODATIONTEXT) %>>%
+    dplyr::mutate(AccomodationText = trimws(AccomodationText))
+  # currently 0 '', 1 'Own home', 2 "Relative's home", 3 'Other private house'
+  # 4 'Hostel', 5 'Nursing home (RACF), 6 'Homeless', 7 'Rental home'
+  self$db$liveswith <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'LIVESWITH')) %>>%
+    dplyr::rename(LivesWithCode = LIVESWITHCODE,
+                  LivesWithText = LIVESWITHTEXT) %>>%
+    dplyr::mutate(LivesWithText = trimws(LivesWithText))
+  # currently 0 '', 1 'Spouse', 2 'Relative', 3 'Friend', 4 'Alone'
+  self$db$carer <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'CARER')) %>>%
+    dplyr::select(INTERNALID, TITLECODE, SURNAME, FIRSTNAME,
+                  ADDRESS, CITY, POSTCODE, CONTACTPHONE, CONTACTPHONE2, RELATIONSHIP,
+                  CREATED, UPDATED) %>>%
+    dplyr::rename(InternalID = INTERNALID,
+                  TitleCode = TITLECODE,
+                  Surname = SURNAME, Firstname = FIRSTNAME,
+                  Address = ADDRESS, City = CITY, Postcode = POSTCODE,
+                  ContactPhone = CONTACTPHONE,
+                  ContactPhone2 = CONTACTPHONE2,
+                  Relationship = RELATIONSHIP,
+                  Created = CREATED, Updated = UPDATED) %>>%
+    dplyr::mutate(Surname = trimws(Surname), Firstname = trimws(Firstname),
+                  Address = trimws(Address), City = trimws(City),
+                  Postcode = trimws(Postcode), ContactPhone = trimws(ContactPhone),
+                  ContactPhone2 = trimws(ContactPhone2),
+                  Relationship = trimws(Relationship))
+
+  self$db$titles <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'TITLES')) %>>%
+    dplyr::select(TITLECODE, TITLE) %>>%
+    dplyr::rename(TitleCode = TITLECODE, Title = TITLE) %>>%
+    dplyr::mutate(Title = trimws(Title))
 
   self$db$reactions <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Reactions')) %>>%

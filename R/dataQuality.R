@@ -210,7 +210,16 @@ list_socialHx <- function(dMeasure_obj,
   socialHx_list <- appointments_list %>>%
     dplyr::left_join(self$db$clinical %>>%
                        dplyr::filter(InternalID %in% intID) %>>%
-                       dplyr::select(InternalID, SocialHx, Created, Updated),
+                       dplyr::select(InternalID, SocialHx, Accomodation, LivesWith,
+                                     HasCarer, IsCarer, Recreation,
+                                     Created, Updated) %>>%
+                       dplyr::left_join(self$db$accomodation,
+                                        by = c("Accomodation" = "AccomodationCode")) %>>%
+                       dplyr::left_join(self$db$liveswith,
+                                        by = c("LivesWith" = "LivesWithCode")) %>>%
+                       dplyr::select(-c(Accomodation, LivesWith)) %>>%
+                       # remove the 'index column', and replace with the text
+                       dplyr::rename(Accomodation = AccomodationText, LivesWith = LivesWithText),
                      by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::collect() %>>%
@@ -223,13 +232,21 @@ list_socialHx <- function(dMeasure_obj,
     # note that 'if_else' vectorizes,
     # demanding same datatype for TRUE/FALSE alternatives
     # 'ifelse' does not preserve date type in this circumstance
+    dplyr::mutate(LivesWith = dplyr::if_else(paste2(LivesWith, na.rm = TRUE) == "",
+                                             # force to empty string if NULL/NA
+                                             "",
+                                             paste0("Lives with ", LivesWith))) %>>%
     {if (qualitytag)
-    {dplyr::mutate(., socialHx_string = paste2(SocialHx, na.rm = TRUE))} else {.}} %>>%
+    {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+                                               sep = ", ", na.rm = TRUE))}
+      else {.}} %>>%
     # paste2 changes NULL to empty string
     # there are other potential social history elements which could be included
     # from fields RETIRED, ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
     {if (qualitytag_print)
-    {dplyr::mutate(., socialHx_string = paste2(SocialHx, na.rm = TRUE))} else {.}}
+    {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+                                               sep = ", ", na.rm = TRUE))}
+      else {.}}
 
   if (qualitytag) {
     socialHx_list <- socialHx_list %>>%
