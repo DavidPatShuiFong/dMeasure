@@ -1,10 +1,17 @@
 Changelog
 
+0.8.0 - 12th November 2019
+==========================
+
 New
 
 * dataQuality module - list_dataQuality. currently includes list_allergy
 
   Data quality assessment. Are allergies recorded for the listed patients?
+
+  social history (partial)
+
+  list of quality choices in $dataQuality_choices
 
 * paste2 - a version of paste which ignores NA, empty strings and character(0)
 
