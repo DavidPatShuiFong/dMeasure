@@ -1278,12 +1278,31 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
                   ResultValue, Units, Range) %>>%
-    dplyr::mutate(ReportDate = as.Date(ReportDate),
+    dplyr::mutate(ReportDate = as_datetime(ReportDate),
                   LoincCode = trimws(LoincCode),
                   ResultName = trimws(ResultName),
                   Range = trimws(Range),
+                  BPCode = as.numeric(BPCode),
+                  Units = trimws(Units),
+                  # "ResultValue = as.numeric(ResultValue),"
+                  # this coercion only works in my modified version of dbplyr 1.4.2
+                  # (if there are non-numeric characters in ResultValue)
+                  # modified dbplyr translates as.numeric (and as.Date) as a 'try_cast'
+                  # the default sample database contains ResultValue which are
+                  # not purely numeric e.g. "<0.5", and results in an error
+                  # when just trying to 'cast', if those characters are not removed
                   ResultValue = trimws(ResultValue),
-                  Units = trimws(Units))
+                  # get rid of leading "<" or ">", this will result in an 'assigned' value
+                  # equal to the limit of the test
+                  ResultValue = dplyr::case_when(substr(ResultValue, 1, 1) %LIKE% "%[<>]%" ~
+                                                   substr(ResultValue, 2, 100), # assume nchar <= 100
+                                                 # doesn't accept nchar(ResultValue)
+                                                 TRUE ~ ResultValue)) %>>%
+    # need separate mutate to work after trimming "<" and ">" from ResultValue
+    dplyr::mutate(ResultValue = as.double(ResultValue))
+  # modified version of dbplyr also required for 'as.double' to cast as a FLOAT
+  # the default NUMERIC rounds/?truncates ResultValue to an integer
+
   # BPCode
   #  1 - HbA1C
   #  2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol, 5 - triglycerides
