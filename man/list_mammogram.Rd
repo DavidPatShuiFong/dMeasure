@@ -4,17 +4,9 @@
 \alias{list_mammogram}
 \title{Breast cancer  screening list}
 \usage{
-list_mammogram(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  action = FALSE,
-  screentag = FALSE,
-  screentag_print = TRUE
-)
+list_mammogram(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, appointments_list = NULL, lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

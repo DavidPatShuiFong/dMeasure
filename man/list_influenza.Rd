@@ -4,16 +4,9 @@
 \alias{list_influenza}
 \title{List of patients potentially eligible for influenza vaccine}
 \usage{
-list_influenza(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  vaxtag = FALSE,
-  vaxtag_print = TRUE
-)
+list_influenza(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, appointments_list = NULL, lazy = FALSE,
+  vaxtag = FALSE, vaxtag_print = TRUE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

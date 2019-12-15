@@ -464,9 +464,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         dplyr::collect()
       print("Opening EMR database")
       self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
-                             server = server$Address, database = server$Database,
-                             uid = server$UserID,
-                             pwd = dMeasure::simple_decode(server$dbPassword))
+                          server = server$Address, database = server$Database,
+                          uid = server$UserID,
+                          pwd = dMeasure::simple_decode(server$dbPassword))
       # the open firewall ports required at the Best Practice database server are:
       #  TCP - 139    : File & Print Sharing - Subnet
       #  TCP - 54968  : BP Dynamic - SQL Express
@@ -1367,20 +1367,28 @@ initialize_emr_tables <- function(dMeasure_obj,
                   DiseaseComment = trimws(DiseaseComment))
 
   self$db$familyhistory <- emr_db$conn() %>>%
+    # incorporates db$familyhistorydetail
     dplyr::tbl(dbplyr::in_schema("dbo", "FAMILYHISTORY")) %>>%
     dplyr::select(InternalID = INTERNALID, Unknown = ADOPTED,
+                  # Unknown : 0 - FALSE, 1 = TRUE
                   FatherAlive = PATALIVE, MotherAlive = MATALIVE,
                   # 0 - unknown, 1 - No, 2 - Yes
                   FatherAgeAtDeath = PATAGEATDEATH, MotherAgeAtDeath = MATAGEATDEATH,
                   FatherCauseOfDeath = PATCAUSEOFDEATH,
-                  MotherCauesOfDeath = MATCAUSEOFDEATH,
+                  MotherCauseOfDeath = MATCAUSEOFDEATH,
                   FatherCauseOfDeathCode = PATCAUSEOFDEATHCODE,
                   MotherCauseOfDeathCode = MATCAUSEOFDEATHCODE,
                   Comment = FHCOMMENT) %>>%
+    # unfortunately the CREATED column does not have the date of first entry
+    # so there is no accurate date of first entry
     dplyr::mutate(FatherCauseOfDeath = trimws(FatherCauseOfDeath),
-                  MotherCauesOfDeath = trimws(MotherCauesOfDeath)) %>>%
+                  MotherCauseOfDeath = trimws(MotherCauseOfDeath),
+                  Comment = trimws(Comment)) %>>%
     dplyr::left_join(self$db$familyhistorydetail,
                      by = "InternalID")
+  # after joining with db$familyhistorydetail,
+  # there may be multiple rows per InternalID, each with a different relative
+
 
   self$db$observations <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
