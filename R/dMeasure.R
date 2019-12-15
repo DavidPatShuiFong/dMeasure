@@ -130,6 +130,9 @@ dMeasure <-
     self$db$reportValues <- NULL
     self$db$services <- NULL
     self$db$history <- NULL
+    self$db$familyhistory <- NULL
+    self$db$familyhistorydetail <- NULL
+    self$db$relationcode <- NULL
     self$clinician_choice_list <- NULL
   }
   self$authenticated = FALSE
@@ -491,6 +494,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$servicesRaw <- NULL
       self$db$invoices <- NULL
       self$db$history <- NULL
+      self$db$familyhistory <- NULL
+      self$db$familyhistorydetail <- NULL
+      self$db$relationcode <- NULL
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
@@ -1341,9 +1347,40 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_History')) %>>%
-    dplyr::select('InternalID', 'Year',
-                  'Condition', 'ConditionID', 'Status')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_History")) %>>%
+    dplyr::select(InternalID, Year,
+                  Condition, ConditionID, Status)
+
+  self$db$relationcode <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
+    dplyr::select(RelationCode = RELATIONCODE,
+                  RelationName = RELATIONNAME) %>>%
+    dplyr::mutate(RelationName = trimws(RelationName))
+
+  self$db$familyhistorydetail <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_FamilyHistoryDetail")) %>>%
+    dplyr::select(InternalID, Relation = RelationName,
+                  Condition, DiseaseCode,
+                  DiseaseComment = Comment) %>>%
+    dplyr::mutate(Relation = trimws(Relation),
+                  Condition = trimws(Condition),
+                  DiseaseComment = trimws(DiseaseComment))
+
+  self$db$familyhistory <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "FAMILYHISTORY")) %>>%
+    dplyr::select(InternalID = INTERNALID, Unknown = ADOPTED,
+                  FatherAlive = PATALIVE, MotherAlive = MATALIVE,
+                  # 0 - unknown, 1 - No, 2 - Yes
+                  FatherAgeAtDeath = PATAGEATDEATH, MotherAgeAtDeath = MATAGEATDEATH,
+                  FatherCauseOfDeath = PATCAUSEOFDEATH,
+                  MotherCauesOfDeath = MATCAUSEOFDEATH,
+                  FatherCauseOfDeathCode = PATCAUSEOFDEATHCODE,
+                  MotherCauseOfDeathCode = MATCAUSEOFDEATHCODE,
+                  Comment = FHCOMMENT) %>>%
+    dplyr::mutate(FatherCauseOfDeath = trimws(FatherCauseOfDeath),
+                  MotherCauesOfDeath = trimws(MotherCauesOfDeath)) %>>%
+    dplyr::left_join(self$db$familyhistorydetail,
+                     by = "InternalID")
 
   self$db$observations <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%

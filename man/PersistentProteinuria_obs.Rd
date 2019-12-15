@@ -4,8 +4,7 @@
 \alias{PersistentProteinuria_obs}
 \title{List of patients with persistent proteinuria}
 \usage{
-PersistentProteinuria_obs(dMeasure_obj, intID, date_from = NA,
-  date_to = NA)
+PersistentProteinuria_obs(dMeasure_obj, intID, date_from = NA, date_to = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

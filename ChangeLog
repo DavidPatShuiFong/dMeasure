@@ -1,5 +1,9 @@
 Changelog
 
+New
+
+* db$familyhistory and db$familyhistorydetail : access to family history
+  also db$relationcode - but this is not actually used at this time
 
 Bugfix
 

@@ -4,8 +4,12 @@
 \alias{list_contact_services}
 \title{List of contacts (service type)}
 \usage{
-list_contact_services(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA)
+list_contact_services(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

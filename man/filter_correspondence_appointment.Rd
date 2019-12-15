@@ -4,9 +4,16 @@
 \alias{filter_correspondence_appointment}
 \title{List of correspondence with appointments}
 \usage{
-filter_correspondence_appointment(dMeasure_obj, date_from = NA,
-  date_to = NA, clinicians = NA, Action = NA, Actioned = NA,
-  ignorePast = NA, lazy = FALSE)
+filter_correspondence_appointment(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  Action = NA,
+  Actioned = NA,
+  ignorePast = NA,
+  lazy = FALSE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
