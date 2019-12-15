@@ -1,5 +1,18 @@
 Changelog
 
+
+Bugfix
+
+* convert ResultValue and BPcode to numeric in db$ReportValues
+
+  also remove prceding "<" and ">" from ResultValue to allow numerical comparison
+  against "<" and ">" values.
+
+  these features require a modified version of dbplyr
+  * 'as.double' CASTs to DOUBLE, instead of NUMERIC (the latter casts to integers)
+  * use TRY_CAST (a T-SQL/Microsoft SQL specific feature) instead of CAST, to
+    allow graceful failure to NA instead of errors.
+
 0.8.0 - 12th November 2019
 ==========================
 
