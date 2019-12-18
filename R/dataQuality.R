@@ -256,11 +256,11 @@ list_socialHx <- function(dMeasure_obj,
                         colour =
                           dplyr::if_else(is.na(Created) | socialHx_string == "",
                                          # if no entry in 'clinical' table at all (at this date)
-                                         # or if KnownAllergies is 'none recorded'
+                                         # or string is empty
                                          c('red'),
                                          c('green')),
-                        # red if not given, purple if removed from herpes zoster vax reminders
-                        # and green if has had the vax
+                        # red if not recorded
+                        # and green if social history recording
                         popuphtml =
                           paste0("<h4>",
                                  dplyr::if_else(is.na(Created) | socialHx_string == "",
@@ -287,11 +287,171 @@ list_socialHx <- function(dMeasure_obj,
   return(socialHx_list)
 })
 
+#' List of patients with family history recordings
+#'
+#' Optionally added a HTML ('qualitytag') or printable ('qualitytag_print')
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
+#' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param lazy = FALSE recalculate an appointment list
+#' @param qualitytag = FALSE
+#' @param qualitytag_print = TRUE
+#'
+#' @return dataframe list of patients with family history recording status
+#' @export
+list_familyHx <- function(dMeasure_obj,
+                          date_from = NA, date_to = NA, clinicians = NA,
+                          appointments_list = NULL,
+                          lazy = FALSE,
+                          qualitytag = FALSE, qualitytag_print = TRUE) {
+  dMeasure_obj$list_familyHx(date_from, date_to , clinicians,
+                             appointments_list,
+                             lazy,
+                             qualitytag, qualitytag_print)
+}
+
+.public(dMeasure, "list_familyHx", function(date_from = NA, date_to = NA, clinicians = NA,
+                                            appointments_list = NULL,
+                                            lazy = FALSE,
+                                            qualitytag = FALSE, qualitytag_print = TRUE) {
+  # return datatable of appointments with familyHx status
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (all(is.na(clinicians))) {
+    clinicians <- self$clinicians
+  }
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (is.null(appointments_list) & !lazy) {
+    self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
+    # if not 'lazy' evaluation, then re-calculate self$appointments_billings
+    # (that is automatically done by calling the $billed_appointments method)
+  }
+
+  if (is.null(appointments_list)) {
+    appointments_list <- self$appointments_list
+  }
+
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
+  intID <- c(dplyr::pull(intID_Date, InternalID), -1)
+  # add -1 dummy because cannot search %in% empty vector
+  # just the InternalID
+
+  familyHx_list <- appointments_list %>>%
+    dplyr::left_join(self$db$familyhistory %>>%
+                       dplyr::filter(InternalID %in% intID) %>>%
+                       dplyr::select(InternalID, Unknown,
+                                     FatherAlive, MotherAlive,
+                                     FatherCauseOfDeath, MotherCauseOfDeath,
+                                     FatherAgeAtDeath, MotherAgeAtDeath,
+                                     Comment,
+                                     Relation, Condition, DiseaseComment),
+                     # Relation, Condition, DiseaseComment are
+                     # relation-specific information
+                     # so there can be multiple rows per InternalID
+                     by = "InternalID",
+                     copy = TRUE) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(EmptyFamilyHistory = # TRUE if no recording
+                    (FatherAlive == 0 & MotherAlive == 0 & Unknown == 0 &
+                       (is.null(Comment) | Comment == "") &
+                       is.null(Relation)),
+                  Unknown = dplyr::if_else(Unknown == 0, "", "Unknown"),
+                  FatherAgeAtDeath = dplyr::if_else(paste2(FatherAgeAtDeath, na.rm = TRUE) == 0,
+                                                    "",
+                                                    paste0("(", FatherAgeAtDeath, ")")),
+                  MotherAgeAtDeath = dplyr::if_else(paste2(MotherAgeAtDeath, na.rm = TRUE) == 0,
+                                                    "",
+                                                    paste0("(", MotherAgeAtDeath, ")")),
+                  FatherCauseOfDeath = paste2(FatherCauseOfDeath, na.rm = TRUE),
+                  MotherCauseOfDeath = paste2(MotherCauseOfDeath, na.rm = TRUE),
+                  Father = dplyr::if_else(FatherAlive == 0,
+                                          "",
+                                          dplyr::if_else(FatherAlive == 2,
+                                                         "Father alive",
+                                                         paste0("Father deceased",
+                                                                FatherCauseOfDeath,
+                                                                FatherAgeAtDeath,
+                                                                sep = " "))),
+                  Mother = dplyr::if_else(MotherAlive == 0,
+                                          "",
+                                          dplyr::if_else(MotherAlive == 2,
+                                                         "Mother alive",
+                                                         paste0("Mother deceased",
+                                                                MotherCauseOfDeath,
+                                                                MotherAgeAtDeath,
+                                                                sep = " "))),
+                  DiseaseComment = dplyr::if_else(paste2(DiseaseComment, na.rm = TRUE) == "",
+                                                  # force to empty string if NULL/NA
+                                                  "",
+                                                  paste0("(", DiseaseComment, ")")),
+                  RelativeDetail = dplyr::if_else(is.na(Relation),
+                                                  "",
+                                                  paste2(Relation, ":", Condition, DiseaseComment,
+                                                         sep = ""))) %>>%
+    dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Status, Provider,
+                    DOB, Age, EmptyFamilyHistory, Unknown, Father, Mother, Comment) %>>%
+    dplyr::summarise(RelativeDetails = paste(RelativeDetail, collapse = ", ")) %>>%
+    dplyr::ungroup() %>>%
+    dplyr::mutate(familyHx_string = paste2(Unknown, Father, Mother, Comment,
+                                           RelativeDetails,
+                                           sep = ", ", na.rm = TRUE))
+
+  if (qualitytag) {
+    familyHx_list <- familyHx_list %>>%
+      dplyr::mutate(qualitytag =
+                      dMeasure::semantic_tag(
+                        paste0(' Family History '),
+                        colour =
+                          dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
+                                         # if no details in family history at all
+                                         # or string is empty
+                                         c('red'),
+                                         c('green')),
+                        # red if no recordings,
+                        # and green if there is a recording
+                        popuphtml =
+                          paste0("<h4>",
+                                 dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
+                                                "No recording",
+                                                familyHx_string),
+                                 "</h4>")))
+  }
+
+  if (qualitytag_print) {
+    familyHx_list <- familyHx_list %>>%
+      dplyr::mutate(qualitytag_print =
+                      paste0("Family History", " ", # printable version of information
+                             dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
+                                            "(No recording)",
+                                            paste0("(", familyHx_string, ")"))
+                      ))
+  }
+
+  familyHx_list <- familyHx_list %>>%
+    dplyr::select(intersect(names(familyHx_list),
+                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+                              "Provider", "DOB", "Age", "qualitytag", "qualitytag_print")))
+
+  return(familyHx_list)
+})
+
 .active(dMeasure, "dataQuality_choices", function(value) {
   if (!missing(value)) {
     warning("$dataQuality_choices is read-only.")
   } else {
-    return(c("Allergies", "Social History"))
+    return(c("Allergies", "Social History", "Family History"))
     # vector of valid dataQuality choices
   }
 })
@@ -372,6 +532,13 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
 
   if ("Social History" %in% chosen) {
     vlist <- rbind(vlist, self$list_socialHx(date_from, date_to, clinicians,
+                                             appointments_list,
+                                             lazy,
+                                             qualitytag, qualitytag_print))
+  }
+
+  if ("Family History" %in% chosen) {
+    vlist <- rbind(vlist, self$list_familyHx(date_from, date_to, clinicians,
                                              appointments_list,
                                              lazy,
                                              qualitytag, qualitytag_print))

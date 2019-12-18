@@ -1,5 +1,14 @@
 Changelog
 
+0.8.1 - 18th December 2019
+==========================
+
+New
+
+* list_familyHx (data quality method)
+
+* db$familyhistory and db$familyhistorydetail : access to family history
+  also db$relationcode - but this is not actually used at this time
 
 Bugfix
 
@@ -22,7 +31,7 @@ New
 
   Data quality assessment. Are allergies recorded for the listed patients?
 
-  social history (partial)
+  social history (partial) - list_socialHx
 
   list of quality choices in $dataQuality_choices
 
