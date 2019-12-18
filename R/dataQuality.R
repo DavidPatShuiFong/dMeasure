@@ -357,10 +357,10 @@ list_familyHx <- function(dMeasure_obj,
                                      FatherAgeAtDeath, MotherAgeAtDeath,
                                      Comment,
                                      Relation, Condition, DiseaseComment),
-                       # Relation, Condition, DiseaseComment are
-                       # relation-specific information
-                       # so there can be multiple rows per InternalID
-                       by = "InternalID",
+                     # Relation, Condition, DiseaseComment are
+                     # relation-specific information
+                     # so there can be multiple rows per InternalID
+                     by = "InternalID",
                      copy = TRUE) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(EmptyFamilyHistory = # TRUE if no recording
@@ -369,11 +369,11 @@ list_familyHx <- function(dMeasure_obj,
                        is.null(Relation)),
                   Unknown = dplyr::if_else(Unknown == 0, "", "Unknown"),
                   FatherAgeAtDeath = dplyr::if_else(paste2(FatherAgeAtDeath, na.rm = TRUE) == 0,
-                                                     "",
-                                                     paste0("(", FatherAgeAtDeath, ")")),
+                                                    "",
+                                                    paste0("(", FatherAgeAtDeath, ")")),
                   MotherAgeAtDeath = dplyr::if_else(paste2(MotherAgeAtDeath, na.rm = TRUE) == 0,
-                                                     "",
-                                                     paste0("(", MotherAgeAtDeath, ")")),
+                                                    "",
+                                                    paste0("(", MotherAgeAtDeath, ")")),
                   FatherCauseOfDeath = paste2(FatherCauseOfDeath, na.rm = TRUE),
                   MotherCauseOfDeath = paste2(MotherCauseOfDeath, na.rm = TRUE),
                   Father = dplyr::if_else(FatherAlive == 0,
@@ -532,6 +532,13 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
 
   if ("Social History" %in% chosen) {
     vlist <- rbind(vlist, self$list_socialHx(date_from, date_to, clinicians,
+                                             appointments_list,
+                                             lazy,
+                                             qualitytag, qualitytag_print))
+  }
+
+  if ("Family History" %in% chosen) {
+    vlist <- rbind(vlist, self$list_familyHx(date_from, date_to, clinicians,
                                              appointments_list,
                                              lazy,
                                              qualitytag, qualitytag_print))
