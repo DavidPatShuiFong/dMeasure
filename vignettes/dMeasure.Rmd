@@ -4,10 +4,6 @@ author: "David Fong : vkelim at bigpond dot com"
 date: "`r Sys.Date()`"
 abstract: "Interface to Best Practice Electronic Medical Record database to provide information about opportunities for preventative health activities, screening and chronic condition cycles of care and care planning and billings. Part of the \"Daily Measure\" software suite and the backend to \"GP Stat!\"."
 output:
-  rmarkdown::html_vignette: null
-  pdf_document:
-    toc: yes
-    toc_depth: '3'
   html_document:
     number_sections: yes
     theme: lumen
@@ -16,6 +12,10 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  rmarkdown::html_vignette: null
 vignette: >
   %\VignetteIndexEntry{dMeasure}
   %\VignetteEncoding{UTF-8}
