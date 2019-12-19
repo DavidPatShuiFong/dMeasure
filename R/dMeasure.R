@@ -130,6 +130,9 @@ dMeasure <-
     self$db$reportValues <- NULL
     self$db$services <- NULL
     self$db$history <- NULL
+    self$db$familyhistory <- NULL
+    self$db$familyhistorydetail <- NULL
+    self$db$relationcode <- NULL
     self$clinician_choice_list <- NULL
   }
   self$authenticated = FALSE
@@ -461,9 +464,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         dplyr::collect()
       print("Opening EMR database")
       self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
-                             server = server$Address, database = server$Database,
-                             uid = server$UserID,
-                             pwd = dMeasure::simple_decode(server$dbPassword))
+                          server = server$Address, database = server$Database,
+                          uid = server$UserID,
+                          pwd = dMeasure::simple_decode(server$dbPassword))
       # the open firewall ports required at the Best Practice database server are:
       #  TCP - 139    : File & Print Sharing - Subnet
       #  TCP - 54968  : BP Dynamic - SQL Express
@@ -491,6 +494,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$servicesRaw <- NULL
       self$db$invoices <- NULL
       self$db$history <- NULL
+      self$db$familyhistory <- NULL
+      self$db$familyhistorydetail <- NULL
+      self$db$relationcode <- NULL
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
@@ -1278,12 +1284,31 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
     dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
                   ResultValue, Units, Range) %>>%
-    dplyr::mutate(ReportDate = as.Date(ReportDate),
+    dplyr::mutate(ReportDate = as_datetime(ReportDate),
                   LoincCode = trimws(LoincCode),
                   ResultName = trimws(ResultName),
                   Range = trimws(Range),
+                  BPCode = as.numeric(BPCode),
+                  Units = trimws(Units),
+                  # "ResultValue = as.numeric(ResultValue),"
+                  # this coercion only works in my modified version of dbplyr 1.4.2
+                  # (if there are non-numeric characters in ResultValue)
+                  # modified dbplyr translates as.numeric (and as.Date) as a 'try_cast'
+                  # the default sample database contains ResultValue which are
+                  # not purely numeric e.g. "<0.5", and results in an error
+                  # when just trying to 'cast', if those characters are not removed
                   ResultValue = trimws(ResultValue),
-                  Units = trimws(Units))
+                  # get rid of leading "<" or ">", this will result in an 'assigned' value
+                  # equal to the limit of the test
+                  ResultValue = dplyr::case_when(substr(ResultValue, 1, 1) %LIKE% "%[<>]%" ~
+                                                   substr(ResultValue, 2, 100), # assume nchar <= 100
+                                                 # doesn't accept nchar(ResultValue)
+                                                 TRUE ~ ResultValue)) %>>%
+    # need separate mutate to work after trimming "<" and ">" from ResultValue
+    dplyr::mutate(ResultValue = as.double(ResultValue))
+  # modified version of dbplyr also required for 'as.double' to cast as a FLOAT
+  # the default NUMERIC rounds/?truncates ResultValue to an integer
+
   # BPCode
   #  1 - HbA1C
   #  2- Cholesterol, 3 - HDL cholesterol, 4 - LDL cholesterol, 5 - triglycerides
@@ -1322,9 +1347,48 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_History')) %>>%
-    dplyr::select('InternalID', 'Year',
-                  'Condition', 'ConditionID', 'Status')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_History")) %>>%
+    dplyr::select(InternalID, Year,
+                  Condition, ConditionID, Status)
+
+  self$db$relationcode <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
+    dplyr::select(RelationCode = RELATIONCODE,
+                  RelationName = RELATIONNAME) %>>%
+    dplyr::mutate(RelationName = trimws(RelationName))
+
+  self$db$familyhistorydetail <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_FamilyHistoryDetail")) %>>%
+    dplyr::select(InternalID, Relation = RelationName,
+                  Condition, DiseaseCode,
+                  DiseaseComment = Comment) %>>%
+    dplyr::mutate(Relation = trimws(Relation),
+                  Condition = trimws(Condition),
+                  DiseaseComment = trimws(DiseaseComment))
+
+  self$db$familyhistory <- emr_db$conn() %>>%
+    # incorporates db$familyhistorydetail
+    dplyr::tbl(dbplyr::in_schema("dbo", "FAMILYHISTORY")) %>>%
+    dplyr::select(InternalID = INTERNALID, Unknown = ADOPTED,
+                  # Unknown : 0 - FALSE, 1 = TRUE
+                  FatherAlive = PATALIVE, MotherAlive = MATALIVE,
+                  # 0 - unknown, 1 - No, 2 - Yes
+                  FatherAgeAtDeath = PATAGEATDEATH, MotherAgeAtDeath = MATAGEATDEATH,
+                  FatherCauseOfDeath = PATCAUSEOFDEATH,
+                  MotherCauseOfDeath = MATCAUSEOFDEATH,
+                  FatherCauseOfDeathCode = PATCAUSEOFDEATHCODE,
+                  MotherCauseOfDeathCode = MATCAUSEOFDEATHCODE,
+                  Comment = FHCOMMENT) %>>%
+    # unfortunately the CREATED column does not have the date of first entry
+    # so there is no accurate date of first entry
+    dplyr::mutate(FatherCauseOfDeath = trimws(FatherCauseOfDeath),
+                  MotherCauseOfDeath = trimws(MotherCauseOfDeath),
+                  Comment = trimws(Comment)) %>>%
+    dplyr::left_join(self$db$familyhistorydetail,
+                     by = "InternalID")
+  # after joining with db$familyhistorydetail,
+  # there may be multiple rows per InternalID, each with a different relative
+
 
   self$db$observations <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
