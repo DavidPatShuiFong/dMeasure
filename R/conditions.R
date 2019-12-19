@@ -743,7 +743,8 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::inner_join(self$db$pregnancies %>>%
                         dplyr::filter(InternalID %in% intID),
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter(is.null(ENDDATE) | as.Date(ENDDATE) > as.Date(Date)) %>>%
+    dplyr::filter(is.na(ENDDATE) | is.null(ENDDATE) |
+                    as.Date(ENDDATE) > as.Date(Date)) %>>%
     dplyr::filter((as.Date(EDCBYDATE) > as.Date(Date)) &
                     (as.Date(EDCBYDATE) < as.Date(Date+280))) %>>%
     dplyr::pull(InternalID) %>>%

@@ -6,7 +6,8 @@
 \usage{
 list_dataQuality(dMeasure_obj, date_from = NA, date_to = NA,
   clinicians = NA, appointments_list = NULL, lazy = FALSE,
-  qualitytag = FALSE, qualitytag_print = TRUE, chosen = vax_names)
+  qualitytag = FALSE, qualitytag_print = TRUE,
+  chosen = self$dataQuality_choices)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
