@@ -1,6 +1,6 @@
 Changelog
 
-0.8.1 - 18th December 2019
+0.8.1 - 19th December 2019
 ==========================
 
 New
@@ -9,6 +9,10 @@ New
 
 * db$familyhistory and db$familyhistorydetail : access to family history
   also db$relationcode - but this is not actually used at this time
+
+* list_measlesVax (measles vaccine eligibility)
+
+* add self$vaccine_choices - list of available vaccine lists
 
 Bugfix
 
@@ -21,6 +25,12 @@ Bugfix
   * 'as.double' CASTs to DOUBLE, instead of NUMERIC (the latter casts to integers)
   * use TRY_CAST (a T-SQL/Microsoft SQL specific feature) instead of CAST, to
     allow graceful failure to NA instead of errors.
+
+* default 'chosen' in list_dataQuality corrected
+
+* correction in pregnant_list, allow is.na(ENDDATE) for current pregnancy
+
+
 
 0.8.0 - 12th November 2019
 ==========================

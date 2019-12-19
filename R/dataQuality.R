@@ -476,7 +476,7 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
                              appointments_list = NULL,
                              lazy = FALSE,
                              qualitytag = FALSE, qualitytag_print = TRUE,
-                             chosen = vax_names) {
+                             chosen = self$dataQuality_choices) {
   dMeasure_obj$list_dataQuality(date_from, date_to, clinicians,
                                 appointments_list,
                                 lazy,
