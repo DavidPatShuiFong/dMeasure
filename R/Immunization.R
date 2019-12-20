@@ -231,10 +231,10 @@ list_measlesVax <- function(dMeasure_obj,
 
   measlesVax_list <- appointments_list %>>%
     dplyr::filter(DOB >= as.Date("1966-01-01") &
-                    Age <= as.Date("1997-12-31")) %>>% # from DOB 1966 to 1997 inclusive
+                    DOB <= as.Date("1997-12-31")) %>>% # from DOB 1966 to 1997 inclusive
     dplyr::left_join(self$db$immunizations %>>%
                        dplyr::filter((InternalID %in% intID) &&
-                                       # those who have had the zostavax vaccine
+                                       # those who have had the measles vaccine
                                        ((VaccineName %LIKE% "%measles%") ||
                                           VaccineName %LIKE% "%mmr%" ||
                                           (VaccineID %in% measlesVaxID))),
