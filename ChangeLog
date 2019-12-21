@@ -14,6 +14,8 @@ New
 
 * add self$vaccine_choices - list of available vaccine lists
 
+* add postnatal_list
+
 Bugfix
 
 * convert ResultValue and BPcode to numeric in db$ReportValues
@@ -29,8 +31,7 @@ Bugfix
 * default 'chosen' in list_dataQuality corrected
 
 * correction in pregnant_list, allow is.na(ENDDATE) for current pregnancy
-
-
+  improved date logic
 
 0.8.0 - 12th November 2019
 ==========================

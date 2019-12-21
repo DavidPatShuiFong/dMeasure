@@ -4,9 +4,16 @@
 \alias{list_familyHx}
 \title{List of patients with family history recordings}
 \usage{
-list_familyHx(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, appointments_list = NULL, lazy = FALSE,
-  qualitytag = FALSE, qualitytag_print = TRUE)
+list_familyHx(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  appointments_list = NULL,
+  lazy = FALSE,
+  qualitytag = FALSE,
+  qualitytag_print = TRUE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

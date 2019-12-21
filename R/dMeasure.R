@@ -1035,12 +1035,21 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$patients <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
-    dplyr::mutate(Firstname = trimws(Firstname),
+    dplyr::mutate(Title = trimws(Title),
+                  Firstname = trimws(Firstname),
                   Middlename = trimws(Middlename),
                   Surname = trimws(Surname),
                   Ethnicity = trimws(Ethnicity),
                   Sex = trimws(Sex),
-                  RecordNo = trimws(RecordNo))
+                  RecordNo = trimws(RecordNo),
+                  ExternalID = trimws(ExternalID),
+                  StatusText = trimws(StatusText),
+                  Preferredname = trimws(Preferredname),
+                  Address1 = trimws(Address1),
+                  Address2 = trimws(Address2),
+                  City = trimws(City),
+                  PostalAddress = trimws(PostalAddress),
+                  PostalCity = trimws(PostalCity))
 
   # fields include InternalID, ExternalID, RecordNo, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
@@ -1420,8 +1429,17 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$pregnancies <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "PREGNANCIES")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'EDCBYDATE',
-                  'ACTUALLMP', 'NOMINALLMP', 'ENDDATE')
+    dplyr::select(InternalID = INTERNALID, EDCbyDate = EDCBYDATE, EDCbyScan = EDCBYSCAN,
+                  UseScan = USESCAN, ActualLMP = ACTUALLMP, NominalLMP = NOMINALLMP,
+                  EndDate = ENDDATE, OutcomeCode = OUTCOMECODE) %>>%
+    dplyr::mutate(EDCbyDate = as.Date(EDCbyDate), EDCbyScan = as.Date(EDCbyScan),
+                  ActualLMP = as.Date(ActualLMP), NominalLMP = as.Date(NominalLMP),
+                  EndDate = as.Date(EndDate))
+  #'   OutcomeCode :0 = none recorded, 1 = "Live birth",
+  #'   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
+  #'   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
+  #'   7 = hydatiform mole
+
 
   self$db$dbversion <- self$db$dbversion + 1
   print(paste("dbversion:", self$db$dbversion))
