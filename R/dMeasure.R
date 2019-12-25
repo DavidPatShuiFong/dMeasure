@@ -1006,8 +1006,13 @@ open_emr_db <- function(dMeasure_obj,
 
 #' initialize the tables of the EMR database
 #'
+#' @name initialize_emr_tables
+#'
 #' @param dMeasure_obj dMeasure object
 #' @param emr_db R6 object connecting to EMR database
+#'
+#' @return none
+#'
 #' @export
 initialize_emr_tables <- function(dMeasure_obj,
                                   emr_db = dMeasure_obj$emr_db) {
