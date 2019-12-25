@@ -4,14 +4,8 @@
 \alias{filter_investigations}
 \title{List of investigations}
 \usage{
-filter_investigations(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  Action = NA,
-  Actioned = NA
-)
+filter_investigations(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, Action = NA, Actioned = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

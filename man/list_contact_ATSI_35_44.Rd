@@ -4,16 +4,9 @@
 \alias{list_contact_ATSI_35_44}
 \title{List of those aged 35 years to 44 years and ATSI (as of 'date_to') in the contact list}
 \usage{
-list_contact_ATSI_35_44(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  min_contact = NA,
-  min_date = NA,
-  contact_type = NA,
-  lazy = FALSE
-)
+list_contact_ATSI_35_44(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, min_contact = NA, min_date = NA,
+  contact_type = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

@@ -4,14 +4,8 @@
 \alias{filter_correspondence}
 \title{List of correspondence}
 \usage{
-filter_correspondence(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  Action = NA,
-  Actioned = NA
-)
+filter_correspondence(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, Action = NA, Actioned = NA)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
