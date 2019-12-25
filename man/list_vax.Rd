@@ -6,7 +6,7 @@
 \usage{
 list_vax(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
   appointments_list = NULL, lazy = FALSE, vaxtag = FALSE,
-  vaxtag_print = TRUE, chosen = vax_names)
+  vaxtag_print = TRUE, chosen = self$vaccine_choices)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

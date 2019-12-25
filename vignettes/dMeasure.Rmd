@@ -18,8 +18,8 @@ output:
   rmarkdown::html_vignette: null
 vignette: >
   %\VignetteIndexEntry{dMeasure}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r, include = FALSE}
@@ -269,6 +269,7 @@ a$diabetes_list()
 a$list_vax() %>% head()
 a$list_influenza() %>% head()
 a$list_zostavax() %>% head()
+a$list_measlesVax() %>% head()
 ```
 
 # Cancer screening methods
@@ -290,6 +291,36 @@ a$list_cst() %>% tail()
 
 ```{r}
 a$list_fobt() %>% head()
+```
+
+# Data Quality methods
+
+## Overall
+
+```{r}
+?dMeasure::list_dataQuality()
+a$list_dataQuality() %>% head()
+```
+
+## Allergy
+
+```{r}
+?dMeasure::list_allergy()
+a$list_allergy() %>% head()
+```
+
+## Social History
+
+```{r}
+?dMeasure::list_socialHx()
+a$list_socialHx() %>% head()
+```
+
+## Family history
+
+```{r}
+?dMeasure::list_familyHx()
+a$list_familyHx() %>% head()
 ```
 
 # Conditions

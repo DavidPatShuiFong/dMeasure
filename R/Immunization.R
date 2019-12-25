@@ -149,6 +149,152 @@ list_zostavax <- function(dMeasure_obj,
   return(zostavax_list)
 })
 
+#' List of patients potentially eligible for measles vaccine
+#'
+#' Includes patients who may have already had measles vaccine,
+#' date of previous measles vaccine is included.
+#'
+#' Optionally added a HTML ('vaxtag') or printable ('vaxtag_print')
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param date_from from date range (default $date_a)
+#' @param date_to to date range (default $date_b)
+#' @param clinicians list of clinicians (default $clinicians)
+#' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param lazy = FALSE recalculate an appointment list
+#' @param vaxtag = FALSE
+#' @param vaxtag_print = TRUE
+#'
+#' @return dataframe list of measles eligible patients
+#' @export
+list_measlesVax <- function(dMeasure_obj,
+                            date_from = NA, date_to = NA, clinicians = NA,
+                            appointments_list = NULL,
+                            lazy = FALSE,
+                            vaxtag = FALSE, vaxtag_print = TRUE) {
+  dMeasure_obj$list_measlesVax(date_from, date_to , clinicians,
+                               appointments_list,
+                               lazy,
+                               vaxtag, vaxtag_print)
+}
+
+.public(dMeasure, "list_measlesVax", function(date_from = NA, date_to = NA, clinicians = NA,
+                                              appointments_list = NULL,
+                                              lazy = FALSE,
+                                              vaxtag = FALSE, vaxtag_print = TRUE) {
+  # return datatable of appointments where measles vaccine is recommended
+  # (might already be given)
+
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (all(is.na(clinicians))) {
+    clinicians <- self$clinicians
+  }
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    stop("Choose at least one clinicians\'s appointment to view")
+  }
+
+  if (is.null(appointments_list) & !lazy) {
+    self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
+    # if not 'lazy' evaluation, then re-calculate self$appointments_billings
+    # (that is automatically done by calling the $billed_appointments method)
+  }
+
+  if (is.null(appointments_list)) {
+    appointments_list <- self$appointments_list
+  }
+
+  intID_Date <- appointments_list %>>%
+    dplyr::select(InternalID, AppointmentDate) %>>%
+    dplyr::rename(Date = AppointmentDate)
+  # just the InternalID and AppointmentDate of the appointment list
+  intID <- c(dplyr::pull(intID_Date, InternalID), -1)
+  # add -1 dummy because cannot search %in% empty vector
+  # just the InternalID
+  pregnantID <- appointments_list %>>% # pregnancy is a contra-indication to measles vax
+    dplyr::filter(InternalID %in% self$pregnant_list(intID_Date)) %>>%
+    dplyr::pull(InternalID) %>>%
+    c(-1)
+
+  measlesVaxID <- unlist(self$db$vaccine_disease %>>%
+                           dplyr::filter(DISEASECODE %in% c(9)) %>>%
+                           dplyr::select(VACCINEID) %>>%
+                           dplyr::collect(), use.names = FALSE)
+  # there are several measles vaccines, these can be found
+  # via the db$vaccine_disease database
+
+  measlesVax_list <- appointments_list %>>%
+    dplyr::filter(DOB >= as.Date("1966-01-01") &
+                    DOB <= as.Date("1997-12-31")) %>>% # from DOB 1966 to 1997 inclusive
+    dplyr::left_join(self$db$immunizations %>>%
+                       dplyr::filter((InternalID %in% intID) &&
+                                       # those who have had the measles vaccine
+                                       ((VaccineName %LIKE% "%measles%") ||
+                                          VaccineName %LIKE% "%mmr%" ||
+                                          (VaccineID %in% measlesVaxID))),
+                     by = "InternalID",
+                     copy = TRUE) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
+    dplyr::mutate(GivenDate = dplyr::if_else(GivenDate <= AppointmentDate, GivenDate, as.Date(NA))) %>>%
+    # only include immunizations given up to date of appointment,
+    # if there are any immunizations at all
+    # note that 'if_else' vectorizes,
+    # demanding same datatype for TRUE/FALSE alternatives
+    # 'ifelse' does not preserve date type in this circumstance
+    dplyr::mutate(Pregnant = InternalID %in% pregnantID)
+  # pregnancy is an exclusion criteria for measles vax
+
+  if (vaxtag) {
+    measlesVax_list <- measlesVax_list %>>%
+      dplyr::mutate(vaxtag =
+                      dMeasure::semantic_tag(
+                        paste0(" Measles "),
+                        colour =
+                          dplyr::if_else(is.na(GivenDate),
+                                         dplyr::if_else(!Pregnant, c("red"), c("purple")),
+                                         c("green")),
+                        # red if not given, purple if exclusion criteria (pregnant)
+                        # and green if has had the vax
+                        popuphtml =
+                          paste0("<h4>",
+                                 dplyr::if_else(is.na(GivenDate),
+                                                dplyr::if_else(
+                                                  !Pregnant,
+                                                  "Born 1966 to 1997 inclusive",
+                                                  "Contra-indication : pregnancy"),
+                                                paste0('Date : ', format(GivenDate))),
+                                 "</h4>")))
+  }
+
+  if (vaxtag_print) {
+    measlesVax_list <- measlesVax_list %>>%
+      dplyr::mutate(vaxtag_print =
+                      paste0("Measles", " ", # printable version of information
+                             dplyr::if_else(
+                               is.na(GivenDate),
+                               dplyr::if_else(
+                                 !Pregnant,
+                                 "(DUE) (Born 1966 to 1997 inclusive)",
+                                 "(Contra-indication : pregnancy)"),
+                               paste0("(Given : ", format(GivenDate), ")"))
+                      ))
+  }
+
+  measlesVax_list <- measlesVax_list %>>%
+    dplyr::select(intersect(names(measlesVax_list),
+                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+                              "Provider", "DOB", "Age", "vaxtag", "vaxtag_print")))
+
+  return(measlesVax_list)
+})
+
 #' List of patients potentially eligible for influenza vaccine
 #'
 #' Includes patients who may have already had influenza vaccine,
@@ -451,8 +597,14 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 })
 
 
-
-vax_names <- c("Zostavax", "Influenza")
+.active(dMeasure, "vaccine_choices", function(value) {
+  if (!missing(value)) {
+    warning("$vaccine_choices is read-only.")
+  } else {
+    return(c("Zostavax", "Influenza", "Measles"))
+    # vector of valid vaccine choices
+  }
+})
 
 #' List of patients potentially eligible for vaccines
 #'
@@ -477,7 +629,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
                      appointments_list = NULL,
                      lazy = FALSE,
                      vaxtag = FALSE, vaxtag_print = TRUE,
-                     chosen = vax_names) {
+                     chosen = self$vaccine_choices) {
   dMeasure_obj$list_vax(date_from, date_to, clinicians,
                         appointments_list,
                         lazy,
@@ -489,7 +641,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
                                        appointments_list = NULL,
                                        lazy = FALSE,
                                        vaxtag = FALSE, vaxtag_print = TRUE,
-                                       chosen = vax_names) {
+                                       chosen = self$vaccine_choices) {
 
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -516,12 +668,24 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
     appointments_list <- self$appointments_list
   }
 
-  vlist <- NULL
+  vlist <- data.frame(Patient = character(), InternalID = integer(),
+                      AppointmentDate = numeric(), AppointmentTime = character(),
+                      Provider = character(),
+                      DOB = numeric(), Age = double())
+  if (vaxtag) {vlist <- cbind(vlist, vaxtag = character())}
+  if (vaxtag_print) {vlist <- cbind(vlist, vaxtag_print = character())}
+
   if ("Zostavax" %in% chosen) {
     vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
                                              appointments_list,
                                              lazy,
                                              vaxtag, vaxtag_print))
+  }
+  if ("Measles" %in% chosen) {
+    vlist <- rbind(vlist, self$list_measlesVax(date_from, date_to, clinicians,
+                                               appointments_list,
+                                               lazy,
+                                               vaxtag, vaxtag_print))
   }
   if ("Influenza" %in% chosen) {
     vlist <- rbind(vlist, self$list_influenza(date_from, date_to, clinicians,
@@ -530,7 +694,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
                                               vaxtag, vaxtag_print))
   }
 
-  if (!is.null(vlist)) {
+  if (nrow(vlist) > 0) {
     vlist <- vlist %>>%
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%

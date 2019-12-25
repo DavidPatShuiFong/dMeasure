@@ -739,15 +739,88 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  appointments %>>% dplyr::collect() %>>%
+  appointments %>>%
     dplyr::inner_join(self$db$pregnancies %>>%
                         dplyr::filter(InternalID %in% intID),
                       by = "InternalID", copy = TRUE) %>>%
-    dplyr::filter(is.null(ENDDATE) | as.Date(ENDDATE) > as.Date(Date)) %>>%
-    dplyr::filter((as.Date(EDCBYDATE) > as.Date(Date)) &
-                    (as.Date(EDCBYDATE) < as.Date(Date+280))) %>>%
+    dplyr::filter(is.na(EndDate) | is.null(EndDate) |
+                    EndDate > Date) %>>%
+    dplyr::filter(UseScan == 1 | # 'pass-through' is using scan date
+                    # (using LNMP date)
+                    # using SQL function 'DATEDIFF'
+                    # assume not 'pregnant' is more than 30 days post-dates
+                    (!is.na(EDCbyDate) &
+                       (Date - as.Date(EDCbyDate)) < 30)) %>>%
+    dplyr::filter(UseScan == 0 | # 'pass-through' if using LNMP date
+                    # (using LNMP date)
+                    (!is.na(EDCbyScan) &
+                       (Date - as.Date(EDCbyScan)) < 30)) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
+})
+
+### post-natal sub-code
+#' list of patients who are pregnant at the 'appointment' date
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#' @param include_edc include post-natal by EDC (TRUE or FALSE)
+#' @param days_min minimum number of days post-natal
+#' @param days_max maximum number of days post-natal
+#' @param outcome allowable outcomes (vector)
+#'   possible outcomes 0 = none recorded, 1 = "Live birth",
+#'   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
+#'   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
+#'   7 = hydatiform mole
+#'
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a dataframe : InternalID, EDCbyDate, EDCbyScan, EndDate, OutcomeCode
+#' @export
+postnatal_list <- function(dMeasure_obj, appointments = NULL,
+                           include_edc = FALSE,
+                           days_min = 0, days_max = 180,
+                           outcome = c(0, 1, 2, 3, 4, 5, 6, 7)) {
+  dMeasure_obj$postnatal_list(appointments)
+}
+.public(dMeasure, "postnatal_list", function(appointments = NULL,
+                                             include_edc = FALSE,
+                                             days_min = 0, days_max = 180,
+                                             outcome = c(0:7)) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # returns vector of $InternalID of patients who
+  # are postnatal at time $Date
+
+  include_edc <- as.numeric(include_edc)
+  # can't compare TRUE/FALSE inside a filter with SQL
+  # but we can compare numerics (TRUE = 1, FALSE = 0)
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  appointments %>>%
+    dplyr::inner_join(self$db$pregnancies %>>%
+                        dplyr::filter(InternalID %in% intID),
+                      by = "InternalID", copy = TRUE) %>>%
+    dplyr::filter(OutcomeCode %in% outcome) %>>%
+    dplyr::filter(is.na(EndDate) | # if no recorded end date, then 'pass-through'
+                    # if there is a recorded end-date, then use SQL function DATEDIFF
+                    dplyr::between(Date - as.Date(EndDate), days_min, days_max)) %>>%
+    dplyr::filter(!is.na(EndDate) | # if recorded end date, then 'pass-through'
+                    ((include_edc == 1) & UseScan == 0 & !is.na(EDCbyDate) & # use EDCbyDAte
+                       dplyr::between(Date - as.Date(EDCbyDate), days_min, days_max)) |
+                    ((include_edc == 1) & UseScan == 1 & !is.na(EDCbyScan) & # use EDCbyScan
+                       dplyr::between(Date - as.Date(EDCbyScan), days_min, days_max))) %>>%
+    dplyr::select(InternalID, EDCbyDate, EDCbyScan, EndDate, OutcomeCode)
 })
 
 ### fifteen plus age sub-code

@@ -1,5 +1,47 @@
 Changelog
 
+0.8.2 - 24th December 2019
+==========================
+
+New
+
+* list_measlesVax (measles vaccine eligibility)
+
+* add self$vaccine_choices - list of available vaccine lists
+
+* add postnatal_list
+
+Bugfix
+
+* default 'chosen' in list_dataQuality corrected
+
+* correction in pregnant_list, allow is.na(ENDDATE) for current pregnancy
+  improved date logic
+
+
+0.8.1 - 18th December 2019
+==========================
+
+New
+
+* list_familyHx (data quality method)
+
+* db$familyhistory and db$familyhistorydetail : access to family history
+  also db$relationcode - but this is not actually used at this time
+
+Bugfix
+
+* convert ResultValue and BPcode to numeric in db$ReportValues
+
+  also remove prceding "<" and ">" from ResultValue to allow numerical comparison
+  against "<" and ">" values.
+
+  these features require a modified version of dbplyr
+  * 'as.double' CASTs to DOUBLE, instead of NUMERIC (the latter casts to integers)
+  * use TRY_CAST (a T-SQL/Microsoft SQL specific feature) instead of CAST, to
+    allow graceful failure to NA instead of errors.
+
+
 0.8.0 - 12th November 2019
 ==========================
 
@@ -9,7 +51,7 @@ New
 
   Data quality assessment. Are allergies recorded for the listed patients?
 
-  social history (partial)
+  social history (partial) - list_socialHx
 
   list of quality choices in $dataQuality_choices
 
