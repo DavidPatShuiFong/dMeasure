@@ -4,14 +4,8 @@
 \alias{postnatal_list}
 \title{list of patients who are pregnant at the 'appointment' date}
 \usage{
-postnatal_list(
-  dMeasure_obj,
-  appointments = NULL,
-  include_edc = FALSE,
-  days_min = 0,
-  days_max = 180,
-  outcome = c(0, 1, 2, 3, 4, 5, 6, 7)
-)
+postnatal_list(dMeasure_obj, appointments = NULL, include_edc = FALSE,
+  days_min = 0, days_max = 180, outcome = c(0, 1, 2, 3, 4, 5, 6, 7))
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

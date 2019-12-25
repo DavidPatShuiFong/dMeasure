@@ -4,14 +4,8 @@
 \alias{list_appointments}
 \title{List of appointments with date of birth}
 \usage{
-list_appointments(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  status = NA,
-  lazy = FALSE
-)
+list_appointments(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, status = NA, lazy = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
