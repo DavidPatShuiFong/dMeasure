@@ -117,6 +117,7 @@ dMeasure <-
       self$emr_db$close_log_db() # close logging database
     }
     self$emr_db$close()
+    self$db$practice <- NULL
     self$db$users <- NULL
     self$db$patients <- NULL
     self$db$clinical <- NULL
@@ -479,6 +480,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
       # either database not opened, or has just been closed, including set to 'None'
+      self$db$practice <- NULL
       self$db$users <- NULL
       self$db$patients <- NULL
       self$db$clinical <- NULL
@@ -701,7 +703,10 @@ open_configuration_db <-
                                c("AuthIdentity", "character"),
                                c("Location", "character"),
                                c("Password", "character"),
-                               c("Attributes", "character")))
+                               c("Attributes", "character"),
+                               c("License", "character"), # contains license code (if any)
+                               c("LicenseCheckDate", "character") # date of most recent check (if any)
+                          ))
 
     initialize_data_table(config_db, "UserRestrictions",
                           list(c("uid", "integer"),
@@ -1022,6 +1027,11 @@ initialize_emr_tables <- function(dMeasure_obj,
 .public(dMeasure, "initialize_emr_tables", function(emr_db = self$emr_db) {
 
   print("Re-initializing databases")
+
+  self$db$practice <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PRACTICE")) %>>%
+    dplyr::select(PracticeName = PRACTICE) %>>%
+    dplyr::mutate(PracticeName = trimws(PracticeName))
 
   self$db$users <- emr_db$conn() %>>%
     # this is a function! a collect() is later called prior to mutate/join,
@@ -1483,9 +1493,6 @@ initialize_emr_tables <- function(dMeasure_obj,
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
-      dplyr::mutate(Title = trimws(Title),
-                    Firstname = trimws(Firstname),
-                    Surname = trimws(Surname)) %>>%
       dplyr::mutate(Fullname =
                       paste(Title, Firstname, Surname, sep = ' ')) %>>%
       # include 'Fullname'

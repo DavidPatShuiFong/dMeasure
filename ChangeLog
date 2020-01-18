@@ -1,5 +1,12 @@
 Changelog
 
+0.8.3 - 18th January 2020
+=========================
+
+New
+
+* self$db$Practice provides access to dbo.PRACTICE
+
 0.8.2 - 24th December 2019
 ==========================
 
