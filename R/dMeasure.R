@@ -1,4 +1,5 @@
 ##### dMeasure ###########################################
+
 #' @include r6_helpers.R
 #' functions to help create R6 classes
 NULL
@@ -257,6 +258,13 @@ configuration_file_path <- function(dMeasure_obj, value) {
 # $config_db_trigR will trigger (0/1) with each configuration
 # database change
 
+.public_init(dMeasure, "subscription_db", quote(dbConnection::dbConnection$new()))
+# R6 connection to subscription database
+# using either DBI or pool
+# two subscription databases available
+#  1. vkelim.3322.org and 2. vkelim.dsmynas.com
+#  port 3307, username = "guest", password - not required, dbname = "DailyMeasureUsers"
+
 .private(dMeasure, ".BPdatabase", data.frame(id = integer(),
                                              Name = character(),
                                              Address = character(),
@@ -510,6 +518,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # successfully opened database
       # set choice of database to attempted choice
       self$initialize_emr_tables() # initialize data tables
+
       invisible(self$clinician_list()) # and list all 'available' clinicians
     }
 
@@ -795,6 +804,45 @@ read_configuration_db <- function(dMeasure_obj,
   return(new)
 })
 
+#' read the subscription database
+#'
+#' @param dMeasure_obj dMeasure object
+#'
+#' @examples
+#' dMeasure_obj$read_subscription_db()
+#' @export
+read_subscription_db <- function(dMeasure_obj) {
+    dMeasure_obj$read_subscription_db()
+}
+.public(dMeasure, "read_subscription_db", function() {
+  # read subscription information
+
+  print("Opening subscription database")
+  if (requireNamespace("RMariaDB", quietly = TRUE)) {
+    # RMariaDB is GPL version 3.0
+    # dMeasure will work if RMariaDB is not available,
+    # but subscription features will not be complete
+
+    self$subscription_db$connect(RMariaDB::MariaDB(),
+                                 host = "vkelim.3222.org", port = 3307,
+                                 username = "guest", dbname = "DailyMeasureUsers",
+                                 timeout = 3)
+    if (!self$subscription_db$is_open()) {
+      # if failed to open vkelim.3322.org, then try the alternate vkelim.dsmynas.com
+      self$subscription_db$connect(RMariaDB::MariaDB(),
+                                   host = "vkelim.dsmynas.com", port = 3307,
+                                   username = "guest", dbname = "DailyMeasureUsers",
+                                   timeout = 3)
+    }
+    if (self$subscription_db$is_open()) {
+      # successfully opened subscription database
+      print("Subscription database open")
+
+      # close before exit
+      self$subscription_db$close()
+    }
+  }
+})
 
 ##### User login ##################################################
 
@@ -1024,13 +1072,16 @@ initialize_emr_tables <- function(dMeasure_obj,
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
-.public(dMeasure, "initialize_emr_tables", function(emr_db = self$emr_db) {
+.public(dMeasure, "initialize_emr_tables", function(emr_db) {
+  if (missing(emr_db)) {
+    emr_db <- self$emr_db
+  }
 
   print("Re-initializing databases")
 
   self$db$practice <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "PRACTICE")) %>>%
-    dplyr::select(PracticeName = PRACTICE) %>>%
+    dplyr::select(PracticeName = PRACTICENAME) %>>%
     dplyr::mutate(PracticeName = trimws(PracticeName))
 
   self$db$users <- emr_db$conn() %>>%

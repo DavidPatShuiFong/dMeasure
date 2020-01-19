@@ -6,6 +6,9 @@ Changelog
 New
 
 * self$db$Practice provides access to dbo.PRACTICE
+* subscription changes
+*  self$subscription_db provides access to subscription servers (when open)
+*  self$read_subscription_db to read subscription information
 
 0.8.2 - 24th December 2019
 ==========================
