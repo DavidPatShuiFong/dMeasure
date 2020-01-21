@@ -217,6 +217,8 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
 #' will also take command-line arguments or read from environment.
 #' Companion function to simple_encode
 #'
+#' Note that the decoder doesn't handle NA
+#'
 #' @param msg the text to decode
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #' @param nonce a non-secret unique data value used to randomize the cipher

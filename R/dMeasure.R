@@ -812,7 +812,7 @@ read_configuration_db <- function(dMeasure_obj,
 #' dMeasure_obj$read_subscription_db()
 #' @export
 read_subscription_db <- function(dMeasure_obj) {
-    dMeasure_obj$read_subscription_db()
+  dMeasure_obj$read_subscription_db()
 }
 .public(dMeasure, "read_subscription_db", function() {
   # read subscription information
@@ -834,9 +834,24 @@ read_subscription_db <- function(dMeasure_obj) {
                                    username = "guest", dbname = "DailyMeasureUsers",
                                    timeout = 3)
     }
-    if (self$subscription_db$is_open()) {
+    if (self$subscription_db$is_open() &&
+        self$emr_db$is_open() && self$config_db$is_open()) {
       # successfully opened subscription database
+      # neees the configuration and EMR databases to also be open
       print("Subscription database open")
+
+      a <- self$UserFullConfig %>>%
+        dplyr::mutate(LicenseCheckDate = vapply(LicenseCheckDate,
+                                                function(n) {
+                                                  if (is.na(n))
+                                                  {as.character(NA)}
+                                                  # can't decode a 'NA' (that causes an error)
+                                                  else
+                                                  {dMeasure::simple_decode(LicenseCheckDate,
+                                                                           key = "karibuni")}},
+                                                FUN.VALUE = character(1))) # returns type 'char'
+
+      print(a)
 
       # close before exit
       self$subscription_db$close()
