@@ -803,18 +803,19 @@ read_configuration_db <- function(dMeasure_obj,
   }
   return(new)
 })
-
 #' read the subscription database
 #'
 #' @param dMeasure_obj dMeasure object
+#' @param forcecheck check, even if already checked 'today'. TRUE/FALSE
 #'
 #' @examples
 #' dMeasure_obj$read_subscription_db()
 #' @export
-read_subscription_db <- function(dMeasure_obj) {
-  dMeasure_obj$read_subscription_db()
+read_subscription_db <- function(dMeasure_obj,
+                                 forcecheck = FALSE) {
+  dMeasure_obj$read_subscription_db(forcecheck)
 }
-.public(dMeasure, "read_subscription_db", function() {
+.public(dMeasure, "read_subscription_db", function(forcecheck = FALSE) {
   # read subscription information
 
   print("Opening subscription database")
@@ -827,6 +828,13 @@ read_subscription_db <- function(dMeasure_obj) {
                                  host = "vkelim.3222.org", port = 3307,
                                  username = "guest", dbname = "DailyMeasureUsers",
                                  timeout = 3)
+    if (!self$subscription_db$is_open()) {
+      # if failed to open vkelim.3322.org, then try the alternate name for vkelim.3322.org
+      self$subscription_db$connect(RMariaDB::MariaDB(),
+                                   host = "davidfong.synology-ds.de", port = 3307,
+                                   username = "guest", dbname = "DailyMeasureUsers",
+                                   timeout = 3)
+    }
     if (!self$subscription_db$is_open()) {
       # if failed to open vkelim.3322.org, then try the alternate vkelim.dsmynas.com
       self$subscription_db$connect(RMariaDB::MariaDB(),
@@ -842,13 +850,24 @@ read_subscription_db <- function(dMeasure_obj) {
 
       a <- self$UserFullConfig %>>%
         dplyr::mutate(LicenseCheckDate =
-                        as.Date(simple_decode(LicenseCheckDate),
+                        as.Date(LicenseCheckDate,
+                                # not obfuscated
+                                # don't attempt re-check if already checked today
+                                # will need option to 'force' manual re-check
                                 origin = "1970-01-01"),
                       LicenseExpiryDate =
                         simple_decode(License)) %>>%
-        dplyr::mutate(LeftString = paste0(self$db$practice %>>%
-                                            # verification string
-                                            dplyr::pull(PracticeName), "::",
+        dplyr::mutate(LeftString = paste0(vapply(ProviderNo,
+                                                 # verification string
+                                                 function(n) if (nchar(n) == 0) {
+                                                   self$db$practice %>>%
+                                                     # practice name if no provider number
+                                                     dplyr::pull(PracticeName)}
+                                                 else {
+                                                   n
+                                                 },
+                                                 FUN.VALUE = character(1),
+                                                 USE.NAMES = FALSE), "::",
                                           Fullname, "::")) %>>%
         dplyr::mutate(LicenseDate = if
                       (!is.na(LicenseExpiryDate) && # could be NA
@@ -859,9 +878,13 @@ read_subscription_db <- function(dMeasure_obj) {
                         as.Date(NA, origin = "1970-01-01")
                       }) %>>%
         dplyr::mutate(LicenseCheck =
-                        is.na(LicenseCheckDate) ||
-                        is.na(LicenseExpiryDate) ||
-                        LicenseExpiryDate < (Sys.Date() + 60))
+                        (forcecheck || is.na(LicenseCheckDate) || LicenseCheckDate != Sys.Date()) &&
+                        # if forcecheck == TRUE, then check even if already checked today
+                        # otherewise, skip checking if already checked today
+                        (is.na(LicenseExpiryDate) ||
+                           # check if no valid license expiry
+                           # or license is expiring soon
+                           LicenseExpiryDate < (Sys.Date() + 60)))
 
       # close before exit
       self$subscription_db$close()

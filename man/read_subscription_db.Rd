@@ -4,10 +4,12 @@
 \alias{read_subscription_db}
 \title{read the subscription database}
 \usage{
-read_subscription_db(dMeasure_obj)
+read_subscription_db(dMeasure_obj, forcecheck = FALSE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}
+
+\item{forcecheck}{check, even if already checked 'today'. TRUE/FALSE}
 }
 \description{
 read the subscription database

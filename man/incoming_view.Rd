@@ -4,9 +4,18 @@
 \alias{incoming_view}
 \title{incoming (investigations and correspondence) view}
 \usage{
-incoming_view(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, Action = NA, Actioned = NA, ignorePast = NA,
-  lazy = FALSE, screentag = FALSE, screentag_print = TRUE)
+incoming_view(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  Action = NA,
+  Actioned = NA,
+  ignorePast = NA,
+  lazy = FALSE,
+  screentag = FALSE,
+  screentag_print = TRUE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
