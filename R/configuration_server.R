@@ -101,6 +101,7 @@ server.insert <- function(dMeasure_obj, description) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
+#'
 #'  any of $Name, $Address, $Database, $UserID and/or $dbPassword can
 #'  be defined
 #'

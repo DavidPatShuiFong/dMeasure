@@ -187,7 +187,10 @@ hrmin <- function(t) {
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #' @param nonce a non-secret unique data value used to randomize the cipher
 #'
-#' @return - the encrypted text
+#' @return - the encrypted text.
+#'
+#'   returns NA for elements of msg which are NA
+#'
 #' @export
 simple_encode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
@@ -206,8 +209,17 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
     }
   }
   key <- sodium::hash(charToRaw(key))
-  return(jsonlite::base64_enc(
-    sodium::data_encrypt(charToRaw(msg), key, nonce)))
+
+  return(vapply(msg,
+                function(n) {
+                  if (is.na(n)) {
+                    as.character(NA)}
+                  # can't encode a 'NA' (that causes an error)
+                  else {
+                    jsonlite::base64_enc(
+                      sodium::data_encrypt(charToRaw(n), key, nonce))}},
+                FUN.VALUE = character(1),
+                USE.NAMES = FALSE))
 }
 
 #' Simple decoder
@@ -217,13 +229,15 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
 #' will also take command-line arguments or read from environment.
 #' Companion function to simple_encode
 #'
-#' Note that the decoder doesn't handle NA
-#'
 #' @param msg the text to decode
 #' @param key the cipher, which can be set manually, otherwise will read from env
 #' @param nonce a non-secret unique data value used to randomize the cipher
 #'
 #' @return - the encrypted text
+#'
+#'   returns NA for elements of msg which are NA, or "" empty string.
+#'   note that simple_encode will ENCRYPT an empty string "".
+#'
 #' @export
 simple_decode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
@@ -243,9 +257,17 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
     }
   }
   key <- sodium::hash(charToRaw(key))
-  return(rawToChar(sodium::data_decrypt(
-    jsonlite::base64_dec(msg),key, nonce)
-  ))
+
+  return(vapply(msg,
+                function(n) {
+                  if (is.na(n) || n == "") {
+                    as.character(NA)}
+                  # can't decode a 'NA' (that causes an error)
+                  else {
+                    rawToChar(sodium::data_decrypt(
+                      jsonlite::base64_dec(n),key, nonce))}},
+                FUN.VALUE = character(1),
+                USE.NAMES = FALSE))
 }
 
 #' Simple tagger

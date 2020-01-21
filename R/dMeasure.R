@@ -841,20 +841,31 @@ read_subscription_db <- function(dMeasure_obj) {
       print("Subscription database open")
 
       a <- self$UserFullConfig %>>%
-        dplyr::mutate(LicenseCheckDate = vapply(LicenseCheckDate,
-                                                function(n) {
-                                                  if (is.na(n))
-                                                  {as.character(NA)}
-                                                  # can't decode a 'NA' (that causes an error)
-                                                  else
-                                                  {dMeasure::simple_decode(LicenseCheckDate,
-                                                                           key = "karibuni")}},
-                                                FUN.VALUE = character(1))) # returns type 'char'
-
-      print(a)
+        dplyr::mutate(LicenseCheckDate =
+                        as.Date(simple_decode(LicenseCheckDate),
+                                origin = "1970-01-01"),
+                      LicenseExpiryDate =
+                        simple_decode(License)) %>>%
+        dplyr::mutate(LeftString = paste0(self$db$practice %>>%
+                                            # verification string
+                                            dplyr::pull(PracticeName), "::",
+                                          Fullname, "::")) %>>%
+        dplyr::mutate(LicenseDate = if
+                      (!is.na(LicenseExpiryDate) && # could be NA
+                       substr(LicenseExpiryDate, 1, nchar(LeftSring)) == LeftString) {
+                        as.Date(substring(LicenseExpiryDate, nchar(LeftString) + 1))
+                        # keep remainder of string, and convert to date
+                      } else {
+                        as.Date(NA, origin = "1970-01-01")
+                      }) %>>%
+        dplyr::mutate(LicenseCheck =
+                        is.na(LicenseCheckDate) ||
+                        is.na(LicenseExpiryDate) ||
+                        LicenseExpiryDate < (Sys.Date() + 60))
 
       # close before exit
       self$subscription_db$close()
+      return(a)
     }
   }
 })

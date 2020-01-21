@@ -14,7 +14,9 @@ simple_encode(msg, key = NULL, nonce = NULL)
 \item{nonce}{a non-secret unique data value used to randomize the cipher}
 }
 \value{
-- the encrypted text
+- the encrypted text.
+
+  returns NA for elements of msg which are NA
 }
 \description{
 Simple encode of text strings, will output a text string.

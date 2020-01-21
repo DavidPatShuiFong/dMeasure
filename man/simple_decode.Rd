@@ -15,6 +15,9 @@ simple_decode(msg, key = NULL, nonce = NULL)
 }
 \value{
 - the encrypted text
+
+  returns NA for elements of msg which are NA, or "" empty string.
+  note that simple_encode will ENCRYPT an empty string "".
 }
 \description{
 Simple decoder of text strings, will output a text string.

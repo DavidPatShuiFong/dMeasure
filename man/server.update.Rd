@@ -10,8 +10,9 @@ server.update(dMeasure_obj, description)
 \item{dMeasure_obj}{dMeasure R6 object}
 
 \item{description}{list $id, $Name, $Address, $Database, $UserID, $dbPassword
-any of $Name, $Address, $Database, $UserID and/or $dbPassword can
-be defined}
+
+ any of $Name, $Address, $Database, $UserID and/or $dbPassword can
+ be defined}
 }
 \value{
 dataframe - full list of database descriptions
