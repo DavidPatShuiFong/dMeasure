@@ -12,7 +12,8 @@ read_subscription_db(dMeasure_obj, forcecheck = FALSE)
 \item{forcecheck}{check, even if already checked 'today'. TRUE/FALSE}
 }
 \description{
-read the subscription database
+also update the configuration database with new Licenses (if available)
+ and the date of checks
 }
 \examples{
 dMeasure_obj$read_subscription_db()
