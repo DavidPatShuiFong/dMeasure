@@ -109,9 +109,6 @@ dMeasure <-
     # empty the configuration fields
     private$.BPdatabase <- private$BPdatabase[0,]
     private$.BPdatabaseChoice <- "None"
-    private$PracticeLocations <- private$PracticeLocation[0,]
-    private$.UserConfig <- private$.UserConfig[0,]
-    private$.UserRestrictions <- private$.UserRestrictions[0,]
   }
   if (self$emr_db$is_open()) {
     if (self$emr_db$keep_log) { # if currently logging
@@ -353,10 +350,14 @@ BPdatabaseNames <- function(dMeasure_obj) {
 # need default value for practice location filter
 # interface initialization
 .private(dMeasure, ".UserConfig", data.frame(id = integer(),
-                                             Fullname = character(), AuthIdentity = character(),
+                                             Fullname = character(),
+                                             AuthIdentity = character(),
                                              Location = character(),
                                              Attributes = character(),
                                              Password = character(),
+                                             License = character(),
+                                             LicenseCheckDate = as.Date(numeric(0),
+                                                                        origin = "1970-01-01"),
                                              stringsAsFactors = FALSE))
 #' show user configurations
 #'
@@ -386,7 +387,10 @@ UserConfig <- function(dMeasure_obj) {
     stop("self$UserConfig is read-only!")
   }
 
-  userconfig <- private$.UserConfig %>>%
+  userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+    dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
+                  Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
+    # splits Location and Attributes into multiple entries (in the same column)
     dplyr::select(-Password) # same as $.UserConfig, except the password
 
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
@@ -773,15 +777,13 @@ read_configuration_db <- function(dMeasure_obj,
   # $location_list() will refresh the reactive location_listR if available
 
   private$.UserConfig <- config_db$conn() %>>%
-    dplyr::tbl("Users") %>>%
+    dplyr::tbl("Users")
     # in .UserConfig, there can be multiple Locations/Attributes per user
-    dplyr::collect() %>>%
-    dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
-                  Attributes = stringi::stri_split(Attributes, regex = ";"))
+    # this is only translated in the public version 'self$UserConfig'
   invisible(self$UserConfig) # this will also set $userConfigR reactive version
 
   private$.UserRestrictions <- config_db$conn() %>>%
-    dplyr::tbl("UserRestrictions") %>>% dplyr::collect()
+    dplyr::tbl("UserRestrictions")
   private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
   self$match_user()
@@ -890,19 +892,38 @@ read_subscription_db <- function(dMeasure_obj,
                            # or license is expiring soon
                            LicenseDate < (Sys.Date() + 60))) %>>%
         dplyr::mutate(NewLicense =
-                        mapply(function(x, y, z) {
+                        mapply(function(x, y, z, zz) {
                           if (x) {
                             d <- self$subscription_db$conn() %>>%
                               # read the subscription database
                               dplyr::tbl("Subscriptions") %>>%
                               dplyr::filter(Key == y) %>>%
                               # look for Key == LeftString
-                              dplyr::pull(License) # just need expiry date ('encrypted')
+                              dplyr::pull(License) # just need expiry date (which is 'encrypted')
+
+                            # update the license check date
+                            if (nrow(self$userconfig.list() %>>%
+                                     dplyr::filter(Fullname == zz)) == 0) {
+                              # the user has NO entry in the configuration database, so create one
+                              self$userconfig.insert(list(Fullname = zz))
+                            }
+                            query <- paste("UPDATE Users SET LicenseCheckDate = ? WHERE Fullname = ?")
+                            data_for_sql <- as.list.data.frame(c(as.character(Sys.Date()), zz))
+                            self$config_db$dbSendQuery(query, data_for_sql)
+
                             if ((is.na(z) || d != z) && !identical(d, character(0))) {d} else {NA}
-                            # only if different to previous LicenseExpiryDate
+                            # newlicense only if different to previous LicenseExpiryDate
                             # note that character(0) is returned if not found in subscription_db
                           } else {NA} # not checking
-                        }, LicenseCheck, LeftString, License)) %>>%
+                        }, LicenseCheck, LeftString, License, Fullname)) %>>%
+        dplyr::mutate(LicenseCheckDate =
+                        mapply(function(x,y) {
+                          if (x) {
+                            Sys.Date() # update if checked
+                          } else {
+                            y
+                          }
+                        }, LicenseCheck, LicenseCheckDate)) %>>%
         dplyr::mutate(License =
                         mapply(function(x, y, z) {
                           if (is.na(z)) {
@@ -911,12 +932,13 @@ read_subscription_db <- function(dMeasure_obj,
                             # need to set to NewLicenseExpiryDate
                             # and also need to update our configuration database
 
-                            if (nrow(self$userconfig.list() %>>% dplyr::filter(Fullname = x)) == 0) {
+                            if (nrow(self$userconfig.list() %>>%
+                                     dplyr::filter(Fullname == x)) == 0) {
                               # the user has NO entry in the configuration database, so create one
-                              dMeasure_obj$userconfig.insert(list(Fullname = x))
+                              self$userconfig.insert(list(Fullname = x))
                             }
                             # update the license
-                            query <- paste("UPDATE Users SET License= ? WHERE id = ?")
+                            query <- paste("UPDATE Users SET License = ? WHERE Fullname = ?")
                             data_for_sql <- as.list.data.frame(c(z, x))
                             self$config_db$dbSendQuery(query, data_for_sql)
                             # if the connection is a pool, can't send write query (a statement) directly
@@ -925,18 +947,31 @@ read_subscription_db <- function(dMeasure_obj,
                           }
                         }, Fullname, License, NewLicense)) %>>%
         dplyr::mutate(LicenseExpiryDate =
-                        # re-decrypt LicenseExpiryDate
-                        simple_decode(License, "karibuni")) %>>%
-        dplyr::mutate(LicenseDate = if
-                      # re-create LicenseDate (again), perhaps this could be restricted to where NewLicense
-                      (!is.na(LicenseExpiryDate) && # could be NA
-                       substr(LicenseExpiryDate, 1, nchar(LeftSring)) == LeftString) {
-                        as.Date(substring(LicenseExpiryDate, nchar(LeftString) + 1))
-                        # converts LicenseExpiryDate (which is )
-                        # keep remainder of string, and convert to date
-                      } else {
-                        as.Date(NA, origin = "1970-01-01")
-                      })
+                        # re-decrypt LicenseExpiryDate, if necessary
+                        mapply(function(x,y,z) {
+                          if (is.na(z)) { # if NA for License
+                            x # remain unchanged
+                          } else { # otherwise decode
+                            simple_decode(y, "karibuni")
+                          }
+                        }, LicenseExpiryDate, License, NewLicense)) %>>%
+        dplyr::mutate(LicenseDate =
+                        # re-create LicenseDate (again)
+                        mapply(function(x,y,zz,z) {
+                          if (is.na(z)) { # if no new license
+                            x # remains unchanged
+                          } else {
+                            if (substr(y, 1, nchar(zz)) == zz) {
+                              # if leftstring matches
+                              as.Date(substring(y, nchar(zz) + 1))
+                              # converts LicenseExpiryDate (right side of string)
+                              # keep remainder of string, and convert to date
+                            } else {
+                              as.Date(NA, origin = "1970-01-01")
+                              # invalid new license
+                            }
+                          }
+                        }, LicenseDate, LicenseExpiryDate, LeftString, NewLicense))
 
       # close before exit
       self$subscription_db$close()
@@ -969,16 +1004,18 @@ match_user <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "match_user", function() {
-  private$.identified_user <-
-    private$.UserConfig[private$.UserConfig$AuthIdentity == Sys.info()[["user"]],]
+  current_user <- Sys.info()[["user"]]
+  private$.identified_user <- private$.UserConfig %>>%
+    dplyr::filter(AuthIdentity == current_user) %>>% dplyr::collect()
   private$set_reactive(self$identified_user,
-                       private$.identified_user %>>%
+                       self$UserConfig %>>%
+                         dplyr::filter(AuthIdentity == current_user) %>>%
                          dplyr::select(Fullname, AuthIdentity, Location, Attributes)
   )
   # set reactive version if reactive (shiny) environment available
   # does not include password
 
-  if ("RequirePasswords" %in% unlist(private$.UserRestrictions$Restriction)) {
+  if ("RequirePasswords" %in% (private$.UserRestrictions %>>% dplyr::pull(Restriction))) {
     # password not yet entered, so not yet authenticated
     self$authenticated <- FALSE
   } else {
@@ -1047,8 +1084,8 @@ clinician_list <- function(dMeasure_obj,
     # same 'shape' as the comparison statement
     clinician_list <- self$UserFullConfig$Fullname
   } else {
-    clinician_list <- subset(private$.UserConfig$Fullname,
-                             sapply(private$.UserConfig$Location,
+    clinician_list <- subset(self$UserConfig$Fullname,
+                             sapply(self$UserConfig$Location,
                                     function (y) self$location %in% y))
     # filter clinicians by location choice
     # it is possible for a clinician to have multiple locations
@@ -1059,7 +1096,8 @@ clinician_list <- function(dMeasure_obj,
 
   for (restriction in self$view_restrictions) {
     # go through list of view restrictions
-    if (restriction$restriction %in% unlist(private$.UserRestrictions$Restriction)) {
+    if (restriction$restriction %in% (private$.UserRestrictions %>>%
+                                      dplyr::pull(Restriction))) {
       # if the restriction has been activated
       if (view_name %in% restriction$view_to_hide) {
         # if the relevant view is being shown
@@ -1637,8 +1675,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   }
 
   if (is.null(self$db$users)) {
-    UserFullConfig <- private$.UserConfig %>>%
-      dplyr::select(-Password)
+    UserFullConfig <- self$UserConfig
     # just the .UserConfig except the passwords
   } else {
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
@@ -1648,9 +1685,8 @@ initialize_emr_tables <- function(dMeasure_obj,
       dplyr::mutate(Fullname =
                       paste(Title, Firstname, Surname, sep = ' ')) %>>%
       # include 'Fullname'
-      dplyr::left_join(private$.UserConfig, by = 'Fullname') %>>%
+      dplyr::left_join(self$UserConfig, by = 'Fullname')
       # add user details including practice locations
-      dplyr::select(-Password) # removes the password field
   }
 
   return(UserFullConfig)

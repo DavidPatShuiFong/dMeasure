@@ -275,11 +275,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   newstate <-
     restrictionLocal$callback[[1]](
       state,
-      private$.UserConfig$Attributes %>>%
+      private$.UserConfig %>>%
+        dplyr::select(Attributes) %>>%
+        dplyr::collect() %>>%
         unlist(use.names = FALSE),
       # list of attributes in use
-      (nchar(paste(apply(cbind(unlist(private$.UserConfig$Password,
-                                      use.names = FALSE)),
+      (nchar(paste(apply(cbind(private$.UserConfig %>>%
+                                 dplyr::pull(Password)),
                          1,
                          function(x)
                            paste(x[!is.na(x)],
@@ -452,7 +454,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
     }
   }
 
-  if (description$Fullname %in% private$.UserConfig$Fullname) {
+  if (description$Fullname %in% (private$.UserConfig %>>% dplyr::pull(Fullname))) {
     # if the proposed new name is the same as one that is configured elsewhere
     stop("This user is already configured")
   }
@@ -473,7 +475,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
              stop(paste("Error in description validation : ", e[[1]],
                         "Unable to insert this user description"))})
 
-  newid <- max(private$.UserConfig$id, 0) + 1
+  newid <- max(private$.UserConfig %>>% dplyr::pull(id), 0) + 1
   # initially, $.UserConfig$id might be an empty set, so need to append a '0'
   description$id <- newid
 
@@ -491,8 +493,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
 
-  private$.UserConfig <- rbind(private$.UserConfig,
-                               tibble::as_tibble(description))
+  invisible(self$UserConfig)
   # update the dataframe in memory
   # as_tibble allows the use of lists in a field without I()
   #
@@ -558,13 +559,13 @@ userconfig.update <- function(dMeasure_obj, description) {
     # immediately encode password if it was provided
   }
 
-  if (!(description$Fullname %in% private$.UserConfig$Fullname)) {
+  if (!(description$Fullname %in% (private$.UserConfig %>>% dplyr::pull(Fullname)))) {
     # if the proposed configuration to change is not actually configured
     stop("This user is not configured")
   }
 
   old_description <- private$.UserConfig %>>%
-    dplyr::filter(Fullname == description$Fullname) %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>% dplyr::collect() %>>%
     tail(1) # in case there is more than one match, remove the last one
   # the 'old' configuration
   description$id <- old_description$id # need to copy the id
@@ -594,7 +595,7 @@ userconfig.update <- function(dMeasure_obj, description) {
            })
 
   proposed_UserConfig <- private$.UserConfig %>>%
-    dplyr::filter(Fullname != description$Fullname) %>>%
+    dplyr::filter(Fullname != description$Fullname) %>>% dplyr::collect() %>>%
     rbind(tibble::as_tibble(description))
 
   # this is the proposed user configuration
@@ -619,8 +620,6 @@ userconfig.update <- function(dMeasure_obj, description) {
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
-
-  private$.UserConfig <- proposed_UserConfig
 
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
@@ -653,7 +652,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
                         "'UserAdmin' permission required to change/delete user configuration.")))
 
   UserConfigRow <- private$.UserConfig %>>%
-    dplyr::filter(Fullname == description$Fullname) %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>% dplyr::collect() %>>%
     tail(1) # in case there is more than one match, remove the last one
 
   if (nrow(UserConfigRow) == 0) {
@@ -661,7 +660,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
   }
 
   proposed_UserConfig <- private$.UserConfig %>>%
-    dplyr::filter(Fullname != description$Fullname)
+    dplyr::filter(Fullname != description$Fullname) %>>% dplyr::collect()
 
   # this is the proposed user configuration
 
@@ -680,8 +679,6 @@ userconfig.delete <- function(dMeasure_obj, description) {
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
-
-  private$.UserConfig <- proposed_UserConfig
 
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
@@ -707,7 +704,7 @@ userconfig.list <- function(dMeasure_obj) {
                         "'UserAdmin' permission required",
                         "to view user configurations.")))
 
-  return(private$.UserConfig)
+  return(private$.UserConfig %>>% dplyr::collect())
 })
 
 #' userrestriction.list

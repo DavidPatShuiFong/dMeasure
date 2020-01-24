@@ -72,8 +72,8 @@ user_logout <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "user_logout", function() {
-  if (is.null(private$.identified_user) ||
-      nrow(private$.identified_user) == 0) {
+  if (is.null(private$.identified_user %>>% dplyr::collect()) ||
+      nrow(private$.identified_user %>>% dplyr::collect()) == 0) {
     # no identified user
   } else if (self$authenticated == FALSE) {
     # user not authetnicated
