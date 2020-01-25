@@ -92,14 +92,7 @@ user_logout <- function(dMeasure_obj) {
   # encode (actually 'tag') the password, if not an empty string
   # tagging (hash) defined in calculation_definitions.R
 
-  private$.UserConfig <-
-    private$.UserConfig %>>%
-    dplyr::mutate(Password =
-                    replace(Password,
-                            name == Fullname,
-                            newpassword))
   # replace password
-
   id <- private$.UserConfig %>>%
     dplyr::filter(Fullname == name) %>>%
     dplyr::pull(id)
@@ -126,6 +119,12 @@ user_logout <- function(dMeasure_obj) {
 #'
 #' @return TRUE if password is successfully set
 #' otherwise, stops with error
+#' @examples
+#' \dontrun{
+#' a <- dMeasure::dMeasure::new()
+#' a$open_emr_db()
+#' a$password.set(newpassword = "catsrule", oldpassword = "bluewhale")
+#' }
 #' @export
 password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   dMeasure_obj$password.set(newpassword, oldpassword)
@@ -153,7 +152,7 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
     # no password yet set for currently identified user,
     # so just accept the 'newpassword'
     private$change_password(private$.identified_user$Fullname, newpassword)
-    # change private$.UserConfig and SQLite configuration database
+    # change SQLite configuration database
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
@@ -195,7 +194,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
              stop(paste(w,
                         "'UserAdmin' permission required to reset/edit other passwords.")))
 
-  if (!(user %in% private$.UserConfig$Fullname)) {
+  if (!(user %in% self$UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")
   }
 
@@ -215,7 +214,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
   }
 
   private$change_password(user, newpassword)
-  # change private$.UserConfig and SQLite configuration database
+  # change SQLite configuration database
 
   invisible(self)
 })
