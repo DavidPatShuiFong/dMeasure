@@ -20,12 +20,11 @@ NULL
 #' @param date_from from date range (default $date_a)
 #' @param date_to to date range (default $date_b)
 #' @param clinicians list of clinicians (default $clinicians)
-#' @param appointments_list dataframe, list of appointments to search
+#' @param appointments_list dataframe, list of appointments to search.
 #'
-#'  if not provided, use $appointments_list
+#' if not provided, use $appointments_list.
 #'
-#'  needs fields Age, InternalID
-#'
+#' needs fields Age, InternalID
 #' @param lazy recalculate an appointment list
 #' @param action includes 'OutOfDate' field
 #' @param screentag optionally add a fomantic/semantic HTML description of 'action'

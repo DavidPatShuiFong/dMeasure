@@ -17,6 +17,10 @@ NULL
 #'
 #' @return dataframe - full list of location descriptions
 #'  can also return error (stop) if description is invalid
+#' @examples
+#' \dontrun{a <- dMeasure::dMeasure::new()}
+#' \dontrun{a$open_emr_db())}
+#' \dontrun{a$location.inser(list(Name = "Bayside", Description = "by the sea"))}
 #' @export
 location.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$location.insert(description)
@@ -59,7 +63,7 @@ location.insert <- function(dMeasure_obj, description) {
     invisible(self$location_list) # will also trigger change in $location_listR
     # don't need to explicitly set private$PracticeLocations, since it
     # it is calculated automatically upon database change
-    return(private$PracticeLocations)
+    return(private$PracticeLocations %>>% dplyr::collect())
   }
 })
 
@@ -85,13 +89,22 @@ location.update <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  olddescription <- private$PracticeLocations %>>%
-    dplyr::filter(id == description$id) %>>% dplyr::collect()
-  # the description before modificatioin
+  olddescription <- private$PracticeLocations %>>% dplyr::collect() %>>%
+    dplyr::filter(id == description$id)
+  # can't access description$id directly within SQL!
+  #  unless allocating to another variable first e.g. descid <- description$id
+  # the description before modification
 
+  if (is.null(description$Name)) { # copy previous Name if none provided
+    description$Name <- olddescription$Name
+  }
+  if (is.null(description$Description)) { # copy previous Description if none provided
+    description$Description <- olddescription$Description
+  }
 
   if (length(grep(toupper(description$Name),
                   toupper(as.data.frame(private$PracticeLocations %>>%
+                                        dplyr::collect() %>>%
                                         dplyr::filter(id != description$id))$Name)
   ))) {
     # if the proposed new name is the same as one that already exists
@@ -99,7 +112,7 @@ location.update <- function(dMeasure_obj, description) {
     stop("New practice location name cannot be the same as existing names, or 'None'")
   } else if (is.null(description$Name)){
     stop("New practice location name cannot be 'empty'!")
-  } else if ((olddescription$Name %in% private$.UserConfig$Location) &
+  } else if ((olddescription$Name %in% self$UserConfig$Location) &
              (olddescription$Name != description$Name)) {
     stop(paste0("Cannot change the name of '", olddescription$Name,
                 "', this location is assigned to a user."))
@@ -117,7 +130,7 @@ location.update <- function(dMeasure_obj, description) {
     # don't need to explicitly set private$PracticeLocations, since
     # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
     # so does not need to be modified manually
-    return(private$PracticeLocations)
+    return(private$PracticeLocations %>>% dplyr::collect())
   }
 })
 
@@ -143,15 +156,13 @@ location.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  if (description$Name %in% private$.UserConfig$Location) {
+  if (description$Name %in% self$UserConfig$Location) {
     stop(paste0("Cannot remove '", description$Name,
                 "', this location is assigned to a user."))
   } else {
-    description$id <- private$PracticeLocations %>>%
+    description$id <- private$PracticeLocations %>>% dplyr::collect() %>>%
       dplyr::filter(Name == description$Name) %>>%
-      dplyr::select(id) %>>%
-      dplyr::collect() %>>%
-      unlist(use.names = FALSE)
+      dplyr::pull(id)
 
     if (length(description$id) == 0) {
       stop("$Name not found in list of server names.")
@@ -170,7 +181,7 @@ location.delete <- function(dMeasure_obj, description) {
   # don't need to explicitly set private$PracticeLocations, since
   # private$PracticeLocations is 'lazy' evaluated directly from SQLite,
   # so does not need to be modified manually
-  return(private$PracticeLocations)
+  return(private$PracticeLocations %>>% dplyr::collect())
 })
 
 #' location.list
@@ -192,7 +203,7 @@ location.list <- function(dMeasure_obj) {
              stop(paste(w,
                         "'UserAdmin' permission required to view or edit location list.")))
 
-  return(private$PracticeLocations)
+  return(private$PracticeLocations %>>% dplyr::collect())
 })
 
 #' location.permission
@@ -217,7 +228,8 @@ location.permission <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "location.permission", function() {
-  if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
+  if ("UserAdmin" %in% unlist(private$.UserRestrictions %>>%
+                              dplyr::pull(Restriction))) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
         self$authenticated == TRUE) {

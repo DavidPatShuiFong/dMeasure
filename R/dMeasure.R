@@ -772,7 +772,8 @@ read_configuration_db <- function(dMeasure_obj,
   # because if $Log is TRUE, then will immediate try to open the logfile
 
   private$PracticeLocations <- config_db$conn() %>>%
-    dplyr::tbl("Location")
+    dplyr::tbl("Location") %>>%
+    dplyr::mutate(Name = trimws(Name))
   invisible(self$location_list)
   # $location_list() will refresh the reactive location_listR if available
 
@@ -1709,21 +1710,18 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' @return the list of locations, including 'All'
 #' @export
 location_list <- function(dMeasure_obj) {
-  dMeasure_obj$location_list()
+  dMeasure_obj$location_list
 }
 
 .active(dMeasure, "location_list", function(value) {
   if (!missing(value)) {
     stop("$location_list is read-only!")
   }
-  locations <- data.frame(Name = "All", stringsAsFactors = FALSE)
+  locations <- c("All") # 'everyone', but not itself a group
   if (!is.null(private$PracticeLocations)) {
-    locations <-
-      rbind(locations,
-            as.data.frame(private$PracticeLocations %>>%
-                            dplyr::select(Name))) %>>%
-      dplyr::mutate(Name = trimws(Name)) %>>% # remove whitespace
-      unlist(use.names = FALSE)
+    locations <- c(locations,
+                   private$PracticeLocations %>>%
+                     dplyr::pull(Name))
   }
   # set reactive versions, only if shiny is available
   private$set_reactive(self$location_listR, locations)
