@@ -228,20 +228,6 @@ location.permission <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "location.permission", function() {
-  if ("UserAdmin" %in% unlist(private$.UserRestrictions %>>%
-                              dplyr::pull(Restriction))) {
-    # only some users allowed to see/change server settings
-    if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
-        self$authenticated == TRUE) {
-      permission <- TRUE
-    } else {
-      # this user is not authorized to access the locations list
-      permission <- FALSE
-      warning("No 'UserAdmin' attribute for this user.")
-    }
-  } else {
-    # no 'UserAdmin' attribute required
-    permission <- TRUE
-  }
-  return(permission)
+  # only some users allowed to see/change location settings
+  return(self$useradmin.permission()) # same as user admin permission
 })

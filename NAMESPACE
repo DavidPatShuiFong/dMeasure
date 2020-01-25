@@ -2,6 +2,7 @@
 
 export("%>%")
 export("%>>%")
+export(.identified_user)
 export(ATSI_35_44_list)
 export(BPdatabase)
 export(BPdatabaseChoice)

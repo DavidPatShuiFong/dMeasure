@@ -235,14 +235,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     stop("That restriction is not recognized.")
   }
 
-  update_UserRestrictions_database <- function() {
-    # update UserRestrictions database
+  update_UserRestrictions_database <- function(d) {
+    # update UserRestrictions database with 'd'
     # this is manually called when (one) restriction is added or removed
     # so only has to find 'one' row of difference between the 'new' list and the 'old' list
-    originalRestrictions <- self$config_db$conn() %>>%
-      dplyr::tbl("UserRestrictions") %>>%
+    originalRestrictions <- private$.UserRestrictions %>>%
       dplyr::collect()
-    newRestrictions <- private$.UserRestrictions
+    newRestrictions <- d
 
     new_row <- dplyr::anti_join(newRestrictions, originalRestrictions, by = "uid")
     if (nrow(new_row) > 0) {
@@ -258,12 +257,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       deleted_row <- dplyr::anti_join(originalRestrictions, newRestrictions, by = "uid")
       if (nrow(deleted_row) > 0) {
         # if a row was deleted, then remove from configuration database
-        query <- "DELETE FROM UserRestrictions WHERE uid = ?"
-        data_for_sql <- as.list.data.frame(c(deleted_row$uid))
+        query <- "DELETE FROM UserRestrictions WHERE uid IN ({d*})"
+        d <- as.list.data.frame(c(deleted_row$uid))
 
-        self$config_db$dbSendQuery(query, data_for_sql)
+        self$config_db$dbSendGlueQuery(query, d = d)
         # if the connection is a pool, can't send write query (a statement) directly
         # so use the object's method
+        # dbSendGlueQuery allows removing multiple $uid
         private$trigger(self$config_db_trigR) # send a trigger signal
       }
     }
@@ -275,10 +275,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   newstate <-
     restrictionLocal$callback[[1]](
       state,
-      private$.UserConfig %>>%
-        dplyr::select(Attributes) %>>%
-        dplyr::collect() %>>%
-        unlist(use.names = FALSE),
+      self$UserConfig %>>% dplyr::pull(Attributes) %>>% unlist(),
       # list of attributes in use
       (nchar(paste(apply(cbind(private$.UserConfig %>>%
                                  dplyr::pull(Password)),
@@ -302,27 +299,27 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   } else {
     # state returned is the same as the attempted change
     if (state == TRUE) {
-      private$.UserRestrictions <-
-        dplyr::bind_rows(private$.UserRestrictions,
-                         data.frame(uid = max(private$.UserRestrictions$uid, 0) + 1,
+      d <- # new restrictions
+        dplyr::bind_rows(private$.UserRestrictions %>>% dplyr::collect(),
+                         data.frame(uid = max(private$.UserRestrictions %>>%
+                                                dplyr::pull(uid), 0) + 1,
                                     Restriction = restriction,
                                     stringsAsFactors = FALSE))
-      # only if reactive environments available, make public
-      private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
       # add entry to datatable of UserRestrictions
       # add one to maximum UID (at least zero), and add restriction to new row
       # note that this table in the database uses 'uid' rather than 'id'
       #  to reduce confusion with the use of 'id' for input names
-      update_UserRestrictions_database()
-    } else {
-      # remove entry in datatable of UserRestrictions
-      private$.UserRestrictions <-
-        dplyr::filter(private$.UserRestrictions,
-                      private$.UserRestrictions$Restriction != restriction)
+      update_UserRestrictions_database(d)
       # only if reactive environments available, make public
       private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
-      update_UserRestrictions_database()
+    } else {
+      # remove entry in datatable of UserRestrictions
+      d <- private$.UserRestrictions %>>% # new restriction
+        dplyr::filter(Restriction != restriction) %>>% dplyr::collect()
+      # only if reactive environments available, make public
+      update_UserRestrictions_database(d)
+      private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
     }
   }
 
@@ -378,7 +375,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   # if restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
-  if ("ServerAdmin" %in% private$.UserRestrictions$Restriction) {
+  if ("ServerAdmin" %in% self$userrestriction.list()) {
     if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
                                     dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with ServerAdmin attribute
@@ -387,7 +384,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     }
   }
 
-  if ("UserAdmin" %in% private$.UserRestrictions$Restriction) {
+  if ("UserAdmin" %in% self$userrestriction.list()) {
     if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
                                   dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with UserAdmin attribute
@@ -447,7 +444,8 @@ userconfig.insert <- function(dMeasure_obj, description) {
   }
 
   # create empty entries for description, if necessary
-  for (x in c("AuthIdentity", "Location", "Attributes", "Password")) {
+  for (x in c("AuthIdentity", "Location", "Attributes", "Password",
+              "License", "LicenseCheckDate")) {
     if (is.null(description[[x]])) {
       description[[x]] <- ""
       # if named field not present, add empty string
@@ -479,11 +477,15 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # initially, $.UserConfig$id might be an empty set, so need to append a '0'
   description$id <- newid
 
-  query <- "INSERT INTO Users (id, Fullname, AuthIdentity, Location, Attributes) VALUES ($id, $fn, $au, $lo, $at)"
+  query <- paste0("INSERT INTO Users",
+                  "(id, Fullname, AuthIdentity, Location, Attributes, License, LicenseCheckDate)",
+                  "VALUES ($id, $fn, $au, $lo, $at, $li, $lc)")
   data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
                        # $Location and $Attribute could both have multiple (or no) entries
                        lo = paste0(description$Location[[1]], "", collapse = ";"),
-                       at = paste0(description$Attributes[[1]], "", collapse = ";"))
+                       at = paste0(description$Attributes[[1]], "", collapse = ";"),
+                       li = description$License,
+                       lc = description$LicenseCheckDate)
   # [[1]] 'de-lists' $Location and $Attributes, which prevents some strange
   # behaviour which *sometimes* results in a string being created in the form
   # of 'c("ServerAdmin", "UserAdmin")'
@@ -564,14 +566,15 @@ userconfig.update <- function(dMeasure_obj, description) {
     stop("This user is not configured")
   }
 
-  old_description <- private$.UserConfig %>>%
-    dplyr::filter(Fullname == description$Fullname) %>>% dplyr::collect() %>>%
+  old_description <- private$.UserConfig %>>% dplyr::collect() %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
   # the 'old' configuration
   description$id <- old_description$id # need to copy the id
 
   # copy entries from existing description, as necessary
-  for (x in c("AuthIdentity", "Location", "Attributes", "Password")) {
+  for (x in c("AuthIdentity", "Location", "Attributes", "Password",
+              "License", "LicenseCheckDate")) {
     if (is.null(description[[x]])) {
       description[[x]] <- old_description[[x]]
     }
@@ -594,8 +597,8 @@ userconfig.update <- function(dMeasure_obj, description) {
                         "- Unable to update this user description"))
            })
 
-  proposed_UserConfig <- private$.UserConfig %>>%
-    dplyr::filter(Fullname != description$Fullname) %>>% dplyr::collect() %>>%
+  proposed_UserConfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+    dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
   # this is the proposed user configuration
@@ -609,10 +612,12 @@ userconfig.update <- function(dMeasure_obj, description) {
   # then at least one user must have the restricted attribute
 
   query <- paste("UPDATE Users SET Fullname = ?, AuthIdentity = ?, ",
-                 "Location = ?, Attributes = ? WHERE id = ?", sep = "")
+                 "Location = ?, Attributes = ?, License = ?, LicenseCheckDate = ? ",
+                 "WHERE id = ?", sep = "")
   data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
                             paste0(unlist(description$Location[[1]]), "", collapse = ";"),
                             paste0(unlist(description$Attributes[[1]]), "", collapse = ";"),
+                            description$License, description$LicenseCheckDate,
                             description$id))
   # note extra "" within paste0 is required in the case of empty data
 
@@ -651,16 +656,16 @@ userconfig.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to change/delete user configuration.")))
 
-  UserConfigRow <- private$.UserConfig %>>%
-    dplyr::filter(Fullname == description$Fullname) %>>% dplyr::collect() %>>%
+  UserConfigRow <- private$.UserConfig %>>% dplyr::collect() %>>%
+    dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
 
   if (nrow(UserConfigRow) == 0) {
     stop(paste0("'", description$Fullname, "' not a configured user."))
   }
 
-  proposed_UserConfig <- private$.UserConfig %>>%
-    dplyr::filter(Fullname != description$Fullname) %>>% dplyr::collect()
+  proposed_UserConfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+    dplyr::filter(Fullname != description$Fullname)
 
   # this is the proposed user configuration
 
@@ -719,7 +724,7 @@ userrestriction.list <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "userrestriction.list", function() {
-  private$.UserRestrictions$Restriction
+  private$.UserRestrictions %>>% dplyr::pull(Restriction)
 })
 
 #' useradmin.permission
@@ -744,9 +749,14 @@ useradmin.permission <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "useradmin.permission", function() {
-  if ("UserAdmin" %in% unlist(private$.UserRestrictions$Restriction)) {
+  if ("UserAdmin" %in% self$userrestriction.list()) {
     # only some users allowed to see/change server settings
-    if ("UserAdmin" %in% unlist(private$.identified_user$Attributes) &
+    if ("UserAdmin" %in% (self$UserConfig %>>%
+                          dplyr::filter(Fullname ==
+                                        paste(self$.identified_user$Fullname,
+                                              collapse = "")) %>>%
+                          # paste with collapse = "" changes character(0) to ""
+                          dplyr::pull(Attributes) %>>% unlist()) &&
         self$authenticated == TRUE) {
       permission <- TRUE
     } else {

@@ -95,7 +95,7 @@ dMeasure <-
 
 .public(dMeasure, "close", function() {
   # close any open database connections
-  if (!is.null(private$.identified_user)) {
+  if (!is.null(self$.identified_user)) {
     self$user_logout()
   }
   if (self$config_db$is_open()) {
@@ -787,7 +787,7 @@ read_configuration_db <- function(dMeasure_obj,
     dplyr::tbl("UserRestrictions")
   private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
-  self$match_user()
+  invisible(self$.identified_user)
   # see if 'identified' system user is matched with a configured user
 
   private$trigger(self$config_db_trigR)
@@ -983,10 +983,47 @@ read_subscription_db <- function(dMeasure_obj,
 
 ##### User login ##################################################
 
-## fields
-.private(dMeasure, ".identified_user", data.frame(id = integer(), Fullname = character(),
-                                                  AuthIdentity = character(), Location = character(),
-                                                  Password = character(), Attributes = character()))
+#' returns information about the identified user
+#'
+#' also sets reactive $identified_user, and sets $authenticated
+#'
+#' @param dMeasure_obj dMeasure object
+#'
+#' @return dataframe, single row, the identified user
+#'
+#' @export
+.identified_user <- function(dMeasure_obj) {
+  return(dMeasure_obj$.identified_user)
+}
+.active(dMeasure, ".identified_user", function(value) {
+  if (!missing(value)) {
+    stop("cannot be set, $.identified_user is read-only")
+  }
+
+  current_user <- Sys.info()[["user"]]
+  private$set_reactive(self$identified_user,
+                       self$UserConfig %>>%
+                         dplyr::filter(AuthIdentity == current_user) %>>%
+                         dplyr::select(Fullname, AuthIdentity, Location, Attributes)
+  )
+  # set reactive version if reactive (shiny) environment available
+  # does not include password
+
+  if ("RequirePasswords" %in% (private$.UserRestrictions %>>% dplyr::pull(Restriction))) {
+    # password not yet entered, so not yet authenticated
+    self$authenticated <- FALSE
+  } else {
+    # no password required, current user attributes are 'authenticated' by Sys.info()
+    self$authenticated <- TRUE
+  }
+
+  return(private$.UserConfig %>>%
+           dplyr::filter(AuthIdentity == current_user) %>>% dplyr::collect())
+})
+# data.frame(id = integer(), Fullname = character(),
+#  AuthIdentity = character(), Location = character(),
+#  Password = character(), Attributes = character()))
+
 # user information for just the identified user
 .public(dMeasure, "authenticated", FALSE)
 # has the current 'identified' user been authenticated yet?
@@ -1006,8 +1043,6 @@ match_user <- function(dMeasure_obj) {
 
 .public(dMeasure, "match_user", function() {
   current_user <- Sys.info()[["user"]]
-  private$.identified_user <- private$.UserConfig %>>%
-    dplyr::filter(AuthIdentity == current_user) %>>% dplyr::collect()
   private$set_reactive(self$identified_user,
                        self$UserConfig %>>%
                          dplyr::filter(AuthIdentity == current_user) %>>%
@@ -1103,12 +1138,14 @@ clinician_list <- function(dMeasure_obj,
       if (view_name %in% restriction$view_to_hide) {
         # if the relevant view is being shown
         if (self$authenticated == FALSE |
-            !(restriction$restriction %in% unlist(private$.identified_user$Attributes))) {
+            !(restriction$restriction %in% (self$UserConfig %>>%
+                                            dplyr::filter(Fullname == self$.identified_user$Fullname) %>>%
+                                            dplyr::pull(Attributes) %>>% unlist()))) {
           # if user is not authenticated or
           # if the current user does not have this 'Global' attribute
           # then can only view one's own appointments
           clinician_list <- subset(clinician_list,
-                                   clinician_list == private$.identified_user$Fullname)
+                                   clinician_list == self$.identified_user$Fullname)
         }
       }
     }
