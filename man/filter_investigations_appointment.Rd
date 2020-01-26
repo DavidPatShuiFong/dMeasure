@@ -4,9 +4,16 @@
 \alias{filter_investigations_appointment}
 \title{List of investigations with appointments}
 \usage{
-filter_investigations_appointment(dMeasure_obj, date_from = NA,
-  date_to = NA, clinicians = NA, Action = NA, Actioned = NA,
-  ignorePast = NA, lazy = FALSE)
+filter_investigations_appointment(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  Action = NA,
+  Actioned = NA,
+  ignorePast = NA,
+  lazy = FALSE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

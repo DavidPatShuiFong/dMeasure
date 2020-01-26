@@ -216,7 +216,57 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
                     as.character(NA)}
                   # can't encode a 'NA' (that causes an error)
                   else {
-                    jsonlite::base64_enc(
+                    gsub("[\r\n]", "", jsonlite::base64_enc(
+                      sodium::data_encrypt(charToRaw(n), key, nonce)))}},
+                # gsub is required to remove extraneous \n created
+                # by jsonlite::base64_enc (this is not done by
+                # base64enc::base64encode). these \n can be decrypted
+                # by jsonlite::base64_dec, but not after mangling by
+                # storage in a database
+                FUN.VALUE = character(1),
+                USE.NAMES = FALSE))
+}
+
+#' Simple encoder base64library
+#'
+#' Simple encode of text strings, will output a text string.
+#' Uses sodium library and base64_enc/dec from jsonlite. Has some defaults, but
+#' will also take command-line arguments or read from environment
+#'
+#' @param msg the text to encode
+#' @param key the cipher, which can be set manually, otherwise will read from env
+#' @param nonce a non-secret unique data value used to randomize the cipher
+#'
+#' @return - the encrypted text.
+#'
+#'   returns NA for elements of msg which are NA
+#'
+#' @export
+simple_encode_base64 <- function(msg, key = NULL, nonce = NULL) {
+  if (is.null(nonce)) {
+    # non-secret unique data 'nonce' used to randomize the cipher
+    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
+  }
+  if (is.null(key)) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+      # if not set then the number of characters will be zero
+      key <- Sys.getenv("DailyMeasure_value2")
+      # this can be set in .Renviron
+    } else {
+      key <- "noncenonce"
+    }
+  }
+  key <- sodium::hash(charToRaw(key))
+
+  return(vapply(msg,
+                function(n) {
+                  if (is.na(n)) {
+                    as.character(NA)}
+                  # can't encode a 'NA' (that causes an error)
+                  else {
+                    base64enc::base64encode(
                       sodium::data_encrypt(charToRaw(n), key, nonce))}},
                 FUN.VALUE = character(1),
                 USE.NAMES = FALSE))
@@ -238,6 +288,8 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
 #'   returns NA for elements of msg which are NA, or "" empty string.
 #'   note that simple_encode will ENCRYPT an empty string "".
 #'
+#'   returns NULL if failure to decode e.g. invalid base64 decode
+#'
 #' @export
 simple_decode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
@@ -258,16 +310,82 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
   }
   key <- sodium::hash(charToRaw(key))
 
-  return(vapply(msg,
-                function(n) {
-                  if (is.na(n) || n == "") {
-                    as.character(NA)}
-                  # can't decode a 'NA' (that causes an error)
-                  else {
-                    rawToChar(sodium::data_decrypt(
-                      jsonlite::base64_dec(n),key, nonce))}},
-                FUN.VALUE = character(1),
-                USE.NAMES = FALSE))
+  decoded <- tryCatch(vapply(msg,
+                             function(n) {
+                               if (is.na(n) || n == "") {
+                                 as.character(NA)}
+                               # can't decode a 'NA' (that causes an error)
+                               else {
+                                 rawToChar(sodium::data_decrypt(
+                                   jsonlite::base64_dec(paste(n)),key, nonce))}},
+                             # paste is required because the encoded string (wrongly)
+                             # includes backslashes, which are converted into '\\'
+                             # when stored in the dataframe
+                             # paste converts the '\\' back into '\'
+                             FUN.VALUE = character(1),
+                             USE.NAMES = FALSE),
+                      error = function(e) NULL,
+                      warning = function(e) NULL)
+
+  return(decoded)
+}
+
+#' Simple decoder base64
+#'
+#' Simple decoder of text strings, will output a text string.
+#' Uses sodium library and base64_enc/dec from jsonlite. Has some defaults, but
+#' will also take command-line arguments or read from environment.
+#' Companion function to simple_encode
+#'
+#' @param msg the text to decode
+#' @param key the cipher, which can be set manually, otherwise will read from env
+#' @param nonce a non-secret unique data value used to randomize the cipher
+#'
+#' @return - the encrypted text
+#'
+#'   returns NA for elements of msg which are NA, or "" empty string.
+#'   note that simple_encode will ENCRYPT an empty string "".
+#'
+#'   returns NULL if failure to decode e.g. invalid base64 decode
+#'
+#' @export
+simple_decode_base64 <- function(msg, key = NULL, nonce = NULL) {
+  if (is.null(nonce)) {
+    # non-secret unique data 'nonce' used to randomize the cipher
+    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
+  }
+  if (is.null(key)) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+      # if not set then the number of characters will be zero
+      key <- Sys.getenv("DailyMeasure_value2")
+      # this can be set in .Renviron
+      # or with Sys.setenv(DailyMeasure_value2="password")
+    } else {
+      key <- "noncenonce"
+    }
+  }
+  key <- sodium::hash(charToRaw(key))
+
+  decoded <- tryCatch(vapply(msg,
+                             function(n) {
+                               if (is.na(n) || n == "") {
+                                 as.character(NA)}
+                               # can't decode a 'NA' (that causes an error)
+                               else {
+                                 rawToChar(sodium::data_decrypt(
+                                   base64enc::base64decode(n),key, nonce))}},
+                             # paste is required because the encoded string (wrongly)
+                             # includes backslashes, which are converted into '\\'
+                             # when stored in the dataframe
+                             # paste converts the '\\' back into '\'
+                             FUN.VALUE = character(1),
+                             USE.NAMES = FALSE),
+                      error = function(e) NULL,
+                      warning = function(e) NULL)
+
+  return(decoded)
 }
 
 #' Simple tagger

@@ -4,8 +4,11 @@
 \alias{choose_date}
 \title{Choose date}
 \usage{
-choose_date(dMeasure_obj, date_from = dMeasure_obj$date_a,
-  date_to = dMeasure_obj$date_b)
+choose_date(
+  dMeasure_obj,
+  date_from = dMeasure_obj$date_a,
+  date_to = dMeasure_obj$date_b
+)
 }
 \arguments{
 \item{dMeasure_obj}{dateContact R6 object}

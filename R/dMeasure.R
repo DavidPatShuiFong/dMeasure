@@ -881,8 +881,8 @@ read_subscription_db <- function(dMeasure_obj,
             if (is.na(y)) { # if NA for License
               NA # remain unchanged
             } else { # otherwise decode
-              zzz <- simple_decode(y, "karibuni")
-              if (substr(zzz, 1, nchar(z)) == z) {
+              zzz <- simple_decode(y, "karibuni") # this could return NULL if not valid
+              if (!is.null(zzz) && substr(zzz, 1, nchar(z)) == z) {
                 substring(zzz, nchar(z) + 1)
                 # converts decrypted License (right side of string)
                 # keep remainder of string, and convert to date
@@ -953,8 +953,8 @@ read_subscription_db <- function(dMeasure_obj,
             if (is.na(y)) { # if NA for License
               NA # remain unchanged
             } else { # otherwise decode
-              zzz <- simple_decode(y, "karibuni")
-              if (substr(zzz, 1, nchar(z)) == z) {
+              zzz <- simple_decode(y, "karibuni") # this could return NULL if not valid
+              if (!is.null(zzz) && substr(zzz, 1, nchar(z)) == z) {
                 substring(zzz, nchar(z) + 1)
                 # converts decrypted License (right side of string)
                 # keep remainder of string, and convert to date
@@ -994,24 +994,29 @@ read_subscription_db <- function(dMeasure_obj,
   }
 
   current_user <- Sys.info()[["user"]]
-  private$set_reactive(self$identified_user,
-                       self$UserConfig %>>%
-                         dplyr::filter(AuthIdentity == current_user) %>>%
-                         dplyr::select(Fullname, AuthIdentity, Location, Attributes)
-  )
-  # set reactive version if reactive (shiny) environment available
-  # does not include password
+  d <- NULL
+  if (self$config_db$is_open()) {
+    private$set_reactive(self$identified_user,
+                         self$UserConfig %>>%
+                           dplyr::filter(AuthIdentity == current_user) %>>%
+                           dplyr::select(Fullname, AuthIdentity, Location, Attributes)
+    )
+    # set reactive version if reactive (shiny) environment available
+    # does not include password
 
-  if ("RequirePasswords" %in% (private$.UserRestrictions %>>% dplyr::pull(Restriction))) {
-    # password not yet entered, so not yet authenticated
-    self$authenticated <- FALSE
-  } else {
-    # no password required, current user attributes are 'authenticated' by Sys.info()
-    self$authenticated <- TRUE
+    if ("RequirePasswords" %in% (private$.UserRestrictions %>>% dplyr::pull(Restriction))) {
+      # password not yet entered, so not yet authenticated
+      self$authenticated <- FALSE
+    } else {
+      # no password required, current user attributes are 'authenticated' by Sys.info()
+      self$authenticated <- TRUE
+    }
+
+    d <- private$.UserConfig %>>%
+      dplyr::filter(AuthIdentity == current_user) %>>% dplyr::collect()
   }
 
-  return(private$.UserConfig %>>%
-           dplyr::filter(AuthIdentity == current_user) %>>% dplyr::collect())
+  return(d)
 })
 # data.frame(id = integer(), Fullname = character(),
 #  AuthIdentity = character(), Location = character(),
