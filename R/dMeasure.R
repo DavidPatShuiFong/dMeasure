@@ -387,12 +387,15 @@ UserConfig <- function(dMeasure_obj) {
     stop("self$UserConfig is read-only!")
   }
 
-  userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
-    dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
-                  Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
-    # splits Location and Attributes into multiple entries (in the same column)
-    dplyr::select(-Password) # same as $.UserConfig, except the password
-
+  if (self$config_db$is_open()) {
+    userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+      dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
+                    Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
+      # splits Location and Attributes into multiple entries (in the same column)
+      dplyr::select(-Password) # same as $.UserConfig, except the password
+  } else {
+    userconfig <- NA
+  }
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
@@ -779,8 +782,8 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$.UserConfig <- config_db$conn() %>>%
     dplyr::tbl("Users")
-    # in .UserConfig, there can be multiple Locations/Attributes per user
-    # this is only translated in the public version 'self$UserConfig'
+  # in .UserConfig, there can be multiple Locations/Attributes per user
+  # this is only translated in the public version 'self$UserConfig'
   invisible(self$UserConfig) # this will also set $userConfigR reactive version
 
   private$.UserRestrictions <- config_db$conn() %>>%
@@ -824,7 +827,6 @@ read_subscription_db <- function(dMeasure_obj,
 .public(dMeasure, "read_subscription_db", function(forcecheck = FALSE) {
   # read subscription information
 
-  print("Opening subscription database")
   if (requireNamespace("RMariaDB", quietly = TRUE)) {
     # RMariaDB is GPL version 3.0
     # dMeasure will work if RMariaDB is not available,
@@ -852,7 +854,7 @@ read_subscription_db <- function(dMeasure_obj,
         self$emr_db$is_open() && self$config_db$is_open()) {
       # successfully opened subscription database
       # neees the configuration and EMR databases to also be open
-      print("Subscription database open")
+      print("Subscription database opened")
 
       a <- self$UserFullConfig %>>%
         dplyr::mutate(LicenseCheckDate =
@@ -860,10 +862,8 @@ read_subscription_db <- function(dMeasure_obj,
                                 # not obfuscated
                                 # don't attempt re-check if already checked today
                                 # will need option to 'force' manual re-check
-                                origin = "1970-01-01"),
-                      LicenseExpiryDate =
-                        simple_decode(License, "karibuni")) %>>%
-        dplyr::mutate(LeftString = paste0(vapply(ProviderNo,
+                                origin = "1970-01-01")) %>>%
+        dplyr::mutate(Identifier = paste0(vapply(ProviderNo,
                                                  # create verification string
                                                  function(n) if (nchar(n) == 0) {
                                                    self$db$practice %>>%
@@ -875,15 +875,24 @@ read_subscription_db <- function(dMeasure_obj,
                                                  FUN.VALUE = character(1),
                                                  USE.NAMES = FALSE), "::",
                                           Fullname, "::")) %>>%
-        dplyr::mutate(LicenseDate = if
-                      (!is.na(LicenseExpiryDate) && # could be NA
-                       substr(LicenseExpiryDate, 1, nchar(LeftSring)) == LeftString) {
-                        as.Date(substring(LicenseExpiryDate, nchar(LeftString) + 1))
-                        # converts LicenseExpiryDate (which is )
-                        # keep remainder of string, and convert to date
-                      } else {
-                        as.Date(NA, origin = "1970-01-01")
-                      }) %>>%
+        dplyr::mutate(LicenseDate = as.Date(
+          # decrypt License. this is repeated later after retrieval of licenses
+          mapply(function(y,z) {
+            if (is.na(y)) { # if NA for License
+              NA # remain unchanged
+            } else { # otherwise decode
+              zzz <- simple_decode(y, "karibuni")
+              if (substr(zzz, 1, nchar(z)) == z) {
+                substring(zzz, nchar(z) + 1)
+                # converts decrypted License (right side of string)
+                # keep remainder of string, and convert to date
+              } else {
+                NA
+                # invalid new license
+              }
+            }
+          }, License, Identifier),
+          origin = "1970-01-01")) %>>%
         dplyr::mutate(LicenseCheck =
                         (forcecheck || is.na(LicenseCheckDate) || LicenseCheckDate != Sys.Date()) &&
                         # if forcecheck == TRUE, then check even if already checked today
@@ -891,46 +900,37 @@ read_subscription_db <- function(dMeasure_obj,
                         (is.na(LicenseDate) ||
                            # check if no valid license expiry
                            # or license is expiring soon
-                           LicenseDate < (Sys.Date() + 60))) %>>%
-        dplyr::mutate(NewLicense =
-                        mapply(function(x, y, z, zz) {
-                          if (x) {
-                            d <- self$subscription_db$conn() %>>%
-                              # read the subscription database
-                              dplyr::tbl("Subscriptions") %>>%
-                              dplyr::filter(Key == y) %>>%
-                              # look for Key == LeftString
-                              dplyr::pull(License) # just need expiry date (which is 'encrypted')
+                           LicenseDate < (Sys.Date() + 60)))
 
-                            # update the license check date
-                            if (nrow(self$userconfig.list() %>>%
-                                     dplyr::filter(Fullname == zz)) == 0) {
-                              # the user has NO entry in the configuration database, so create one
-                              self$userconfig.insert(list(Fullname = zz))
-                            }
-                            query <- paste("UPDATE Users SET LicenseCheckDate = ? WHERE Fullname = ?")
-                            data_for_sql <- as.list.data.frame(c(as.character(Sys.Date()), zz))
-                            self$config_db$dbSendQuery(query, data_for_sql)
+      b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
+        dplyr::pull(Identifier) %>>% simple_encode(key = "karibuni")
+      # vector of Identifier to check in subscription database
+      # these are 'encoded'
 
-                            if ((is.na(z) || d != z) && !identical(d, character(0))) {d} else {NA}
-                            # newlicense only if different to previous LicenseExpiryDate
-                            # note that character(0) is returned if not found in subscription_db
-                          } else {NA} # not checking
-                        }, LicenseCheck, LeftString, License, Fullname)) %>>%
-        dplyr::mutate(LicenseCheckDate =
-                        mapply(function(x,y) {
-                          if (x) {
-                            Sys.Date() # update if checked
-                          } else {
-                            y
-                          }
-                        }, LicenseCheck, LicenseCheckDate)) %>>%
+      a <- a %>>%
+        dplyr::left_join(self$subscription_db$conn() %>>%
+                           # read the subscription database
+                           dplyr::tbl("Subscriptions") %>>%
+                           dplyr::filter(Key %in% b) %>>%
+                           # look for Key == Identifier
+                           dplyr::collect() %>>%
+                           dplyr::mutate(Identifier = simple_decode(Key, key = "karibuni")) %>>%
+                           dplyr::select(Identifier, NewLicense = License),
+                         by = "Identifier") %>>%
+        dplyr::mutate(LicenseCheckDate = as.Date(
+          mapply(function(x,y) {
+            if (x) {
+              Sys.Date() # update if checked
+            } else {
+              y
+            }
+          }, LicenseCheck, LicenseCheckDate), origin = "1970-01-01")) %>>%
         dplyr::mutate(License =
                         mapply(function(x, y, z) {
                           if (is.na(z)) {
                             y # no new expiry date, 'License'
                           } else {
-                            # need to set to NewLicenseExpiryDate
+                            # need to set to new license
                             # and also need to update our configuration database
 
                             if (nrow(self$userconfig.list() %>>%
@@ -947,32 +947,25 @@ read_subscription_db <- function(dMeasure_obj,
                             z # NewLicsne
                           }
                         }, Fullname, License, NewLicense)) %>>%
-        dplyr::mutate(LicenseExpiryDate =
-                        # re-decrypt LicenseExpiryDate, if necessary
-                        mapply(function(x,y,z) {
-                          if (is.na(z)) { # if NA for License
-                            x # remain unchanged
-                          } else { # otherwise decode
-                            simple_decode(y, "karibuni")
-                          }
-                        }, LicenseExpiryDate, License, NewLicense)) %>>%
-        dplyr::mutate(LicenseDate =
-                        # re-create LicenseDate (again)
-                        mapply(function(x,y,zz,z) {
-                          if (is.na(z)) { # if no new license
-                            x # remains unchanged
-                          } else {
-                            if (substr(y, 1, nchar(zz)) == zz) {
-                              # if leftstring matches
-                              as.Date(substring(y, nchar(zz) + 1))
-                              # converts LicenseExpiryDate (right side of string)
-                              # keep remainder of string, and convert to date
-                            } else {
-                              as.Date(NA, origin = "1970-01-01")
-                              # invalid new license
-                            }
-                          }
-                        }, LicenseDate, LicenseExpiryDate, LeftString, NewLicense))
+        dplyr::mutate(LicenseDate = as.Date(
+          # re-decrypt License, if necessary
+          mapply(function(y,z) {
+            if (is.na(y)) { # if NA for License
+              NA # remain unchanged
+            } else { # otherwise decode
+              zzz <- simple_decode(y, "karibuni")
+              if (substr(zzz, 1, nchar(z)) == z) {
+                substring(zzz, nchar(z) + 1)
+                # converts decrypted License (right side of string)
+                # keep remainder of string, and convert to date
+              } else {
+                NA
+                # invalid new license
+              }
+            }
+          }, License, Identifier),
+          origin = "1970-01-01")) %>>%
+        dplyr::select(-c(LicenseCheck, NewLicense))
 
       # close before exit
       self$subscription_db$close()
@@ -1724,7 +1717,7 @@ initialize_emr_tables <- function(dMeasure_obj,
                       paste(Title, Firstname, Surname, sep = ' ')) %>>%
       # include 'Fullname'
       dplyr::left_join(self$UserConfig, by = 'Fullname')
-      # add user details including practice locations
+    # add user details including practice locations
   }
 
   return(UserFullConfig)
