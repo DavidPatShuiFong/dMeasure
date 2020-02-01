@@ -1074,7 +1074,7 @@ dMeasure class
 \if{html}{\out{<a id="method-read_subscription_db"></a>}}
 \subsection{Method \code{read_subscription_db()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_subscription_db(forcecheck = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_subscription_db(forcecheck = FALSE, users = NULL)}\if{html}{\out{</div>}}
 }
 
 }

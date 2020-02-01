@@ -4,12 +4,14 @@
 \alias{read_subscription_db}
 \title{read the subscription database}
 \usage{
-read_subscription_db(dMeasure_obj, forcecheck = FALSE)
+read_subscription_db(dMeasure_obj, forcecheck = FALSE, users = NULL)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}
 
 \item{forcecheck}{check, even if already checked 'today'. TRUE/FALSE}
+
+\item{users}{vector of user names. if NULL (the default) then all user in $UserFullConfig}
 }
 \description{
 also update the configuration database with new Licenses (if available)
