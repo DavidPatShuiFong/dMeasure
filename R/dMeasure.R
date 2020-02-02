@@ -809,6 +809,7 @@ read_configuration_db <- function(dMeasure_obj,
   }
   return(new)
 })
+
 #' read the subscription database
 #'
 #'  also update the configuration database with new Licenses (if available)
@@ -928,6 +929,87 @@ read_subscription_db <- function(dMeasure_obj,
     }
   }
 })
+
+#' check the subscription database
+#'
+#' @param dMeasure_obj dMeasure object
+#' @param clinicians vector of users to check
+#' @param date_from date from, by default $date_a
+#' @param date_to date to, by default $date_b
+#' @param adjustdate will this function change the dates? ($date_a, $date_b)
+#'
+#' @return a list $changedate, $date_from, $date_to
+#'  $changedate (TRUE/FALSE), and the (possibly) adjusted dates
+#'
+#' @examples
+#' dMeasure_obj$check_subscription()
+#' @export
+check_subscription <- function(dMeasure_obj,
+                               clinicians = NA,
+                               date_from = NA, date_to = NA,
+                               adjustedate = TRUE) {
+  dMeasure_obj$check_subscription(users, date_from, date_to)
+}
+.public(dMeasure, "check_subscription", function(clinicians = NA,
+                                                 date_from = NA,
+                                                 date_to = NA,
+                                                 adjustdate = TRUE) {
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (all(is.na(clinicians))) {
+    clinicians <- self$clinicians
+  }
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter cannot handle empty list()
+  }
+
+  LicenseDates <- self$UserFullConfig %>>%
+    dplyr::filter(Fullname %in% clinicians) %>>%
+    dplyr::pull(LicenseDate)
+
+  changedate <- FALSE # do dates need to be changed
+  # i.e. is there a chosen user with no license, or expired license
+
+  if (date_to > (Sys.Date()-7)) {
+    # only if date range includes future, or insufficiently 'old' appointments
+     changedate <- (NA %in% LicenseDates) # a chosen user has no license
+     if (!changedate) {
+       # no NA, but are any dates expired
+       for (a in LicenseDates) {
+         b <- as.Date(a, origin = "1970-01-01")
+         if (b < Sys.Date()) {
+           # expired subscription
+           changedate <- TRUE
+           break # no need to check other users
+         }
+       }
+     }
+  }
+
+  if (changedate) {
+    if (date_to > (Sys.Date() - 7)) {
+      date_to <- Sys.Date() - 7
+      warning("A chosen user has an invalid subscription for chosen date range. Dates changed")
+      if (date_from > date_to) {
+        date_from <- date_to
+      }
+      if (adjustdate) {
+        # change the dates
+        self$choose_date(date_from, date_to)
+      }
+    }
+  }
+
+  return(list(changedate = changedate, date_from = date_from, date_to = date_to))
+
+})
+
 
 ##### User login ##################################################
 

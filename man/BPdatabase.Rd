@@ -10,6 +10,10 @@ BPdatabase(dMeasure_obj)
 BPdatabaseNames(dMeasure_obj)
 }
 \arguments{
+\item{dMeasure_obj}{dMeasure R6 object
+
+reactive version : BPdatabaseR}
+
 \item{dMeasure_obj}{dMeasure R6 object}
 }
 \value{

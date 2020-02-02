@@ -4,16 +4,9 @@
 \alias{list_socialHx}
 \title{List of patients with social history recordings}
 \usage{
-list_socialHx(
-  dMeasure_obj,
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  qualitytag = FALSE,
-  qualitytag_print = TRUE
-)
+list_socialHx(dMeasure_obj, date_from = NA, date_to = NA,
+  clinicians = NA, appointments_list = NULL, lazy = FALSE,
+  qualitytag = FALSE, qualitytag_print = TRUE)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
