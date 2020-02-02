@@ -12,6 +12,10 @@ read_subscription_db(dMeasure_obj, forcecheck = FALSE, users = NULL)
 \item{forcecheck}{check, even if already checked 'today'. TRUE/FALSE}
 
 \item{users}{vector of user names. if NULL (the default) then all user in $UserFullConfig}
+
+\item{UserFullConfig}{updated UserFullConfig (includes subscription information)
+returns warning if RMariaDB module is not available to open database
+returns warning if unable to open subscription database}
 }
 \description{
 also update the configuration database with new Licenses (if available)

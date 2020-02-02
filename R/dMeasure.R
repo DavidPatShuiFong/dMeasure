@@ -366,12 +366,15 @@ BPdatabaseNames <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe of user configuration descriptions
-#'  id, Fullname, AuthIdentity, Location, Attributes
+#'  id, Fullname, AuthIdentity, Location, Attributes,
+#'  License, LicenseCheckDate
 #'
 #'  Fullname - Best Practice full user name
 #'  AuthIdentity - Windows login identity
 #'  Location - vector of groups/locations
 #'  Attributes - vector of user's attributes/permissions
+#'  License - undecoded license
+#'  LicenseCheckDate
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
@@ -390,19 +393,94 @@ UserConfig <- function(dMeasure_obj) {
   if (self$config_db$is_open()) {
     userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
       dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
-                    Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
+                    Attributes = stringi::stri_split(Attributes, regex = ";"),
+                    LicenseCheckDate =
+                      as.Date(LicenseCheckDate, # not obfuscated
+                              origin = "1970-01-01")) %>>%
       # splits Location and Attributes into multiple entries (in the same column)
       dplyr::select(-Password) # same as $.UserConfig, except the password
   } else {
-    userconfig <- NA
+    userconfig <-
+      data.frame(id = integer(), Fullname = character(),
+                 AuthIdentity = character(),
+                 Location = character(),
+                 Attributes = character(),
+                 License = character(),
+                 LicenseCheckDate = as.Date(numeric(0),
+                                            origin = "1970-01-01"))
   }
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
-.reactive(dMeasure, "UserConfigR", quote(data.frame(id = integer(), Fullname = character(),
-                                                    AuthIdentity = character(),
-                                                    Location = character(),
-                                                    Attributes = character())))
+.reactive(dMeasure, "UserConfigR",
+          quote(data.frame(id = integer(), Fullname = character(),
+                           AuthIdentity = character(),
+                           Location = character(),
+                           Attributes = character(),
+                           License = character(),
+                           LicenseCheckDate = as.Date(numeric(0),
+                                                      origin = "1970-01-01"))))
+
+#' show user configurations with license
+#'
+#' @name UserConfigLicense
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#'
+#' @return dataframe of user configuration descriptions
+#'  id, Fullname, AuthIdentity, Location, Attributes,
+#'  License, LicenseCheckDate
+#'
+#'  Fullname - Best Practice full user name
+#'  AuthIdentity - Windows login identity
+#'  Location - vector of groups/locations
+#'  Attributes - vector of user's attributes/permissions
+#'  License - undecoded license
+#'  LicenseCheckDate
+#'  Identifier - identifier used to interrogate subscription database
+#'  LicenseDate - date of license
+#'
+#' @examples
+#' dMeasure_obj <- dMeasure$new()
+#' dMeasure_obj$open_configuration_db()
+#' dMeasure_obj$read_configuration_db()
+#' dMeasure_obj$UserConfigLicense
+#' @export
+UserConfigLicense <- function(dMeasure_obj) {
+  return(dMeasure_obj$UserConfigLicense)
+}
+.active(dMeasure, "UserConfigLicense", function(value) {
+  if (!missing(value)) {
+    stop("self$UserConfigLicense is read-only!")
+  }
+
+  if (self$emr_db$is_open() && self$config_db$is_open()) {
+    userconfiglicense <- self$UserConfig %>>%
+      dplyr::left_join(self$UserFullConfig %>>%
+                         dplyr::select(Fullname, Identifier, LicenseDate),
+                       by = "Fullname")
+  } else {
+    userconfiglicense <-
+      data.frame(id = integer(), Fullname = character(),
+                 AuthIdentity = character(),
+                 Location = character(),
+                 Attributes = character(),
+                 License = character(),
+                 LicenseCheckDate = as.Date(numeric(0),
+                                            origin = "1970-01-01"),
+                 Identifier = character(),
+                 LicenseDate = as.Date(numeric(0),
+                                            origin = "1970-01-01"))
+  }
+  return(userconfiglicense)
+})
+.reactive_event(dMeasure, "UserConfigLicenseR",
+                quote(
+                  shiny::eventReactive(
+                    c(self$UserConfigR()), {
+                          self$UserConfigLicense
+                        })
+                ))
 
 .private(dMeasure, ".UserRestrictions", data.frame(uid = integer(),
                                                    Restriction = character(),
@@ -819,6 +897,10 @@ read_configuration_db <- function(dMeasure_obj,
 #' @param forcecheck check, even if already checked 'today'. TRUE/FALSE
 #' @param users vector of user names. if NULL (the default) then all user in $UserFullConfig
 #'
+#' @param UserFullConfig updated UserFullConfig (includes subscription information)
+#'  returns warning if RMariaDB module is not available to open database
+#'  returns warning if unable to open subscription database
+#'
 #' @examples
 #' dMeasure_obj$read_subscription_db()
 #' @export
@@ -926,7 +1008,11 @@ read_subscription_db <- function(dMeasure_obj,
       self$subscription_db$close()
 
       return(self$UserFullConfig) # this contains the updated license informatioin
+    } else {
+      warning("Unable to open subscription database")
     }
+  } else {
+    warning("Unable to access subscription features (missing database module 'RMariaDB')")
   }
 })
 
@@ -940,6 +1026,7 @@ read_subscription_db <- function(dMeasure_obj,
 #'
 #' @return a list $changedate, $date_from, $date_to
 #'  $changedate (TRUE/FALSE), and the (possibly) adjusted dates
+#'  warning generated if $changedate is TRUE
 #'
 #' @examples
 #' dMeasure_obj$check_subscription()
@@ -995,7 +1082,7 @@ check_subscription <- function(dMeasure_obj,
   if (changedate) {
     if (date_to > (Sys.Date() - 7)) {
       date_to <- Sys.Date() - 7
-      warning("A chosen user has an invalid subscription for chosen date range. Dates changed")
+      warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
       }
@@ -1761,9 +1848,6 @@ initialize_emr_tables <- function(dMeasure_obj,
       dplyr::left_join(self$UserConfig, by = 'Fullname') %>>%
       # add user details including practice locations
       # next section decodes the LicenseDate
-      dplyr::mutate(LicenseCheckDate =
-                      as.Date(LicenseCheckDate, # not obfuscated
-                              origin = "1970-01-01")) %>>%
       # the Identifier is used in $read_subscription_db to interrogate the
       # license database
       # and is also used to help 'decode' the LicenseDate

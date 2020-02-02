@@ -21,6 +21,7 @@ check_subscription(dMeasure_obj, clinicians = NA, date_from = NA,
 \value{
 a list $changedate, $date_from, $date_to
  $changedate (TRUE/FALSE), and the (possibly) adjusted dates
+ warning generated if $changedate is TRUE
 }
 \description{
 check the subscription database
