@@ -260,7 +260,7 @@ configuration_file_path <- function(dMeasure_obj, value) {
 # using either DBI or pool
 # two subscription databases available
 #  1. vkelim.3322.org and 2. vkelim.dsmynas.com
-#  port 3307, username = "guest", password - not required, dbname = "DailyMeasureUsers"
+#  port 3306, username = "guest", password - not required, dbname = "DailyMeasureUsers"
 
 .private(dMeasure, ".BPdatabase", data.frame(id = integer(),
                                              Name = character(),
@@ -390,11 +390,18 @@ UserConfig <- function(dMeasure_obj) {
     stop("self$UserConfig is read-only!")
   }
 
+  empty_as_na <- function(x){
+    if("factor" %in% class(x)) x <- as.character(x) # since ifelse wont work with factors
+    ifelse(as.character(x) != "", x, NA)
+  }
+
   if (self$config_db$is_open()) {
     userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
       dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
-                    Attributes = stringi::stri_split(Attributes, regex = ";"),
-                    LicenseCheckDate =
+                    Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
+      dplyr::mutate(License = empty_as_na(License),
+                    LicenseCheckDate = empty_as_na(LicenseCheckDate)) %>>%
+      dplyr::mutate(LicenseCheckDate =
                       as.Date(LicenseCheckDate, # not obfuscated
                               origin = "1970-01-01")) %>>%
       # splits Location and Attributes into multiple entries (in the same column)
@@ -470,7 +477,7 @@ UserConfigLicense <- function(dMeasure_obj) {
                                             origin = "1970-01-01"),
                  Identifier = character(),
                  LicenseDate = as.Date(numeric(0),
-                                            origin = "1970-01-01"))
+                                       origin = "1970-01-01"))
   }
   return(userconfiglicense)
 })
@@ -478,8 +485,8 @@ UserConfigLicense <- function(dMeasure_obj) {
                 quote(
                   shiny::eventReactive(
                     c(self$UserConfigR()), {
-                          self$UserConfigLicense
-                        })
+                      self$UserConfigLicense
+                    })
                 ))
 
 .private(dMeasure, ".UserRestrictions", data.frame(uid = integer(),
@@ -919,20 +926,20 @@ read_subscription_db <- function(dMeasure_obj,
     # but subscription features will not be complete
 
     self$subscription_db$connect(RMariaDB::MariaDB(),
-                                 host = "vkelim.3222.org", port = 3307,
+                                 host = "vkelim.3222.org", port = 3306,
                                  username = "guest", dbname = "DailyMeasureUsers",
                                  timeout = 3)
     if (!self$subscription_db$is_open()) {
       # if failed to open vkelim.3322.org, then try the alternate name for vkelim.3322.org
       self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "davidfong.synology-ds.de", port = 3307,
+                                   host = "davidfong.synology-ds.de", port = 3306,
                                    username = "guest", dbname = "DailyMeasureUsers",
                                    timeout = 3)
     }
     if (!self$subscription_db$is_open()) {
       # if failed to open vkelim.3322.org, then try the alternate vkelim.dsmynas.com
       self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "vkelim.dsmynas.com", port = 3307,
+                                   host = "vkelim.dsmynas.com", port = 3306,
                                    username = "guest", dbname = "DailyMeasureUsers",
                                    timeout = 3)
     }
@@ -1065,18 +1072,18 @@ check_subscription <- function(dMeasure_obj,
 
   if (date_to > (Sys.Date()-7)) {
     # only if date range includes future, or insufficiently 'old' appointments
-     changedate <- (NA %in% LicenseDates) # a chosen user has no license
-     if (!changedate) {
-       # no NA, but are any dates expired
-       for (a in LicenseDates) {
-         b <- as.Date(a, origin = "1970-01-01")
-         if (b < Sys.Date()) {
-           # expired subscription
-           changedate <- TRUE
-           break # no need to check other users
-         }
-       }
-     }
+    changedate <- (NA %in% LicenseDates) # a chosen user has no license
+    if (!changedate) {
+      # no NA, but are any dates expired
+      for (a in LicenseDates) {
+        b <- as.Date(a, origin = "1970-01-01")
+        if (b < Sys.Date()) {
+          # expired subscription
+          changedate <- TRUE
+          break # no need to check other users
+        }
+      }
+    }
   }
 
   if (changedate) {

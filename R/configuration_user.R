@@ -444,11 +444,18 @@ userconfig.insert <- function(dMeasure_obj, description) {
   }
 
   # create empty entries for description, if necessary
-  for (x in c("AuthIdentity", "Location", "Attributes", "Password",
-              "License", "LicenseCheckDate")) {
+  for (x in c("AuthIdentity", "Location", "Attributes")) {
     if (is.null(description[[x]])) {
       description[[x]] <- ""
       # if named field not present, add empty string
+    }
+  }
+
+  # create NA entries for description, if necessary
+  for (x in c("Password", "License", "LicenseCheckDate")) {
+    if (is.null(description[[x]])) {
+      description[[x]] <- NA
+      # if named field not present, set to NA
     }
   }
 
@@ -572,7 +579,8 @@ userconfig.update <- function(dMeasure_obj, description) {
   # the 'old' configuration
   description$id <- old_description$id # need to copy the id
 
-  # copy entries from existing description, as necessary
+
+  # create empty entries for description, if necessary
   for (x in c("AuthIdentity", "Location", "Attributes", "Password",
               "License", "LicenseCheckDate")) {
     if (is.null(description[[x]])) {
@@ -656,7 +664,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to change/delete user configuration.")))
 
-  UserConfigRow <- private$.UserConfig %>>% dplyr::collect() %>>%
+  UserConfigRow <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
 
@@ -664,7 +672,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
     stop(paste0("'", description$Fullname, "' not a configured user."))
   }
 
-  proposed_UserConfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+  proposed_UserConfig <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::filter(Fullname != description$Fullname)
 
   # this is the proposed user configuration
