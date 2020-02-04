@@ -516,7 +516,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
-  return(self$UserConfig)
+  return(self$UserConfigLicense)
 
 })
 
@@ -573,15 +573,15 @@ userconfig.update <- function(dMeasure_obj, description) {
     stop("This user is not configured")
   }
 
-  old_description <- private$.UserConfig %>>% dplyr::collect() %>>%
+  old_description <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
     tail(1) # in case there is more than one match, remove the last one
-  # the 'old' configuration
+  # the 'old' configuration for the selected user
   description$id <- old_description$id # need to copy the id
 
 
   # create empty entries for description, if necessary
-  for (x in c("AuthIdentity", "Location", "Attributes", "Password",
+  for (x in c("AuthIdentity", "Location", "Attributes",
               "License", "LicenseCheckDate")) {
     if (is.null(description[[x]])) {
       description[[x]] <- old_description[[x]]
@@ -605,7 +605,9 @@ userconfig.update <- function(dMeasure_obj, description) {
                         "- Unable to update this user description"))
            })
 
-  proposed_UserConfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+  proposed_UserConfig <- self$UserConfig %>>% dplyr::collect() %>>%
+    dplyr::select("id", "Fullname", "AuthIdentity", "Location", "Attributes",
+                  "License", "LicenseCheckDate")
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
@@ -636,7 +638,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
-  return(self$UserConfig)
+  return(self$UserConfigLicense)
 })
 
 #' userconfig.delete
@@ -695,7 +697,7 @@ userconfig.delete <- function(dMeasure_obj, description) {
 
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
-  return(self$UserConfig)
+  return(self$UserConfigLicense)
 })
 
 #' userconfig.list
