@@ -607,7 +607,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   proposed_UserConfig <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::select("id", "Fullname", "AuthIdentity", "Location", "Attributes",
-                  "License", "LicenseCheckDate")
+                  "License", "LicenseCheckDate") %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
