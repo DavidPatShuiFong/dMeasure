@@ -1870,29 +1870,45 @@ initialize_emr_tables <- function(dMeasure_obj,
                                                FUN.VALUE = character(1),
                                                USE.NAMES = FALSE), "::",
                                         Fullname, "::")) %>>%
-      dplyr::mutate(LicenseDate = as.Date(
-        # decrypt License
-        mapply(function(y,z) {
-          if (is.na(y)) { # if NA for License
-            NA # remain unchanged
-          } else { # otherwise decode
-            zzz <- simple_decode(y, "karibuni") # this could return NULL if not valid
-            if (!is.null(zzz) && substr(zzz, 1, nchar(z)) == z) {
-              # left side of decrypted license must equal the Identifier
-              substring(zzz, nchar(z) + 1)
-              # converts decrypted License (right side of string)
-              # keep remainder of string, and convert to date
-            } else {
-              NA
-              # invalid new license
-            }
-          }
-        }, License, Identifier),
-        origin = "1970-01-01"))
+      dplyr::mutate(LicenseDate =
+                      # decrypt License
+                      as.Date(mapply(function(y,z) {
+                        dMeasure::verify_license(y, z)
+                      }, License, Identifier), origin = "1970-01-01"))
   }
 
   return(UserFullConfig)
 })
+
+#' verify license/subscription
+#'
+#' Location is used in subsequent list of clinicians available
+#'
+#' @param License an encoded character string
+#' @param Identifier a character string
+#'
+#' @return a date object 'LicenseDate'.
+#'
+#' @export
+verify_license <- function(License, Identifier) {
+
+  if (is.na(License)) { # if NA for License
+    LicenseDate <- NA # remain unchanged
+  } else { # otherwise decode
+    zzz <- simple_decode(License, "karibuni") # this could return NULL if not valid
+    if (!is.null(zzz) && substr(zzz, 1, nchar(Identifier)) == Identifier) {
+      # left side of decrypted license must equal the Identifier
+      LicenseDate <- substring(zzz, nchar(Identifier) + 1)
+      # converts decrypted License (right side of string)
+      # keep remainder of string, and convert to date
+    } else {
+      LicenseDate <- NA
+      # invalid new license
+    }
+  }
+
+  return(as.Date(LicenseDate, origin = "1970-01-01"))
+}
 
 ##### location #####################################
 

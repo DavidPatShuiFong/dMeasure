@@ -4,8 +4,13 @@
 \alias{check_subscription}
 \title{check the subscription database}
 \usage{
-check_subscription(dMeasure_obj, clinicians = NA, date_from = NA,
-  date_to = NA, adjustedate = TRUE)
+check_subscription(
+  dMeasure_obj,
+  clinicians = NA,
+  date_from = NA,
+  date_to = NA,
+  adjustedate = TRUE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}

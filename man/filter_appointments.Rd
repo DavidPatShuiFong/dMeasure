@@ -4,8 +4,13 @@
 \alias{filter_appointments}
 \title{List of appointments}
 \usage{
-filter_appointments(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, status = NA)
+filter_appointments(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  status = NA
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
