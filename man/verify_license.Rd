@@ -12,7 +12,7 @@ verify_license(License, Identifier)
 \item{Identifier}{a character string}
 }
 \value{
-a date object 'LicenseDate'.
+a date object 'LicenseDate'. returns NA if not valid
 }
 \description{
 Location is used in subsequent list of clinicians available

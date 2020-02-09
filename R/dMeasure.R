@@ -1002,12 +1002,11 @@ read_subscription_db <- function(dMeasure_obj,
                               self$userconfig.insert(list(Fullname = x))
                             }
                             # update the license
-                            query <- paste("UPDATE Users SET License = ? WHERE Fullname = ?")
-                            data_for_sql <- as.list.data.frame(c(z, x))
-                            self$config_db$dbSendQuery(query, data_for_sql)
-                            # if the connection is a pool, can't send write query (a statement) directly
-                            # so use the object's method
-                            z # NewLicsne
+                            self$update_subscription(Fullname = Fullname,
+                                                     License = License,
+                                                     verify = FALSE)
+                            # not verified at this stage
+                            z # NewLicence
                           }
                         }, Fullname, License, NewLicense))
 
@@ -1022,6 +1021,47 @@ read_subscription_db <- function(dMeasure_obj,
     warning("Unable to access subscription features (missing database module 'RMariaDB')")
   }
 })
+
+#' Update subscription database
+#'
+#' @param dMeasure_obj dMeasure object
+#' @param Fullname name of the user to change license
+#' @param License the (undecoded) license string
+#' @param Identifier the identifier of the user
+#' @param verify verify before changing
+#'
+#' @return TRUE if license written, FALSE if not
+#'  only meaningful if Verify is TRUE, in which case
+#'  FALSE indicates the license was not valid
+update_subscription <- function(dMeasure_obj,
+                                Fullname = NA,
+                                License = NA,
+                                Identifier = NA,
+                                verify = TRUE) {
+  dMeasure_obj$update_subscription(Fullname, License, Identifier,
+                                   verify)
+}
+.public(dMeasure, "update_subscription", function(Fullname = NA,
+                                                  License = NA,
+                                                  Identifier = NA,
+                                                  verify = TRUE) {
+
+  if (verify) {
+    verified <- !is.na(dMeasure::verify_license(License, Identifier))
+    # verify_license returns NA if not a valid license
+  }
+  if (!verify || verified ) {
+    # either no verification required, or is verified
+    query <- paste("UPDATE Users SET License = ? WHERE Fullname = ?")
+    data_for_sql <- as.list.data.frame(c(License, Fullname))
+    self$config_db$dbSendQuery(query, data_for_sql)
+    # if the connection is a pool,
+    # can't send write query (a statement) directly
+    # so use the object's method
+  }
+
+})
+
 
 #' check the subscription database
 #'
@@ -1887,7 +1927,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #' @param License an encoded character string
 #' @param Identifier a character string
 #'
-#' @return a date object 'LicenseDate'.
+#' @return a date object 'LicenseDate'. returns NA if not valid
 #'
 #' @export
 verify_license <- function(License, Identifier) {
@@ -1896,7 +1936,7 @@ verify_license <- function(License, Identifier) {
     LicenseDate <- NA # remain unchanged
   } else { # otherwise decode
     zzz <- simple_decode(License, "karibuni") # this could return NULL if not valid
-    if (!is.null(zzz) && substr(zzz, 1, nchar(Identifier)) == Identifier) {
+    if (!is.na(zzz) && substr(zzz, 1, nchar(Identifier)) == Identifier) {
       # left side of decrypted license must equal the Identifier
       LicenseDate <- substring(zzz, nchar(Identifier) + 1)
       # converts decrypted License (right side of string)

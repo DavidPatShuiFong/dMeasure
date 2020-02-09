@@ -19,7 +19,7 @@ simple_decode(msg, key = NULL, nonce = NULL)
   returns NA for elements of msg which are NA, or "" empty string.
   note that simple_encode will ENCRYPT an empty string "".
 
-  returns NULL if failure to decode e.g. invalid base64 decode
+  returns NA if failure to decode e.g. invalid base64 decode
 }
 \description{
 Simple decoder of text strings, will output a text string.

@@ -4,7 +4,8 @@
 \alias{open_emr_db}
 \title{opens the EMR database}
 \usage{
-open_emr_db(dMeasure_obj, BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice)
+open_emr_db(dMeasure_obj,
+  BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}

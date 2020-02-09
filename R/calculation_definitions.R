@@ -288,7 +288,7 @@ simple_encode_base64 <- function(msg, key = NULL, nonce = NULL) {
 #'   returns NA for elements of msg which are NA, or "" empty string.
 #'   note that simple_encode will ENCRYPT an empty string "".
 #'
-#'   returns NULL if failure to decode e.g. invalid base64 decode
+#'   returns NA if failure to decode e.g. invalid base64 decode
 #'
 #' @export
 simple_decode <- function(msg, key = NULL, nonce = NULL) {
@@ -324,8 +324,8 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
                              # paste converts the '\\' back into '\'
                              FUN.VALUE = character(1),
                              USE.NAMES = FALSE),
-                      error = function(e) NULL,
-                      warning = function(e) NULL)
+                      error = function(e) as.character(NA),
+                      warning = function(e) as.character(NA))
 
   return(decoded)
 }
