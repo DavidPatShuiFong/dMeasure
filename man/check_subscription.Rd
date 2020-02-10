@@ -16,7 +16,10 @@ check_subscription(dMeasure_obj, clinicians = NA, date_from = NA,
 
 \item{date_to}{date to, by default $date_b}
 
-\item{adjustdate}{will this function change the dates? ($date_a, $date_b)}
+\item{adjustdate}{will this function change the dates? ($date_a, $date_b)
+
+if the date is adjusted then reactive $check_subscription_datechange_trigR
+is triggered}
 }
 \value{
 a list $changedate, $date_from, $date_to

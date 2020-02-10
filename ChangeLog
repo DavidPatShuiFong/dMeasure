@@ -10,6 +10,7 @@ New
 *  self$subscription_db provides access to subscription servers (when open)
 *  self$read_subscription_db to read subscription information
 *  self$check_subscription to check subscription and date range
+*   can 'trigger' self$check_subscription_datechange_trigR
 *  self$UserConfigLicense and $UserConfigLicenseR - similar to $UserConfig, includes $LicenseDate and $Identifier
 
 Changes

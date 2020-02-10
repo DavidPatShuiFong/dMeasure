@@ -1062,7 +1062,6 @@ update_subscription <- function(dMeasure_obj,
 
 })
 
-
 #' check the subscription database
 #'
 #' @param dMeasure_obj dMeasure object
@@ -1070,6 +1069,9 @@ update_subscription <- function(dMeasure_obj,
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
 #' @param adjustdate will this function change the dates? ($date_a, $date_b)
+#'
+#' if the date is adjusted then reactive $check_subscription_datechange_trigR
+#' is triggered
 #'
 #' @return a list $changedate, $date_from, $date_to
 #'  $changedate (TRUE/FALSE), and the (possibly) adjusted dates
@@ -1136,14 +1138,13 @@ check_subscription <- function(dMeasure_obj,
       if (adjustdate) {
         # change the dates
         self$choose_date(date_from, date_to)
+        private$trigger(self$check_subscription_datechange_trigR)
       }
     }
   }
-
   return(list(changedate = changedate, date_from = date_from, date_to = date_to))
-
 })
-
+.reactive(dMeasure, "check_subscription_datechange_trigR", 0)
 
 ##### User login ##################################################
 
