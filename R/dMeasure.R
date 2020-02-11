@@ -573,6 +573,17 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       #  TCP - 54968  : BP Dynamic - SQL Express
       #  UDP - 137    : File & Print Sharing - Subnet
       #  UDP - 1434   : SQL Browser - Scope Sensitive
+      #
+      # additional firewall recommendations on Microsoft SQL docs
+      #  https://docs.microsoft.com/en-us/sql/sql-server/install/
+      #  configure-the-windows-firewall-to-allow-sql-server-access?view=sql-server-ver15
+      #
+      #  TCP - 135, 1433, 1434, 4022
+      #  UDP - 1434
+      #
+      #  dynamic ports - Windows Firewall Advanced Security
+      #   inbound rules - Rule type - Program
+      #   e.g. C:\Program Files\Microsoft SQL Server\MSSQL12.BPSINSTANCE\Binn\sqlservr
     }
 
     if (!self$emr_db$is_open() || !DBI::dbIsValid(self$emr_db$conn())) {
