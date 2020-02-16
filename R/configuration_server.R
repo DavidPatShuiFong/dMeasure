@@ -101,6 +101,7 @@ server.insert <- function(dMeasure_obj, description) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
+#'
 #'  any of $Name, $Address, $Database, $UserID and/or $dbPassword can
 #'  be defined
 #'
@@ -289,9 +290,14 @@ server.permission <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "server.permission", function() {
-  if ("ServerAdmin" %in% unlist(private$UserRestrictions$Restriction)) {
+  if ("ServerAdmin" %in% self$userrestriction.list()) {
     # only some users allowed to see/change server settings
-    if ("ServerAdmin" %in% unlist(private$.identified_user$Attributes) &
+    if ("ServerAdmin" %in% (self$UserConfig %>>%
+                            dplyr::filter(Fullname ==
+                                          paste(self$.identified_user$Fullname,
+                                                collapse = "")) %>>%
+                            # paste with collapse = "" changes character(0) to ""
+                            dplyr::pull(Attributes) %>>% unlist()) &&
         self$authenticated == TRUE) {
       permission <- TRUE
     } else {

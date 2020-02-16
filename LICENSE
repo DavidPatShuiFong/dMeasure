@@ -82,3 +82,7 @@ GPL-3
 shiny (optional 'suggests' package)
 https://github.com/rstudio/shiny
 licensing details in LICENSE.shiny
+
+RMariaDB (optional 'suggests' package)
+https://github.com/r-dbi/RMariaDB/
+licensing details in LICENSE.GPL3

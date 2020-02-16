@@ -17,11 +17,11 @@ list_fobt(dMeasure_obj, date_from = NA, date_to = NA,
 
 \item{clinicians}{list of clinicians (default $clinicians)}
 
-\item{appointments_list}{dataframe, list of appointments to search
+\item{appointments_list}{dataframe, list of appointments to search.
 
- if not provided, use $appointments_list
+if not provided, use $appointments_list.
 
- needs fields Age, InternalID}
+needs fields Age, InternalID}
 
 \item{lazy}{recalculate an appointment list}
 
