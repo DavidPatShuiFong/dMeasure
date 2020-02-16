@@ -1072,6 +1072,9 @@ update_subscription <- function(dMeasure_obj,
     # if the connection is a pool,
     # can't send write query (a statement) directly
     # so use the object's method
+    return(TRUE)
+  } else {
+    return(FALSE)
   }
 
 })
@@ -1937,8 +1940,6 @@ initialize_emr_tables <- function(dMeasure_obj,
 })
 
 #' verify license/subscription
-#'
-#' Location is used in subsequent list of clinicians available
 #'
 #' @param License an encoded character string
 #' @param Identifier a character string
