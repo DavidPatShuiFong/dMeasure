@@ -15,5 +15,5 @@ verify_license(License, Identifier)
 a date object 'LicenseDate'. returns NA if not valid
 }
 \description{
-Location is used in subsequent list of clinicians available
+verify license/subscription
 }
