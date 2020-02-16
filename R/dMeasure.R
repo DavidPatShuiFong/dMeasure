@@ -968,10 +968,10 @@ read_subscription_db <- function(dMeasure_obj,
 
       a <- a %>>%
         dplyr::mutate(LicenseCheck =
-                        (forcecheck || is.na(LicenseCheckDate) || LicenseCheckDate != Sys.Date()) &&
+                        (forcecheck | is.na(LicenseCheckDate) | LicenseCheckDate != Sys.Date()) &
                         # if forcecheck == TRUE, then check even if already checked today
                         # otherewise, skip checking if already checked today
-                        (is.na(LicenseDate) ||
+                        (is.na(LicenseDate) |
                            # check if no valid license expiry
                            # or license is expiring soon
                            LicenseDate < (Sys.Date() + 60)))
@@ -998,9 +998,10 @@ read_subscription_db <- function(dMeasure_obj,
             } else {
               y
             }
-          }, LicenseCheck, LicenseCheckDate), origin = "1970-01-01")) %>>%
+          }, LicenseCheck, LicenseCheckDate,
+          USE.NAMES = FALSE), origin = "1970-01-01")) %>>%
         dplyr::mutate(License =
-                        mapply(function(x, y, z) {
+                        mapply(function(x, y, z, zz) {
                           if (is.na(z)) {
                             y # no new expiry date, 'License'
                           } else {
@@ -1013,13 +1014,15 @@ read_subscription_db <- function(dMeasure_obj,
                               self$userconfig.insert(list(Fullname = x))
                             }
                             # update the license
-                            self$update_subscription(Fullname = Fullname,
-                                                     License = License,
+                            self$update_subscription(Fullname = x,
+                                                     License = z, # new license
+                                                     Identifier = zz,
                                                      verify = FALSE)
                             # not verified at this stage
                             z # NewLicence
                           }
-                        }, Fullname, License, NewLicense))
+                        }, Fullname, License, NewLicense, Identifier,
+                        USE.NAMES = FALSE))
 
       # close before exit
       self$subscription_db$close()
@@ -1926,7 +1929,8 @@ initialize_emr_tables <- function(dMeasure_obj,
                       # decrypt License
                       as.Date(mapply(function(y,z) {
                         dMeasure::verify_license(y, z)
-                      }, License, Identifier), origin = "1970-01-01"))
+                      }, License, Identifier, USE.NAMES = FALSE),
+                      origin = "1970-01-01"))
   }
 
   return(UserFullConfig)
