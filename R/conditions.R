@@ -804,6 +804,18 @@ postnatal_list <- function(dMeasure_obj, appointments = NULL,
     # just needs $InternalID and $Date
   }
 
+  if (nrow(appointments) == 0) {
+    # no apppointments to choose from!
+    # database might not even be open
+    # return an (empty) dataframe in the same shape as the expected return dataframe
+    return(appointments %>>%
+             dplyr::select(-c(Date)) %>>%
+             dplyr::mutate(EDCbyDate = as.Date(NA, origin = "1970-01-01"),
+                           EDCbyScan = as.Date(NA, origin = "1970-01-01"),
+                           EndDate = as.Date(NA, origin = "1970-01-01"),
+                           OutcomeCode = as.numeric(NA)))
+  }
+
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
