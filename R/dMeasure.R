@@ -107,8 +107,26 @@ dMeasure <-
     self$config_db$close()
 
     # empty the configuration fields
-    private$.BPdatabase <- private$BPdatabase[0,]
+    private$.BPdatabase <- BPdatabase_empty
     private$.BPdatabaseChoice <- "None"
+
+    private$PracticeLocations <- data.frame(id = numeric(),
+                                            Name = character(),
+                                            Description = character())
+    invisible(self$location_list)
+    # $location_list() will refresh the reactive location_listR if available
+
+    private$.UserConfig <- UserConfig_empty
+    invisible(self$UserConfig) # this will also set $userConfigR reactive version
+
+    private$.UserRestrictions <- data.frame(uid = integer(),
+                                            Restriction = character(),
+                                            stringsAsFactors = FALSE)
+    private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
+
+    invisible(self$.identified_user)
+    # see if 'identified' system user is matched with a configured user
+
   }
   if (self$emr_db$is_open()) {
     if (self$emr_db$keep_log) { # if currently logging
@@ -190,40 +208,90 @@ configuration_file_path <- function(dMeasure_obj, value) {
 }
 .active(dMeasure, "configuration_file_path", function (filepath) {
 
+  if (missing(filepath)) {
+    # reads configuration file (if it exists)
+    private$local_config <- self$configuration_file_yaml
+    self$sql_config_filepath <- private$local_config$config_file
+  } else {
+    self$close() # close any open database connections
+    self$sql_config_filepath <- filepath # set the new config filepath
+
+    self$configuration_file_yaml <- filepath # write to YAML file
+  }
+
+  private$set_reactive(self$configuration_file_pathR, self$sql_config_filepath)
+  return(self$sql_config_filepath)
+})
+.reactive(dMeasure, "configuration_file_pathR", NULL)
+
+#' read (or set) configuration filepath in YAML
+#'
+#' By default, the YAML configuration is either in the working
+#' directory (where a local installation of R lives),
+#' or the user's home directory
+#'
+#' '~/.DailyMeasure_cfg.yaml'
+#'
+#' this method will read or write the .sqlite filepath
+#' to the YAML configuration file. If already
+#' existing might contain the 'real' location of the $sql_config_filepath
+#'
+#' Does not change the configuration file used by
+#' the current dM object.
+#'
+#' returns the SQL filepath
+#'
+#' @name configuration_file_yaml
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param value (opt) filepath to set
+#'
+#' @return local_config
+#'  $config_file : SQL filepath (only returned if no 'value' provided)
+#'
+#' @export
+configuration_file_yaml <- function(dMeasure_obj, value) {
+  if (missing(value)) {
+    return(dMeasure_obj$configuration_file_yaml)
+  } else {
+    dMeasure_obj$configuration_file_yaml <- value
+  }
+}
+.active(dMeasure, "configuration_file_yaml", function (filepath) {
+
   self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
   # the location the of the '.yaml' configuration file
   # always in the user's home directory
   if (!missing(filepath)) {
     # the 'new' configuration filepath is being set
-    self$close() # close any open database connections
-    self$sql_config_filepath <- filepath # set the new config filepath
+    sql_config_filepath <- filepath # set the new config filepath
 
-    private$local_config <- list()
-    private$local_config$config_file <- self$sql_config_filepath
+    local_config <- list()
+    local_config$config_file <- sql_config_filepath
     # main configuration file, could (potentially) be set to 'common location'
   } else {
     # no configuration filepath has been provided
     # read the old configuration filepath, or create one
     if (configr::is.yaml.file(self$yaml_config_filepath)) {
       # if config file exists and is a YAML-type file
-      private$local_config <- configr::read.config(self$yaml_config_filepath)
-      self$sql_config_filepath <- private$local_config$config_file
+      local_config <- configr::read.config(self$yaml_config_filepath)
+      sql_config_filepath <- local_config$config_file
       # config in local location
     } else {
       # local config file does not exist. possibly first-run
       if (grepl("Program Files", normalizePath(R.home()))) {
         # this is a system-wide install
-        self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+        sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
         # store in user's home directory
       } else {
         # this is a 'local' user install, not a system-wide install
         # e.g. C:/Users/MyName/AppData/Programs/...
         # as opposed to 'C:/Program Files/...'
-        self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
+        sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
         # this file can be stored in the AppData folder, out of sight of the user
       }
-      private$local_config <- list()
-      private$local_config$config_file <- self$sql_config_filepath
+      local_config <- list()
+      local_config$config_file <- self$sql_config_filepath
       # main configuration file, could (potentially) be set to 'common location'
     }
   }
@@ -233,17 +301,14 @@ configuration_file_path <- function(dMeasure_obj, value) {
     # either there is no .YAML configuration file,
     # or the .sqlite filepath has been changed
     configr::write.config(
-      private$local_config,
+      local_config,
       file.path = self$yaml_config_filepath,
       write.type = "yaml"
     )
   }
 
-  private$set_reactive(self$configuration_file_pathR, self$sql_config_filepath)
-
-  return(self$sql_config_filepath)
+  return(local_config)
 })
-.reactive(dMeasure, "configuration_file_pathR", NULL)
 
 ##### Configuration details - databases, locations, users ###########
 
@@ -262,13 +327,14 @@ configuration_file_path <- function(dMeasure_obj, value) {
 #  1. vkelim.3322.org and 2. vkelim.dsmynas.com
 #  port 3306, username = "guest", password - not required, dbname = "DailyMeasureUsers"
 
-.private(dMeasure, ".BPdatabase", data.frame(id = integer(),
-                                             Name = character(),
-                                             Address = character(),
-                                             Database = character(),
-                                             UserID = character(),
-                                             dbPassword = character(),
-                                             stringsAsFactors = FALSE))
+BPdatabase_empty <- data.frame(id = integer(),
+                               Name = character(),
+                               Address = character(),
+                               Database = character(),
+                               UserID = character(),
+                               dbPassword = character(),
+                               stringsAsFactors = FALSE)
+.private(dMeasure, ".BPdatabase", BPdatabase_empty)
 #' show database configurations
 #'
 #' @name BPdatabase
@@ -349,16 +415,17 @@ BPdatabaseNames <- function(dMeasure_obj) {
 # id needed for editing this dataframe later
 # need default value for practice location filter
 # interface initialization
-.private(dMeasure, ".UserConfig", data.frame(id = integer(),
-                                             Fullname = character(),
-                                             AuthIdentity = character(),
-                                             Location = character(),
-                                             Attributes = character(),
-                                             Password = character(),
-                                             License = character(),
-                                             LicenseCheckDate = as.Date(numeric(0),
-                                                                        origin = "1970-01-01"),
-                                             stringsAsFactors = FALSE))
+UserConfig_empty <- data.frame(id = integer(),
+                               Fullname = character(),
+                               AuthIdentity = character(),
+                               Location = character(),
+                               Attributes = character(),
+                               Password = character(),
+                               License = character(),
+                               LicenseCheckDate = as.Date(numeric(0),
+                                                          origin = "1970-01-01"),
+                               stringsAsFactors = FALSE)
+.private(dMeasure, ".UserConfig", UserConfig_empty)
 #' show user configurations
 #'
 #' @name UserConfig
