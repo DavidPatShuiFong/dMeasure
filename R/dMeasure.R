@@ -281,13 +281,13 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
       # local config file does not exist. possibly first-run
       if (grepl("Program Files", normalizePath(R.home()))) {
         # this is a system-wide install
-        sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
         # store in user's home directory
       } else {
         # this is a 'local' user install, not a system-wide install
         # e.g. C:/Users/MyName/AppData/Programs/...
         # as opposed to 'C:/Program Files/...'
-        sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
         # this file can be stored in the AppData folder, out of sight of the user
       }
       local_config <- list()
