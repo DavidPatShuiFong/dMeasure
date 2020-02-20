@@ -1,5 +1,12 @@
 Changelog
 
+0.9.2 - 20th February 2020
+==========================
+
+Fixes
+
+* self$UserFullConfig fix if self$db$users empty
+
 0.9.1 - 19th February 2020
 =========================
 
