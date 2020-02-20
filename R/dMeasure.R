@@ -1968,7 +1968,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   if (is.null(self$db$users)) {
     UserFullConfig <- self$UserConfig %>>%
-      dplyr::mutate(Identifier = character(0),
+      dplyr::mutate(Identifier = as.character(NA),
                     LicenseDate = as.Date(NA, origin = "1970-01-01"))
     # just the .UserConfig except the passwords
     # mutate to the same shape even if database is not open
