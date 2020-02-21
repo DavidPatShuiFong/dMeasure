@@ -11,6 +11,9 @@ initialize_emr_tables(dMeasure_obj, emr_db = dMeasure_obj$emr_db)
 
 \item{emr_db}{R6 object connecting to EMR database}
 }
+\value{
+none
+}
 \description{
 initialize the tables of the EMR database
 }

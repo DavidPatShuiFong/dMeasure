@@ -21,13 +21,13 @@ user_login <- function(dMeasure_obj, password) {
 }
 
 .public(dMeasure, "user_login", function(password) {
-  if (is.null(private$.identified_user)) {
+  if (is.null(self$.identified_user)) {
     stop("No user identified!")
   }
   if (self$empty_password()) {
     stop("No password set for currently identified user!")
   }
-  if (!dMeasure::simple_tag_compare(password, private$.identified_user$Password)) {
+  if (!dMeasure::simple_tag_compare(password, self$.identified_user$Password)) {
     stop("Wrong password")
   } else {
     self$authenticated <- TRUE
@@ -50,10 +50,10 @@ empty_password <- function(dMeasure_obj) {
   # returns true if password for identified user is not defined, or empty
   # this is used by Dailymeasure to prompt for a password to be set
   empty = FALSE
-  if (is.null(private$.identified_user$Password) || # NULL
-      is.na(private$.identified_user$Password) || # NA
-      length(private$.identified_user$Password) == 0 || # integer(0)
-      nchar(private$.identified_user$Password) == 0) { # empty string
+  if (is.null(self$.identified_user$Password) || # NULL
+      is.na(self$.identified_user$Password) || # NA
+      length(self$.identified_user$Password) == 0 || # integer(0)
+      nchar(self$.identified_user$Password) == 0) { # empty string
     empty = TRUE
   }
   return(empty)
@@ -72,8 +72,8 @@ user_logout <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "user_logout", function() {
-  if (is.null(private$.identified_user) ||
-      nrow(private$.identified_user) == 0) {
+  if (is.null(self$.identified_user %>>% dplyr::collect()) ||
+      nrow(self$.identified_user %>>% dplyr::collect()) == 0) {
     # no identified user
   } else if (self$authenticated == FALSE) {
     # user not authetnicated
@@ -92,14 +92,7 @@ user_logout <- function(dMeasure_obj) {
   # encode (actually 'tag') the password, if not an empty string
   # tagging (hash) defined in calculation_definitions.R
 
-  private$.UserConfig <-
-    private$.UserConfig %>>%
-    dplyr::mutate(Password =
-                    replace(Password,
-                            name == Fullname,
-                            newpassword))
   # replace password
-
   id <- private$.UserConfig %>>%
     dplyr::filter(Fullname == name) %>>%
     dplyr::pull(id)
@@ -126,13 +119,19 @@ user_logout <- function(dMeasure_obj) {
 #'
 #' @return TRUE if password is successfully set
 #' otherwise, stops with error
+#' @examples
+#' \dontrun{
+#' a <- dMeasure::dMeasure::new()
+#' a$open_emr_db()
+#' a$password.set(newpassword = "catsrule", oldpassword = "bluewhale")
+#' }
 #' @export
 password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   dMeasure_obj$password.set(newpassword, oldpassword)
 }
 
 .public(dMeasure, "password.set", function(newpassword, oldpassword = NULL) {
-  if (is.null(private$.identified_user)) {
+  if (is.null(self$.identified_user)) {
     stop("No user identified!")
   }
 
@@ -152,16 +151,16 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   if (self$empty_password()) {
     # no password yet set for currently identified user,
     # so just accept the 'newpassword'
-    private$change_password(private$.identified_user$Fullname, newpassword)
-    # change private$.UserConfig and SQLite configuration database
+    private$change_password(self$.identified_user$Fullname, newpassword)
+    # change SQLite configuration database
     self$authenticated <- TRUE
   } else {
     # there is an old password, which needs to be compared with 'oldpassword'
-    if (!dMeasure::simple_tag_compare(oldpassword, private$.identified_user$Password)) {
+    if (!dMeasure::simple_tag_compare(oldpassword, self$.identified_user$Password)) {
       stop("Old password incorrect")
     } else {
       # old password specified correctly
-      private$change_password(private$.identified_user$Fullname, newpassword)
+      private$change_password(self$.identified_user$Fullname, newpassword)
       # change private$.UserConfig and SQLite configuration database
       self$authenticated <- TRUE
     }
@@ -195,15 +194,15 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
              stop(paste(w,
                         "'UserAdmin' permission required to reset/edit other passwords.")))
 
-  if (!(user %in% private$.UserConfig$Fullname)) {
+  if (!(user %in% self$UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")
   }
 
-  if (length(private$.identified_user$Fullname) == 0) {
+  if (length(self$.identified_user$Fullname) == 0) {
     stop("You are not logged in as an identified user.")
   }
 
-  if (user == private$.identified_user$Fullname) {
+  if (user == self$.identified_user$Fullname) {
     stop("Can't remove/reset your own password!")
   }
 
@@ -215,7 +214,7 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
   }
 
   private$change_password(user, newpassword)
-  # change private$.UserConfig and SQLite configuration database
+  # change SQLite configuration database
 
   invisible(self)
 })

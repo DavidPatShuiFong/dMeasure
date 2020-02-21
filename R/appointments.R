@@ -10,42 +10,47 @@ NULL
 ##### Appointments_filtered #########################################
 
 ## Fields
-.public(dMeasure, "appointments_filtered",
-        data.frame(Patient = character(), InternalID = integer(),
-                   AppointmentDate = as.Date(integer(0),
-                                             origin = "1970-01-01"),
-                   AppointmentTime = character(),
-                   Provider = character(), Status = character()))
+appointments_filtered_empty <-
+  data.frame(Patient = character(), InternalID = integer(),
+             AppointmentDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+             AppointmentTime = character(),
+             Provider = character(), Status = character())
+
+.public(dMeasure, "appointments_filtered", appointments_filtered_empty)
 # filtered by chosen dates and clinicians
 
-.public(dMeasure, "appointments_filtered_time",
-        data.frame(Patient = character(), InternalID = integer(),
-                   AppointmentDate = as.Date(integer(0),
-                                             origin = "1970-01-01"),
-                   AppointmentTime = character(),
-                   Provider = character(), Status = character()))
+appointments_filtered_time_empty <-
+  data.frame(Patient = character(), InternalID = integer(),
+             AppointmentDate = as.Date(integer(0),
+                                       origin = "1970-01-01"),
+             AppointmentTime = character(),
+             Provider = character(), Status = character())
+.public(dMeasure, "appointments_filtered_time", appointments_filtered_time_empty)
 # times in more R (and visually) friendly format
 # requires appointments_filtered
 
-.public(dMeasure, "appointments_list",
-        data.frame(Patient = character(), InternalID = integer(),
-                   AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
-                   AppointmentTime = character(0), Provider = character(0),
-                   Status = character(0),
-                   DOB = as.Date(integer(0), origin = "1970-01-01"),
-                   Age = numeric())
-)
+appointments_list_empty <-
+  data.frame(Patient = character(), InternalID = integer(),
+             AppointmentDate = as.Date(integer(0), origin = "1970-01-01"),
+             AppointmentTime = character(0), Provider = character(0),
+             Status = character(0),
+             DOB = as.Date(integer(0), origin = "1970-01-01"),
+             Age = numeric())
+
+.public(dMeasure, "appointments_list", appointments_list_empty)
+
 # add date of birth to appointments list
 # requires appointments_filtered_time
 
-.public(dMeasure, "visits_list",
-        data.frame(Patient = character(), InternalID = integer(),
-                   VisitDate = as.Date(integer(0), origin = "1970-01-01"),
-                   VisitType = character(0),
-                   Provider = character(0),
-                   DOB = as.Date(integer(0), origin = "1970-01-01"),
-                   Age = numeric())
-)
+visits_list_empty <-
+  data.frame(Patient = character(), InternalID = integer(),
+             VisitDate = as.Date(integer(0), origin = "1970-01-01"),
+             VisitType = character(0),
+             Provider = character(0),
+             DOB = as.Date(integer(0), origin = "1970-01-01"),
+             Age = numeric())
+.public(dMeasure, "visits_list", visits_list_empty)
 
 ## Methods
 
@@ -122,6 +127,8 @@ filter_appointments <- function(dMeasure_obj,
             # this reactive is not "collect()"ed because it is joined to other
             # filtered database lists prior to 'collection'
             if (self$Log) {self$config_db$duration_log_db(log_id)}
+          } else {
+            self$appointments_filtered <- appointments_filtered_empty
           }
 
           return(self$appointments_filtered)
@@ -198,6 +205,8 @@ filter_appointments_time <- function(dMeasure_obj,
               dplyr::mutate(AppointmentTime = dMeasure::hrmin(AppointmentTime),
                             AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>>%
               dplyr::arrange(AppointmentDate, AppointmentTime)
+          } else {
+            self$appointments_filtered_time <- appointments_filtered_time_empty
           }
 
           return(self$appointments_filtered_time)
@@ -277,6 +286,8 @@ list_appointments <- function(dMeasure_obj,
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, AppointmentDate))
 
+          } else {
+            self$appointments_list <- appointments_list_empty
           }
           return(self$appointments_list)
         })
@@ -364,6 +375,8 @@ list_visits <- function(dMeasure_obj,
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, VisitDate))
 
+          } else {
+            self$visits_list <- visits_list_empty
           }
           return(self$visits_list)
         })

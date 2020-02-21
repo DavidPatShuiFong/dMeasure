@@ -98,10 +98,10 @@ list_allergy <- function(dMeasure_obj,
         dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider, DOB, Age, Created, KnownAllergies) %>>%
         dplyr::summarise(reaction_string = paste(reaction_string, collapse = "<br>")) %>>%
         dplyr::ungroup()} else {.}} %>>%
-    {if (qualitytag_print)
-    {dplyr::mutate(., reaction_string = paste2(ItemName,
-                                               paste2(Reaction, Severity, Comment, sep = " - ", na.rm = TRUE),
-                                               sep = " : ", na.rm = TRUE))} else {.}}
+        {if (qualitytag_print)
+        {dplyr::mutate(., reaction_string = paste2(ItemName,
+                                                   paste2(Reaction, Severity, Comment, sep = " - ", na.rm = TRUE),
+                                                   sep = " : ", na.rm = TRUE))} else {.}}
 
   if (qualitytag) {
     allergy_list <- allergy_list %>>%
@@ -236,17 +236,17 @@ list_socialHx <- function(dMeasure_obj,
                                              # force to empty string if NULL/NA
                                              "",
                                              paste0("Lives with ", LivesWith))) %>>%
-    {if (qualitytag)
-    {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
-                                               sep = ", ", na.rm = TRUE))}
-      else {.}} %>>%
+                                             {if (qualitytag)
+                                             {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+                                                                                        sep = ", ", na.rm = TRUE))}
+                                               else {.}} %>>%
     # paste2 changes NULL to empty string
     # there are other potential social history elements which could be included
     # from fields RETIRED, ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
-    {if (qualitytag_print)
-    {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
-                                               sep = ", ", na.rm = TRUE))}
-      else {.}}
+                                               {if (qualitytag_print)
+                                               {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+                                                                                          sep = ", ", na.rm = TRUE))}
+                                                 else {.}}
 
   if (qualitytag) {
     socialHx_list <- socialHx_list %>>%
@@ -523,38 +523,35 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
     vlist <- cbind(vlist, qualitytag_print = character())
   }
 
-  if ("Allergies" %in% chosen) {
-    vlist <- rbind(vlist, self$list_allergy(date_from, date_to, clinicians,
-                                            appointments_list,
-                                            lazy,
-                                            qualitytag, qualitytag_print))
+  if (nrow(appointments_list) > 0) { # only if there are appointments to search
+    # if nrow == 0, it is possible that the database is not even open!
+    if ("Allergies" %in% chosen) {
+      vlist <- rbind(vlist, self$list_allergy(date_from, date_to, clinicians,
+                                              appointments_list,
+                                              lazy,
+                                              qualitytag, qualitytag_print))}
+    if ("Social History" %in% chosen) {
+      vlist <- rbind(vlist, self$list_socialHx(date_from, date_to, clinicians,
+                                               appointments_list,
+                                               lazy,
+                                               qualitytag, qualitytag_print))}
+    if ("Family History" %in% chosen) {
+      vlist <- rbind(vlist, self$list_familyHx(date_from, date_to, clinicians,
+                                               appointments_list,
+                                               lazy,
+                                               qualitytag, qualitytag_print))}
   }
-
-  if ("Social History" %in% chosen) {
-    vlist <- rbind(vlist, self$list_socialHx(date_from, date_to, clinicians,
-                                             appointments_list,
-                                             lazy,
-                                             qualitytag, qualitytag_print))
-  }
-
-  if ("Family History" %in% chosen) {
-    vlist <- rbind(vlist, self$list_familyHx(date_from, date_to, clinicians,
-                                             appointments_list,
-                                             lazy,
-                                             qualitytag, qualitytag_print))
-  }
-
   if (nrow(vlist) > 0) {
     vlist <- vlist %>>%
       dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
                       DOB, Age) %>>%
       # gathers vaccination notifications on the same appointment into a single row
-      {if (qualitytag)
-      {dplyr::summarise(., qualitytag = paste(qualitytag, collapse = ""))}
-        else {.}} %>>%
-      {if (qualitytag_print)
-      {dplyr::summarise(., qualitytag_print = paste(qualitytag_print, collapse = ", "))}
-        else {.}} %>>%
+                      {if (qualitytag)
+                      {dplyr::summarise(., qualitytag = paste(qualitytag, collapse = ""))}
+                        else {.}} %>>%
+                        {if (qualitytag_print)
+                        {dplyr::summarise(., qualitytag_print = paste(qualitytag_print, collapse = ", "))}
+                          else {.}} %>>%
       dplyr::ungroup()
   }
 

@@ -1,5 +1,36 @@
 Changelog
 
+0.9.2 - 20th February 2020
+==========================
+
+Fixes
+
+* self$UserFullConfig fix if self$db$users empty
+
+0.9.1 - 19th February 2020
+=========================
+
+New
+
+* self$db$Practice provides access to dbo.PRACTICE
+* subscription changes
+*  self$subscription_db provides access to subscription servers (when open)
+*  self$read_subscription_db to read subscription information
+*  self$check_subscription to check subscription and date range
+*   can 'trigger' self$check_subscription_datechange_trigR
+*  self$UserConfigLicense and $UserConfigLicenseR - similar to $UserConfig, includes $LicenseDate and $Identifier
+
+Changes
+
+* private$.UserRestrictions does not collect() (delayed evaluation)
+* private$.UserConfig does not collect() (delayed evaluation)
+*  private$.UserConfig also does not 'unroll' Locations/Attributes
+* $UserConfig includes License, LicenseCheckDate
+* private$.identified_user changed to active (self$.identified_user)
+*  adopts functionality of match_user function
+* improved handling (emptying variables/tables) when databases closed
+   or configuration filepath changed
+
 0.8.2 - 24th December 2019
 ==========================
 

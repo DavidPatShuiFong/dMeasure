@@ -147,12 +147,95 @@ The most recent Best Practice database choice will be 'remembered' in the .sqlit
 a$close() # closes the database connections
 ```
 
-# Opening the Best Practice database connection, and appointment list examples
+# Opening the Best Practice database connection
 
 ```{r}
 a <- dMeasure::dMeasure$new()
 a$open_emr_db() # this will try to open the most recent database description choice, in this case, 'Main'
 ```
+
+# User configuration
+
+```{r}
+# a$UserConfig
+# shows user configuration as stored in dMeasure's configuration file
+DT::datatable(a$UserConfig,
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+```
+
+```{r}
+# a$UserConfigLicense
+# decodes the 'License'/(subscription) to a 'License (Expiry) Date'
+DT::datatable(a$UserConfigLicense,
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+```
+
+```{r}
+# a$UserFullConfig
+# shows user configuration
+# information combined from dMeasure's configuration file and the EMR (Best Practice) database
+# includes the 'decoded' license date
+DT::datatable(a$UserFullConfig,
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+```
+
+
+A 'manual entry' of subscription/license information can be done...
+
+```{r}
+DrIvorCureIdentifier <- 
+  a$UserFullConfig %>% dplyr::collect() %>%
+  dplyr::filter(Fullname == "Dr Ivor Cure") %>%
+  dplyr::pull(Identifier)
+```
+
+```{r}
+?dMeasure::verify_license
+dMeasure::verify_license(DrIvorCureIdentifier, License = "not_a_real_license")
+```
+
+```{r}
+?dMeasure::update_subscription
+a$update_subscription(Identifier = DrIvorCureIdentifier,
+                      License = "not_a_real_license", verify = TRUE)
+```
+
+The correct way to remove a subscription is to set to 'NA'
+
+```{r}
+a$update_subscription(Identifier = DrIvorCureIdentifier,
+                      Fullname = "Dr Ivor Cure",
+                      License = NA, verify = FALSE)
+
+DT::datatable(a$UserConfigLicense,
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+
+```
+
+Subscription information can be read from the GPstat!/DailyMeasure database.
+
+Note that reading the database will send (encrypted) details of the health care providers
+over the Internet. Those details are the names of the providers, and either the provider number
+or the name of the clinic.
+
+```{r}
+?dMeasure::read_subscription_db
+DT::datatable(a$read_subscription_db(forcecheck = TRUE),
+              extension = "Scroller",
+              options = list(scroller = TRUE, deferRender = TRUE,
+                             scrollX = TRUE, scrollY = 200))
+```
+
+
+# Appointment list examples
 
 By default, no clinicans are selected, and the date of searches will be the current date (in this case `r Sys.Date()`).
 

@@ -18,3 +18,8 @@ dataframe - full list of location descriptions
 \description{
 insert a new location description
 }
+\examples{
+\dontrun{a <- dMeasure::dMeasure::new()}
+\dontrun{a$open_emr_db())}
+\dontrun{a$location.inser(list(Name = "Bayside", Description = "by the sea"))}
+}

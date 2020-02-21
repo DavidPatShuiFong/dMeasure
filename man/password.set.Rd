@@ -21,3 +21,10 @@ otherwise, stops with error
 if there is an old password, that must be specified
 if there is no old password, then 'oldpassword' does not need to be defined
 }
+\examples{
+\dontrun{
+a <- dMeasure::dMeasure::new()
+a$open_emr_db()
+a$password.set(newpassword = "catsrule", oldpassword = "bluewhale")
+}
+}
