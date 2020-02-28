@@ -1988,7 +1988,7 @@ initialize_emr_tables <- function(dMeasure_obj,
       # and is also used to help 'decode' the LicenseDate
       dplyr::mutate(Identifier = paste0(vapply(ProviderNo,
                                                # create verification string
-                                               function(n) if (nchar(n) == 0) {
+                                               function(n) if (is.na(n) || nchar(n) == 0) {
                                                  self$db$practice %>>%
                                                    # practice name if no provider number
                                                    dplyr::pull(PracticeName)}
