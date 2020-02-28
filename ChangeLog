@@ -1,5 +1,18 @@
 Changelog
 
+0.9.3 - 28th February 2020
+==========================
+
+Improvements
+
+* faster $list_appointments : doesn't retrieve entire patients table!
+
+Fixes
+
+* remove InternalID '0' patients from $appointments_filtered
+  - these are 'dummy' appointments
+* deal with NA in ProviderNo
+
 0.9.2 - 20th February 2020
 ==========================
 
