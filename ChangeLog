@@ -1,11 +1,13 @@
 Changelog
 
-0.9.3 - 28th February 2020
-==========================
+0.9.3 - 2nd March 2020
+======================
 
 Improvements
 
 * faster $list_appointments : doesn't retrieve entire patients table!
+* reduce calls to $db$practice in $UserFullConfig
+*  strip whitespace from Fullname in $UserFullConfig
 
 Fixes
 

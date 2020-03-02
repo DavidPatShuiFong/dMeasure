@@ -1973,12 +1973,14 @@ initialize_emr_tables <- function(dMeasure_obj,
     # just the .UserConfig except the passwords
     # mutate to the same shape even if database is not open
   } else {
+    PracticeName <- self$db$practice %>>%
+      dplyr::pull(PracticeName)
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
       dplyr::mutate(Fullname =
-                      paste(Title, Firstname, Surname, sep = ' ')) %>>%
+                      trimws(paste(Title, Firstname, Surname, sep = ' '))) %>>%
       # include 'Fullname'
       dplyr::left_join(self$UserConfig, by = 'Fullname') %>>%
       # add user details including practice locations
@@ -1989,9 +1991,9 @@ initialize_emr_tables <- function(dMeasure_obj,
       dplyr::mutate(Identifier = paste0(vapply(ProviderNo,
                                                # create verification string
                                                function(n) if (is.na(n) || nchar(n) == 0) {
-                                                 self$db$practice %>>%
-                                                   # practice name if no provider number
-                                                   dplyr::pull(PracticeName)}
+                                                 # practice name if no provider number
+                                                 PracticeName
+                                               }
                                                else {
                                                  n # the provider number
                                                },
