@@ -1848,8 +1848,11 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$invoices <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
-    dplyr::select('InvoiceID' = 'INVOICEID', 'UserID' = 'USERID',
-                  'InternalID' = 'INTERNALID')
+    dplyr::select(InvoiceID = INVOICEID, UserID = USERID,
+                  InternalID = INTERNALID, SENTTOWORKCOVER)
+  # some versions of BP appear to require an extraneous field
+  # so that UserID/InternalID are not converted to zeros!
+  # in this case, the extraneous field is 'SENTTOWORKCOVER'
 
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
