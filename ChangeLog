@@ -8,6 +8,7 @@ Improvements
 * faster $list_appointments : doesn't retrieve entire patients table!
 * reduce calls to $db$practice in $UserFullConfig
 *  strip whitespace from Fullname in $UserFullConfig
+* $Driver definition in config database Server description (default is "SQL Server")
 
 Fixes
 

@@ -4,9 +4,16 @@
 \alias{list_zostavax}
 \title{List of patients potentially eligible for Zostavax}
 \usage{
-list_zostavax(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, appointments_list = NULL, lazy = FALSE,
-  vaxtag = FALSE, vaxtag_print = TRUE)
+list_zostavax(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  appointments_list = NULL,
+  lazy = FALSE,
+  vaxtag = FALSE,
+  vaxtag_print = TRUE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}

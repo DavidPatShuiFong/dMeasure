@@ -9,7 +9,13 @@ server.insert(dMeasure_obj, description)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{description}{list object : $Name, $Address, $Database, $UserID, $dbPassword
+\item{description}{list object : $Name, $Driver, $Address, $Database, $UserID, $dbPassword
+
+ 'Driver' will be the MSSQL driver to use. If left blank or not defined,
+  then 'SQL Server' will be used.
+  Other possible choices include "ODBC Driver 11 for SQL Server"
+  or "ODBC Driver 13 for SQL Server".
+  A list of available drivers can be seen (in R) with odbc::odbcListDrivers()
 
  'Address' will typically be of the form COMPUTERNAME and BPSINSTANCE, with two
  backslashes in between.

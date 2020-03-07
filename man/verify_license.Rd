@@ -9,7 +9,8 @@ verify_license(License, Identifier)
 \arguments{
 \item{License}{an encoded character string}
 
-\item{Identifier}{a character string}
+\item{Identifier}{a character string
+Identifier is converted to upper case}
 }
 \value{
 a date object 'LicenseDate'. returns NA if not valid

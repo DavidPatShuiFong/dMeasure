@@ -4,8 +4,10 @@
 \alias{open_configuration_db}
 \title{Open the SQL connection to the configuration from the SQL configuration file}
 \usage{
-open_configuration_db(dMeasure_obj,
-  configuration_file_path = dMeasure_obj$configuration_file_path)
+open_configuration_db(
+  dMeasure_obj,
+  configuration_file_path = dMeasure_obj$configuration_file_path
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}

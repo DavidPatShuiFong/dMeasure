@@ -378,6 +378,7 @@ BPdatabase <- function(dMeasure_obj) {
                                                     Name = character(),
                                                     Address = character(),
                                                     Database = character(),
+                                                    Driver = character(),
                                                     UserID = character(),
                                                     dbPassword = character(),
                                                     stringsAsFactors = FALSE)))
@@ -614,7 +615,14 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         dplyr::filter(Name == choice) %>>%
         dplyr::collect()
       print("Opening EMR database")
-      self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
+      if (is.null(server$Driver) || is.na(server$Driver) || server$Driver == "") {
+        # if driver id not defined
+        server_driver <- "SQL Server" # the old 'default'
+      } else {
+        server_driver <- server$Driver
+      }
+
+      self$emr_db$connect(odbc::odbc(), driver = server_driver,
                           server = server$Address, database = server$Database,
                           uid = server$UserID,
                           pwd = dMeasure::simple_decode(server$dbPassword))
@@ -815,6 +823,7 @@ open_configuration_db <-
     initialize_data_table(config_db, "Server",
                           list(c("id", "integer"),
                                c("Name", "character"),
+                               c("Driver", "character"), # which MSSQL ODBC driver to use
                                c("Address", "character"),
                                c("Database", "character"),
                                c("UserID", "character"),
