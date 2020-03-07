@@ -312,12 +312,14 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
 
   decoded <- tryCatch(vapply(msg,
                              function(n) {
-                               if (is.na(n) || n == "") {
+                               tryCatch(if (is.na(n) || n == "") {
                                  as.character(NA)}
-                               # can't decode a 'NA' (that causes an error)
-                               else {
-                                 rawToChar(sodium::data_decrypt(
-                                   jsonlite::base64_dec(paste(n)),key, nonce))}},
+                                 # can't decode a 'NA' (that causes an error)
+                                 else {
+                                   rawToChar(sodium::data_decrypt(
+                                     jsonlite::base64_dec(paste(n)),key, nonce))},
+                                 error = function(e) as.character(NA),
+                                 warning = function(e) as.character(NA))},
                              # paste is required because the encoded string (wrongly)
                              # includes backslashes, which are converted into '\\'
                              # when stored in the dataframe
@@ -370,20 +372,22 @@ simple_decode_base64 <- function(msg, key = NULL, nonce = NULL) {
 
   decoded <- tryCatch(vapply(msg,
                              function(n) {
-                               if (is.na(n) || n == "") {
+                               tryCatch(if (is.na(n) || n == "") {
                                  as.character(NA)}
-                               # can't decode a 'NA' (that causes an error)
-                               else {
-                                 rawToChar(sodium::data_decrypt(
-                                   base64enc::base64decode(n),key, nonce))}},
+                                 # can't decode a 'NA' (that causes an error)
+                                 else {
+                                   rawToChar(sodium::data_decrypt(
+                                     jsonlite::base64_dec(paste(n)),key, nonce))},
+                                 error = function(e) as.character(NA),
+                                 warning = function(e) as.character(NA))},
                              # paste is required because the encoded string (wrongly)
                              # includes backslashes, which are converted into '\\'
                              # when stored in the dataframe
                              # paste converts the '\\' back into '\'
                              FUN.VALUE = character(1),
                              USE.NAMES = FALSE),
-                      error = function(e) NULL,
-                      warning = function(e) NULL)
+                      error = function(e) as.character(NA),
+                      warning = function(e) as.character(NA))
 
   return(decoded)
 }
