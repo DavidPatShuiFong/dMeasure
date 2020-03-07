@@ -2018,6 +2018,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' @param License an encoded character string
 #' @param Identifier a character string
+#'  Identifier is converted to upper case
 #'
 #' @return a date object 'LicenseDate'. returns NA if not valid
 #'
@@ -2027,6 +2028,7 @@ verify_license <- function(License, Identifier) {
   if (is.na(License)) { # if NA for License
     LicenseDate <- NA # remain unchanged
   } else { # otherwise decode
+    Identifier <- toupper(Identifier) # convert to upper-case
     zzz <- simple_decode(License, "karibuni") # this could return NULL if not valid
     if (!is.na(zzz) && substr(zzz, 1, nchar(Identifier)) == Identifier) {
       # left side of decrypted license must equal the Identifier

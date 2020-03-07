@@ -413,6 +413,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
+#'  $License, $LicenseCheckDate
 #'
 #' @return $UserConfig
 #'
@@ -438,7 +439,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
              stop(paste(w,
                         "'UserAdmin' permission required to change user configuration")))
 
-  if (!is.null(description$password)) {
+  if (!is.null(description$password)) { # actually, this isn't written subsequently...
     description$password <- dMeasure::simple_encode(description$password)
     # immediately encode password if it was provided
   }
@@ -453,7 +454,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 
   # create NA entries for description, if necessary
   for (x in c("Password", "License", "LicenseCheckDate")) {
-    if (is.null(description[[x]])) {
+    if (is.null(description[[x]])) { # Password is not written subsequently...
       description[[x]] <- NA
       # if named field not present, set to NA
     }
@@ -538,6 +539,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
+#'  $License, $LicenseCheckDate
 #'
 #' @return self$UserConfig
 #'
