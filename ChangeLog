@@ -19,6 +19,7 @@ Fixes
    some versions of MSSQL odbc client/server configurations require
    the extra field (not all fields work) to maintain non-zero status
    for UserID/InternalID after a select!
+* removal of LicenseCheckData from user configuration
 
 Changes
 

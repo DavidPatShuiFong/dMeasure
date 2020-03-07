@@ -422,8 +422,6 @@ UserConfig_empty <- data.frame(id = integer(),
                                Attributes = character(),
                                Password = character(),
                                License = character(),
-                               LicenseCheckDate = as.Date(numeric(0),
-                                                          origin = "1970-01-01"),
                                stringsAsFactors = FALSE)
 .private(dMeasure, ".UserConfig", UserConfig_empty)
 #' show user configurations
@@ -433,15 +431,13 @@ UserConfig_empty <- data.frame(id = integer(),
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe of user configuration descriptions
-#'  id, Fullname, AuthIdentity, Location, Attributes,
-#'  License, LicenseCheckDate
+#'  id, Fullname, AuthIdentity, Location, Attributes, License
 #'
 #'  Fullname - Best Practice full user name
 #'  AuthIdentity - Windows login identity
 #'  Location - vector of groups/locations
 #'  Attributes - vector of user's attributes/permissions
 #'  License - undecoded license
-#'  LicenseCheckDate
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
@@ -461,17 +457,12 @@ UserConfig <- function(dMeasure_obj) {
     if("factor" %in% class(x)) x <- as.character(x) # since ifelse wont work with factors
     ifelse(as.character(x) != "", x, NA)
   }
-
   if (self$config_db$is_open()) {
     userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
       dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                     Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
-      dplyr::mutate(License = empty_as_na(License),
-                    LicenseCheckDate = empty_as_na(LicenseCheckDate)) %>>%
-      dplyr::mutate(LicenseCheckDate =
-                      as.Date(LicenseCheckDate, # not obfuscated
-                              origin = "1970-01-01")) %>>%
       # splits Location and Attributes into multiple entries (in the same column)
+      dplyr::mutate(License = empty_as_na(License)) %>>%
       dplyr::select(-Password) # same as $.UserConfig, except the password
   } else {
     userconfig <-
@@ -479,9 +470,7 @@ UserConfig <- function(dMeasure_obj) {
                  AuthIdentity = character(),
                  Location = character(),
                  Attributes = character(),
-                 License = character(),
-                 LicenseCheckDate = as.Date(numeric(0),
-                                            origin = "1970-01-01"))
+                 License = character())
   }
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
@@ -491,9 +480,7 @@ UserConfig <- function(dMeasure_obj) {
                            AuthIdentity = character(),
                            Location = character(),
                            Attributes = character(),
-                           License = character(),
-                           LicenseCheckDate = as.Date(numeric(0),
-                                                      origin = "1970-01-01"))))
+                           License = character())))
 
 #' show user configurations with license
 #'
@@ -502,15 +489,13 @@ UserConfig <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe of user configuration descriptions
-#'  id, Fullname, AuthIdentity, Location, Attributes,
-#'  License, LicenseCheckDate
+#'  id, Fullname, AuthIdentity, Location, Attributes, License
 #'
 #'  Fullname - Best Practice full user name
 #'  AuthIdentity - Windows login identity
 #'  Location - vector of groups/locations
 #'  Attributes - vector of user's attributes/permissions
 #'  License - undecoded license
-#'  LicenseCheckDate
 #'  Identifier - identifier used to interrogate subscription database
 #'  LicenseDate - date of license
 #'
@@ -540,8 +525,6 @@ UserConfigLicense <- function(dMeasure_obj) {
                  Location = character(),
                  Attributes = character(),
                  License = character(),
-                 LicenseCheckDate = as.Date(numeric(0),
-                                            origin = "1970-01-01"),
                  Identifier = character(),
                  LicenseDate = as.Date(numeric(0),
                                        origin = "1970-01-01"))
@@ -883,8 +866,7 @@ open_configuration_db <-
                                c("Location", "character"),
                                c("Password", "character"),
                                c("Attributes", "character"),
-                               c("License", "character"), # contains license code (if any)
-                               c("LicenseCheckDate", "character") # date of most recent check (if any)
+                               c("License", "character") # contains license code (if any)
                           ))
 
     initialize_data_table(config_db, "UserRestrictions",
@@ -1035,9 +1017,8 @@ read_subscription_db <- function(dMeasure_obj,
 
       a <- a %>>%
         dplyr::mutate(LicenseCheck =
-                        (forcecheck | is.na(LicenseCheckDate) | LicenseCheckDate != Sys.Date()) &
-                        # if forcecheck == TRUE, then check even if already checked today
-                        # otherewise, skip checking if already checked today
+                        forcecheck &
+                        # if forcecheck == TRUE
                         (is.na(LicenseDate) |
                            # check if no valid license expiry
                            # or license is expiring soon
@@ -1058,15 +1039,6 @@ read_subscription_db <- function(dMeasure_obj,
                            dplyr::mutate(Identifier = simple_decode(Key, key = "karibuni")) %>>%
                            dplyr::select(Identifier, NewLicense = License),
                          by = "Identifier") %>>%
-        dplyr::mutate(LicenseCheckDate = as.Date(
-          mapply(function(x,y) {
-            if (x) {
-              Sys.Date() # update if checked
-            } else {
-              y
-            }
-          }, LicenseCheck, LicenseCheckDate,
-          USE.NAMES = FALSE), origin = "1970-01-01")) %>>%
         dplyr::mutate(License =
                         mapply(function(x, y, z, zz) {
                           if (is.na(z)) {
