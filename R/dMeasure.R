@@ -1022,7 +1022,7 @@ read_subscription_db <- function(dMeasure_obj,
                     IdentifierUpper = toupper(Identifier)) # convert identifier to upper-case
 
     b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
-      dplyr::pull(UpperIdentifier) %>>% simple_encode(key = "karibuni")
+      dplyr::pull(IdentifierUpper) %>>% simple_encode(key = "karibuni")
     # vector of Identifier to check in subscription database
     # these are 'encoded'
     search_string <- paste0("OR(", paste0("{Key} = '", c(b, "dummy"), "'", collapse = ", "),")")
