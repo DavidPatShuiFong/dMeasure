@@ -989,99 +989,86 @@ read_subscription_db <- function(dMeasure_obj,
                                                    users = NULL) {
   # read subscription information
 
-  if (requireNamespace("RMariaDB", quietly = TRUE)) {
-    # RMariaDB is GPL version 3.0
-    # dMeasure will work if RMariaDB is not available,
-    # but subscription features will not be complete
+  Sys.setenv("AIRTABLE_API_KEY" = "keyKqBa9WxbM63qqu")
 
-    self$subscription_db$connect(RMariaDB::MariaDB(),
-                                 host = "vkelim.3222.org", port = 3306,
-                                 username = "guest", dbname = "DailyMeasureUsers",
-                                 timeout = 3)
-    if (!self$subscription_db$is_open()) {
-      # if failed to open vkelim.3322.org, then try the alternate name for vkelim.3322.org
-      self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "davidfong.synology-ds.de", port = 3306,
-                                   username = "guest", dbname = "DailyMeasureUsers",
-                                   timeout = 3)
+  airtable <- airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions")
+  # the actual table is 'DailyMeasureUsers'
+
+  subscription_is_open <-
+    is.list(tryCatch(airtable$Subscriptions$select(filterByFormula = "Key = 'dummy'"),
+                     error = function(e) {NA}))
+  #
+
+  if (subscription_is_open &&
+      self$emr_db$is_open() && self$config_db$is_open()) {
+    # successfully opened subscription database
+    # neees the configuration and EMR databases to also be open
+    print("Subscription database opened")
+
+    a <- self$UserFullConfig
+    if (!is.null(users)) { # if null, then search for all users
+      # if not null, then restrict checked users to those in 'users' vector
+      a <- a %>>% dplyr::filter(Fullname %in% users)
     }
-    if (!self$subscription_db$is_open()) {
-      # if failed to open vkelim.3322.org, then try the alternate vkelim.dsmynas.com
-      self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "vkelim.dsmynas.com", port = 3306,
-                                   username = "guest", dbname = "DailyMeasureUsers",
-                                   timeout = 3)
-    }
-    if (self$subscription_db$is_open() &&
-        self$emr_db$is_open() && self$config_db$is_open()) {
-      # successfully opened subscription database
-      # neees the configuration and EMR databases to also be open
-      print("Subscription database opened")
 
-      a <- self$UserFullConfig
-      if (!is.null(users)) { # if null, then search for all users
-        # if not null, then restrict checked users to those in 'users' vector
-        a <- a %>>% dplyr::filter(Fullname %in% users)
-      }
+    a <- a %>>%
+      dplyr::mutate(LicenseCheck =
+                      forcecheck |
+                      # if forcecheck == TRUE
+                      (is.na(LicenseDate) |
+                         # check if no valid license expiry
+                         # or license is expiring soon
+                         LicenseDate < (Sys.Date() + 60)),
+                    IdentifierUpper = toupper(Identifier)) # convert identifier to upper-case
 
-      a <- a %>>%
-        dplyr::mutate(LicenseCheck =
-                        forcecheck &
-                        # if forcecheck == TRUE
-                        (is.na(LicenseDate) |
-                           # check if no valid license expiry
-                           # or license is expiring soon
-                           LicenseDate < (Sys.Date() + 60)))
+    b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
+      dplyr::pull(IdentifierUpper) %>>% simple_encode(key = "karibuni")
+    # vector of Identifier to check in subscription database
+    # these are 'encoded'
+    search_string <- paste0("OR(", paste0("{Key} = '", c(b, "dummy"), "'", collapse = ", "),")")
+    # this ends up looking something like....
+    #  "OR({Key} = 'a', {Key} = 'j', {Key} = 'tea')"
+    #  adds 'dummy' to the vector, because if no entries are returned, then
+    #  the search will return an empty list! (instead of a dataframe)
 
-      b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
-        dplyr::pull(Identifier) %>>% simple_encode(key = "karibuni")
-      # vector of Identifier to check in subscription database
-      # these are 'encoded'
+    a <- a %>>%
+      dplyr::left_join(airtable$Subscriptions$select(filterByFormula = search_string) %>>%
+                         # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
+                         dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
+                         dplyr::select(IdentifierUpper, NewLicense = License),
+                       by = "IdentifierUpper") %>>%
+      dplyr::mutate(License =
+                      mapply(function(x, y, z, zz) {
+                        if (is.na(z)) {
+                          y # no new expiry date, 'License'
+                        } else {
+                          # need to set to new license
+                          # and also need to update our configuration database
 
-      a <- a %>>%
-        dplyr::left_join(self$subscription_db$conn() %>>%
-                           # read the subscription database
-                           dplyr::tbl("Subscriptions") %>>%
-                           dplyr::filter(Key %in% b) %>>%
-                           # look for Key == Identifier
-                           dplyr::collect() %>>%
-                           dplyr::mutate(Identifier = simple_decode(Key, key = "karibuni")) %>>%
-                           dplyr::select(Identifier, NewLicense = License),
-                         by = "Identifier") %>>%
-        dplyr::mutate(License =
-                        mapply(function(x, y, z, zz) {
-                          if (is.na(z)) {
-                            y # no new expiry date, 'License'
-                          } else {
-                            # need to set to new license
-                            # and also need to update our configuration database
-
-                            if (nrow(self$userconfig.list() %>>%
-                                     dplyr::filter(Fullname == x)) == 0) {
-                              # the user has NO entry in the configuration database, so create one
-                              self$userconfig.insert(list(Fullname = x))
-                            }
-                            # update the license
-                            self$update_subscription(Fullname = x,
-                                                     License = z, # new license
-                                                     Identifier = zz,
-                                                     verify = FALSE)
-                            # not verified at this stage
-                            z # NewLicence
+                          if (nrow(self$userconfig.list() %>>%
+                                   dplyr::filter(Fullname == x)) == 0) {
+                            # the user has NO entry in the configuration database, so create one
+                            self$userconfig.insert(list(Fullname = x))
                           }
-                        }, Fullname, License, NewLicense, Identifier,
-                        USE.NAMES = FALSE))
+                          # update the license
+                          self$update_subscription(Fullname = x,
+                                                   License = z, # new license
+                                                   Identifier = zz,
+                                                   verify = FALSE)
+                          # not verified at this stage
+                          z # NewLicence
+                        }
+                      }, Fullname, License, NewLicense, Identifier,
+                      USE.NAMES = FALSE))
 
-      # close before exit
-      self$subscription_db$close()
+    # close before exit
+    self$subscription_db$close()
 
-      return(self$UserFullConfig) # this contains the updated license informatioin
-    } else {
-      warning("Unable to open subscription database")
-    }
+    return(self$UserFullConfig) # this contains the updated license informatioin
   } else {
-    warning("Unable to access subscription features (missing database module 'RMariaDB')")
+    warning("Unable to open subscription database")
   }
+
 })
 
 #' Update subscription database

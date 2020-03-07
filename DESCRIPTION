@@ -1,7 +1,7 @@
 Package: dMeasure
 Type: Package
 Title: case finding in the EMR (Best Practice)
-Version: 0.9.3
+Version: 0.9.4
 Author: David Fong
 Maintainer: David Fong <vkelim@bigpond.com>
 Description: Search for health interventions in the Best Practice EMR database.
@@ -22,7 +22,8 @@ Imports:
     configr,
     sodium,
     R6,
-    stringi
+    stringi,
+    airtabler
 Suggests:
     shiny,
     knitr,
@@ -30,8 +31,7 @@ Suggests:
     rmarkdown,
     dMeasureQIM,
     dMeasureBillings,
-    dMeasureCDM,
-    RMariaDB
+    dMeasureCDM
 RoxygenNote: 7.0.2.9000
 Collate: 
     'fomantic_definitions_tags.R'
