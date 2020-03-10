@@ -1,9 +1,12 @@
 Changelog
 
-0.9.4 - 7th March 2020
+0.9.4 - 10th March 2020
 ======================
 
 * change from MariaDB to Airtabler
+* filter some 'dummy' entries from $list_appointments, such as 'DO NOT BOOK'
+* $read_configuration_db throws warning and stops if $config_db is not a valid,
+   even after an attempted opening (by $read_configuration_db)
 
 0.9.3 - 7th March 2020
 ======================

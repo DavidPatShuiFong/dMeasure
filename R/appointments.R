@@ -238,7 +238,8 @@ filter_appointments_time <- function(dMeasure_obj,
 #' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
 #'
 #'
-#' @return list of appointments
+#' @return list of appointments.
+#'  excludes some 'dummy' appointments such as 'DO NOT BOOK', 'CARE PLAN' and 'CANCELLED'
 #' @export
 list_appointments <- function(dMeasure_obj,
                               date_from = NA, date_to = NA,
@@ -289,6 +290,10 @@ list_appointments <- function(dMeasure_obj,
               # need patients database to access date-of-birth
               dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
                               'AppointmentTime', 'Status', 'Provider', 'DOB')) %>>%
+              dplyr::filter(!(toupper(Patient) %in% c("DO NOT BOOK",
+                                                      "CANCELLED",
+                                                      "CARE PLAN"))) %>>%
+              # don't include 'dummy appointments'
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, AppointmentDate))
 

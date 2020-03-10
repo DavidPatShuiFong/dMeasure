@@ -917,6 +917,11 @@ read_configuration_db <- function(dMeasure_obj,
     config_db <- self$config_db
   }
 
+  if (!config_db$is_open()) {
+    warning("Configuration database not opened or defined.")
+    return(invisible(self))
+  }
+
   private$.BPdatabase <- config_db$conn() %>>%
     dplyr::tbl("Server") %>>% dplyr::collect()
   invisible(self$BPdatabase) # will also set $BPdatabaseR
