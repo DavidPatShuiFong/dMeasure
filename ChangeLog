@@ -1,7 +1,13 @@
 Changelog
 
-0.9.4 - 10th March 2020
+0.9.4 - 13th March 2020
 ======================
+
+New
+
+* add $db$vaccines $db$vaccine_disease $db$vaxdiseases (none of them used, yet)
+
+Changes
 
 * change from MariaDB to Airtabler
 * filter some 'dummy' entries from $list_appointments, such as 'DO NOT BOOK'

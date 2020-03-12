@@ -1734,6 +1734,23 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
+  self$db$vaccines <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINES")) %>>%
+    # there is also ACIRCODE, CHIDLHOOD, GENERIC
+    dplyr::select("VACCINEID", "VACCINENAME") %>>%
+    dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
+    dplyr::mutate(VaccineName = trimws(VACCINENAME))
+
+  self$db$vaccine_disease <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
+    dplyr::select("VACCINEID", "DISEASECODE")
+
+  self$db$vaxdiseases <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VAXDISEASES")) %>>%
+    dplyr::select("DISEASECODE", "DISEASENAME") %>>%
+    dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
+    dplyr::mutate(DiseaseName = trimws(DISEASENAME))
+
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
     dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>>%
@@ -1810,7 +1827,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
   self$db$services <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Services')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
 
