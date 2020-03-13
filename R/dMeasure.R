@@ -260,9 +260,16 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
 }
 .active(dMeasure, "configuration_file_yaml", function (filepath) {
 
-  print(paste("R_CONFIG_ACTIVE: ", Sys.getenv("R_CONFIG_ACTIVE")))
+  if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+    # shinyapps.io environment
+    yaml_config_filepath <- ".DailyMeasure_cfg.yaml"
+    sql_config_filepath <- ".DailyMeasure_cfg.sqlite"
+  } else {
+    yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
+    sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+  }
 
-  self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
+  self$yaml_config_filepath <- yaml_config_filepath
   # the location the of the '.yaml' configuration file
   # always in the user's home directory
   if (!missing(filepath)) {
@@ -284,13 +291,13 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
       # local config file does not exist. possibly first-run
       if (grepl("Program Files", normalizePath(R.home()))) {
         # this is a system-wide install
-        self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- sql_config_filepath
         # store in user's home directory
       } else {
         # this is a 'local' user install, not a system-wide install
         # e.g. C:/Users/MyName/AppData/Programs/...
         # as opposed to 'C:/Program Files/...'
-        self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- sql_config_filepath
         # this file can be stored in the AppData folder, out of sight of the user
       }
       local_config <- list()
