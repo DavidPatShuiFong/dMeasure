@@ -160,7 +160,8 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::pull(Name)
   } else {
     if (toupper(description$Name) %in%
-        toupper(append(private$.BPdatabase[-(id = description$id),]$Name, "None"))) {
+        toupper(append(private$.BPdatabase[!(private$.BPdatabase$id == description$id),]$Name,
+                       "None"))) {
       # if the proposed server is the same as one that already exists
       # (ignoring case, and removing the 'id' which is specified in the description)
       stop("New server name cannot be the same as existing names, or 'None'")

@@ -14,6 +14,10 @@ Changes
 * $read_configuration_db throws warning and stops if $config_db is not a valid,
    even after an attempted opening (by $read_configuration_db)
 
+Fix
+
+* $server.update invalid Name logic fixed
+
 0.9.3 - 7th March 2020
 ======================
 
