@@ -259,6 +259,8 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
 }
 .active(dMeasure, "configuration_file_yaml", function (filepath) {
 
+  print(paste("R_CONFIG_ACTIVE: ", Sys.getenv("R_CONFIG_ACTIVE")))
+
   self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
   # the location the of the '.yaml' configuration file
   # always in the user's home directory
