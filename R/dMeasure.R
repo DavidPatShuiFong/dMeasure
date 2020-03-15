@@ -29,23 +29,6 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
-                  if (length(public_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(public_init_fields$name)) {
-                      if (public_init_fields$obj[[i]] == "dMeasure") {
-                        self[[public_init_fields$name[[i]]]] <-
-                          eval(public_init_fields$value[[i]]) # could 'quote' the value
-                      }
-                    }
-                  }
-                  if (length(private_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(private_init_fields$name)) {
-                      if (private_init_fields$obj[[i]] == "dMeasure") {
-                        private[[private_init_fields$name[[i]]]] <-
-                          eval(private_init_fields$value[[i]]) # could 'quote' the value
-                      }
-                    }
-                  }
-
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
@@ -64,6 +47,23 @@ dMeasure <-
                           self[[reactive_event$name[[i]]]] <-
                             eval(reactive_event$value[[i]]) # could 'quote' the value
                         }
+                      }
+                    }
+                  }
+
+                  if (length(public_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(public_init_fields$name)) {
+                      if (public_init_fields$obj[[i]] == "dMeasure") {
+                        self[[public_init_fields$name[[i]]]] <-
+                          eval(public_init_fields$value[[i]]) # could 'quote' the value
+                      }
+                    }
+                  }
+                  if (length(private_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(private_init_fields$name)) {
+                      if (private_init_fields$obj[[i]] == "dMeasure") {
+                        private[[private_init_fields$name[[i]]]] <-
+                          eval(private_init_fields$value[[i]]) # could 'quote' the value
                       }
                     }
                   }
