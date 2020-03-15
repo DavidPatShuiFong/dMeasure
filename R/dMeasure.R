@@ -81,6 +81,8 @@ myreactive <- function(x) {} # dummy value
 .private(dMeasure, "set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
   # myreactive is passed by reference
+  print(myreactive)
+  print(deparse(sys.call(-1)))
   if (requireNamespace("shiny", quietly = TRUE)) {
     myreactive(value)
   }
