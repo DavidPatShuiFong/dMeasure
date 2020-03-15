@@ -413,7 +413,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
-#'  $License, $LicenseCheckDate
+#'  $License
 #'
 #' @return $UserConfig
 #'
@@ -453,7 +453,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
   }
 
   # create NA entries for description, if necessary
-  for (x in c("Password", "License", "LicenseCheckDate")) {
+  for (x in c("Password", "License")) {
     if (is.null(description[[x]])) { # Password is not written subsequently...
       description[[x]] <- NA
       # if named field not present, set to NA
@@ -486,14 +486,13 @@ userconfig.insert <- function(dMeasure_obj, description) {
   description$id <- newid
 
   query <- paste0("INSERT INTO Users",
-                  "(id, Fullname, AuthIdentity, Location, Attributes, License, LicenseCheckDate)",
-                  "VALUES ($id, $fn, $au, $lo, $at, $li, $lc)")
+                  "(id, Fullname, AuthIdentity, Location, Attributes, License)",
+                  "VALUES ($id, $fn, $au, $lo, $at, $li)")
   data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
                        # $Location and $Attribute could both have multiple (or no) entries
                        lo = paste0(description$Location[[1]], "", collapse = ";"),
                        at = paste0(description$Attributes[[1]], "", collapse = ";"),
-                       li = description$License,
-                       lc = description$LicenseCheckDate)
+                       li = description$License)
   # [[1]] 'de-lists' $Location and $Attributes, which prevents some strange
   # behaviour which *sometimes* results in a string being created in the form
   # of 'c("ServerAdmin", "UserAdmin")'
@@ -539,7 +538,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param description list $Fullname, $AuthIdentity, $Location, $Attributes
-#'  $License, $LicenseCheckDate
+#'  $License
 #'
 #' @return self$UserConfig
 #'
@@ -570,6 +569,10 @@ userconfig.update <- function(dMeasure_obj, description) {
     # immediately encode password if it was provided
   }
 
+  if (is.null(description$Fullname)) {
+    stop("Must include $Fullname in the description.")
+  }
+
   if (!(description$Fullname %in% (private$.UserConfig %>>% dplyr::pull(Fullname)))) {
     # if the proposed configuration to change is not actually configured
     stop("This user is not configured")
@@ -584,7 +587,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   # create empty entries for description, if necessary
   for (x in c("AuthIdentity", "Location", "Attributes",
-              "License", "LicenseCheckDate")) {
+              "License")) {
     if (is.null(description[[x]])) {
       description[[x]] <- old_description[[x]]
     }
@@ -609,7 +612,7 @@ userconfig.update <- function(dMeasure_obj, description) {
 
   proposed_UserConfig <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::select("id", "Fullname", "AuthIdentity", "Location", "Attributes",
-                  "License", "LicenseCheckDate") %>>%
+                  "License") %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
@@ -624,12 +627,12 @@ userconfig.update <- function(dMeasure_obj, description) {
   # then at least one user must have the restricted attribute
 
   query <- paste("UPDATE Users SET Fullname = ?, AuthIdentity = ?, ",
-                 "Location = ?, Attributes = ?, License = ?, LicenseCheckDate = ? ",
+                 "Location = ?, Attributes = ?, License = ? ",
                  "WHERE id = ?", sep = "")
   data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
                             paste0(unlist(description$Location[[1]]), "", collapse = ";"),
                             paste0(unlist(description$Attributes[[1]]), "", collapse = ";"),
-                            description$License, description$LicenseCheckDate,
+                            description$License,
                             description$id))
   # note extra "" within paste0 is required in the case of empty data
 
@@ -667,6 +670,10 @@ userconfig.delete <- function(dMeasure_obj, description) {
            warning = function(w)
              stop(paste(w,
                         "'UserAdmin' permission required to change/delete user configuration.")))
+
+  if (is.null(description$Fullname)) {
+    stop("Must include $Fullname in the description.")
+  }
 
   UserConfigRow <- self$UserConfig %>>% dplyr::collect() %>>%
     dplyr::filter(Fullname == description$Fullname) %>>%
