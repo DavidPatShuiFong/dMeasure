@@ -76,27 +76,16 @@ dMeasure <-
 
 ##### special reactive functions ##########################
 
-dMeasure$set("private", "set_reactive",
-             function(myreactive, value) {
-               # reactive (if shiny/reactive environment is available) is set to 'value'
-               # myreactive is passed by reference
-               # print(myreactive)
-               # print(deparse(sys.call(-1)))
-               if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive) &&
-                   is.function(myreactive)) {
-                 shiny::isolate(myreactive(value))
-               }
-             })
 
-# .private(dMeasure, "set_reactive", function(myreactive, value) {
-#   # reactive (if shiny/reactive environment is available) is set to 'value'
-#   # myreactive is passed by reference
-#   # print(myreactive)
-#   # print(deparse(sys.call(-1)))
-#   if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
-#     myreactive(value)
-#   }
-# })
+.private_init(dMeasure, "set_reactive", function(myreactive, value) {
+  # reactive (if shiny/reactive environment is available) is set to 'value'
+  # myreactive is passed by reference
+  # print(myreactive)
+  # print(deparse(sys.call(-1)))
+  if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
+    myreactive(value)
+  }
+})
 .private(dMeasure, "trigger", function(myreactive) {
   # toggles a reactive between (usually) 0 and 1
   if (requireNamespace("shiny", quietly = TRUE)) {
