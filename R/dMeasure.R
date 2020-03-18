@@ -77,13 +77,13 @@ dMeasure <-
 ##### special reactive functions ##########################
 
 
-.private_init(dMeasure, "set_reactive", function(myreactive, value) {
+.private(dMeasure, "set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
   # myreactive is passed by reference
   # print(myreactive)
   # print(deparse(sys.call(-1)))
   if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
-    myreactive(value)
+    shiny::isolate(eval(substitute(myreactive, env = parent.frame()))(value))
   }
 })
 .private(dMeasure, "trigger", function(myreactive) {
