@@ -80,8 +80,8 @@ dMeasure$set("private", "set_reactive",
              function(myreactive, value) {
                # reactive (if shiny/reactive environment is available) is set to 'value'
                # myreactive is passed by reference
-               print(myreactive)
-               print(deparse(sys.call(-1)))
+               cat(file = stderr(), fill = TRUE, print(myreactive))
+               cat(file = stderr(), fill = TRUE, print(deparse(sys.call(-1))))
                if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
                  myreactive(value)
                }
