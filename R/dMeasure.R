@@ -84,7 +84,7 @@ dMeasure$set("private", "set_reactive",
                # print(deparse(sys.call(-1)))
                if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive) &&
                    is.function(myreactive)) {
-                 myreactive(value)
+                 shiny::isolate(myreactive(value))
                }
              })
 
