@@ -29,6 +29,24 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
+
+                  if (length(public_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(public_init_fields$name)) {
+                      if (public_init_fields$obj[[i]] == "dMeasure") {
+                        self[[public_init_fields$name[[i]]]] <-
+                          eval(public_init_fields$value[[i]]) # could 'quote' the value
+                      }
+                    }
+                  }
+                  if (length(private_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(private_init_fields$name)) {
+                      if (private_init_fields$obj[[i]] == "dMeasure") {
+                        private[[private_init_fields$name[[i]]]] <-
+                          eval(private_init_fields$value[[i]]) # could 'quote' the value
+                      }
+                    }
+                  }
+
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
@@ -47,23 +65,6 @@ dMeasure <-
                           self[[reactive_event$name[[i]]]] <-
                             eval(reactive_event$value[[i]]) # could 'quote' the value
                         }
-                      }
-                    }
-                  }
-
-                  if (length(public_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(public_init_fields$name)) {
-                      if (public_init_fields$obj[[i]] == "dMeasure") {
-                        self[[public_init_fields$name[[i]]]] <-
-                          eval(public_init_fields$value[[i]]) # could 'quote' the value
-                      }
-                    }
-                  }
-                  if (length(private_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(private_init_fields$name)) {
-                      if (private_init_fields$obj[[i]] == "dMeasure") {
-                        private[[private_init_fields$name[[i]]]] <-
-                          eval(private_init_fields$value[[i]]) # could 'quote' the value
                       }
                     }
                   }
@@ -780,6 +781,19 @@ open_configuration_db <-
                       dbname = self$configuration_file_path)
     # create = TRUE not a valid option?
     # always tries to create file if it doesn't exist
+  }
+
+  if (!config_db$is_open()) {
+    # failed to read, or create, configuration database
+    if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+      # shinyapps.io environment
+      self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
+    } else {
+      self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
+    }
+    # try to create the default configuration file
+    config_db$connect(RSQLite::SQLite(),
+                      dbname = self$configuration_file_path)
   }
 
   initialize_data_table = function(config_db, tablename, variable_list ) {
