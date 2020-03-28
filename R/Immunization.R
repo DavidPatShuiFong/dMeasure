@@ -26,6 +26,8 @@ NULL
 #' @param date_from from date range (default $date_a)
 #' @param date_to to date range (default $date_b)
 #' @param clinicians list of clinicians (default $clinicians)
+#' @param intID list of internal ID (default is NULL, in which case appointments_list is used)
+#' @param intID_Date if intID is not NULL, then date to check (default is Sys.Date())
 #' @param appointments_list provide an appointment list (default $appointments_list)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
@@ -35,16 +37,19 @@ NULL
 #' @export
 list_zostavax <- function(dMeasure_obj,
                           date_from = NA, date_to = NA, clinicians = NA,
+                          intID = NULL, intID_Date = Sys.Date(),
                           appointments_list = NULL,
                           lazy = FALSE,
                           vaxtag = FALSE, vaxtag_print = TRUE) {
   dMeasure_obj$list_zostavax(date_from, date_to , clinicians,
+                             intID, intID_Date,
                              appointments_list,
                              lazy,
                              vaxtag, vaxtag_print)
 }
 
 .public(dMeasure, "list_zostavax", function(date_from = NA, date_to = NA, clinicians = NA,
+                                            intID = NULL, intID_Date = Sys.Date(),
                                             appointments_list = NULL,
                                             lazy = FALSE,
                                             vaxtag = FALSE, vaxtag_print = TRUE) {
@@ -65,26 +70,50 @@ list_zostavax <- function(dMeasure_obj,
     stop("Choose at least one clinicians\'s appointment to view")
   }
 
-  if (is.null(appointments_list) & !lazy) {
-    self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
-    # if not 'lazy' evaluation, then re-calculate self$appointments_billings
-    # (that is automatically done by calling the $billed_appointments method)
+  if (is.null(intID)) {
+    # list of internalID has not been supplied
+    # in which case internalID and dates will be derived from appointment list
+
+    if (is.null(appointments_list) & !lazy) {
+      self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
+      # if not 'lazy' evaluation, then re-calculate self$appointments_billings
+      # (that is automatically done by calling the $billed_appointments method)
+    }
+
+    if (is.null(appointments_list)) {
+      appointments_list <- self$appointments_list
+    }
+
+    intID_Date <- appointments_list %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just the InternalID and AppointmentDate of the appointment list
+    intID <- c(dplyr::pull(intID_Date, InternalID), -1)
+    # add -1 dummy because cannot search %in% empty vector
+    # just the InternalID
+    zostavax_list <- appointments_list %>>%
+      dplyr::filter(Age >= 70 & Age <= 80) %>>%
+      dplyr::mutate(Date = AppointmentDate) # used to compare with vax date
+    # 'Date' will later be filtered out
+  } else {
+    intID <- self$db$patients %>>% # check the age of the intID list
+      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::select(InternalID, DOB) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(intID_Date)) %>>%
+      # initially Date is a dttm (POSIXt) object,
+      # which makes the subsequent calc_age very slow,
+      # and throws up warnings
+      dplyr::mutate(Age = dMeasure::calc_age(DOB, Date)) %>>%
+      dplyr::filter(Age >= 70 & Age <= 80) %>>%
+      dplyr::pull(InternalID) %>>%
+      unique() %>>% c(-1)
+
+    intID_Date <- data.frame(InternalID = intID, Date = intID_Date)
+    zostavax_list <- intID_Date
   }
 
-  if (is.null(appointments_list)) {
-    appointments_list <- self$appointments_list
-  }
-
-  intID_Date <- appointments_list %>>%
-    dplyr::select(InternalID, AppointmentDate) %>>%
-    dplyr::rename(Date = AppointmentDate)
-  # just the InternalID and AppointmentDate of the appointment list
-  intID <- c(dplyr::pull(intID_Date, InternalID), -1)
-  # add -1 dummy because cannot search %in% empty vector
-  # just the InternalID
-
-  zostavax_list <- appointments_list %>>%
-    dplyr::filter(Age >= 70 & Age <= 80) %>>% # from age 70 to 80 years inclusive
+  zostavax_list <- zostavax_list %>>%
     dplyr::left_join(self$db$immunizations %>>%
                        dplyr::filter((InternalID %in% intID) &&
                                        # those who have had the zostavax vaccine
@@ -98,7 +127,8 @@ list_zostavax <- function(dMeasure_obj,
                      copy = TRUE) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
-    dplyr::mutate(GivenDate = dplyr::if_else(GivenDate <= AppointmentDate, GivenDate, as.Date(NA)))
+    dplyr::mutate(GivenDate = dplyr::if_else(GivenDate <= Date, GivenDate, as.Date(NA))) %>>%
+    dplyr::filter(InternalID != -1) # get rid of dummy internalID
   # only include immunizations given up to date of appointment,
   # if there are any immunizations at all
   # note that 'if_else' vectorizes,
@@ -677,6 +707,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 
   if ("Zostavax" %in% chosen) {
     vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
+                                             intID = NULL, intID_Date = NULL,
                                              appointments_list,
                                              lazy,
                                              vaxtag, vaxtag_print))

@@ -216,6 +216,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
