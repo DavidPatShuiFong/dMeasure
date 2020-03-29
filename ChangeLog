@@ -5,7 +5,7 @@ Changelog
 
 New
 
-* add intID/intID_Date options to list_zostavax
+* add intID/intID_Date options to list_zostavax, list_influenza, list_measlesVax, list_vax
 
 0.9.4 - 15th March 2020
 =======================
