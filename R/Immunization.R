@@ -748,7 +748,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   }
 
   if (is.null(intID)) {
-
+    # get internalIDs from appointments
     if (is.null(appointments_list) & !lazy) {
       self$list_appointments(date_from, date_to, clinicians, lazy = FALSE)
       # if not 'lazy' evaluation, then re-calculate self$appointments_billings
@@ -758,12 +758,16 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
     if (is.null(appointments_list)) {
       appointments_list <- self$appointments_list
     }
+
+    vlist <- data.frame(Patient = character(), InternalID = integer(),
+                        AppointmentDate = numeric(), AppointmentTime = character(),
+                        Provider = character(),
+                        DOB = numeric(), Age = double())
+
+  } else {
+    vlist <- data.frame(InternalID = integer())
   }
 
-  vlist <- data.frame(Patient = character(), InternalID = integer(),
-                      AppointmentDate = numeric(), AppointmentTime = character(),
-                      Provider = character(),
-                      DOB = numeric(), Age = double())
   if (vaxtag) {vlist <- cbind(vlist, vaxtag = character())}
   if (vaxtag_print) {vlist <- cbind(vlist, vaxtag_print = character())}
 
