@@ -1,11 +1,17 @@
 Changelog
 
-0.9.5 - 29th March 2020
+0.9.5 - 30th March 2020
 =======================
 
 New
 
-* add intID/intID_Date options to list_zostavax, list_influenza, list_measlesVax, list_vax
+* add intID/intID_Date options to $list_zostavax, $list_influenza, $list_measlesVax, $list_vax
+
+Change
+
+* change from $asplenia_list to $asplenic_list
+* adjustable $change_subscription (add adjust_days)
+
 
 0.9.4 - 15th March 2020
 =======================

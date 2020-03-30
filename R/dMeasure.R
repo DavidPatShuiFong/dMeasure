@@ -1151,6 +1151,7 @@ update_subscription <- function(dMeasure_obj,
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
 #' @param adjustdate will this function change the dates? ($date_a, $date_b)
+#' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
 #' is triggered
@@ -1165,13 +1166,16 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE) {
-  dMeasure_obj$check_subscription(users, date_from, date_to)
+                               adjustedate = TRUE,
+                               adjust_days = 7) {
+  dMeasure_obj$check_subscription(users, date_from, date_to,
+                                  adjustdate, adjust_days)
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE) {
+                                                 adjustdate = TRUE,
+                                                 adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -1194,7 +1198,7 @@ check_subscription <- function(dMeasure_obj,
   changedate <- FALSE # do dates need to be changed
   # i.e. is there a chosen user with no license, or expired license
 
-  if (date_to > (Sys.Date()-7)) {
+  if (date_to > (Sys.Date() - adjust_days)) {
     # only if date range includes future, or insufficiently 'old' appointments
     changedate <- (NA %in% LicenseDates) # a chosen user has no license
     if (!changedate) {
@@ -1211,8 +1215,8 @@ check_subscription <- function(dMeasure_obj,
   }
 
   if (changedate) {
-    if (date_to > (Sys.Date() - 7)) {
-      date_to <- Sys.Date() - 7
+    if (date_to > (Sys.Date() - adjust_days)) {
+      date_to <- Sys.Date() - adjust_days
       warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
