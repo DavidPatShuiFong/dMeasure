@@ -102,7 +102,7 @@ list_zostavax <- function(dMeasure_obj,
     # 'Date' will later be filtered out
   } else {
     intID <- self$db$patients %>>% # check the age of the intID list
-      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::filter(InternalID %in% c(intID, -1)) %>>%
       dplyr::select(InternalID, DOB) %>>%
       dplyr::collect() %>>%
       dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(intID_Date)) %>>%
@@ -281,7 +281,7 @@ list_measlesVax <- function(dMeasure_obj,
       dplyr::mutate(Date = AppointmentDate) # used to compare with vax date
   } else {
     intID <- self$db$patients %>>% # check the age of the intID list
-      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::filter(InternalID %in% c(intID, -1)) %>>%
       dplyr::select(InternalID, DOB) %>>%
       dplyr::filter(DOB >= as.Date("1966-01-01") &
                       DOB <= as.Date("1997-12-31")) %>>%
@@ -464,7 +464,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     intID_Date <- data.frame(InternalID = intID, Date = intID_Date)
     list_details <- intID_Date %>>%
       dplyr::left_join(self$db$patients %>>%
-                         dplyr::filter(InternalID %in% intID) %>>%
+                         dplyr::filter(InternalID %in% c(intID, -1)) %>>%
                          dplyr::select(InternalID, DOB),
                        by = "InternalID", copy = TRUE) %>>%
       dplyr::mutate(DOB = as.Date(DOB)) %>>%
