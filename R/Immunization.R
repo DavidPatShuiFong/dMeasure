@@ -29,6 +29,7 @@ NULL
 #' @param intID list of internal ID (default is NULL, in which case appointments_list is used)
 #' @param intID_Date if intID is not NULL, then date to check (default is Sys.Date())
 #' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param include_uptodate include those who are up-to-date ('green' tags)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
 #' @param vaxtag_print = TRUE
@@ -39,11 +40,13 @@ list_zostavax <- function(dMeasure_obj,
                           date_from = NA, date_to = NA, clinicians = NA,
                           intID = NULL, intID_Date = Sys.Date(),
                           appointments_list = NULL,
+                          include_uptodate = TRUE,
                           lazy = FALSE,
                           vaxtag = FALSE, vaxtag_print = TRUE) {
   dMeasure_obj$list_zostavax(date_from, date_to , clinicians,
                              intID, intID_Date,
                              appointments_list,
+                             include_uptodate,
                              lazy,
                              vaxtag, vaxtag_print)
 }
@@ -51,6 +54,7 @@ list_zostavax <- function(dMeasure_obj,
 .public(dMeasure, "list_zostavax", function(date_from = NA, date_to = NA, clinicians = NA,
                                             intID = NULL, intID_Date = Sys.Date(),
                                             appointments_list = NULL,
+                                            include_uptodate = TRUE,
                                             lazy = FALSE,
                                             vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where Zostavax is recommended (might already be given)
@@ -136,6 +140,13 @@ list_zostavax <- function(dMeasure_obj,
   # demanding same datatype for TRUE/FALSE alternatives
   # 'ifelse' does not preserve date type in this circumstance
 
+  if (!include_uptodate) {
+    # remove entries which are 'up-to-date'!
+    zostavax_list <- zostavax_list %>>%
+      dplyr::filter(is.na(GivenDate))
+    # anyone who has had a Zostavax (and so has a valid 'GivenDate') is 'up-to-date'!
+  }
+
   if (vaxtag) {
     zostavax_list <- zostavax_list %>>%
       dplyr::mutate(vaxtag =
@@ -158,7 +169,7 @@ list_zostavax <- function(dMeasure_obj,
                                                     paste0('Date : ', format(GivenDate))),
                                                   'Removed from herpes zoster immunization reminders'),
                                    paste0('Given : ', format(GivenDate))),
-                                   "</h4>")))
+                                 "</h4>")))
   }
 
   if (vaxtag_print) {
@@ -197,6 +208,7 @@ list_zostavax <- function(dMeasure_obj,
 #' @param intID list of internal ID (default is NULL, in which case appointments_list is used)
 #' @param intID_Date if intID is not NULL, then date to check (default is Sys.Date())
 #' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param include_uptodate include those who are up-to-date ('green' tags)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
 #' @param vaxtag_print = TRUE
@@ -207,11 +219,13 @@ list_measlesVax <- function(dMeasure_obj,
                             date_from = NA, date_to = NA, clinicians = NA,
                             intID = NULL, intID_Date = Sys.Date(),
                             appointments_list = NULL,
+                            include_uptodate = TRUE,
                             lazy = FALSE,
                             vaxtag = FALSE, vaxtag_print = TRUE) {
   dMeasure_obj$list_measlesVax(date_from, date_to , clinicians,
                                intID, intID_Date,
                                appointments_list,
+                               include_uptodate,
                                lazy,
                                vaxtag, vaxtag_print)
 }
@@ -219,6 +233,7 @@ list_measlesVax <- function(dMeasure_obj,
 .public(dMeasure, "list_measlesVax", function(date_from = NA, date_to = NA, clinicians = NA,
                                               intID = NULL, intID_Date = Sys.Date(),
                                               appointments_list = NULL,
+                                              include_uptodate = TRUE,
                                               lazy = FALSE,
                                               vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where measles vaccine is recommended
@@ -307,6 +322,13 @@ list_measlesVax <- function(dMeasure_obj,
     # pregnancy is an exclusion criteria for measles vax
     dplyr::filter(InternalID != -1) # remove dummy row
 
+  if (!include_uptodate) {
+    measlesVax_list <- measlesVax_list %>>%
+      dplyr::filter(is.na(GivenDate))
+    # remove entries which are 'up-to-date'!
+    # anyone who has had a measles vax (and so has a valid 'GivenDate') is 'up-to-date'!
+  }
+
   if (vaxtag) {
     measlesVax_list <- measlesVax_list %>>%
       dplyr::mutate(vaxtag =
@@ -365,6 +387,7 @@ list_measlesVax <- function(dMeasure_obj,
 #' @param intID list of internal ID (default is NULL, in which case appointments_list is used)
 #' @param intID_Date if intID is not NULL, then date to check (default is Sys.Date())
 #' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param include_uptodate include those who are up-to-date ('green' tags)
 #' @param lazy = FALSE recalculate an appointment list
 #' @param vaxtag = FALSE
 #' @param vaxtag_print = TRUE
@@ -374,11 +397,13 @@ list_measlesVax <- function(dMeasure_obj,
 list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                            intID = NULL, intID_Date = Sys.Date(),
                            appointments_list = NULL,
+                           include_uptodate = TRUE,
                            lazy = FALSE,
                            vaxtag = FALSE, vaxtag_print = TRUE) {
   dMeasure_obj$list_influenza(date_from, date_to , clinicians,
                               intID, intID_Date,
                               appointments_list,
+                              include_uptodate,
                               lazy,
                               vaxtag, vaxtag_print)
 }
@@ -386,6 +411,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 .public(dMeasure, "list_influenza", function(date_from = NA, date_to = NA, clinicians = NA,
                                              intID = NULL, intID_Date = Sys.Date(),
                                              appointments_list = NULL,
+                                             include_uptodate = TRUE,
                                              lazy = FALSE,
                                              vaxtag = FALSE, vaxtag_print = TRUE) {
   # return datatable of appointments where influenza is recommended (might already be given)
@@ -619,6 +645,14 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                      copy = TRUE) %>>%
     dplyr::collect()
 
+  if (!include_uptodate) {
+    l <- l %>>%
+      dplyr::filter(is.na(GivenDate) | GivenDate == as.Date(-Inf, origin = '1970-01-01') |
+                      format(GivenDate, "%Y") != format(AppointmentDate, "%Y"))
+    # remove entries which are 'up-to-date'!
+    # anyone who has had a measles vax (and so has a valid 'GivenDate') is 'up-to-date'!
+  }
+
   if (vaxtag) {
     l <- l %>>%
       dplyr::mutate(
@@ -718,6 +752,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 #' @param intID list of internal ID (default is NULL, in which case appointments_list is used)
 #' @param intID_Date if intID is not NULL, then date to check (default is Sys.Date())
 #' @param appointments_list provide an appointment list (default $appointments_list)
+#' @param include_uptodate include those who are up-to-date ('green' tag)
 #' @param lazy (default FALSE) recalculate an appointment list
 #' @param vaxtag (default FALSE) HTML/browser version of tags
 #' @param vaxtag_print (default TRUE) printable version of tags
@@ -728,12 +763,14 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
                      intID = NULL, intID_Date = Sys.Date(),
                      appointments_list = NULL,
+                     include_uptodate = TRUE,
                      lazy = FALSE,
                      vaxtag = FALSE, vaxtag_print = TRUE,
                      chosen = self$vaccine_choices) {
   dMeasure_obj$list_vax(date_from, date_to, clinicians,
                         intID, intID_Date,
                         appointments_list,
+                        include_uptodate,
                         lazy,
                         vaxtag, vaxtag_print,
                         chosen)
@@ -742,6 +779,7 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 .public(dMeasure, "list_vax", function(date_from = NA, date_to = NA, clinicians = NA,
                                        intID = NULL, intID_Date = Sys.Date(),
                                        appointments_list = NULL,
+                                       include_uptodate = TRUE,
                                        lazy = FALSE,
                                        vaxtag = FALSE, vaxtag_print = TRUE,
                                        chosen = self$vaccine_choices) {
@@ -789,23 +827,26 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   if ("Zostavax" %in% chosen) {
     vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
                                              intID = intID, intID_Date = intID_Date,
-                                             appointments_list,
-                                             lazy,
-                                             vaxtag, vaxtag_print))
+                                             appointments_list = appointments_list,
+                                             include_uptodate = include_uptodate,
+                                             lazy = lazy,
+                                             vaxtag = vaxtag, vaxtag_print = vaxtag_print))
   }
   if ("Measles" %in% chosen) {
     vlist <- rbind(vlist, self$list_measlesVax(date_from, date_to, clinicians,
                                                intID = intID, intID_Date = intID_Date,
-                                               appointments_list,
-                                               lazy,
-                                               vaxtag, vaxtag_print))
+                                               appointments_list = appointments_list,
+                                               include_uptodate = include_uptodate,
+                                               lazy = lazy,
+                                               vaxtag = vaxtag, vaxtag_print = vaxtag_print))
   }
   if ("Influenza" %in% chosen) {
     vlist <- rbind(vlist, self$list_influenza(date_from, date_to, clinicians,
                                               intID = intID, intID_Date = intID_Date,
                                               appointments_list,
-                                              lazy,
-                                              vaxtag, vaxtag_print))
+                                              include_uptodate = include_uptodate,
+                                              lazy = lazy,
+                                              vaxtag = vaxtag, vaxtag_print = vaxtag_print))
   }
 
   if (nrow(vlist) > 0) {

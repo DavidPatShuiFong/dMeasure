@@ -3,6 +3,10 @@ Changelog
 0.9.6 - 1st April 2020
 ======================
 
+New
+
+* include_uptodate options for $list_vax, $list_influenza, $list_measlesVax, $list_zostavax
+
 Fix
 
 * correction to $list_influenza and $list_zostavax tag display logic (erroneously showed 'removed from reminder list')
