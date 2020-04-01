@@ -149,13 +149,16 @@ list_zostavax <- function(dMeasure_obj,
                         # and green if has had the vax
                         popuphtml =
                           paste0("<h4>",
-                                 dplyr::if_else(is.na(ITEMID),
-                                                dplyr::if_else(
-                                                  is.na(GivenDate),
-                                                  "Age 70 to 79 years",
-                                                  paste0('Date : ', format(GivenDate))),
-                                                'Removed from herpes zoster immunization reminders'),
-                                 "</h4>")))
+                                 dplyr::if_else(
+                                   is.na(GivenDate),
+                                   dplyr::if_else(is.na(ITEMID),
+                                                  dplyr::if_else(
+                                                    is.na(GivenDate),
+                                                    "Age 70 to 79 years",
+                                                    paste0('Date : ', format(GivenDate))),
+                                                  'Removed from herpes zoster immunization reminders'),
+                                   paste0('Given : ', format(GivenDate))),
+                                   "</h4>")))
   }
 
   if (vaxtag_print) {
@@ -608,7 +611,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
                     Provider, DOB, Age) %>>%
     dplyr::summarise(GivenDate = max(GivenDate),
                      Reason = paste0(Reason, collapse = ", ")) %>>%
-      # join unique Reasons together
+    # join unique Reasons together
     dplyr::ungroup() %>>%
     dplyr::left_join(self$db$preventive_health %>>%
                        # those who have been removed from the reminder system for influenza
@@ -636,9 +639,21 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
             # and green if has had the vax this year. yellow if 'old' vax
             popuphtml =
               paste0("<h4>",
-                     dplyr::if_else(is.na(ITEMID),
-                                    as.character(Reason), # co-erce to character (it could be empty)
-                                    'Removed from influenza immunization reminders'),
+                     dplyr::if_else(
+                       is.na(GivenDate),
+                       dplyr::if_else(is.na(ITEMID),
+                                      as.character(Reason), # co-erce to character (it could be empty)
+                                      'Removed from influenza immunization reminders'),
+                       paste0(dplyr::if_else(
+                         is.na(GivenDate) | (GivenDate == -Inf), # no previous vax
+                         "DUE -",
+                         dplyr::if_else(
+                           format(GivenDate, "%Y") == format(AppointmentDate, "%Y"),
+                           # this compares dates
+                           # https://stackoverflow.com/questions/36568070/extract-year-from-date
+                           " ", " DUE -")),
+                         " ", Reason
+                       )),
                      "</h4>")))
   }
 
@@ -795,8 +810,8 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 
   if (nrow(vlist) > 0) {
     group_names <- intersect(names(vlist),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
-                              "Provider", "DOB", "Age"))
+                             c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+                               "Provider", "DOB", "Age"))
     vlist <- vlist %>>%
       dplyr::group_by_at(group_names) %>>%
       # gathers vaccination notifications on the same appointment into a single row
