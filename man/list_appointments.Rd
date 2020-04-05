@@ -29,7 +29,8 @@ permissible values are 'Booked', 'Completed', 'At billing',
 \item{lazy}{(default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
 }
 \value{
-list of appointments
+list of appointments.
+ excludes some 'dummy' appointments such as 'DO NOT BOOK', 'CARE PLAN' and 'CANCELLED'
 }
 \description{
 Filtered by date, and chosen clinicians

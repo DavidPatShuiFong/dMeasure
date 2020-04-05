@@ -216,6 +216,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
@@ -232,6 +234,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
@@ -248,6 +252,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
@@ -264,6 +270,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
@@ -1101,7 +1109,8 @@ dMeasure class
   clinicians = NA,
   date_from = NA,
   date_to = NA,
-  adjustdate = TRUE
+  adjustdate = TRUE,
+  adjust_days = 7
 )}\if{html}{\out{</div>}}
 }
 

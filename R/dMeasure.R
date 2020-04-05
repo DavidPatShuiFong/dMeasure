@@ -29,6 +29,24 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
+
+                  if (length(public_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(public_init_fields$name)) {
+                      if (public_init_fields$obj[[i]] == "dMeasure") {
+                        self[[public_init_fields$name[[i]]]] <-
+                          eval(public_init_fields$value[[i]]) # could 'quote' the value
+                      }
+                    }
+                  }
+                  if (length(private_init_fields$name) > 0) { # only if any defined
+                    for (i in 1:length(private_init_fields$name)) {
+                      if (private_init_fields$obj[[i]] == "dMeasure") {
+                        private[[private_init_fields$name[[i]]]] <-
+                          eval(private_init_fields$value[[i]]) # could 'quote' the value
+                      }
+                    }
+                  }
+
                   if (requireNamespace("shiny", quietly = TRUE)) {
                     # set reactive version only if shiny is available
                     # note that this is for reading (from programs calling this object) only!
@@ -50,23 +68,6 @@ dMeasure <-
                       }
                     }
                   }
-
-                  if (length(public_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(public_init_fields$name)) {
-                      if (public_init_fields$obj[[i]] == "dMeasure") {
-                        self[[public_init_fields$name[[i]]]] <-
-                          eval(public_init_fields$value[[i]]) # could 'quote' the value
-                      }
-                    }
-                  }
-                  if (length(private_init_fields$name) > 0) { # only if any defined
-                    for (i in 1:length(private_init_fields$name)) {
-                      if (private_init_fields$obj[[i]] == "dMeasure") {
-                        private[[private_init_fields$name[[i]]]] <-
-                          eval(private_init_fields$value[[i]]) # could 'quote' the value
-                      }
-                    }
-                  }
                 }
               )
               # this is a 'skeleton' class
@@ -76,13 +77,14 @@ dMeasure <-
 
 ##### special reactive functions ##########################
 
+
 .private(dMeasure, "set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
   # myreactive is passed by reference
   # print(myreactive)
   # print(deparse(sys.call(-1)))
   if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
-    myreactive(value)
+    shiny::isolate(eval(substitute(myreactive, env = parent.frame()))(value))
   }
 })
 .private(dMeasure, "trigger", function(myreactive) {
@@ -781,6 +783,19 @@ open_configuration_db <-
     # always tries to create file if it doesn't exist
   }
 
+  if (!config_db$is_open()) {
+    # failed to read, or create, configuration database
+    if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+      # shinyapps.io environment
+      self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
+    } else {
+      self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
+    }
+    # try to create the default configuration file
+    config_db$connect(RSQLite::SQLite(),
+                      dbname = self$configuration_file_path)
+  }
+
   initialize_data_table = function(config_db, tablename, variable_list ) {
     # make sure the table in the database has all the right variable headings
     # allows 'update' of old databases
@@ -1136,6 +1151,7 @@ update_subscription <- function(dMeasure_obj,
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
 #' @param adjustdate will this function change the dates? ($date_a, $date_b)
+#' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
 #' is triggered
@@ -1150,13 +1166,16 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE) {
-  dMeasure_obj$check_subscription(users, date_from, date_to)
+                               adjustedate = TRUE,
+                               adjust_days = 7) {
+  dMeasure_obj$check_subscription(users, date_from, date_to,
+                                  adjustdate, adjust_days)
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE) {
+                                                 adjustdate = TRUE,
+                                                 adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -1179,7 +1198,7 @@ check_subscription <- function(dMeasure_obj,
   changedate <- FALSE # do dates need to be changed
   # i.e. is there a chosen user with no license, or expired license
 
-  if (date_to > (Sys.Date()-7)) {
+  if (date_to > (Sys.Date() - adjust_days)) {
     # only if date range includes future, or insufficiently 'old' appointments
     changedate <- (NA %in% LicenseDates) # a chosen user has no license
     if (!changedate) {
@@ -1196,8 +1215,8 @@ check_subscription <- function(dMeasure_obj,
   }
 
   if (changedate) {
-    if (date_to > (Sys.Date() - 7)) {
-      date_to <- Sys.Date() - 7
+    if (date_to > (Sys.Date() - adjust_days)) {
+      date_to <- Sys.Date() - adjust_days
       warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
@@ -1848,11 +1867,12 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$invoices <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
-    dplyr::select(InvoiceID = INVOICEID, UserID = USERID,
+    dplyr::select(InvoiceID = INVOICEID, UserID = USERID, Total = TOTAL,
                   InternalID = INTERNALID, SENTTOWORKCOVER)
   # some versions of BP appear to require an extraneous field
   # so that UserID/InternalID are not converted to zeros!
   # in this case, the extraneous field is 'SENTTOWORKCOVER'
+  # Total is in cents
 
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status

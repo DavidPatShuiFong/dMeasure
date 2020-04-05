@@ -1,7 +1,30 @@
 Changelog
 
-0.9.4 - 15th March 2020
+0.9.6 - 1st April 2020
 ======================
+
+New
+
+* include_uptodate options for $list_vax, $list_influenza, $list_measlesVax, $list_zostavax
+
+Fix
+
+* correction to $list_influenza and $list_zostavax tag display logic (erroneously showed 'removed from reminder list')
+
+0.9.5 - 30th March 2020
+=======================
+
+New
+
+* add intID/intID_Date options to $list_zostavax, $list_influenza, $list_measlesVax, $list_vax
+
+Change
+
+* change from $asplenia_list to $asplenic_list
+* adjustable $change_subscription (add adjust_days)
+
+0.9.4 - 15th March 2020
+=======================
 
 New
 

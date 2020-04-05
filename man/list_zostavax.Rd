@@ -9,6 +9,8 @@ list_zostavax(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
   appointments_list = NULL,
   lazy = FALSE,
   vaxtag = FALSE,
@@ -23,6 +25,10 @@ list_zostavax(
 \item{date_to}{to date range (default $date_b)}
 
 \item{clinicians}{list of clinicians (default $clinicians)}
+
+\item{intID}{list of internal ID (default is NULL, in which case appointments_list is used)}
+
+\item{intID_Date}{if intID is not NULL, then date to check (default is Sys.Date())}
 
 \item{appointments_list}{provide an appointment list (default $appointments_list)}
 

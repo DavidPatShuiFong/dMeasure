@@ -266,8 +266,8 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @return a vector of numbers, which are the InternalIDs
 #' @export
-asplenia_list <- function(dMeasure_obj, appointments = NULL) {
-  dMeasure_obj$asplenia_list(appointments)
+asplenic_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$asplenic_list(appointments)
 }
 .public(dMeasure, "asplenic_list", function(appointments = NULL) {
   # @param Appointments dataframe of $InternalID and $Date
