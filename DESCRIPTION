@@ -21,6 +21,7 @@ Imports:
     dbConnection,
     configr,
     sodium,
+    jsonlite,
     R6,
     stringi,
     airtabler
