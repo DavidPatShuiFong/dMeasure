@@ -23,6 +23,8 @@ ui <- fluidPage(
 
 server <- function(input, output) {
 
+  subscriptions <- reactiveVal() # later will point to database
+
   table_base <- reactiveVal(data.frame(id = character(),
                                        Key = character(), License = character(),
                                        Comment = character(),
@@ -37,9 +39,9 @@ server <- function(input, output) {
 
   observeEvent(input$api_key, ignoreNULL = TRUE, ignoreInit = TRUE, {
     Sys.setenv("AIRTABLE_API_KEY" = input$api_key)
-    airtable <- airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions")
+    subscriptions(airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions"))
     # note that this fails very ungracefully if not a valid API_KEY
-    table_base(airtable$Subscriptions$select() %>% dplyr::select(c("id", "Key", "License", "Comment")))
+    table_base(subscriptions()$Subscriptions$select() %>% dplyr::select(c("id", "Key", "License", "Comment")))
   })
 
   observeEvent(input$subscription_key, ignoreNULL = TRUE, ignoreInit = TRUE, {
@@ -54,7 +56,7 @@ server <- function(input, output) {
   })
 
   table.insert.callback <- function(data, row) {
-    data[row,]$Name <- toupper(data[row,]$Name)
+    data[row,]$Name <- toupper(trimws(data[row,]$Name))
     data[row,]$Key <- dMeasure::simple_encode(data[row,]$Name,
                                               key = input$subscription_key)
     data[row,]$License <- dMeasure::simple_encode(paste0(data[row,]$Name,
@@ -65,18 +67,18 @@ server <- function(input, output) {
       License = data[row,]$License,
       Comment = data[row,]$Comment
     )
-    new_row <- airtable$Subscriptions$insert(record_data)
+    new_row <- subscriptions()$Subscriptions$insert(record_data)
     data[row,]$id <- new_row$id
     return(data)
   }
 
   table.delete.callback <- function(data, row) {
-    airtable$Subscriptions$delete(data[row,]$id)
+    subscriptions()$Subscriptions$delete(data[row,]$id)
     return(data[-c(row),])
   }
 
   table.update.callback <- function(data, olddata, row) {
-    data[row,]$Name <- toupper(data[row,]$Name)
+    data[row,]$Name <- toupper(trimws(data[row,]$Name))
     data[row,]$Key <- dMeasure::simple_encode(data[row,]$Name,
                                               key = input$subscription_key)
     data[row,]$License <- dMeasure::simple_encode(paste0(data[row,]$Name,
@@ -89,8 +91,8 @@ server <- function(input, output) {
       Comment = data[row,]$Comment
     )
 
-    airtable$Subscriptions$update(record_id = data[row,]$id,
-                                  record_data = record_data)
+    subscriptions()$Subscriptions$update(record_id = data[row,]$id,
+                                         record_data = record_data)
 
     return(data)
   }
