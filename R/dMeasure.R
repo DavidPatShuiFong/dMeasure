@@ -29,6 +29,7 @@ dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
                 initialize = function () {
+
                   if (length(public_init_fields$name) > 0) { # only if any defined
                     for (i in 1:length(public_init_fields$name)) {
                       if (public_init_fields$obj[[i]] == "dMeasure") {
@@ -80,8 +81,10 @@ dMeasure <-
 .private(dMeasure, "set_reactive", function(myreactive, value) {
   # reactive (if shiny/reactive environment is available) is set to 'value'
   # myreactive is passed by reference
-  if (requireNamespace("shiny", quietly = TRUE)) {
-    myreactive(value)
+  # print(myreactive)
+  # print(deparse(sys.call(-1)))
+  if (requireNamespace("shiny", quietly = TRUE) && shiny::is.reactive(myreactive)) {
+    shiny::isolate(eval(substitute(myreactive, env = parent.frame()))(value))
   }
 })
 .private(dMeasure, "trigger", function(myreactive) {
@@ -259,7 +262,16 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
 }
 .active(dMeasure, "configuration_file_yaml", function (filepath) {
 
-  self$yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
+  if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+    # shinyapps.io environment
+    yaml_config_filepath <- ".DailyMeasure_cfg.yaml"
+    sql_config_filepath <- ".DailyMeasure_cfg.sqlite"
+  } else {
+    yaml_config_filepath <- "~/.DailyMeasure_cfg.yaml"
+    sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+  }
+
+  self$yaml_config_filepath <- yaml_config_filepath
   # the location the of the '.yaml' configuration file
   # always in the user's home directory
   if (!missing(filepath)) {
@@ -281,13 +293,13 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
       # local config file does not exist. possibly first-run
       if (grepl("Program Files", normalizePath(R.home()))) {
         # this is a system-wide install
-        self$sql_config_filepath <- "~/.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- sql_config_filepath
         # store in user's home directory
       } else {
         # this is a 'local' user install, not a system-wide install
         # e.g. C:/Users/MyName/AppData/Programs/...
         # as opposed to 'C:/Program Files/...'
-        self$sql_config_filepath <- "./.DailyMeasure_cfg.sqlite"
+        self$sql_config_filepath <- sql_config_filepath
         # this file can be stored in the AppData folder, out of sight of the user
       }
       local_config <- list()
@@ -378,6 +390,7 @@ BPdatabase <- function(dMeasure_obj) {
                                                     Name = character(),
                                                     Address = character(),
                                                     Database = character(),
+                                                    Driver = character(),
                                                     UserID = character(),
                                                     dbPassword = character(),
                                                     stringsAsFactors = FALSE)))
@@ -422,8 +435,6 @@ UserConfig_empty <- data.frame(id = integer(),
                                Attributes = character(),
                                Password = character(),
                                License = character(),
-                               LicenseCheckDate = as.Date(numeric(0),
-                                                          origin = "1970-01-01"),
                                stringsAsFactors = FALSE)
 .private(dMeasure, ".UserConfig", UserConfig_empty)
 #' show user configurations
@@ -433,15 +444,13 @@ UserConfig_empty <- data.frame(id = integer(),
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe of user configuration descriptions
-#'  id, Fullname, AuthIdentity, Location, Attributes,
-#'  License, LicenseCheckDate
+#'  id, Fullname, AuthIdentity, Location, Attributes, License
 #'
 #'  Fullname - Best Practice full user name
 #'  AuthIdentity - Windows login identity
 #'  Location - vector of groups/locations
 #'  Attributes - vector of user's attributes/permissions
 #'  License - undecoded license
-#'  LicenseCheckDate
 #'
 #' @examples
 #' dMeasure_obj <- dMeasure$new()
@@ -461,17 +470,12 @@ UserConfig <- function(dMeasure_obj) {
     if("factor" %in% class(x)) x <- as.character(x) # since ifelse wont work with factors
     ifelse(as.character(x) != "", x, NA)
   }
-
   if (self$config_db$is_open()) {
     userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
       dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
                     Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
-      dplyr::mutate(License = empty_as_na(License),
-                    LicenseCheckDate = empty_as_na(LicenseCheckDate)) %>>%
-      dplyr::mutate(LicenseCheckDate =
-                      as.Date(LicenseCheckDate, # not obfuscated
-                              origin = "1970-01-01")) %>>%
       # splits Location and Attributes into multiple entries (in the same column)
+      dplyr::mutate(License = empty_as_na(License)) %>>%
       dplyr::select(-Password) # same as $.UserConfig, except the password
   } else {
     userconfig <-
@@ -479,9 +483,7 @@ UserConfig <- function(dMeasure_obj) {
                  AuthIdentity = character(),
                  Location = character(),
                  Attributes = character(),
-                 License = character(),
-                 LicenseCheckDate = as.Date(numeric(0),
-                                            origin = "1970-01-01"))
+                 License = character())
   }
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
@@ -491,9 +493,7 @@ UserConfig <- function(dMeasure_obj) {
                            AuthIdentity = character(),
                            Location = character(),
                            Attributes = character(),
-                           License = character(),
-                           LicenseCheckDate = as.Date(numeric(0),
-                                                      origin = "1970-01-01"))))
+                           License = character())))
 
 #' show user configurations with license
 #'
@@ -502,15 +502,13 @@ UserConfig <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #'
 #' @return dataframe of user configuration descriptions
-#'  id, Fullname, AuthIdentity, Location, Attributes,
-#'  License, LicenseCheckDate
+#'  id, Fullname, AuthIdentity, Location, Attributes, License
 #'
 #'  Fullname - Best Practice full user name
 #'  AuthIdentity - Windows login identity
 #'  Location - vector of groups/locations
 #'  Attributes - vector of user's attributes/permissions
 #'  License - undecoded license
-#'  LicenseCheckDate
 #'  Identifier - identifier used to interrogate subscription database
 #'  LicenseDate - date of license
 #'
@@ -540,8 +538,6 @@ UserConfigLicense <- function(dMeasure_obj) {
                  Location = character(),
                  Attributes = character(),
                  License = character(),
-                 LicenseCheckDate = as.Date(numeric(0),
-                                            origin = "1970-01-01"),
                  Identifier = character(),
                  LicenseDate = as.Date(numeric(0),
                                        origin = "1970-01-01"))
@@ -631,7 +627,14 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         dplyr::filter(Name == choice) %>>%
         dplyr::collect()
       print("Opening EMR database")
-      self$emr_db$connect(odbc::odbc(), driver = "SQL Server",
+      if (is.null(server$Driver) || is.na(server$Driver) || server$Driver == "") {
+        # if driver id not defined
+        server_driver <- "SQL Server" # the old 'default'
+      } else {
+        server_driver <- server$Driver
+      }
+
+      self$emr_db$connect(odbc::odbc(), driver = server_driver,
                           server = server$Address, database = server$Database,
                           uid = server$UserID,
                           pwd = dMeasure::simple_decode(server$dbPassword))
@@ -780,6 +783,19 @@ open_configuration_db <-
     # always tries to create file if it doesn't exist
   }
 
+  if (!config_db$is_open()) {
+    # failed to read, or create, configuration database
+    if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+      # shinyapps.io environment
+      self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
+    } else {
+      self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
+    }
+    # try to create the default configuration file
+    config_db$connect(RSQLite::SQLite(),
+                      dbname = self$configuration_file_path)
+  }
+
   initialize_data_table = function(config_db, tablename, variable_list ) {
     # make sure the table in the database has all the right variable headings
     # allows 'update' of old databases
@@ -832,6 +848,7 @@ open_configuration_db <-
     initialize_data_table(config_db, "Server",
                           list(c("id", "integer"),
                                c("Name", "character"),
+                               c("Driver", "character"), # which MSSQL ODBC driver to use
                                c("Address", "character"),
                                c("Database", "character"),
                                c("UserID", "character"),
@@ -883,8 +900,7 @@ open_configuration_db <-
                                c("Location", "character"),
                                c("Password", "character"),
                                c("Attributes", "character"),
-                               c("License", "character"), # contains license code (if any)
-                               c("LicenseCheckDate", "character") # date of most recent check (if any)
+                               c("License", "character") # contains license code (if any)
                           ))
 
     initialize_data_table(config_db, "UserRestrictions",
@@ -924,6 +940,11 @@ read_configuration_db <- function(dMeasure_obj,
     # then try to open configuration database
     self$open_configuration_db()
     config_db <- self$config_db
+  }
+
+  if (!config_db$is_open()) {
+    warning("Configuration database not opened or defined.")
+    return(invisible(self))
   }
 
   private$.BPdatabase <- config_db$conn() %>>%
@@ -998,109 +1019,86 @@ read_subscription_db <- function(dMeasure_obj,
                                                    users = NULL) {
   # read subscription information
 
-  if (requireNamespace("RMariaDB", quietly = TRUE)) {
-    # RMariaDB is GPL version 3.0
-    # dMeasure will work if RMariaDB is not available,
-    # but subscription features will not be complete
+  Sys.setenv("AIRTABLE_API_KEY" = "keyKqBa9WxbM63qqu")
 
-    self$subscription_db$connect(RMariaDB::MariaDB(),
-                                 host = "vkelim.3222.org", port = 3306,
-                                 username = "guest", dbname = "DailyMeasureUsers",
-                                 timeout = 3)
-    if (!self$subscription_db$is_open()) {
-      # if failed to open vkelim.3322.org, then try the alternate name for vkelim.3322.org
-      self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "davidfong.synology-ds.de", port = 3306,
-                                   username = "guest", dbname = "DailyMeasureUsers",
-                                   timeout = 3)
+  airtable <- airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions")
+  # the actual table is 'DailyMeasureUsers'
+
+  subscription_is_open <-
+    is.list(tryCatch(airtable$Subscriptions$select(filterByFormula = "Key = 'dummy'"),
+                     error = function(e) {NA}))
+  #
+
+  if (subscription_is_open &&
+      self$emr_db$is_open() && self$config_db$is_open()) {
+    # successfully opened subscription database
+    # neees the configuration and EMR databases to also be open
+    print("Subscription database opened")
+
+    a <- self$UserFullConfig
+    if (!is.null(users)) { # if null, then search for all users
+      # if not null, then restrict checked users to those in 'users' vector
+      a <- a %>>% dplyr::filter(Fullname %in% users)
     }
-    if (!self$subscription_db$is_open()) {
-      # if failed to open vkelim.3322.org, then try the alternate vkelim.dsmynas.com
-      self$subscription_db$connect(RMariaDB::MariaDB(),
-                                   host = "vkelim.dsmynas.com", port = 3306,
-                                   username = "guest", dbname = "DailyMeasureUsers",
-                                   timeout = 3)
-    }
-    if (self$subscription_db$is_open() &&
-        self$emr_db$is_open() && self$config_db$is_open()) {
-      # successfully opened subscription database
-      # neees the configuration and EMR databases to also be open
-      print("Subscription database opened")
 
-      a <- self$UserFullConfig
-      if (!is.null(users)) { # if null, then search for all users
-        # if not null, then restrict checked users to those in 'users' vector
-        a <- a %>>% dplyr::filter(Fullname %in% users)
-      }
+    a <- a %>>%
+      dplyr::mutate(LicenseCheck =
+                      forcecheck |
+                      # if forcecheck == TRUE
+                      (is.na(LicenseDate) |
+                         # check if no valid license expiry
+                         # or license is expiring soon
+                         LicenseDate < (Sys.Date() + 60)),
+                    IdentifierUpper = toupper(Identifier)) # convert identifier to upper-case
 
-      a <- a %>>%
-        dplyr::mutate(LicenseCheck =
-                        (forcecheck | is.na(LicenseCheckDate) | LicenseCheckDate != Sys.Date()) &
-                        # if forcecheck == TRUE, then check even if already checked today
-                        # otherewise, skip checking if already checked today
-                        (is.na(LicenseDate) |
-                           # check if no valid license expiry
-                           # or license is expiring soon
-                           LicenseDate < (Sys.Date() + 60)))
+    b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
+      dplyr::pull(IdentifierUpper) %>>% simple_encode(key = "karibuni")
+    # vector of Identifier to check in subscription database
+    # these are 'encoded'
+    search_string <- paste0("OR(", paste0("{Key} = '", c(b, "dummy"), "'", collapse = ", "),")")
+    # this ends up looking something like....
+    #  "OR({Key} = 'a', {Key} = 'j', {Key} = 'tea')"
+    #  adds 'dummy' to the vector, because if no entries are returned, then
+    #  the search will return an empty list! (instead of a dataframe)
 
-      b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
-        dplyr::pull(Identifier) %>>% simple_encode(key = "karibuni")
-      # vector of Identifier to check in subscription database
-      # these are 'encoded'
+    a <- a %>>%
+      dplyr::left_join(airtable$Subscriptions$select(filterByFormula = search_string) %>>%
+                         # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
+                         dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
+                         dplyr::select(IdentifierUpper, NewLicense = License),
+                       by = "IdentifierUpper") %>>%
+      dplyr::mutate(License =
+                      mapply(function(x, y, z, zz) {
+                        if (is.na(z)) {
+                          y # no new expiry date, 'License'
+                        } else {
+                          # need to set to new license
+                          # and also need to update our configuration database
 
-      a <- a %>>%
-        dplyr::left_join(self$subscription_db$conn() %>>%
-                           # read the subscription database
-                           dplyr::tbl("Subscriptions") %>>%
-                           dplyr::filter(Key %in% b) %>>%
-                           # look for Key == Identifier
-                           dplyr::collect() %>>%
-                           dplyr::mutate(Identifier = simple_decode(Key, key = "karibuni")) %>>%
-                           dplyr::select(Identifier, NewLicense = License),
-                         by = "Identifier") %>>%
-        dplyr::mutate(LicenseCheckDate = as.Date(
-          mapply(function(x,y) {
-            if (x) {
-              Sys.Date() # update if checked
-            } else {
-              y
-            }
-          }, LicenseCheck, LicenseCheckDate,
-          USE.NAMES = FALSE), origin = "1970-01-01")) %>>%
-        dplyr::mutate(License =
-                        mapply(function(x, y, z, zz) {
-                          if (is.na(z)) {
-                            y # no new expiry date, 'License'
-                          } else {
-                            # need to set to new license
-                            # and also need to update our configuration database
-
-                            if (nrow(self$userconfig.list() %>>%
-                                     dplyr::filter(Fullname == x)) == 0) {
-                              # the user has NO entry in the configuration database, so create one
-                              self$userconfig.insert(list(Fullname = x))
-                            }
-                            # update the license
-                            self$update_subscription(Fullname = x,
-                                                     License = z, # new license
-                                                     Identifier = zz,
-                                                     verify = FALSE)
-                            # not verified at this stage
-                            z # NewLicence
+                          if (nrow(self$userconfig.list() %>>%
+                                   dplyr::filter(Fullname == x)) == 0) {
+                            # the user has NO entry in the configuration database, so create one
+                            self$userconfig.insert(list(Fullname = x))
                           }
-                        }, Fullname, License, NewLicense, Identifier,
-                        USE.NAMES = FALSE))
+                          # update the license
+                          self$update_subscription(Fullname = x,
+                                                   License = z, # new license
+                                                   Identifier = zz,
+                                                   verify = FALSE)
+                          # not verified at this stage
+                          z # NewLicence
+                        }
+                      }, Fullname, License, NewLicense, Identifier,
+                      USE.NAMES = FALSE))
 
-      # close before exit
-      self$subscription_db$close()
+    # close before exit
+    self$subscription_db$close()
 
-      return(self$UserFullConfig) # this contains the updated license informatioin
-    } else {
-      warning("Unable to open subscription database")
-    }
+    return(self$UserFullConfig) # this contains the updated license informatioin
   } else {
-    warning("Unable to access subscription features (missing database module 'RMariaDB')")
+    warning("Unable to open subscription database")
   }
+
 })
 
 #' Update subscription database
@@ -1153,6 +1151,7 @@ update_subscription <- function(dMeasure_obj,
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
 #' @param adjustdate will this function change the dates? ($date_a, $date_b)
+#' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
 #' is triggered
@@ -1167,13 +1166,16 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE) {
-  dMeasure_obj$check_subscription(users, date_from, date_to)
+                               adjustedate = TRUE,
+                               adjust_days = 7) {
+  dMeasure_obj$check_subscription(users, date_from, date_to,
+                                  adjustdate, adjust_days)
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE) {
+                                                 adjustdate = TRUE,
+                                                 adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -1196,7 +1198,7 @@ check_subscription <- function(dMeasure_obj,
   changedate <- FALSE # do dates need to be changed
   # i.e. is there a chosen user with no license, or expired license
 
-  if (date_to > (Sys.Date()-7)) {
+  if (date_to > (Sys.Date() - adjust_days)) {
     # only if date range includes future, or insufficiently 'old' appointments
     changedate <- (NA %in% LicenseDates) # a chosen user has no license
     if (!changedate) {
@@ -1213,8 +1215,8 @@ check_subscription <- function(dMeasure_obj,
   }
 
   if (changedate) {
-    if (date_to > (Sys.Date() - 7)) {
-      date_to <- Sys.Date() - 7
+    if (date_to > (Sys.Date() - adjust_days)) {
+      date_to <- Sys.Date() - adjust_days
       warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
@@ -1761,6 +1763,23 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
+  self$db$vaccines <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINES")) %>>%
+    # there is also ACIRCODE, CHIDLHOOD, GENERIC
+    dplyr::select("VACCINEID", "VACCINENAME") %>>%
+    dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
+    dplyr::mutate(VaccineName = trimws(VACCINENAME))
+
+  self$db$vaccine_disease <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
+    dplyr::select("VACCINEID", "DISEASECODE")
+
+  self$db$vaxdiseases <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VAXDISEASES")) %>>%
+    dplyr::select("DISEASECODE", "DISEASENAME") %>>%
+    dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
+    dplyr::mutate(DiseaseName = trimws(DISEASENAME))
+
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
     dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>>%
@@ -1837,7 +1856,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
   self$db$services <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_SERVICES')) %>>%
+    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Services')) %>>%
     dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
                   'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
 
@@ -1848,8 +1867,12 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$invoices <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
-    dplyr::select('InvoiceID' = 'INVOICEID', 'UserID' = 'USERID',
-                  'InternalID' = 'INTERNALID')
+    dplyr::select(InvoiceID = INVOICEID, UserID = USERID, Total = TOTAL,
+                  InternalID = INTERNALID, SENTTOWORKCOVER)
+  # some versions of BP appear to require an extraneous field
+  # so that UserID/InternalID are not converted to zeros!
+  # in this case, the extraneous field is 'SENTTOWORKCOVER'
+  # Total is in cents
 
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
@@ -1973,12 +1996,14 @@ initialize_emr_tables <- function(dMeasure_obj,
     # just the .UserConfig except the passwords
     # mutate to the same shape even if database is not open
   } else {
+    PracticeName <- self$db$practice %>>%
+      dplyr::pull(PracticeName)
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
       dplyr::mutate(Fullname =
-                      paste(Title, Firstname, Surname, sep = ' ')) %>>%
+                      trimws(paste(Title, Firstname, Surname, sep = ' '))) %>>%
       # include 'Fullname'
       dplyr::left_join(self$UserConfig, by = 'Fullname') %>>%
       # add user details including practice locations
@@ -1988,10 +2013,10 @@ initialize_emr_tables <- function(dMeasure_obj,
       # and is also used to help 'decode' the LicenseDate
       dplyr::mutate(Identifier = paste0(vapply(ProviderNo,
                                                # create verification string
-                                               function(n) if (nchar(n) == 0) {
-                                                 self$db$practice %>>%
-                                                   # practice name if no provider number
-                                                   dplyr::pull(PracticeName)}
+                                               function(n) if (is.na(n) || nchar(n) == 0) {
+                                                 # practice name if no provider number
+                                                 PracticeName
+                                               }
                                                else {
                                                  n # the provider number
                                                },
@@ -2013,6 +2038,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' @param License an encoded character string
 #' @param Identifier a character string
+#'  Identifier is converted to upper case
 #'
 #' @return a date object 'LicenseDate'. returns NA if not valid
 #'
@@ -2022,6 +2048,7 @@ verify_license <- function(License, Identifier) {
   if (is.na(License)) { # if NA for License
     LicenseDate <- NA # remain unchanged
   } else { # otherwise decode
+    Identifier <- toupper(Identifier) # convert to upper-case
     zzz <- simple_decode(License, "karibuni") # this could return NULL if not valid
     if (!is.na(zzz) && substr(zzz, 1, nchar(Identifier)) == Identifier) {
       # left side of decrypted license must equal the Identifier

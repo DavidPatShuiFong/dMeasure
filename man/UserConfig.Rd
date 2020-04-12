@@ -11,15 +11,13 @@ UserConfig(dMeasure_obj)
 }
 \value{
 dataframe of user configuration descriptions
- id, Fullname, AuthIdentity, Location, Attributes,
- License, LicenseCheckDate
+ id, Fullname, AuthIdentity, Location, Attributes, License
 
  Fullname - Best Practice full user name
  AuthIdentity - Windows login identity
  Location - vector of groups/locations
  Attributes - vector of user's attributes/permissions
  License - undecoded license
- LicenseCheckDate
 }
 \description{
 show user configurations

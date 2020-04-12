@@ -14,7 +14,7 @@ NULL
   if (!missing(value)) {
     warning("'appointment_status_types' cannot be set.")
   }
-  return (c("Booked",  "Waiting", "With doctor", "At billing", "Invoiced", "Completed"))
+  return (c("Booked",  "Waiting", "With doctor", "At billing", "Invoiced", "Completed", "Paid"))
 })
 
 # valid appointment states. note that 'with doctor' applies to any health provider type!

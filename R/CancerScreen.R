@@ -88,22 +88,6 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
             "('%FAECAL IMMUNOCHEMICAL TEST%'), ('%FAECAL HAEMOGLOBIN%'),",
             "('%COLONOSCOPY%'), ('%COLONOSCOPE%')) AS tests(fobtnames)"))
 
-  fobt_investigation_query <-
-    paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations',
-          'INNER JOIN', bowel_cancer_screen_terms,
-          'ON TestName LIKE tests.fobtnames')
-  # SQL code to find investigations which could be bowel cancer screening items
-
-  fobt_letter_subject_query <-
-    paste('SELECT InternalID, CorrespondenceDate, Subject FROM dbo.BPS_CorrespondenceIn',
-          'INNER JOIN', bowel_cancer_screen_terms,
-          'ON Subject LIKE tests.fobtnames')
-
-  fobt_letter_detail_query <-
-    paste('SELECT InternalID, CorrespondenceDate, Detail FROM dbo.BPS_CorrespondenceIn',
-          'INNER JOIN', bowel_cancer_screen_terms,
-          'ON Detail LIKE tests.fobtnames')
-
   fobt_result_query <-
     paste("SELECT InternalID, ReportDate, ResultName FROM dbo.BPS_ReportValues",
           "WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',",
@@ -114,6 +98,27 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 
   screen_fobt_list <- appointments_list %>>%
     dplyr::filter(Age >= 50 & Age <=75) # from age 50 to 75 years inclusive
+
+  intID <- screen_fobt_list %>>% dplyr::pull(InternalID) %>>% unique() %>>% c(-1)
+
+  fobt_investigation_query <-
+    paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations',
+          'INNER JOIN', bowel_cancer_screen_terms,
+          'ON TestName LIKE tests.fobtnames',
+          'WHERE InternalID in (', paste(intID, collapse = ", "), ')')
+  # SQL code to find investigations which could be bowel cancer screening items
+
+  fobt_letter_subject_query <-
+    paste('SELECT InternalID, CorrespondenceDate, Subject FROM dbo.BPS_CorrespondenceIn',
+          'INNER JOIN', bowel_cancer_screen_terms,
+          'ON Subject LIKE tests.fobtnames',
+          'WHERE InternalID in (', paste(intID, collapse = ", "), ')')
+
+  fobt_letter_detail_query <-
+    paste('SELECT InternalID, CorrespondenceDate, Detail FROM dbo.BPS_CorrespondenceIn',
+          'INNER JOIN', bowel_cancer_screen_terms,
+          'ON Detail LIKE tests.fobtnames',
+          'WHERE InternalID in (', paste(intID, collapse = ", "), ')')
 
   screen_fobt_ix <- screen_fobt_list %>>%
     dplyr::left_join(

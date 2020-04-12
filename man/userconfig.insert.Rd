@@ -9,7 +9,8 @@ userconfig.insert(dMeasure_obj, description)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{description}{list $Fullname, $AuthIdentity, $Location, $Attributes}
+\item{description}{list $Fullname, $AuthIdentity, $Location, $Attributes
+$License}
 }
 \value{
 $UserConfig

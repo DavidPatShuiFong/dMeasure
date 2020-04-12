@@ -4,8 +4,13 @@
 \alias{update_subscription}
 \title{Update subscription database}
 \usage{
-update_subscription(dMeasure_obj, Fullname = NA, License = NA,
-  Identifier = NA, verify = TRUE)
+update_subscription(
+  dMeasure_obj,
+  Fullname = NA,
+  License = NA,
+  Identifier = NA,
+  verify = TRUE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}

@@ -9,9 +9,9 @@ server.update(dMeasure_obj, description)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{description}{list $id, $Name, $Address, $Database, $UserID, $dbPassword
+\item{description}{list $id, $Name, $Driver, $Address, $Database, $UserID, $dbPassword
 
- any of $Name, $Address, $Database, $UserID and/or $dbPassword can
+ any of $Name, $Driver, $Address, $Database, $UserID and/or $dbPassword can
  be defined}
 }
 \value{

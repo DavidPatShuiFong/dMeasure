@@ -119,6 +119,7 @@ filter_appointments <- function(dMeasure_obj,
             self$appointments_filtered <- self$db$appointments %>>%
               dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
               dplyr::filter(Provider %in% clinicians) %>>%
+              dplyr::filter(InternalID != 0) %>>% # get rid of 'dummy' appointments
               dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
               dplyr::filter(Status %in% status)
             # a database filter on an empty list after %in% will
@@ -237,7 +238,8 @@ filter_appointments_time <- function(dMeasure_obj,
 #' @param lazy (default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate
 #'
 #'
-#' @return list of appointments
+#' @return list of appointments.
+#'  excludes some 'dummy' appointments such as 'DO NOT BOOK', 'CARE PLAN' and 'CANCELLED'
 #' @export
 list_appointments <- function(dMeasure_obj,
                               date_from = NA, date_to = NA,
@@ -277,12 +279,21 @@ list_appointments <- function(dMeasure_obj,
               # (that is automatically done by calling the $filter_appointments_time method)
             }
 
+            intID <- c(self$appointments_filtered_time %>>% dplyr::pull(InternalID), -1)
+            # just the internalID, and add a dummy entry in case the list is empty
+
             self$appointments_list <-
               self$appointments_filtered_time %>>%
-              dplyr::left_join(self$db$patients, by = 'InternalID', copy = TRUE) %>>%
+              dplyr::left_join(self$db$patients %>>%
+                                 dplyr::filter(InternalID %in% intID),
+                               by = 'InternalID', copy = TRUE) %>>%
               # need patients database to access date-of-birth
               dplyr::select(c('Patient', 'InternalID', 'AppointmentDate',
                               'AppointmentTime', 'Status', 'Provider', 'DOB')) %>>%
+              dplyr::filter(!(toupper(Patient) %in% c("DO NOT BOOK",
+                                                      "CANCELLED",
+                                                      "CARE PLAN"))) %>>%
+              # don't include 'dummy appointments'
               dplyr::mutate(DOB = as.Date(substr(DOB, 1, 10))) %>>%
               dplyr::mutate(Age = dMeasure::calc_age(DOB, AppointmentDate))
 

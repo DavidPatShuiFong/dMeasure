@@ -4,8 +4,14 @@
 \alias{list_appointments}
 \title{List of appointments with date of birth}
 \usage{
-list_appointments(dMeasure_obj, date_from = NA, date_to = NA,
-  clinicians = NA, status = NA, lazy = FALSE)
+list_appointments(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  status = NA,
+  lazy = FALSE
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
@@ -23,7 +29,8 @@ permissible values are 'Booked', 'Completed', 'At billing',
 \item{lazy}{(default FALSE) if lazy=TRUE, then don't re-calculate $appointments_filtered to calculate}
 }
 \value{
-list of appointments
+list of appointments.
+ excludes some 'dummy' appointments such as 'DO NOT BOOK', 'CARE PLAN' and 'CANCELLED'
 }
 \description{
 Filtered by date, and chosen clinicians

@@ -4,8 +4,14 @@
 \alias{check_subscription}
 \title{check the subscription database}
 \usage{
-check_subscription(dMeasure_obj, clinicians = NA, date_from = NA,
-  date_to = NA, adjustedate = TRUE)
+check_subscription(
+  dMeasure_obj,
+  clinicians = NA,
+  date_from = NA,
+  date_to = NA,
+  adjustedate = TRUE,
+  adjust_days = 7
+)
 }
 \arguments{
 \item{dMeasure_obj}{dMeasure object}
@@ -16,10 +22,12 @@ check_subscription(dMeasure_obj, clinicians = NA, date_from = NA,
 
 \item{date_to}{date to, by default $date_b}
 
-\item{adjustdate}{will this function change the dates? ($date_a, $date_b)
+\item{adjust_days}{number of days to adjust
 
 if the date is adjusted then reactive $check_subscription_datechange_trigR
 is triggered}
+
+\item{adjustdate}{will this function change the dates? ($date_a, $date_b)}
 }
 \value{
 a list $changedate, $date_from, $date_to

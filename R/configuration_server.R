@@ -13,7 +13,13 @@ NULL
 #' insert a new server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description list object : $Name, $Address, $Database, $UserID, $dbPassword
+#' @param description list object : $Name, $Driver, $Address, $Database, $UserID, $dbPassword
+#'
+#'  'Driver' will be the MSSQL driver to use. If left blank or not defined,
+#'   then 'SQL Server' will be used.
+#'   Other possible choices include "ODBC Driver 11 for SQL Server"
+#'   or "ODBC Driver 13 for SQL Server".
+#'   A list of available drivers can be seen (in R) with odbc::odbcListDrivers()
 #'
 #'  'Address' will typically be of the form COMPUTERNAME and BPSINSTANCE, with two
 #'  backslashes in between.
@@ -57,16 +63,29 @@ server.insert <- function(dMeasure_obj, description) {
              is.null(description$Database) |
              is.null(description$UserID) |
              is.null(description$dbPassword)) {
-    stop(paste("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
+    stop(paste("Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
                "must be described"))
   } else if (stringi::stri_length(description$Name) == 0 |
              stringi::stri_length(description$Address) == 0 |
              stringi::stri_length(description$Database) == 0 |
              stringi::stri_length(description$UserID) == 0 |
              stringi::stri_length(description$dbPassword) == 0) {
-    stop(paste("All entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
+    stop(paste("Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
                "must be described"))
   } else {
+    if (is.null(description$Driver)) {
+      description$Driver <- "" # this is the only field which is assigned a default!
+      # 'empty' will result in 'SQL Server' being used
+    }
+    if (!(description$Driver %in% c(odbc::odbcListDrivers()$name, ""))) {
+      description$Driver <- ""
+      warning(paste("Invalid driver choice.",
+                    "Must be one of : ",
+                    paste(unique(odbc::odbcListDrivers()$name),
+                          collapse = ", "),
+                    ". Will be set to empty ''."))
+    }
+
     newid <- max(c(as.data.frame(private$.BPdatabase)$id, 0)) + 1
     # initially, private$.BPdatabase$id might be an empty set, so need to append a '0'
     description$id <- newid
@@ -75,15 +94,16 @@ server.insert <- function(dMeasure_obj, description) {
     # stored encrypted both in memory and in configuration file
 
     query <- paste("INSERT INTO Server",
-                   "(id, Name, Address, Database, UserID, dbPassword)",
-                   "VALUES (?, ?, ?, ?, ?, ?)")
-    data_for_sql <- as.list.data.frame(c(newid, description$Name, description$Address,
+                   "(id, Name, Driver, Address, Database, UserID, dbPassword)",
+                   "VALUES (?, ?, ?, ?, ?, ?, ?)")
+    data_for_sql <- as.list.data.frame(c(newid, description$Name, description$Driver,
+                                         description$Address,
                                          description$Database, description$UserID,
                                          description$dbPassword))
-
     self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
+
     private$trigger(self$config_db_trigR)
 
     private$.BPdatabase <- rbind(private$.BPdatabase, description,
@@ -100,9 +120,9 @@ server.insert <- function(dMeasure_obj, description) {
 #' the server to change is specified by $id
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description list $id, $Name, $Address, $Database, $UserID, $dbPassword
+#' @param description list $id, $Name, $Driver, $Address, $Database, $UserID, $dbPassword
 #'
-#'  any of $Name, $Address, $Database, $UserID and/or $dbPassword can
+#'  any of $Name, $Driver, $Address, $Database, $UserID and/or $dbPassword can
 #'  be defined
 #'
 #' @return dataframe - full list of database descriptions
@@ -140,11 +160,26 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::pull(Name)
   } else {
     if (toupper(description$Name) %in%
-        toupper(append(private$.BPdatabase[-(id = description$id),]$Name, "None"))) {
+        toupper(append(private$.BPdatabase[!(private$.BPdatabase$id == description$id),]$Name,
+                       "None"))) {
       # if the proposed server is the same as one that already exists
       # (ignoring case, and removing the 'id' which is specified in the description)
       stop("New server name cannot be the same as existing names, or 'None'")
     }
+  }
+  if (is.null(description$Driver)) {
+    description$Driver <- private$.BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(Driver)
+  }
+  if (!(description$Driver %in% c("", odbc::odbcListDrivers()$name))) {
+    description$Driver <- private$.BPdatabase %>>%
+      dplyr::filter(id == description$id) %>>%
+      dplyr::pull(Driver)
+    warning(paste("Invalid driver choice.",
+                  "Must be one of : ",
+                  paste(unique(odbc::odbcListDrivers()$name),
+                        collapse = ", ")))
   }
   if (is.null(description$Address)) {
     description$Address <- private$.BPdatabase %>>%
@@ -171,15 +206,17 @@ server.update <- function(dMeasure_obj, description) {
     # stored encrypted both in memory and in configuration file
   }
 
-  query <- paste("UPDATE Server SET Name = ?, Address = ?, Database = ?,",
+  query <- paste("UPDATE Server SET Name = ?, Driver = ?, Address = ?, Database = ?,",
                  "UserID = ?, dbPassword = ? WHERE id = ?")
-  data_for_sql <- as.list.data.frame(c(description$Name, description$Address,
+  data_for_sql <- as.list.data.frame(c(description$Name, description$Driver,
+                                       description$Address,
                                        description$Database, description$UserID,
                                        description$dbPassword, description$id))
 
   self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
+
   private$trigger(self$config_db_trigR)
 
   private$.BPdatabase <- rbind(private$.BPdatabase %>>% dplyr::filter(id != description$id),
@@ -355,7 +392,7 @@ server.permission <- function(dMeasure_obj) {
         # configuration database is open (from earlier check),
         # but not currently logging
         self$config_db$open_log_db(filename = self$LogFile,
-                                      tag = Sys.info()[["user"]])
+                                   tag = Sys.info()[["user"]])
         # tries to open the logging database
         if (is.null(self$config_db$log_db)) {
           # log database not successfully opened
@@ -366,7 +403,7 @@ server.permission <- function(dMeasure_obj) {
       if (self$emr_db$is_open() & !self$emr_db$keep_log) {
         # EMR database is open, but not currently logging
         self$emr_db$open_log_db(filename = self$LogFile,
-                                   tag = Sys.info()[["user"]])
+                                tag = Sys.info()[["user"]])
         # tries to open the logging database
         if (is.null(self$emr_db$log_db)) {
           # log database not successfully opened
