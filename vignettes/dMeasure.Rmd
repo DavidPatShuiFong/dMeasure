@@ -326,7 +326,7 @@ Chronic disease management methods are contained within the dMeasureCDM module h
 cdm <- dMeasureCDM::dMeasureCDM$new(a, billings)
 # the dMeasureCDM object requires access to both the dMeasure ('a') object
 # and the dMeasureBillings ('billings') object
-cdm$appointments_billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
+cdm$billings_cdm() %>% head() # chronic disease management opportunities based on chronic conditions
 ```
 
 Chronic disease management opportunities based on a a large number of condition lists, such `diabetes_list_cdm`.
@@ -334,7 +334,9 @@ These active condition lists look at `appointments_list` (which is set by **list
 determine if a chronic disease management billing has occurred in a time period prior to the appointment.
 
 ```{r}
-cdm$diabetes_list_cdm %>% head() # note that this is an 'active' variable, not a method
+intID_list <- a$appointments_list %>>%
+  dplyr::select(InternalID, AppointmentDate, AppointmentTime, Provider, Age)
+cdm$diabetes_list_cdm(intID_list) %>% head()
 ```
 
 The **diabetes_list_cdm** method in turn calls upon the **diabetes_list** method, which given a dataframe of `$InternalID`

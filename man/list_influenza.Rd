@@ -12,6 +12,7 @@ list_influenza(
   intID = NULL,
   intID_Date = Sys.Date(),
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   vaxtag = FALSE,
   vaxtag_print = TRUE
@@ -31,6 +32,8 @@ list_influenza(
 \item{intID_Date}{if intID is not NULL, then date to check (default is Sys.Date())}
 
 \item{appointments_list}{provide an appointment list (default $appointments_list)}
+
+\item{include_uptodate}{include those who are up-to-date ('green' tags)}
 
 \item{lazy}{= FALSE recalculate an appointment list}
 

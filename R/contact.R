@@ -19,7 +19,7 @@ NULL
 
 # valid appointment states. note that 'with doctor' applies to any health provider type!
 .private_init(dMeasure, ".appointment_status",
-              quote(c("With doctor", "At billing", "Invoiced", "Completed")))
+              quote(c("With doctor", "At billing", "Invoiced", "Completed", "Paid")))
 # by default, all status types are valid
 .active(dMeasure, "appointment_status", function(value) {
   if (missing(value)) {
