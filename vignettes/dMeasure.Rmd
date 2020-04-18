@@ -143,6 +143,10 @@ Database connections can be 'manually' closed.
 
 The most recent Best Practice database choice will be 'remembered' in the .sqlite configuration file.
 
+```{r echo = FALSE, results = 'hide', message = FALSE}
+a$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite" # set quietly to default!
+```
+
 ```{r}
 a$close() # closes the database connections
 ```
