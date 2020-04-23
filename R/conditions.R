@@ -40,7 +40,7 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% diabetes_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -80,7 +80,7 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% asthma_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -116,13 +116,15 @@ atsi_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice Aboriginal or Torres Strait Islander codes
-  atsi_codes <- c("Aboriginal", "Torres Strait Islander",
-                  "Aboriginal/Torres Strait Islander")
+  atsi_codes <- c(
+    "Aboriginal", "Torres Strait Islander",
+    "Aboriginal/Torres Strait Islander"
+  )
 
 
   self$db$patients %>>%
     dplyr::filter(Ethnicity %in% atsi_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -158,21 +160,23 @@ malignancy_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice codes including for many cancers, carcinomas, lymphomas, leukaemias
-  malignancy_codes <- c(463, 478, 485, 7845, 449, 6075, 453, 456, 473, 490, 11927,
-                        445, 444, 446, 447, 448, 451, 457, 458, 459, 460, 462, 469, 454,
-                        472, 474, 477, 480, 481, 482, 486, 487, 488, 489, 11911, 491,
-                        492, 9391, 7751, 483, 8027, 470, 471, 476, 8261, 2475, 6835,
-                        6827, 6817, 6818, 6813, 6824, 6830, 6820, 6822, 6819, 6815, 6828,
-                        6826, 6821, 6833, 6831, 6823, 6834, 6825, 6832, 6829, 6814, 3221,
-                        4975, 2273, 2287, 4976, 5604, 5599, 5602, 5600, 5609, 5601, 5603,
-                        5608, 5607, 329, 2350, 2222, 5054, 2223, 6541, 2224, 2225, 2226,
-                        6003, 5480, 2230, 452, 3215, 7005, 2173, 2174, 2175, 2176, 2177,
-                        2178, 2179, 1440)
+  malignancy_codes <- c(
+    463, 478, 485, 7845, 449, 6075, 453, 456, 473, 490, 11927,
+    445, 444, 446, 447, 448, 451, 457, 458, 459, 460, 462, 469, 454,
+    472, 474, 477, 480, 481, 482, 486, 487, 488, 489, 11911, 491,
+    492, 9391, 7751, 483, 8027, 470, 471, 476, 8261, 2475, 6835,
+    6827, 6817, 6818, 6813, 6824, 6830, 6820, 6822, 6819, 6815, 6828,
+    6826, 6821, 6833, 6831, 6823, 6834, 6825, 6832, 6829, 6814, 3221,
+    4975, 2273, 2287, 4976, 5604, 5599, 5602, 5600, 5609, 5601, 5603,
+    5608, 5607, 329, 2350, 2222, 5054, 2223, 6541, 2224, 2225, 2226,
+    6003, 5480, 2230, 452, 3215, 7005, 2173, 2174, 2175, 2176, 2177,
+    2178, 2179, 1440
+  )
 
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% malignancy_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -211,7 +215,7 @@ hiv_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% hiv_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -251,7 +255,7 @@ haemoglobinopathy_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% haemoglobinopathy_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -291,7 +295,7 @@ asplenic_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% asplenic_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -334,7 +338,7 @@ transplant_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% transplant_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -391,7 +395,7 @@ cvd_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% cvd_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -432,14 +436,16 @@ cardiacdisease_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice codes for cardiac disease
-  cardiac_codes <- c(7810, 226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381,
-                     2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847,
-                     1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556)
+  cardiac_codes <- c(
+    7810, 226, 227, 228, 2376, 2377, 2378, 2379, 2380, 2381,
+    2382, 3576, 3577, 3578, 3579, 1534, 2556, 6847, 7847,
+    1347, 2376, 2377, 2378, 2379, 2380, 2381, 2382, 7847, 6847, 2556
+  )
   # cyanotic congenital heart disease, ischaemic heart disease, AMI and congestive failure
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% cardiac_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -479,7 +485,7 @@ trisomy21_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% trisomy21_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -515,9 +521,10 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
 
   appointments %>>% dplyr::collect() %>>%
     dplyr::inner_join(self$db$observations %>>%
-                        dplyr::filter(ObservationCode == 9),
-                      # this is BMI. also in DATANAME, but different spellings/cases
-                      by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(ObservationCode == 9),
+    # this is BMI. also in DATANAME, but different spellings/cases
+    by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::mutate(ObservationDate = as.Date(ObservationDate)) %>>%
     # although defined 'as.Date' in self$db$observations,
     # it needs to be explicitly converted to as.Date again
@@ -572,7 +579,7 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% cld_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -610,13 +617,15 @@ neurologic_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice codes for neurology
-  neuro_codes <- c(2351, 963, 965, 966, 968, 969, 971, 6604,
-                   2022, 2630, 3093)
+  neuro_codes <- c(
+    2351, 963, 965, 966, 968, 969, 971, 6604,
+    2022, 2630, 3093
+  )
   # multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% neuro_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -659,7 +668,7 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% cld_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -697,13 +706,15 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice codes for chronic liver disease
-  crf_codes <- c(662, 258, 3132, 662, 2486, 2487, 6379, 2489, 7469, 1274,
-                 7502, 7503, 7504, 7505, 7506, 2882)
+  crf_codes <- c(
+    662, 258, 3132, 662, 2486, 2487, 6379, 2489, 7469, 1274,
+    7502, 7503, 7504, 7505, 7506, 2882
+  )
   # chronic renal failure, renal impairment, dialysis
 
   self$db$history %>>%
     dplyr::filter(ConditionID %in% crf_codes &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -741,20 +752,21 @@ pregnant_list <- function(dMeasure_obj, appointments = NULL) {
 
   appointments %>>%
     dplyr::inner_join(self$db$pregnancies %>>%
-                        dplyr::filter(InternalID %in% intID),
-                      by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID),
+    by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::filter(is.na(EndDate) | is.null(EndDate) |
-                    EndDate > Date) %>>%
+      EndDate > Date) %>>%
     dplyr::filter(UseScan == 1 | # 'pass-through' is using scan date
-                    # (using LNMP date)
-                    # using SQL function 'DATEDIFF'
-                    # assume not 'pregnant' is more than 30 days post-dates
-                    (!is.na(EDCbyDate) &
-                       (Date - as.Date(EDCbyDate)) < 30)) %>>%
+      # (using LNMP date)
+      # using SQL function 'DATEDIFF'
+      # assume not 'pregnant' is more than 30 days post-dates
+      (!is.na(EDCbyDate) &
+        (Date - as.Date(EDCbyDate)) < 30)) %>>%
     dplyr::filter(UseScan == 0 | # 'pass-through' if using LNMP date
-                    # (using LNMP date)
-                    (!is.na(EDCbyScan) &
-                       (Date - as.Date(EDCbyScan)) < 30)) %>>%
+      # (using LNMP date)
+      (!is.na(EDCbyScan) &
+        (Date - as.Date(EDCbyScan)) < 30)) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -807,13 +819,16 @@ postnatal_list <- function(dMeasure_obj, appointments = NULL,
   if (nrow(appointments) == 0) {
     # no apppointments to choose from!
     # database might not even be open
-    # return an (empty) dataframe in the same shape as the expected return dataframe
+    # return an (empty) dataframe in the same shape
+    # as the expected return dataframe
     return(appointments %>>%
-             dplyr::select(-c(Date)) %>>%
-             dplyr::mutate(EDCbyDate = as.Date(NA, origin = "1970-01-01"),
-                           EDCbyScan = as.Date(NA, origin = "1970-01-01"),
-                           EndDate = as.Date(NA, origin = "1970-01-01"),
-                           OutcomeCode = as.numeric(NA)))
+      dplyr::select(-c(Date)) %>>%
+      dplyr::mutate(
+        EDCbyDate = as.Date(NA, origin = "1970-01-01"),
+        EDCbyScan = as.Date(NA, origin = "1970-01-01"),
+        EndDate = as.Date(NA, origin = "1970-01-01"),
+        OutcomeCode = as.numeric(NA)
+      ))
   }
 
   intID <- c(dplyr::pull(appointments, InternalID), -1)
@@ -821,17 +836,18 @@ postnatal_list <- function(dMeasure_obj, appointments = NULL,
 
   appointments %>>%
     dplyr::inner_join(self$db$pregnancies %>>%
-                        dplyr::filter(InternalID %in% intID),
-                      by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID),
+    by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::filter(OutcomeCode %in% outcome) %>>%
     dplyr::filter(is.na(EndDate) | # if no recorded end date, then 'pass-through'
-                    # if there is a recorded end-date, then use SQL function DATEDIFF
-                    dplyr::between(Date - as.Date(EndDate), days_min, days_max)) %>>%
+      # if there is a recorded end-date, then use SQL function DATEDIFF
+      dplyr::between(Date - as.Date(EndDate), days_min, days_max)) %>>%
     dplyr::filter(!is.na(EndDate) | # if recorded end date, then 'pass-through'
-                    ((include_edc == 1) & UseScan == 0 & !is.na(EDCbyDate) & # use EDCbyDAte
-                       dplyr::between(Date - as.Date(EDCbyDate), days_min, days_max)) |
-                    ((include_edc == 1) & UseScan == 1 & !is.na(EDCbyScan) & # use EDCbyScan
-                       dplyr::between(Date - as.Date(EDCbyScan), days_min, days_max))) %>>%
+      ((include_edc == 1) & UseScan == 0 & !is.na(EDCbyDate) & # use EDCbyDAte
+        dplyr::between(Date - as.Date(EDCbyDate), days_min, days_max)) |
+      ((include_edc == 1) & UseScan == 1 & !is.na(EDCbyScan) & # use EDCbyScan
+        dplyr::between(Date - as.Date(EDCbyScan), days_min, days_max))) %>>%
     dplyr::select(InternalID, EDCbyDate, EDCbyScan, EndDate, OutcomeCode)
 })
 
@@ -869,7 +885,8 @@ fifteenplus_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     # initially Date is a dttm (POSIXt) object,
@@ -915,10 +932,13 @@ sixtyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB),
-                  Date = as.Date(Date)) %>>%
+    dplyr::mutate(
+      DOB = as.Date(DOB),
+      Date = as.Date(Date)
+    ) %>>%
     dplyr::filter(dMeasure::calc_age(DOB, Date) >= 65) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
@@ -958,7 +978,8 @@ seventyfiveplus_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dMeasure::calc_age(DOB, Date) >= 75) %>>%
@@ -997,19 +1018,23 @@ ATSI_35_44_list <- function(dMeasure_obj, appointments = NULL) {
   # internalID in appointments. add a -1 in case this is an empty list
 
   # Best Practice Aboriginal or Torres Strait Islander codes
-  atsi_codes <- c("Aboriginal", "Torres Strait Islander",
-                  "Aboriginal/Torres Strait Islander")
+  atsi_codes <- c(
+    "Aboriginal", "Torres Strait Islander",
+    "Aboriginal/Torres Strait Islander"
+  )
 
   self$db$patients %>>%
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::inner_join(self$db$patients %>>%
-                        dplyr::filter(Ethnicity %in% atsi_codes &&
-                                        InternalID %in% intID) %>>%
-                        dplyr::select(InternalID),
-                      by = "InternalID") %>>%
+      dplyr::filter(Ethnicity %in% atsi_codes &&
+        InternalID %in% intID) %>>%
+      dplyr::select(InternalID),
+    by = "InternalID"
+    ) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 35, 44)) %>>%
@@ -1051,7 +1076,8 @@ fortyfiveseventyfour_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID) %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 45, 74)) %>>%
@@ -1104,16 +1130,20 @@ cst_eligible_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(DOB = as.Date(DOB),
-                  Date = as.Date(Date)) %>>%
+    dplyr::mutate(
+      DOB = as.Date(DOB),
+      Date = as.Date(Date)
+    ) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 25, 74)) %>>%
     dplyr::select(InternalID, Date) %>>%
     dplyr::left_join(self$db$history %>>%
-                       dplyr::filter(InternalID %in% intID &&
-                                       ConditionID %in% hysterectomy_codes),
-                     by = "InternalID", copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID &&
+        ConditionID %in% hysterectomy_codes),
+    by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::filter(is.na(ConditionID)) %>>%
     # remove all who have a hysterectomy code
     # currently, does not remove according to DATE of hysterectomy
@@ -1162,7 +1192,8 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(InternalID %in% intID && Sex == "Female") %>>%
     dplyr::select(InternalID, DOB) %>>%
     dplyr::left_join(appointments,
-                     by = "InternalID", copy = TRUE) %>>%
+      by = "InternalID", copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(DOB = as.Date(DOB), Date = as.Date(Date)) %>>%
     dplyr::filter(dplyr::between(dMeasure::calc_age(DOB, Date), 50, 74)) %>>%
@@ -1179,10 +1210,12 @@ mammogram_eligible_list <- function(dMeasure_obj, appointments = NULL) {
 #'
 #' @return a vector of numbers, which are the InternalIDs
 #' @export
-familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL) {
+familialHypercholesterolaemia_list <- function(dMeasure_obj,
+                                               appointments = NULL) {
   dMeasure_obj$familialHypercholesterolaemia_list(appointments)
 }
-.public(dMeasure, "familialHypercholesterolaemia_list", function(appointments = NULL) {
+.public(dMeasure, "familialHypercholesterolaemia_list",
+        function(appointments = NULL) {
   # @param Appointments dataframe of $InternalID and $Date
   #  if no parameter provided, derives from $appointments_filtered
   #
@@ -1200,7 +1233,7 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj, appointments = NULL
 
   self$db$history %>>%
     dplyr::filter(ConditionID == 1446 &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
@@ -1235,8 +1268,7 @@ LVH_list <- function(dMeasure_obj, appointments = NULL) {
 
   self$db$history %>>%
     dplyr::filter(ConditionID == 2214 &&
-                    InternalID %in% intID) %>>%
+      InternalID %in% intID) %>>%
     dplyr::pull(InternalID) %>>%
     unique()
 })
-

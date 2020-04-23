@@ -1955,11 +1955,33 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::mutate(EDCbyDate = as.Date(EDCbyDate), EDCbyScan = as.Date(EDCbyScan),
                   ActualLMP = as.Date(ActualLMP), NominalLMP = as.Date(NominalLMP),
                   EndDate = as.Date(EndDate))
-  #'   OutcomeCode :0 = none recorded, 1 = "Live birth",
-  #'   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
-  #'   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
-  #'   7 = hydatiform mole
+  #   OutcomeCode :0 = none recorded, 1 = "Live birth",
+  #   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
+  #   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
+  #   7 = hydatiform mole
+  #
 
+  self$db$asthmaplan <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ASTHMAPLAN")) %>>%
+    dplyr::select(InternalID = INTERNALID,
+                  UserID = USERID,
+                  PlanDate = PLANDATE,
+                  BestPEFR = BESTPEFR,
+                  Mild = MILD, Moderate = MODERATE, Severe = SEVERE,
+                  Emergency = EMERGENCY, Exercise = EXERCISE) %>>%
+    dplyr::mutate(PlanDate = as.Date(PlanDate),
+                  Mild = trimws(Mild), Moderate = trimws(Moderate),
+                  Severe = trimws(Severe), Emergency = trimws(Emergency),
+                  Exercise = trimws(Exercise))
+
+  self$db$pcehrdocuments <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PCEHRDOCUMENTS")) %>>%
+    dplyr::select(InternalID = INTERNALID,
+                  UserID = USERID,
+                  DocumentType = DOCUMENTTYPE,
+                  DocumentDate = DOCUMENTDATE,
+                  Created = CREATED, CreatedBy = CREATEDBY,
+                  Updated = UPDATED, UpdatedBy = UPDATEDBY)
 
   self$db$dbversion <- self$db$dbversion + 1
   print(paste("dbversion:", self$db$dbversion))
