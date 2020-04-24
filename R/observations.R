@@ -17,7 +17,6 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   dMeasure_obj$influenzaVax_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "influenzaVax_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -29,28 +28,30 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   }
 
   fluvaxID <- unlist(self$db$vaccine_disease %>>%
-                       dplyr::filter(DISEASECODE %in% c(7,30)) %>>%
-                       dplyr::select(VACCINEID) %>>%
-                       dplyr::collect(), use.names = FALSE)
+    dplyr::filter(DISEASECODE %in% c(7, 30)) %>>%
+    dplyr::select(VACCINEID) %>>%
+    dplyr::collect(), use.names = FALSE)
   # there are many, many influenza vaccine IDs, but these can be found
   # via the db$vaccine_disease database
 
   self$db$immunizations %>>%
     dplyr::filter(InternalID %in% intID &&
-                    VaccineID %in% fluvaxID &&
-                    # influenza vaccines
-                    GivenDate <= date_to &&
-                    # the database GivenDate field is a dttm object
-                    # which includes the time
-                    # this works for >= in the case below, but fails in the <=
-                    # case above, as GivenDate dttm object will be 'greater'
-                    # than the as.Date object 'date_to' with the same date
-                    GivenDate >= date_from) %>>%
+      VaccineID %in% fluvaxID &&
+      # influenza vaccines
+      GivenDate <= date_to &&
+      # the database GivenDate field is a dttm object
+      # which includes the time
+      # this works for >= in the case below, but fails in the <=
+      # case above, as GivenDate dttm object will be 'greater'
+      # than the as.Date object 'date_to' with the same date
+      GivenDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(GivenDate == max(GivenDate, na.rm = TRUE)) %>>%
     # most recent fluvax by InternalID
-    dplyr::rename(FluvaxName = VaccineName,
-                  FluvaxDate = GivenDate) %>>%
+    dplyr::rename(
+      FluvaxName = VaccineName,
+      FluvaxDate = GivenDate
+    ) %>>%
     dplyr::select(-VaccineID) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(FluvaxDate = as.Date(FluvaxDate))
@@ -74,7 +75,6 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   dMeasure_obj$HbA1C_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "HbA1C_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -93,20 +93,21 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
-                    (BPCode == 1 || BPCode == 19) &&
-                    # BPCode 1 is HbA1C, 19 is SI units
-                    # these reports include 'manual' entries
-                    # in the diabetes assessment dialog
-                    ReportDate <= date_to &&
-                    ReportDate >= date_from
-    ) %>>%
+      (BPCode == 1 || BPCode == 19) &&
+      # BPCode 1 is HbA1C, 19 is SI units
+      # these reports include 'manual' entries
+      # in the diabetes assessment dialog
+      ReportDate <= date_to &&
+      ReportDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
     # the most recent HbA1C report by InternalID
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
-    dplyr::rename(HbA1CDate = ReportDate,
-                  HbA1CValue = ResultValue,
-                  HbA1CUnits = Units) %>>%
+    dplyr::rename(
+      HbA1CDate = ReportDate,
+      HbA1CValue = ResultValue,
+      HbA1CUnits = Units
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(HbA1CDate = as.Date(HbA1CDate))
   # convert to R's 'standard' date format
@@ -130,7 +131,6 @@ smoking_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   dMeasure_obj$smoking_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "smoking_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -144,17 +144,19 @@ smoking_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 
   self$db$clinical %>>%
     dplyr::filter(InternalID %in% intID &&
-                    as.Date(Updated) <= date_to &&
-                    as.Date(Updated) >= date_from) %>>%
+      as.Date(Updated) <= date_to &&
+      as.Date(Updated) >= date_from) %>>%
     dplyr::select(InternalID, SmokingDate = Updated, SmokingStatus) %>>%
     # the table appears to have one entry per patient
     dplyr::collect() %>>%
     dplyr::mutate(SmokingStatus = dplyr::na_if(SmokingStatus, "")) %>>%
     # empty string is 'no record'
     dplyr::mutate(SmokingDate = as.Date(SmokingDate)) %>>%
-    dplyr::mutate(SmokingDate = dplyr::if_else(SmokingStatus == "",
-                                               as.Date(-Inf, origin = "1970-01-01"),
-                                               as.Date(SmokingDate)))
+    dplyr::mutate(SmokingDate = dplyr::if_else(
+      SmokingStatus == "",
+      as.Date(-Inf, origin = "1970-01-01"),
+      as.Date(SmokingDate)
+    ))
 })
 
 #' List of blood pressure observations/recordings
@@ -175,7 +177,6 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
   dMeasure_obj$BloodPressure_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "BloodPressure_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -188,22 +189,25 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
 
   self$db$observations %>>%
     dplyr::filter(InternalID %in% intID &&
-                    ObservationCode %in% c(3,4) &&
-                    # systolic or diastolic blood pressure
-                    # 3 = systolic, 4 = diastolic
-                    as.Date(ObservationDate) <= date_to &&
-                    as.Date(ObservationDate) >= date_from) %>>%
+      ObservationCode %in% c(3, 4) &&
+      # systolic or diastolic blood pressure
+      # 3 = systolic, 4 = diastolic
+      as.Date(ObservationDate) <= date_to &&
+      as.Date(ObservationDate) >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ObservationDate == max(ObservationDate,
-                                         na.rm = TRUE)) %>>%
+      na.rm = TRUE
+    )) %>>%
     # only the most recent recording(s) DATE
     dplyr::filter(ObservationTime == max(ObservationTime,
-                                         na.rm = TRUE)) %>>%
+      na.rm = TRUE
+    )) %>>%
     # only the most recent recording TIME
     dplyr::ungroup() %>>%
     dplyr::group_by(InternalID, ObservationCode) %>>%
     dplyr::filter(RECORDID == max(RECORDID,
-                                  na.rm = TRUE)) %>>%
+      na.rm = TRUE
+    )) %>>%
     # if still tied (this shouldn't be the case? but it happens
     # in the sample database), filter by most recent RECORDID
     dplyr::rename(BPDate = ObservationDate) %>>%
@@ -214,15 +218,18 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
     tidyr::spread(ObservationCode, ObservationValue) %>>%
     # this creates columns `3` or `4` if there are any
     # qualifying blood pressure observations
-    {cols <- c(`3` = NA, `4` = NA)
-    tibble::add_column(.,
-                       !!!cols[!names(cols) %in% names(.)])} %>>%
+    {
+      cols <- c(`3` = NA, `4` = NA)
+      tibble::add_column(
+        .,
+        !!!cols[!names(cols) %in% names(.)]
+      )
+    } %>>%
     # add columns `3` and `4` if they don't exist at this point
-    dplyr::mutate(BP = paste0(`3`,"/",`4`)) %>>%
+    dplyr::mutate(BP = paste0(`3`, "/", `4`)) %>>%
     # create a BP column combined systolic `3` and diastolic `4` readings
     # and then remove those individual readings
     dplyr::select(-c(`3`, `4`))
-
 })
 
 #' List of urine albumin observations/recordings
@@ -242,7 +249,6 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   dMeasure_obj$UrineAlbumin_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "UrineAlbumin_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -270,10 +276,9 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
 
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
-                    (BPCode == 17 || BPCode == 7 || BPCode == 18) &&
-                    ReportDate <= date_to &&
-                    ReportDate >= date_from
-    ) %>>%
+      (BPCode == 17 || BPCode == 7 || BPCode == 18) &&
+      ReportDate <= date_to &&
+      ReportDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
     dplyr::filter(ReportID == max(ReportID, na.rm = TRUE)) %>>%
@@ -282,12 +287,16 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
     # Best Practice's Diabetes Cycle of Care page will record 7+18
     # TOGETHER at the same time, with the same value and same ReportID
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
-    dplyr::rename(UrineAlbuminDate = ReportDate,
-                  UrineAlbuminValue = ResultValue,
-                  UrineAlbuminUnits = Units) %>>%
+    dplyr::rename(
+      UrineAlbuminDate = ReportDate,
+      UrineAlbuminValue = ResultValue,
+      UrineAlbuminUnits = Units
+    ) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(UrineAlbuminDate = as.Date(UrineAlbuminDate),
-                  UrineAlbuminValue = as.numeric(UrineAlbuminValue))
+    dplyr::mutate(
+      UrineAlbuminDate = as.Date(UrineAlbuminDate),
+      UrineAlbuminValue = as.numeric(UrineAlbuminValue)
+    )
   # convert to R's 'standard' date format
   # didn't work before collect()
 })
@@ -317,7 +326,6 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
   dMeasure_obj$PersistentProteinuria_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "PersistentProteinuria_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -343,17 +351,17 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
 
   results <- self$db$reportValues %>>%
     dplyr::left_join(self$db$patients %>>%
-                       dplyr::filter(InternalID %in% intID) %>>%
-                       dplyr::select(InternalID, Sex), # add 'Sex', a character string
-                     by = "InternalID") %>>%
+      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::select(InternalID, Sex), # add 'Sex', a character string
+    by = "InternalID"
+    ) %>>%
     dplyr::filter(InternalID %in% intID &&
-                    (BPCode == 17 || (BPCode == 7 && Units == "mg/mmol")) &&
-                    # two possible ways the result might be recorded
-                    (ResultValue > 35 || (ResultValue > 25 && Sex == "Male")) &&
-                    # more than 35 for females, more than 25 for males
-                    ReportDate <= date_to &&
-                    ReportDate >= date_from
-    )
+      (BPCode == 17 || (BPCode == 7 && Units == "mg/mmol")) &&
+      # two possible ways the result might be recorded
+      (ResultValue > 35 || (ResultValue > 25 && Sex == "Male")) &&
+      # more than 35 for females, more than 25 for males
+      ReportDate <= date_to &&
+      ReportDate >= date_from)
 
   earliest_result <- results %>>%
     dplyr::group_by(InternalID) %>>%
@@ -374,8 +382,10 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
 
   persistentProteinuria <- earliest_result %>>%
     dplyr::left_join(latest_result, by = "InternalID") %>>%
-    dplyr::mutate(PersistentProteinuria =
-                    dMeasure::calc_age_months(EarliestDate, LatestDate) >= 3) %>>%
+    dplyr::mutate(
+      PersistentProteinuria =
+        dMeasure::calc_age_months(EarliestDate, LatestDate) >= 3
+    ) %>>%
     # if the earliest and latest elevated proteinuria dates are
     # more than 3 months apart
 
@@ -403,7 +413,6 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   dMeasure_obj$eGFR_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "eGFR_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -416,20 +425,23 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
-                    (BPCode == 16) &&
-                    ReportDate <= date_to &&
-                    ReportDate >= date_from
-    ) %>>%
+      (BPCode == 16) &&
+      ReportDate <= date_to &&
+      ReportDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
     # the most recent eGFR report by InternalID
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
-    dplyr::rename(eGFRDate = ReportDate,
-                  eGFRValue = ResultValue,
-                  eGFRUnits = Units) %>>%
+    dplyr::rename(
+      eGFRDate = ReportDate,
+      eGFRValue = ResultValue,
+      eGFRUnits = Units
+    ) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(eGFRDate = as.Date(eGFRDate),
-                  eGFRValue = as.numeric(eGFRValue))
+    dplyr::mutate(
+      eGFRDate = as.Date(eGFRDate),
+      eGFRValue = as.numeric(eGFRValue)
+    )
   # convert to R's 'standard' date format
   # didn't work before collect()
 })
@@ -453,7 +465,6 @@ Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
   dMeasure_obj$Cholesterol_obs(intID, date_from, date_to)
 }
 .public(dMeasure, "Cholesterol_obs", function(intID, date_from = NA, date_to = NA) {
-
   intID <- c(intID, -1) # can't search on empty list! add dummy value
   if (is.na(date_to)) {
     date_to <- self$date_b
@@ -466,39 +477,49 @@ Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 
   self$db$reportValues %>>%
     dplyr::filter(InternalID %in% intID &&
-                    BPCode %in% c(2, 3, 4, 5) &&
-                    # systolic or diastolic blood pressure
-                    # 3 = systolic, 4 = diastolic
-                    ReportDate <= date_to &&
-                    ReportDate >= date_from) %>>%
+      BPCode %in% c(2, 3, 4, 5) &&
+      # systolic or diastolic blood pressure
+      # 3 = systolic, 4 = diastolic
+      ReportDate <= date_to &&
+      ReportDate >= date_from) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(ReportDate == max(ReportDate,
-                                    na.rm = TRUE)) %>>%
+      na.rm = TRUE
+    )) %>>%
     # only the most recent recording(s) DATE
     dplyr::ungroup() %>>%
     dplyr::group_by(InternalID, BPCode) %>>%
     dplyr::filter(ReportID == max(ReportID,
-                                  na.rm = TRUE)) %>>%
+      na.rm = TRUE
+    )) %>>%
     # if still tied (this shouldn't be the case? but it happens
     # in the sample database), filter by most recent ReportID
     dplyr::ungroup() %>>%
     dplyr::rename(CholesterolDate = ReportDate) %>>%
     dplyr::select(InternalID, CholesterolDate, BPCode, ResultValue) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(CholesterolDate = as.Date(CholesterolDate),
-                  ResultValue = as.double(ResultValue)) %>>%
+    dplyr::mutate(
+      CholesterolDate = as.Date(CholesterolDate),
+      ResultValue = as.double(ResultValue)
+    ) %>>%
     # convert to R's standard date format
     tidyr::spread(BPCode, ResultValue) %>>%
     # this creates columns `3` or `4` or `5`` or `6`if there are any
     # qualifying blood pressure observations
-    {cols <- c(`2` = NA, `3` = NA, `4` = NA, `5` = NA)
-    tibble::add_column(.,
-                       !!!cols[!names(cols) %in% names(.)])} %>>%
+    {
+      cols <- c(`2` = NA, `3` = NA, `4` = NA, `5` = NA)
+      tibble::add_column(
+        .,
+        !!!cols[!names(cols) %in% names(.)]
+      )
+    } %>>%
     # add columns `3` of `4` or `5` or `6`
     # if they don't exist at this point
-    dplyr::rename(Cholesterol = `2`,
-                  HDL = `3`,
-                  LDL = `4`,
-                  Triglycerides = `5`) %>>%
-    dplyr::mutate(CholHDLRatio = Cholesterol/HDL)
+    dplyr::rename(
+      Cholesterol = `2`,
+      HDL = `3`,
+      LDL = `4`,
+      Triglycerides = `5`
+    ) %>>%
+    dplyr::mutate(CholHDLRatio = Cholesterol / HDL)
 })

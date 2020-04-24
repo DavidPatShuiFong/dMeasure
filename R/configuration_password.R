@@ -49,12 +49,12 @@ empty_password <- function(dMeasure_obj) {
 .public(dMeasure, "empty_password", function() {
   # returns true if password for identified user is not defined, or empty
   # this is used by Dailymeasure to prompt for a password to be set
-  empty = FALSE
+  empty <- FALSE
   if (is.null(self$.identified_user$Password) || # NULL
-      is.na(self$.identified_user$Password) || # NA
-      length(self$.identified_user$Password) == 0 || # integer(0)
-      nchar(self$.identified_user$Password) == 0) { # empty string
-    empty = TRUE
+    is.na(self$.identified_user$Password) || # NA
+    length(self$.identified_user$Password) == 0 || # integer(0)
+    nchar(self$.identified_user$Password) == 0) { # empty string
+    empty <- TRUE
   }
   return(empty)
 })
@@ -73,7 +73,7 @@ user_logout <- function(dMeasure_obj) {
 
 .public(dMeasure, "user_logout", function() {
   if (is.null(self$.identified_user %>>% dplyr::collect()) ||
-      nrow(self$.identified_user %>>% dplyr::collect()) == 0) {
+    nrow(self$.identified_user %>>% dplyr::collect()) == 0) {
     # no identified user
   } else if (self$authenticated == FALSE) {
     # user not authetnicated
@@ -105,7 +105,6 @@ user_logout <- function(dMeasure_obj) {
   # if the connection is a pool, can't send write query (a statement) directly
   # so use the object's method
   private$trigger(self$config_db_trigR) # send a trigger signal
-
 })
 
 #' Set password of currently identified user
@@ -121,7 +120,7 @@ user_logout <- function(dMeasure_obj) {
 #' otherwise, stops with error
 #' @examples
 #' \dontrun{
-#' a <- dMeasure::dMeasure::new()
+#' a <- dMeasure::dMeasure$new()
 #' a$open_emr_db()
 #' a$password.set(newpassword = "catsrule", oldpassword = "bluewhale")
 #' }
@@ -136,14 +135,14 @@ password.set <- function(dMeasure_obj, newpassword, oldpassword = NULL) {
   }
 
   if (stringi::stri_length(newpassword) < 6 &
-      stringi::stri_length(newpassword) != 0 &
-      !("RequirePasswords" %in% self$userrestriction.list())) {
+    stringi::stri_length(newpassword) != 0 &
+    !("RequirePasswords" %in% self$userrestriction.list())) {
     # passwords not actually required
     stop("Password must be at least six (6) characters long, or empty.")
   }
 
   if (stringi::stri_length(newpassword) < 6 &
-      ("RequirePasswords" %in% self$userrestriction.list())) {
+    ("RequirePasswords" %in% self$userrestriction.list())) {
     # passwords required
     stop("Password must be at least six (6) characters long, and passwords are required.")
   }
@@ -188,11 +187,13 @@ password.reset <- function(dMeasure_obj, user, newpassword = "") {
 
 .public(dMeasure, "password.reset", function(user,
                                              newpassword = "") {
-
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to reset/edit other passwords.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to reset/edit other passwords."
+      ))
+  )
 
   if (!(user %in% self$UserConfig$Fullname)) {
     stop("Only configured users can have a password reset!")

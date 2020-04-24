@@ -10,6 +10,7 @@ list_cst(
   date_to = NA,
   clinicians = NA,
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   action = FALSE,
   screentag = FALSE,
@@ -26,10 +27,10 @@ list_cst(
 \item{clinicians}{list of clinicians (default $clinicians)}
 
 \item{appointments_list}{dataframe, list of appointments to search
+if not provided, use $appointments_list
+needs fields Age, InternalID}
 
- if not provided, use $appointments_list
-
- needs fields Age, InternalID}
+\item{include_uptodate}{include those who are up-to-date ('green' tags)}
 
 \item{lazy}{recalculate an appointment list}
 

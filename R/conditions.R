@@ -1214,29 +1214,31 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj,
                                                appointments = NULL) {
   dMeasure_obj$familialHypercholesterolaemia_list(appointments)
 }
-.public(dMeasure, "familialHypercholesterolaemia_list",
-        function(appointments = NULL) {
-  # @param Appointments dataframe of $InternalID and $Date
-  #  if no parameter provided, derives from $appointments_filtered
-  #
-  # Returns vector of InternalID of patients who have diabetes
+.public(
+  dMeasure, "familialHypercholesterolaemia_list",
+  function(appointments = NULL) {
+    # @param Appointments dataframe of $InternalID and $Date
+    #  if no parameter provided, derives from $appointments_filtered
+    #
+    # Returns vector of InternalID of patients who have diabetes
 
-  if (is.null(appointments)) {
-    appointments <- self$appointments_filtered %>>%
-      dplyr::select(InternalID, AppointmentDate) %>>%
-      dplyr::rename(Date = AppointmentDate)
-    # just needs $InternalID and $Date
+    if (is.null(appointments)) {
+      appointments <- self$appointments_filtered %>>%
+        dplyr::select(InternalID, AppointmentDate) %>>%
+        dplyr::rename(Date = AppointmentDate)
+      # just needs $InternalID and $Date
+    }
+
+    intID <- c(dplyr::pull(appointments, InternalID), -1)
+    # internalID in appointments. add a -1 in case this is an empty list
+
+    self$db$history %>>%
+      dplyr::filter(ConditionID == 1446 &&
+        InternalID %in% intID) %>>%
+      dplyr::pull(InternalID) %>>%
+      unique()
   }
-
-  intID <- c(dplyr::pull(appointments, InternalID), -1)
-  # internalID in appointments. add a -1 in case this is an empty list
-
-  self$db$history %>>%
-    dplyr::filter(ConditionID == 1446 &&
-      InternalID %in% intID) %>>%
-    dplyr::pull(InternalID) %>>%
-    unique()
-})
+)
 
 #' list of patients with left ventricular hypertrophy
 #'

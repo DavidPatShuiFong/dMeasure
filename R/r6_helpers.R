@@ -1,7 +1,7 @@
 ##### functions to fill in R6 classes ######################
 # first argument is the object generator of the class
 
-.public <- function(obj, name, f) obj$set("public",  name, f)
+.public <- function(obj, name, f) obj$set("public", name, f)
 .private <- function(obj, name, f) obj$set("private", name, f)
 .active <- function(obj, name, f) obj$set("active", name, f)
 

@@ -36,42 +36,52 @@ NULL
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
 #' @examples
+#' \dontrun{
 #' a <- dMeasure::dMeasure$new()
 #' a$open_configuration_db()
 #' a$read_configuration_db()
-#' a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
-#'                      Database = "BPSSAMPLES", UserID = "bpsrawdata",
-#'                      dbPassword = "mypassword"))
+#' a$server.insert(list(
+#'   Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
+#'   Database = "BPSSAMPLES", UserID = "bpsrawdata",
+#'   dbPassword = "mypassword"
+#' ))
+#' }
 #' @export
 server.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$server.insert(description)
 }
 
 .public(dMeasure, "server.insert", function(description) {
-
   tryCatch(permission <- self$server.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'ServerAdmin' permission required to modify server list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'ServerAdmin' permission required to modify server list."
+      ))
+  )
 
   if (toupper(description$Name) %in% toupper(append(private$.BPdatabase$Name, "None"))) {
     # if the proposed server is the same as one that already exists
     # (ignoring case)
     stop("New server name cannot be the same as existing names, or 'None'")
   } else if (is.null(description$Name) |
-             is.null(description$Address) |
-             is.null(description$Database) |
-             is.null(description$UserID) |
-             is.null(description$dbPassword)) {
-    stop(paste("Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
-               "must be described"))
+    is.null(description$Address) |
+    is.null(description$Database) |
+    is.null(description$UserID) |
+    is.null(description$dbPassword)) {
+    stop(paste(
+      "Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
+      "must be described"
+    ))
   } else if (stringi::stri_length(description$Name) == 0 |
-             stringi::stri_length(description$Address) == 0 |
-             stringi::stri_length(description$Database) == 0 |
-             stringi::stri_length(description$UserID) == 0 |
-             stringi::stri_length(description$dbPassword) == 0) {
-    stop(paste("Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
-               "must be described"))
+    stringi::stri_length(description$Address) == 0 |
+    stringi::stri_length(description$Database) == 0 |
+    stringi::stri_length(description$UserID) == 0 |
+    stringi::stri_length(description$dbPassword) == 0) {
+    stop(paste(
+      "Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
+      "must be described"
+    ))
   } else {
     if (is.null(description$Driver)) {
       description$Driver <- "" # this is the only field which is assigned a default!
@@ -79,11 +89,14 @@ server.insert <- function(dMeasure_obj, description) {
     }
     if (!(description$Driver %in% c(odbc::odbcListDrivers()$name, ""))) {
       description$Driver <- ""
-      warning(paste("Invalid driver choice.",
-                    "Must be one of : ",
-                    paste(unique(odbc::odbcListDrivers()$name),
-                          collapse = ", "),
-                    ". Will be set to empty ''."))
+      warning(paste(
+        "Invalid driver choice.",
+        "Must be one of : ",
+        paste(unique(odbc::odbcListDrivers()$name),
+          collapse = ", "
+        ),
+        ". Will be set to empty ''."
+      ))
     }
 
     newid <- max(c(as.data.frame(private$.BPdatabase)$id, 0)) + 1
@@ -93,13 +106,17 @@ server.insert <- function(dMeasure_obj, description) {
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
 
-    query <- paste("INSERT INTO Server",
-                   "(id, Name, Driver, Address, Database, UserID, dbPassword)",
-                   "VALUES (?, ?, ?, ?, ?, ?, ?)")
-    data_for_sql <- as.list.data.frame(c(newid, description$Name, description$Driver,
-                                         description$Address,
-                                         description$Database, description$UserID,
-                                         description$dbPassword))
+    query <- paste(
+      "INSERT INTO Server",
+      "(id, Name, Driver, Address, Database, UserID, dbPassword)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+    data_for_sql <- as.list.data.frame(c(
+      newid, description$Name, description$Driver,
+      description$Address,
+      description$Database, description$UserID,
+      description$dbPassword
+    ))
     self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
@@ -107,10 +124,11 @@ server.insert <- function(dMeasure_obj, description) {
     private$trigger(self$config_db_trigR)
 
     private$.BPdatabase <- rbind(private$.BPdatabase, description,
-                                 stringsAsFactors = FALSE)
+      stringsAsFactors = FALSE
+    )
     # update the dataframe in memory
     return(private$.BPdatabase %>>%
-             dplyr::select(-dbPassword))
+      dplyr::select(-dbPassword))
   }
 })
 
@@ -133,11 +151,13 @@ server.update <- function(dMeasure_obj, description) {
 }
 
 .public(dMeasure, "server.update", function(description) {
-
   tryCatch(permission <- self$server.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'ServerAdmin' permission required to modify server list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'ServerAdmin' permission required to modify server list."
+      ))
+  )
 
   if (is.null(description$id)) {
     stop("Server to change is to be identified by $id")
@@ -147,9 +167,11 @@ server.update <- function(dMeasure_obj, description) {
   }
   if (self$BPdatabaseChoice != "None") { # only if there is a chosen database
     if (private$.BPdatabase %>>% dplyr::filter(Name == self$BPdatabaseChoice) %>>%
-        dplyr::pull(id) == description$id) {
-      stop(paste("Cannot update server definition id = ", description$id,
-                 ", currently in use!"))
+      dplyr::pull(id) == description$id) {
+      stop(paste(
+        "Cannot update server definition id = ", description$id,
+        ", currently in use!"
+      ))
     }
   }
 
@@ -160,8 +182,10 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::pull(Name)
   } else {
     if (toupper(description$Name) %in%
-        toupper(append(private$.BPdatabase[!(private$.BPdatabase$id == description$id),]$Name,
-                       "None"))) {
+      toupper(append(
+        private$.BPdatabase[!(private$.BPdatabase$id == description$id), ]$Name,
+        "None"
+      ))) {
       # if the proposed server is the same as one that already exists
       # (ignoring case, and removing the 'id' which is specified in the description)
       stop("New server name cannot be the same as existing names, or 'None'")
@@ -176,10 +200,13 @@ server.update <- function(dMeasure_obj, description) {
     description$Driver <- private$.BPdatabase %>>%
       dplyr::filter(id == description$id) %>>%
       dplyr::pull(Driver)
-    warning(paste("Invalid driver choice.",
-                  "Must be one of : ",
-                  paste(unique(odbc::odbcListDrivers()$name),
-                        collapse = ", ")))
+    warning(paste(
+      "Invalid driver choice.",
+      "Must be one of : ",
+      paste(unique(odbc::odbcListDrivers()$name),
+        collapse = ", "
+      )
+    ))
   }
   if (is.null(description$Address)) {
     description$Address <- private$.BPdatabase %>>%
@@ -206,12 +233,16 @@ server.update <- function(dMeasure_obj, description) {
     # stored encrypted both in memory and in configuration file
   }
 
-  query <- paste("UPDATE Server SET Name = ?, Driver = ?, Address = ?, Database = ?,",
-                 "UserID = ?, dbPassword = ? WHERE id = ?")
-  data_for_sql <- as.list.data.frame(c(description$Name, description$Driver,
-                                       description$Address,
-                                       description$Database, description$UserID,
-                                       description$dbPassword, description$id))
+  query <- paste(
+    "UPDATE Server SET Name = ?, Driver = ?, Address = ?, Database = ?,",
+    "UserID = ?, dbPassword = ? WHERE id = ?"
+  )
+  data_for_sql <- as.list.data.frame(c(
+    description$Name, description$Driver,
+    description$Address,
+    description$Database, description$UserID,
+    description$dbPassword, description$id
+  ))
 
   self$config_db$dbSendQuery(query, data_for_sql)
   # if the connection is a pool, can't send write query (a statement) directly
@@ -220,11 +251,12 @@ server.update <- function(dMeasure_obj, description) {
   private$trigger(self$config_db_trigR)
 
   private$.BPdatabase <- rbind(private$.BPdatabase %>>% dplyr::filter(id != description$id),
-                               description,
-                               stringsAsFactors = FALSE)
+    description,
+    stringsAsFactors = FALSE
+  )
   # store new values in copy of settings in memory
   return(private$.BPdatabase %>>%
-           dplyr::select(-dbPassword))
+    dplyr::select(-dbPassword))
 })
 
 #' server.delete
@@ -246,11 +278,14 @@ server.delete <- function(dMeasure_obj, description) {
   # delete a server description
 
   tryCatch(permission <- self$server.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'ServerAdmin' permission required to modify server list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'ServerAdmin' permission required to modify server list."
+      ))
+  )
 
-  name <- private$.BPdatabase[private$.BPdatabase$id == description$id,]$Name
+  name <- private$.BPdatabase[private$.BPdatabase$id == description$id, ]$Name
   if (length(name) == 0) { # id not found
     stop(paste0("Cannot remove id = '", description$id, "', not defined!"))
   }
@@ -270,7 +305,7 @@ server.delete <- function(dMeasure_obj, description) {
   private$.BPdatabase <- private$.BPdatabase %>>% dplyr::filter(id != description$id)
 
   return(private$.BPdatabase %>>%
-           dplyr::select(-dbPassword))
+    dplyr::select(-dbPassword))
 })
 
 #' server.list
@@ -292,13 +327,17 @@ server.list <- function(dMeasure_obj) {
   # list server descriptions
 
   tryCatch(permission <- self$server.permission(),
-           warning = function(w)
-             warning(paste(w,
-                           "'ServerAdmin' permission required to view server list.")))
+    warning = function(w)
+      warning(paste(
+        w,
+        "'ServerAdmin' permission required to view server list."
+      ))
+  )
 
   if (permission) {
     description <- private$.BPdatabase %>>%
-      dplyr::select(-dbPassword)}
+      dplyr::select(-dbPassword)
+  }
   else {
     description <- c("")
   }
@@ -330,12 +369,13 @@ server.permission <- function(dMeasure_obj) {
   if ("ServerAdmin" %in% self$userrestriction.list()) {
     # only some users allowed to see/change server settings
     if ("ServerAdmin" %in% (self$UserConfig %>>%
-                            dplyr::filter(Fullname ==
-                                          paste(self$.identified_user$Fullname,
-                                                collapse = "")) %>>%
-                            # paste with collapse = "" changes character(0) to ""
-                            dplyr::pull(Attributes) %>>% unlist()) &&
-        self$authenticated == TRUE) {
+      dplyr::filter(Fullname ==
+        paste(self$.identified_user$Fullname,
+          collapse = ""
+        )) %>>%
+      # paste with collapse = "" changes character(0) to ""
+      dplyr::pull(Attributes) %>>% unlist()) &&
+      self$authenticated == TRUE) {
       permission <- TRUE
     } else {
       # this user is not authorized to access the server list
@@ -359,12 +399,15 @@ server.permission <- function(dMeasure_obj) {
   #  currently logging or not
 
   tryCatch(permission <- self$server.permission(),
-           warning = function(w) {
-             warning(paste(w,
-                           "'ServerAdmin' permission required",
-                           "to read/change logging status."))
-             return(NULL)
-           })
+    warning = function(w) {
+      warning(paste(
+        w,
+        "'ServerAdmin' permission required",
+        "to read/change logging status."
+      ))
+      return(NULL)
+    }
+  )
 
   if (!self$config_db$is_open()) {
     warning("Unable to read or set logging status. Configuration database is not open")
@@ -391,8 +434,10 @@ server.permission <- function(dMeasure_obj) {
       if (!self$config_db$keep_log) {
         # configuration database is open (from earlier check),
         # but not currently logging
-        self$config_db$open_log_db(filename = self$LogFile,
-                                   tag = Sys.info()[["user"]])
+        self$config_db$open_log_db(
+          filename = self$LogFile,
+          tag = Sys.info()[["user"]]
+        )
         # tries to open the logging database
         if (is.null(self$config_db$log_db)) {
           # log database not successfully opened
@@ -402,8 +447,10 @@ server.permission <- function(dMeasure_obj) {
       }
       if (self$emr_db$is_open() & !self$emr_db$keep_log) {
         # EMR database is open, but not currently logging
-        self$emr_db$open_log_db(filename = self$LogFile,
-                                tag = Sys.info()[["user"]])
+        self$emr_db$open_log_db(
+          filename = self$LogFile,
+          tag = Sys.info()[["user"]]
+        )
         # tries to open the logging database
         if (is.null(self$emr_db$log_db)) {
           # log database not successfully opened
@@ -445,12 +492,15 @@ server.permission <- function(dMeasure_obj) {
   # if no @param filename, then returns current log filename
 
   tryCatch(permission <- self$server.permission(),
-           warning = function(w) {
-             warning(paste(w,
-                           "'ServerAdmin' permission required",
-                           "to read/change logging parameters."))
-             return(NULL)
-           })
+    warning = function(w) {
+      warning(paste(
+        w,
+        "'ServerAdmin' permission required",
+        "to read/change logging parameters."
+      ))
+      return(NULL)
+    }
+  )
 
   if (!self$config_db$is_open()) {
     warning("Unable to read or set logging filename. Configuration database is not open")
@@ -499,7 +549,7 @@ WriteLog <- function(dMeasure_obj, message) {
 .public(dMeasure, "WriteLog", function(message) {
   # write message to logfile database
 
-  if(!self$config_db$is_open()) {
+  if (!self$config_db$is_open()) {
     warning("Unable to write log message, configuration database is not open.")
   } else if (!self$config_db$keep_log) {
     warning("Unable to write log message, logging database is not open.")
@@ -523,12 +573,15 @@ WriteLog <- function(dMeasure_obj, message) {
   }
 
   tryCatch(permission <- self$server.permission(),
-           warning = function(w) {
-             warning(paste(w,
-                           "'ServerAdmin' permission required",
-                           "to read logs."))
-             return(NULL)
-           })
+    warning = function(w) {
+      warning(paste(
+        w,
+        "'ServerAdmin' permission required",
+        "to read logs."
+      ))
+      return(NULL)
+    }
+  )
 
   if (!self$config_db$is_open()) {
     warning("Unable to read logs. Configuration database is not open")
@@ -546,6 +599,5 @@ WriteLog <- function(dMeasure_obj, message) {
   }
 
   return(self$config_db$log_db$conn() %>>% dplyr::tbl("logs") %>>%
-           dplyr::collect())
-
+    dplyr::collect())
 })

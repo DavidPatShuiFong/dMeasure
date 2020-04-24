@@ -10,6 +10,7 @@ list_mammogram(
   date_to = NA,
   clinicians = NA,
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   action = FALSE,
   screentag = FALSE,

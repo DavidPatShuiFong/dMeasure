@@ -37,10 +37,14 @@ dataframe - full list of database descriptions
 insert a new server description
 }
 \examples{
+\dontrun{
 a <- dMeasure::dMeasure$new()
 a$open_configuration_db()
 a$read_configuration_db()
-a$server.insert(list(Name = "MyServer", Address = "127.0.0.1\\\\BPSINSTANCE",
-                     Database = "BPSSAMPLES", UserID = "bpsrawdata",
-                     dbPassword = "mypassword"))
+a$server.insert(list(
+  Name = "MyServer", Address = "127.0.0.1\\\\BPSINSTANCE",
+  Database = "BPSSAMPLES", UserID = "bpsrawdata",
+  dbPassword = "mypassword"
+))
+}
 }

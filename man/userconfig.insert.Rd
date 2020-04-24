@@ -30,12 +30,16 @@ since 'as_tibble' is used for translation. If attributes or location is
 not a list, userconfig.insert will turn them into a list
 }
 \examples{
-
- dMeasure_obj <- dMeasure::dMeasure$new()
- dMeasure_obj$open_emr_db()
- dMeasure_obj$userconfig.insert(
-   list(Fullname = "Mrs. Diabetes Educator",
-        Location = list(c("Jemena", "Lakeside")),
-        Attributes = list(c("UserAdmin", "ServerAdmin")))
+\dontrun{
+dMeasure_obj <- dMeasure::dMeasure$new()
+dMeasure_obj$open_emr_db()
+dMeasure_obj$userconfig.insert(
+  list(
+    Fullname = "Mrs. Diabetes Educator",
+    Location = list(c("Jemena", "Lakeside")),
+    Attributes = list(c("UserAdmin", "ServerAdmin"))
+  )
+)
+}
 
 }
