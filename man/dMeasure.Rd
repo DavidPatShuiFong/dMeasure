@@ -120,6 +120,7 @@ dMeasure class
 \item \href{#method-list_contact_count}{\code{dMeasure$list_contact_count()}}
 \item \href{#method-list_contact_diabetes}{\code{dMeasure$list_contact_diabetes()}}
 \item \href{#method-list_contact_chroniclungdisease}{\code{dMeasure$list_contact_chroniclungdisease()}}
+\item \href{#method-list_contact_asthma}{\code{dMeasure$list_contact_asthma()}}
 \item \href{#method-list_contact_15plus}{\code{dMeasure$list_contact_15plus()}}
 \item \href{#method-list_contact_65plus}{\code{dMeasure$list_contact_65plus()}}
 \item \href{#method-list_contact_45_74}{\code{dMeasure$list_contact_45_74()}}
@@ -1004,6 +1005,23 @@ dMeasure class
 \subsection{Method \code{list_contact_chroniclungdisease()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_chroniclungdisease(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  contact_type = NA,
+  lazy = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_contact_asthma"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_asthma}{}}}
+\subsection{Method \code{list_contact_asthma()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_asthma(
   date_from = NA,
   date_to = NA,
   clinicians = NA,

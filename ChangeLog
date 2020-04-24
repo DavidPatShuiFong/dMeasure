@@ -6,6 +6,7 @@ Changelog
 New
 
 * db$asthmaplan and db$pcehrdocuments
+* $list_contact_asthma, $contact_asthma_list and $contact_asthma_listR
 
 Change
 
