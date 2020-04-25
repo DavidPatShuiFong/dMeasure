@@ -122,7 +122,7 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param intID vector of InternalID
-#' @param date_from start date. default is $date_b minus 15 months
+#' @param date_from start date. default is $date_b minus 12 months
 #' @param date_to end date (inclusive). default is $date_b
 #'
 #' @return dataframe of InternalID, FluvaxName, FluvaxDate
@@ -230,6 +230,43 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
     # create a BP column combined systolic `3` and diastolic `4` readings
     # and then remove those individual readings
     dplyr::select(-c(`3`, `4`))
+})
+
+#' List of asthma plan recordings
+#'
+#' Filtered by InternalID (vector patient numbers) and dates
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param intID vector of InternalID
+#' @param date_from start date. default is $date_b minus 12 months
+#' @param date_to end date (inclusive). default is $date_b
+#'
+#' @return dataframe of InternalID, PlanDate
+#' @export
+asthmaplan_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
+  dMeasure_obj$asthmaplan_obs(intID, date_from, date_to)
+}
+.public(dMeasure, "asthmaplan_obs", function(intID, date_from = NA, date_to = NA) {
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (is.na(date_from)) {
+    date_from <- dMeasure::add_age(date_to, 12, by = "-1 month")
+  } else if (date_from == -Inf) {
+    date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
+  }
+
+  self$db$asthmaplan %>>%
+    dplyr::filter(InternalID %in% intID &&
+      as.Date(PlanDate) <= date_to &&
+      as.Date(PlanDate) >= date_from) %>>%
+    dplyr::select(InternalID, PlanDate) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::filter(PlanDate == max(PlanDate, na.rm = TRUE)) %>>%
+    dplyr::ungroup()
 })
 
 #' List of urine albumin observations/recordings

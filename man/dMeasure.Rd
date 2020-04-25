@@ -151,6 +151,7 @@ dMeasure class
 \item \href{#method-HbA1C_obs}{\code{dMeasure$HbA1C_obs()}}
 \item \href{#method-smoking_obs}{\code{dMeasure$smoking_obs()}}
 \item \href{#method-BloodPressure_obs}{\code{dMeasure$BloodPressure_obs()}}
+\item \href{#method-asthmaplan_obs}{\code{dMeasure$asthmaplan_obs()}}
 \item \href{#method-UrineAlbumin_obs}{\code{dMeasure$UrineAlbumin_obs()}}
 \item \href{#method-PersistentProteinuria_obs}{\code{dMeasure$PersistentProteinuria_obs()}}
 \item \href{#method-eGFR_obs}{\code{dMeasure$eGFR_obs()}}
@@ -1394,6 +1395,15 @@ dMeasure class
 \subsection{Method \code{BloodPressure_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$BloodPressure_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-asthmaplan_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-asthmaplan_obs}{}}}
+\subsection{Method \code{asthmaplan_obs()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$asthmaplan_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
 }
 
 }

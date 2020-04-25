@@ -749,7 +749,8 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   if (!include_uptodate) {
     l <- l %>>%
-      dplyr::filter(is.na(GivenDate) | GivenDate == as.Date(-Inf, origin = "1970-01-01") |
+      dplyr::filter(is.na(GivenDate) |
+        GivenDate == as.Date(-Inf, origin = "1970-01-01") |
         format(GivenDate, "%Y") != format(AppointmentDate, "%Y"))
     # remove entries which are 'up-to-date'!
     # anyone who has had a flu vax  in the same year as appointment date

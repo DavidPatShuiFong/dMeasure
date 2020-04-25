@@ -1,12 +1,13 @@
 Changelog
 
-0.9.7 - 24th April 2020
+0.9.7 - 25th April 2020
 =======================
 
 New
 
 * db$asthmaplan and db$pcehrdocuments
 * $list_contact_asthma, $contact_asthma_list and $contact_asthma_listR
+* $asthmaplan_obs - list asthma plans
 
 Change
 

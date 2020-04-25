@@ -117,7 +117,7 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
 #
 #' @param date_a vector of dates
 #' @param date_b vector of dates
-#' @param unit "none" or "month". if "month", convert all years tomonths
+#' @param unit "none" or "month". if "month", convert all years to months
 #'
 #' @return period(s) in $year, $month and $day
 #' @export
