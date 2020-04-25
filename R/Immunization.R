@@ -677,7 +677,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::filter(InternalID %in% self$chronicrenaldisease_list(intID_Date)) %>>%
     dplyr::mutate(
       GivenDate = as.Date(-Inf, origin = "1970-01-01"),
-      Reason = "BMI>30"
+      Reason = "Renal disease"
     )
 
   lchildaspirin <- list_details %>>%

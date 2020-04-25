@@ -23,7 +23,7 @@ NULL
 #' }
 #'
 #' @examples
-#' 
+#'
 #' @export
 dMeasure <-
   R6::R6Class("dMeasure",
@@ -152,6 +152,7 @@ dMeasure <-
     self$db$correspondenceIn <- NULL
     self$db$reportValues <- NULL
     self$db$services <- NULL
+    self$db$servicesRaw <- NULL
     self$db$history <- NULL
     self$db$familyhistory <- NULL
     self$db$familyhistorydetail <- NULL
@@ -2000,7 +2001,17 @@ initialize_emr_tables <- function(dMeasure_obj,
     )
 
   self$db$servicesRaw <- emr_db$conn() %>>%
+    # PAYERCODE = 0 unknown
+    # PAYERCODE = 1 private (patient)
+    # PAYERCODE = 2 bulk-billing (Medicare direct billing)
+    # PAYERCODE = 3 DVA
+    # PAYERCODE = 4 WorkCover
+    # PAYERCODE = 5 private (head of family)
+    # PAYERCODE = 8 private (other)
     dplyr::tbl(dbplyr::in_schema("dbo", "SERVICES")) %>>%
+    dplyr::filter(SERVICESTATUS != 9, RECORDSTATUS != 2) %>>%
+    # RECORDSTATUS 2 appears to be cancelled services
+    # SERVICESTATUS 9 appears to be 'reversal' of services
     dplyr::select(
       "InvoiceID" = "INVOICEID", "ServiceDate" = "SERVICEDATE",
       "MBSItem" = "MBSITEM", "Description" = "DESCRIPTION"

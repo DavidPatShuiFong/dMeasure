@@ -11,7 +11,7 @@ interval(date_a, date_b, unit = "none")
 
 \item{date_b}{vector of dates}
 
-\item{unit}{"none" or "month". if "month", convert all years tomonths}
+\item{unit}{"none" or "month". if "month", convert all years to months}
 }
 \value{
 period(s) in $year, $month and $day
