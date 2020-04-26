@@ -2001,7 +2001,13 @@ initialize_emr_tables <- function(dMeasure_obj,
     )
 
   self$db$servicesRaw <- emr_db$conn() %>>%
-    # PAYERCODE = 2 might mean 'bulk-billing' (Medicare direct billing)
+    # PAYERCODE = 0 unknown
+    # PAYERCODE = 1 private (patient)
+    # PAYERCODE = 2 bulk-billing (Medicare direct billing)
+    # PAYERCODE = 3 DVA
+    # PAYERCODE = 4 WorkCover
+    # PAYERCODE = 5 private (head of family)
+    # PAYERCODE = 8 private (other)
     dplyr::tbl(dbplyr::in_schema("dbo", "SERVICES")) %>>%
     dplyr::filter(SERVICESTATUS != 9, RECORDSTATUS != 2) %>>%
     # RECORDSTATUS 2 appears to be cancelled services
