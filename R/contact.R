@@ -412,6 +412,7 @@ list_contact_services <- function(dMeasure_obj,
 
     self$contact_services_list <- self$db$servicesRaw %>>%
       dplyr::filter(ServiceDate >= date_from & ServiceDate <= date_to) %>>%
+      dplyr::select(-c(PayerCode)) %>>%
       dplyr::left_join(self$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
       dplyr::filter(UserID %in% clinicians) %>>% # not just doctors!
       dplyr::group_by(InternalID, ServiceDate) %>>%

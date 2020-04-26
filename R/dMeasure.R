@@ -2014,7 +2014,8 @@ initialize_emr_tables <- function(dMeasure_obj,
     # SERVICESTATUS 9 appears to be 'reversal' of services
     dplyr::select(
       "InvoiceID" = "INVOICEID", "ServiceDate" = "SERVICEDATE",
-      "MBSItem" = "MBSITEM", "Description" = "DESCRIPTION"
+      "MBSItem" = "MBSITEM", "Description" = "DESCRIPTION",
+      "PayerCode" = "PAYERCODE"
     )
 
   self$db$invoices <- emr_db$conn() %>>%
