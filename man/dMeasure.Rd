@@ -66,6 +66,7 @@ dMeasure class
 \item \href{#method-list_visits}{\code{dMeasure$list_visits()}}
 \item \href{#method-diabetes_list}{\code{dMeasure$diabetes_list()}}
 \item \href{#method-asthma_list}{\code{dMeasure$asthma_list()}}
+\item \href{#method-list_asthma_details}{\code{dMeasure$list_asthma_details()}}
 \item \href{#method-atsi_list}{\code{dMeasure$atsi_list()}}
 \item \href{#method-malignancy_list}{\code{dMeasure$malignancy_list()}}
 \item \href{#method-hiv_list}{\code{dMeasure$hiv_list()}}
@@ -488,6 +489,26 @@ dMeasure class
 \subsection{Method \code{asthma_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$asthma_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_asthma_details"></a>}}
+\if{latex}{\out{\hypertarget{method-list_asthma_details}{}}}
+\subsection{Method \code{list_asthma_details()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_asthma_details(
+  contact = FALSE,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  contact_type = NA,
+  ignoreOld = FALSE,
+  include_uptodate = TRUE,
+  lazy = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 }

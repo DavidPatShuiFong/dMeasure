@@ -85,6 +85,205 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
+#' list_asthma
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param contact contact system (if TRUE) or appointment system (if FALSE)
+#' @param date_from by default, dM$date_a
+#' @param date_to by default, dM$date_b
+#' @param clinicians by default, is dM$clinicians
+#' @param min_contact used for the 'contact' system. minimum number of contacts in time period
+#' @param min_date used for the 'contact' system. must have been seen since min_date
+#' @param contact_type used for the 'contact' system
+#' @param ignoreOld ignore old administrations (>15 months from date_to).
+#'  by default, FALSE
+#' @param include_uptodate remove uptodate vaccinations?
+#' @param lazy lazy evaluation?
+#'
+#' @return a dataframe
+#'  structure of dataframe depends on whether 'contact' or 'appointment' system
+#'  in both cases, the columns includes :
+#'    Patient, InternalID, DOB, RecordNo, FluvaxName, FluvaxDate
+#'  in the case of 'appointment' system, also includes appointment details
+#' @export
+list_asthma_details <- function(dMeasure_obj,
+                        contact = FALSE,
+                        date_from = NA, date_to = NA,
+                        clinicians = NA,
+                        min_contact = NA, min_date = NA, contact_type = NA,
+                        ignoreOld = FALSE,
+                        include_uptodate = TRUE,
+                        lazy = FALSE) {
+  dMeasure_obj$list_asthma_details(
+    contact,
+    date_from, date_to,
+    clinicians,
+    min_contact, min_date,
+    contact_type,
+    ignoreOld,
+    include_uptodate,
+    lazy
+  )
+}
+
+.public(dMeasure, "list_asthma_details", function(contact = FALSE,
+                                                  date_from = NA,
+                                                  date_to = NA,
+                                                  clinicians = NA,
+                                                  min_contact = NA,
+                                                  min_date = NA,
+                                                  contact_type = NA,
+                                                  ignoreOld = FALSE,
+                                                  include_uptodate = TRUE,
+                                                  lazy = FALSE) {
+  if (is.na(date_from)) {
+    date_from <- self$date_a
+  }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(min_contact)) {
+    min_contact <- self$contact_min
+  }
+  if (is.na(min_date)) {
+    min_date <- self$contact_minDate
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  detailed_asthma_list <- data.frame(
+    Patient = character(),
+    InternalID = character(),
+    RecordNo = character(),
+    FluvaxDate = as.Date(numeric(), origin = "1970-01-01"),
+    FluvaxName = character()
+  ) # empty data.frame
+
+  if (self$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {
+      log_id <- self$config_db$write_log_db(
+        query = "asthma_condition",
+        data = list(date_from, date_to, clinicians)
+      )
+    }
+
+    if (contact) {
+      # contact method
+      if (!lazy) {
+        self$list_contact_asthma(
+          date_from, date_to, clinicians,
+          min_contact, min_date,
+          contact_type,
+          lazy
+        )
+      }
+      asthma_list <- self$contact_asthma_list %>>%
+        dplyr::select(Patient, InternalID) # don't need these fields
+      asthmaID <- asthma_list %>>%
+        dplyr::pull(InternalID) %>>%
+        c(-1) # make sure not empty vector, which is bad for SQL filter
+    } else {
+      # appointment method
+      if (!lazy) {
+        self$list_appointments(lazy = FALSE)
+      }
+      asthma_appt <- self$appointments_list %>>%
+        dplyr::select(Patient, InternalID, AppointmentDate, AppointmentTime, Provider)
+      asthmaID <- self$asthma_list(asthma_appt) %>>%
+        c(-1)
+      asthma_list <- asthma_appt %>>%
+        dplyr::filter(InternalID %in% asthmaID)
+    }
+
+    # add DOB, RecordNo to asthma list
+    asthma_list <- asthma_list %>>%
+      dplyr::left_join(self$db$patients %>>%
+        dplyr::filter(InternalID %in% asthmaID) %>>%
+        dplyr::select(InternalID, DOB, RecordNo) %>>%
+        dplyr::mutate(DOB = as.Date(DOB)),
+      by = "InternalID", copy = TRUE
+      )
+
+    fluvaxList <- self$influenzaVax_obs(asthmaID,
+      date_from = ifelse(ignoreOld,
+        as.Date(NA, origin = "1970-01-01"),
+        as.Date(-Inf, origin = "1970-01-01")
+      ),
+      # if ignoreOld, then influenza_vax will (given NA)
+      # calculate date_from as fifteen months before date_to
+      date_to = date_to
+    )
+    # returns InternalID, FluvaxName, FluvaxDate
+    # add the flu vax list to the asthma list
+    detailed_asthma_list <- asthma_list %>>%
+      dplyr::left_join(fluvaxList,
+        by = "InternalID",
+        copy = TRUE
+      )
+
+    asthmaPlanList <- self$asthmaplan_obs(asthmaID,
+      date_from = ifelse(ignoreOld,
+        as.Date(NA, origin = "1970-01-01"),
+        as.Date(-Inf, origin = "1970-01-01")
+      ),
+      # if ignoreOld, then influenza_vax will (given NA)
+      # calculate date_from as fifteen months before date_to
+      date_to = date_to
+    )
+    # returns InternalID, FluvaxName, FluvaxDate
+    # add the flu vax list to the asthma list
+    detailed_asthma_list <- detailed_asthma_list %>>%
+      dplyr::left_join(asthmaPlanList,
+        by = "InternalID",
+        copy = TRUE
+      )
+
+    # then remove up-to-date items if required
+    # only remove if BOTH/ALL of vax and asthmaplan are up-to-date
+    if (!include_uptodate) {
+      if (contact) {
+        detailed_asthma_list <- detailed_asthma_list %>>%
+          dplyr::filter(is.na(FluvaxDate) ||
+            FluvaxDate == as.Date(-Inf, origin = "1970-01-01") ||
+            format(FluvaxDate, "%Y") != format(date_to, "%Y") ||
+            is.na(PlanDate) ||
+            dMeasure::interval(PlanDate, self$date_b)$year > 0)
+        # remove entries which are 'up-to-date'!
+        # anyone who has had a flu vax  in the same year as end of contact period
+        # (and so has a valid 'GivenDate') is 'up-to-date'!
+        # or plan date less than one year old
+      } else { # appointment method
+        detailed_asthma_list <- detailed_asthma_list %>>%
+          dplyr::filter(is.na(FluvaxDate) ||
+            FluvaxDate == as.Date(-Inf, origin = "1970-01-01") ||
+            format(FluvaxDate, "%Y") != format(AppointmentDate, "%Y") ||
+            is.na(PlanDate) ||
+            dMeasure::interval(PlanDate, AppointmentDate)$year > 0)
+        # remove entries which are 'up-to-date'!
+        # anyone who has had a flu vax  in the same year as appointment date
+        # (and so has a valid 'GivenDate') is 'up-to-date'!
+      }
+    }
+
+    if (self$Log) {
+      self$config_db$duration_log_db(log_id)
+    }
+  }
+  return(detailed_asthma_list)
+})
+
+
 ### Aboriginal and Torres Strait Islander sub-code
 #' list of patients recorded ATSI ethnicity
 #'

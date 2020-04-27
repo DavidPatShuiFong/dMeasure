@@ -8,6 +8,7 @@ New
 * db$asthmaplan and db$pcehrdocuments
 * $list_contact_asthma, $contact_asthma_list and $contact_asthma_listR
 * $asthmaplan_obs - list asthma plans
+* $list_asthma_details - list asthma patients with vaccination and asthma plan status
 
 Change
 
