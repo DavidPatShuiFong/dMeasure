@@ -266,7 +266,13 @@ asthmaplan_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::select(InternalID, PlanDate) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::filter(PlanDate == max(PlanDate, na.rm = TRUE)) %>>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(PlanDate = as.Date(PlanDate))
+  # for some reason, sometimes date mutation required after collect()
+  # doesn't seem to be true for all versions of MSSQL access libraries?
+  # in particular, ODBC Driver 17 for SQL Server doesn't require a mutate
+  # after collect, but 'SQL Server does!
 })
 
 #' List of urine albumin observations/recordings

@@ -166,7 +166,8 @@ list_asthma_details <- function(dMeasure_obj,
     InternalID = character(),
     RecordNo = character(),
     FluvaxDate = as.Date(numeric(), origin = "1970-01-01"),
-    FluvaxName = character()
+    FluvaxName = character(),
+    PlanDate = as.Date(numeric(), origin = "1970-01-01")
   ) # empty data.frame
 
   if (self$emr_db$is_open()) {
