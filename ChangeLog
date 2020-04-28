@@ -1,5 +1,26 @@
 Changelog
 
+0.9.7 - 25th April 2020
+=======================
+
+New
+
+* db$asthmaplan and db$pcehrdocuments
+* $list_contact_asthma, $contact_asthma_list and $contact_asthma_listR
+* $asthmaplan_obs - list asthma plans
+* $list_asthma_details - list asthma patients with vaccination and asthma plan status
+
+Change
+
+* list_fobt, list_cst, list_mammogram
+  'include_uptodate' option (default TRUE)
+* filter out cancelled and 'reversal' services in $db$servicesRaw
+* add PayerCode to $db$servicesRaw
+
+Fix
+
+* incorrect labelling of renal disease indication for influenza vaccination
+
 0.9.6 - 1st April 2020
 ======================
 

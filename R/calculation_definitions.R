@@ -16,16 +16,21 @@ NULL
 calc_age <- function(birthDate, refDate = Sys.Date()) {
   # Calculate age at a given reference date
 
-  if (length(birthDate) == 0) {return(numeric(0))}
+  if (length(birthDate) == 0) {
+    return(numeric(0))
+  }
   # empty vector, so return empty numeric
 
-  period <- mapply(function(x, y)
+  period <- mapply(
+    function(x, y)
     # Arguments can be vectors, so need to use mapply
-    (ifelse(is.na(x) | x == -Inf, NA,
-            length(seq.Date(min(x, y), max(x, y), by = "year")) - 1 ) *
-       ifelse(y > x, 1, -1)),
+      (ifelse(is.na(x) | x == -Inf, NA,
+        length(seq.Date(min(x, y), max(x, y), by = "year")) - 1
+      ) *
+        ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
-    birthDate, refDate)
+    birthDate, refDate
+  )
 
   period <- as.numeric(period)
   # if not converted, could return an empty list, instead of empty numeric
@@ -46,14 +51,21 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 add_age <- function(birthDate, age, by = "year") {
   # Calculate age at a given reference date
 
-  if (length(birthDate) == 0) {return(birthDate)}
+  if (length(birthDate) == 0) {
+    return(birthDate)
+  }
   # empty vector, so return empty vector
 
-  dates <- as.Date(mapply(function(x, y)
+  dates <- as.Date(mapply(
+    function(x, y)
     # Arguments can be vectors, so need to use mapply
-  {ifelse(is.na(x) | x == -Inf, as.Date(NA),
-          tail(seq(from = x, by = by, length.out = y), 1))},
-  birthDate, age + 1), origin = "1970-01-01")
+    {
+      ifelse(is.na(x) | x == -Inf, as.Date(NA),
+        tail(seq(from = x, by = by, length.out = y), 1)
+      )
+    },
+    birthDate, age + 1
+  ), origin = "1970-01-01")
 
   dates <- as.Date(dates, origin = "1970-01-01")
   # if not converted, could return an empty list, instead of empty dates
@@ -74,15 +86,20 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
   # Create an interval between the date of birth and the enrollment date;
   # note that arguments can be vectors, so need to use mapply
 
-  if (length(birthDate) == 0) {return(numeric(0))}
+  if (length(birthDate) == 0) {
+    return(numeric(0))
+  }
   # empty vector, so return empty numeric
 
-  period <- mapply(function(x, y)
-    (ifelse(is.na(x) | x == -Inf, NA,
-            length(seq.Date(min(x, y), max(x, y), by = "month")) - 1) *
-       ifelse(y > x, 1, -1)),
+  period <- mapply(
+    function(x, y)
+      (ifelse(is.na(x) | x == -Inf, NA,
+        length(seq.Date(min(x, y), max(x, y), by = "month")) - 1
+      ) *
+        ifelse(y > x, 1, -1)),
     # note that seq.Date can't handle 'negative' periods
-    birthDate, refDate)
+    birthDate, refDate
+  )
 
   period <- as.numeric(period)
   # if not converted, could return an empty list, instead of empty numeric
@@ -100,60 +117,81 @@ calc_age_months <- function(birthDate, refDate = Sys.Date()) {
 #
 #' @param date_a vector of dates
 #' @param date_b vector of dates
-#' @param unit "none" or "month". if "month", convert all years tomonths
+#' @param unit "none" or "month". if "month", convert all years to months
 #'
 #' @return period(s) in $year, $month and $day
 #' @export
 interval <- function(date_a, date_b, unit = "none") {
-
   infinity_years <- Inf
 
   interval <- list(year = numeric(0), month = numeric(0), day = numeric(0))
 
-  if (length(date_a) == 0 || length(date_b) == 0) {return(interval)}
+  if (length(date_a) == 0 || length(date_b) == 0) {
+    return(interval)
+  }
   # empty input vector, so return list of empty vectors
 
-  interval$year <- mapply(function(x, y)
-    ifelse(!is.na(min(x, y)),
-           ifelse(min(x,y) == -Inf,
-                  infinity_years,
-                  (length(seq.Date(min(x, y), max(x, y), by = "year")) - 1) *
-                    ifelse(y > x, 1, -1)),
-           NA),
+  interval$year <- mapply(
+    function(x, y)
+      ifelse(!is.na(min(x, y)),
+        ifelse(min(x, y) == -Inf,
+          infinity_years,
+          (length(seq.Date(min(x, y), max(x, y), by = "year")) - 1) *
+            ifelse(y > x, 1, -1)
+        ),
+        NA
+      ),
     # note that seq.Date can't handle 'negative' periods
-    date_a, date_b)
+    date_a, date_b
+  )
   interval$year <- as.numeric(interval$year) # if empty, converts from empty list to numeric(0)
 
-  interval$month <- mapply(function(x, y, z)
-    ifelse(!is.na(min(x, y)),
-           (ifelse(min(x,y) == -Inf,
-                   0,
-                   length(seq.Date(tail(seq.Date(min(x, y), length.out = abs(z) + 1,
-                                                 by = "year"), 1),
-                                   # 'reduces' difference between dates by 'year' difference
-                                   max(x,y), by = "month")) -1 ) *
-              ifelse(y > x, 1, -1)),
-           NA),
-    date_a, date_b, interval$year)
+  interval$month <- mapply(
+    function(x, y, z)
+      ifelse(!is.na(min(x, y)),
+        (ifelse(min(x, y) == -Inf,
+          0,
+          length(seq.Date(tail(seq.Date(min(x, y),
+            length.out = abs(z) + 1,
+            by = "year"
+          ), 1),
+          # 'reduces' difference between dates by 'year' difference
+          max(x, y),
+          by = "month"
+          )) - 1
+        ) *
+          ifelse(y > x, 1, -1)),
+        NA
+      ),
+    date_a, date_b, interval$year
+  )
   interval$month <- as.numeric(interval$month)
 
-  interval$day <- mapply(function(x, y, z, zz)
-    ifelse(!is.na(min(x, y)),
-           (ifelse(min(x,y) == -Inf,
-                   0,
-                   length(seq.Date(tail(seq.Date(tail(seq.Date(min(x, y),
-                                                               length.out = abs(z) + 1,
-                                                               by = "year"), 1),
-                                                 length.out = abs(zz) + 1, by = "month"), 1),
-                                   # 'reduces' difference between dates by 'year' difference
-                                   max(x,y), by = "day")) -1 ) *
-              ifelse(y > x, 1, -1)),
-           NA),
-    date_a, date_b, interval$year, interval$month)
+  interval$day <- mapply(
+    function(x, y, z, zz)
+      ifelse(!is.na(min(x, y)),
+        (ifelse(min(x, y) == -Inf,
+          0,
+          length(seq.Date(tail(seq.Date(tail(seq.Date(min(x, y),
+            length.out = abs(z) + 1,
+            by = "year"
+          ), 1),
+          length.out = abs(zz) + 1, by = "month"
+          ), 1),
+          # 'reduces' difference between dates by 'year' difference
+          max(x, y),
+          by = "day"
+          )) - 1
+        ) *
+          ifelse(y > x, 1, -1)),
+        NA
+      ),
+    date_a, date_b, interval$year, interval$month
+  )
   interval$day <- as.numeric(interval$day)
 
-  if (unit == "month" & length(date_a)>0) {
-    interval$month <- interval$month + interval$year*12
+  if (unit == "month" & length(date_a) > 0) {
+    interval$month <- interval$month + interval$year * 12
     interval$year <- replicate(length(interval$month), 0)
   }
 
@@ -169,8 +207,7 @@ interval <- function(date_a, date_b, unit = "none") {
 #' @return 24-hour time of form '14:15' (hh:mm)
 #' @export
 hrmin <- function(t) {
-
-  format(as.POSIXct('1900-1-1') + t, '%H:%M')
+  format(as.POSIXct("1900-1-1") + t, "%H:%M")
 }
 
 # code for encoding/decoding. not 'very' secret
@@ -195,12 +232,14 @@ hrmin <- function(t) {
 simple_encode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
-    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
-                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    nonce <- sodium::hex2bin(paste0(
+      "89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+      "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"
+    ))
     # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
   }
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value2")
       # this can be set in .Renviron
@@ -211,20 +250,25 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
   key <- sodium::hash(charToRaw(key))
 
   return(vapply(msg,
-                function(n) {
-                  if (is.na(n)) {
-                    as.character(NA)}
-                  # can't encode a 'NA' (that causes an error)
-                  else {
-                    gsub("[\r\n]", "", jsonlite::base64_enc(
-                      sodium::data_encrypt(charToRaw(n), key, nonce)))}},
-                # gsub is required to remove extraneous \n created
-                # by jsonlite::base64_enc (this is not done by
-                # base64enc::base64encode). these \n can be decrypted
-                # by jsonlite::base64_dec, but not after mangling by
-                # storage in a database
-                FUN.VALUE = character(1),
-                USE.NAMES = FALSE))
+    function(n) {
+      if (is.na(n)) {
+        as.character(NA)
+      }
+      # can't encode a 'NA' (that causes an error)
+      else {
+        gsub("[\r\n]", "", jsonlite::base64_enc(
+          sodium::data_encrypt(charToRaw(n), key, nonce)
+        ))
+      }
+    },
+    # gsub is required to remove extraneous \n created
+    # by jsonlite::base64_enc (this is not done by
+    # base64enc::base64encode). these \n can be decrypted
+    # by jsonlite::base64_dec, but not after mangling by
+    # storage in a database
+    FUN.VALUE = character(1),
+    USE.NAMES = FALSE
+  ))
 }
 
 #' Simple encoder base64library
@@ -245,12 +289,14 @@ simple_encode <- function(msg, key = NULL, nonce = NULL) {
 simple_encode_base64 <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
-    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
-                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    nonce <- sodium::hex2bin(paste0(
+      "89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+      "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"
+    ))
     # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
   }
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value2")
       # this can be set in .Renviron
@@ -261,15 +307,20 @@ simple_encode_base64 <- function(msg, key = NULL, nonce = NULL) {
   key <- sodium::hash(charToRaw(key))
 
   return(vapply(msg,
-                function(n) {
-                  if (is.na(n)) {
-                    as.character(NA)}
-                  # can't encode a 'NA' (that causes an error)
-                  else {
-                    base64enc::base64encode(
-                      sodium::data_encrypt(charToRaw(n), key, nonce))}},
-                FUN.VALUE = character(1),
-                USE.NAMES = FALSE))
+    function(n) {
+      if (is.na(n)) {
+        as.character(NA)
+      }
+      # can't encode a 'NA' (that causes an error)
+      else {
+        base64enc::base64encode(
+          sodium::data_encrypt(charToRaw(n), key, nonce)
+        )
+      }
+    },
+    FUN.VALUE = character(1),
+    USE.NAMES = FALSE
+  ))
 }
 
 #' Simple decoder
@@ -294,12 +345,14 @@ simple_encode_base64 <- function(msg, key = NULL, nonce = NULL) {
 simple_decode <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
-    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
-                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    nonce <- sodium::hex2bin(paste0(
+      "89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+      "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"
+    ))
     # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
   }
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value2")
       # this can be set in .Renviron
@@ -311,23 +364,30 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
   key <- sodium::hash(charToRaw(key))
 
   decoded <- tryCatch(vapply(msg,
-                             function(n) {
-                               tryCatch(if (is.na(n) || n == "") {
-                                 as.character(NA)}
-                                 # can't decode a 'NA' (that causes an error)
-                                 else {
-                                   rawToChar(sodium::data_decrypt(
-                                     jsonlite::base64_dec(paste(n)),key, nonce))},
-                                 error = function(e) as.character(NA),
-                                 warning = function(e) as.character(NA))},
-                             # paste is required because the encoded string (wrongly)
-                             # includes backslashes, which are converted into '\\'
-                             # when stored in the dataframe
-                             # paste converts the '\\' back into '\'
-                             FUN.VALUE = character(1),
-                             USE.NAMES = FALSE),
-                      error = function(e) as.character(NA),
-                      warning = function(e) as.character(NA))
+    function(n) {
+      tryCatch(if (is.na(n) || n == "") {
+        as.character(NA)
+      }
+      # can't decode a 'NA' (that causes an error)
+      else {
+        rawToChar(sodium::data_decrypt(
+          jsonlite::base64_dec(paste(n)), key, nonce
+        ))
+      },
+      error = function(e) as.character(NA),
+      warning = function(e) as.character(NA)
+      )
+    },
+    # paste is required because the encoded string (wrongly)
+    # includes backslashes, which are converted into '\\'
+    # when stored in the dataframe
+    # paste converts the '\\' back into '\'
+    FUN.VALUE = character(1),
+    USE.NAMES = FALSE
+  ),
+  error = function(e) as.character(NA),
+  warning = function(e) as.character(NA)
+  )
 
   return(decoded)
 }
@@ -354,12 +414,14 @@ simple_decode <- function(msg, key = NULL, nonce = NULL) {
 simple_decode_base64 <- function(msg, key = NULL, nonce = NULL) {
   if (is.null(nonce)) {
     # non-secret unique data 'nonce' used to randomize the cipher
-    nonce <- sodium::hex2bin(paste0("89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
-                                    "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"))
+    nonce <- sodium::hex2bin(paste0(
+      "89:63:73:bc:dc:eb:98:14:59:ce:17:4f:",
+      "6e:0a:75:15:83:0c:36:00:f2:6e:f7:07"
+    ))
     # the 24 bytes of hexadecimal digits created by paste0(random(24), collapse = ":")
   }
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value2"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value2")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value2")
       # this can be set in .Renviron
@@ -371,23 +433,30 @@ simple_decode_base64 <- function(msg, key = NULL, nonce = NULL) {
   key <- sodium::hash(charToRaw(key))
 
   decoded <- tryCatch(vapply(msg,
-                             function(n) {
-                               tryCatch(if (is.na(n) || n == "") {
-                                 as.character(NA)}
-                                 # can't decode a 'NA' (that causes an error)
-                                 else {
-                                   rawToChar(sodium::data_decrypt(
-                                     jsonlite::base64_dec(paste(n)),key, nonce))},
-                                 error = function(e) as.character(NA),
-                                 warning = function(e) as.character(NA))},
-                             # paste is required because the encoded string (wrongly)
-                             # includes backslashes, which are converted into '\\'
-                             # when stored in the dataframe
-                             # paste converts the '\\' back into '\'
-                             FUN.VALUE = character(1),
-                             USE.NAMES = FALSE),
-                      error = function(e) as.character(NA),
-                      warning = function(e) as.character(NA))
+    function(n) {
+      tryCatch(if (is.na(n) || n == "") {
+        as.character(NA)
+      }
+      # can't decode a 'NA' (that causes an error)
+      else {
+        rawToChar(sodium::data_decrypt(
+          jsonlite::base64_dec(paste(n)), key, nonce
+        ))
+      },
+      error = function(e) as.character(NA),
+      warning = function(e) as.character(NA)
+      )
+    },
+    # paste is required because the encoded string (wrongly)
+    # includes backslashes, which are converted into '\\'
+    # when stored in the dataframe
+    # paste converts the '\\' back into '\'
+    FUN.VALUE = character(1),
+    USE.NAMES = FALSE
+  ),
+  error = function(e) as.character(NA),
+  warning = function(e) as.character(NA)
+  )
 
   return(decoded)
 }
@@ -405,7 +474,7 @@ simple_decode_base64 <- function(msg, key = NULL, nonce = NULL) {
 #' @export
 simple_tag <- function(msg, key = NULL) {
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value3")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value3")
       # this can be set in .Renviron
@@ -435,7 +504,7 @@ simple_tag <- function(msg, key = NULL) {
 #' @export
 simple_tag_compare <- function(msg, tag, key = NULL) {
   if (is.null(key)) {
-    if (nchar(Sys.getenv("DailyMeasure_Value3"))>0) {
+    if (nchar(Sys.getenv("DailyMeasure_Value3")) > 0) {
       # if not set then the number of characters will be zero
       key <- Sys.getenv("DailyMeasure_value3")
       # this can be set in .Renviron
@@ -473,9 +542,9 @@ simple_tag_compare <- function(msg, tag, key = NULL) {
 #'
 #' @return string
 #' @export
-paste2 <- function(..., sep = " ", collapse = NULL, na.rm = FALSE){
+paste2 <- function(..., sep = " ", collapse = NULL, na.rm = FALSE) {
   # in default case, use paste
-  if(!na.rm) return(paste(..., sep = sep, collapse = collapse))
+  if (!na.rm) return(paste(..., sep = sep, collapse = collapse))
   # cbind is convenient to recycle, it warns though so use suppressWarnings
   dots <- suppressWarnings(cbind(...))
   res <- apply(dots, 1, function(...) {
@@ -485,6 +554,9 @@ paste2 <- function(..., sep = " ", collapse = NULL, na.rm = FALSE){
     if (all(is.na(x))) return(c(""))
     do.call(paste, as.list(c(na.omit(x), sep = sep)))
   })
-  if(is.null(collapse)) res else
+  if (is.null(collapse)) {
+    res
+  } else {
     paste(na.omit(res), collapse = collapse)
+  }
 }

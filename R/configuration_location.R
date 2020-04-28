@@ -18,9 +18,15 @@ NULL
 #' @return dataframe - full list of location descriptions
 #'  can also return error (stop) if description is invalid
 #' @examples
-#' \dontrun{a <- dMeasure::dMeasure::new()}
-#' \dontrun{a$open_emr_db())}
-#' \dontrun{a$location.inser(list(Name = "Bayside", Description = "by the sea"))}
+#' \dontrun{
+#' a <- dMeasure::dMeasure$new()
+#' }
+#' \dontrun{
+#' a$open_emr_db()
+#' }
+#' \dontrun{
+#' a$location.inser(list(Name = "Bayside", Description = "by the sea"))
+#' }
 #' @export
 location.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$location.insert(description)
@@ -29,21 +35,24 @@ location.insert <- function(dMeasure_obj, description) {
   # insert a practice location
 
   tryCatch(permission <- self$location.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to view or edit location list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to view or edit location list."
+      ))
+  )
 
-  if (length(grep(toupper(description$Name),
-                  toupper(as.data.frame(private$PracticeLocations %>>%
-                                        dplyr::select(Name)))
+  if (length(grep(
+    toupper(description$Name),
+    toupper(as.data.frame(private$PracticeLocations %>>%
+      dplyr::select(Name)))
   ))) {
     # if the proposed new name is the same as one that already exists
     # (ignoring case). grep returns empty integer list if no match
     stop("New practice location name cannot be the same as existing names")
-  } else if (is.null(description$Name)){
+  } else if (is.null(description$Name)) {
     stop("New practice location name cannot be 'empty'!")
   } else {
-
     newid <- max(c(as.data.frame(private$PracticeLocations)$id, 0)) + 1
     # initially, PracticeLocations$id might be an empty set
     # so need to append a '0'
@@ -85,9 +94,12 @@ location.update <- function(dMeasure_obj, description) {
   # change (update) a practice location
 
   tryCatch(permission <- self$location.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to view or edit location list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to view or edit location list."
+      ))
+  )
 
   olddescription <- private$PracticeLocations %>>% dplyr::collect() %>>%
     dplyr::filter(id == description$id)
@@ -102,24 +114,29 @@ location.update <- function(dMeasure_obj, description) {
     description$Description <- olddescription$Description
   }
 
-  if (length(grep(toupper(description$Name),
-                  toupper(as.data.frame(private$PracticeLocations %>>%
-                                        dplyr::collect() %>>%
-                                        dplyr::filter(id != description$id))$Name)
+  if (length(grep(
+    toupper(description$Name),
+    toupper(as.data.frame(private$PracticeLocations %>>%
+      dplyr::collect() %>>%
+      dplyr::filter(id != description$id))$Name)
   ))) {
     # if the proposed new name is the same as one that already exists
     # (ignoring case). grep returns empty integer list if no match
     stop("New practice location name cannot be the same as existing names, or 'None'")
-  } else if (is.null(description$Name)){
+  } else if (is.null(description$Name)) {
     stop("New practice location name cannot be 'empty'!")
   } else if ((olddescription$Name %in% self$UserConfig$Location) &
-             (olddescription$Name != description$Name)) {
-    stop(paste0("Cannot change the name of '", olddescription$Name,
-                "', this location is assigned to a user."))
+    (olddescription$Name != description$Name)) {
+    stop(paste0(
+      "Cannot change the name of '", olddescription$Name,
+      "', this location is assigned to a user."
+    ))
   } else {
     query <- "UPDATE Location SET Name = ?, Description = ? WHERE id = ?"
-    data_for_sql <- as.list.data.frame(c(description$Name, description$Description,
-                                         description$id))
+    data_for_sql <- as.list.data.frame(c(
+      description$Name, description$Description,
+      description$id
+    ))
 
     self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
@@ -152,13 +169,18 @@ location.delete <- function(dMeasure_obj, description) {
   # delete a practice location
 
   tryCatch(permission <- self$location.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to view or edit location list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to view or edit location list."
+      ))
+  )
 
   if (description$Name %in% self$UserConfig$Location) {
-    stop(paste0("Cannot remove '", description$Name,
-                "', this location is assigned to a user."))
+    stop(paste0(
+      "Cannot remove '", description$Name,
+      "', this location is assigned to a user."
+    ))
   } else {
     description$id <- private$PracticeLocations %>>% dplyr::collect() %>>%
       dplyr::filter(Name == description$Name) %>>%
@@ -175,7 +197,6 @@ location.delete <- function(dMeasure_obj, description) {
     # if the connection is a pool, can't send write query (a statement) directly
     # so use the object's method
     private$trigger(self$config_db_trigR) # send a trigger signal
-
   }
   invisible(self$location_list) # will also trigger change in $location_listR
   # don't need to explicitly set private$PracticeLocations, since
@@ -197,11 +218,13 @@ location.list <- function(dMeasure_obj) {
 }
 
 .public(dMeasure, "location.list", function() {
-
   tryCatch(permission <- self$location.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to view or edit location list.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to view or edit location list."
+      ))
+  )
 
   return(private$PracticeLocations %>>% dplyr::collect())
 })

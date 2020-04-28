@@ -13,33 +13,41 @@
 #' @return vector of semantic/fomantic tags
 #'
 #' @export
-semantic_tag <- function(tag, colour="", popuptext = NA, popuphtml = NA) {
+semantic_tag <- function(tag, colour = "", popuptext = NA, popuphtml = NA) {
   #
   paste0('<span class="huge ', colour, ' ui tag label"',
-         ifelse(!is.na(popuphtml),
-                paste0('data-variation="wide" data-position = "left center"',
-                       'data-htmltagX="', # this is a 'dummy' attribute
-                       # to help datatables order this column alphabetically!
-                       tag, # will order this column alphabetically by 'tag'
-                       '"',
+    ifelse(!is.na(popuphtml),
+      paste0('data-variation="wide" data-position = "left center"',
+        'data-htmltagX="', # this is a 'dummy' attribute
+        # to help datatables order this column alphabetically!
+        tag, # will order this column alphabetically by 'tag'
+        '"',
 
-                'data-html="',
-                       popuphtml,
-                       '"', sep=""),
-                # 'data-variation' is only available in the
-                # fomantic version of semantic.ui
-                # as of writing, semantic.ui does not allow
-                # variation in text-size of javascript-free tag
-                ''),
-         '> ',
-         ifelse(!is.na(popuptext),
-                paste0('<span data-tooltip = "',
-                       popuptext,
-                       '" data-variation = "wide huge" data-position = "left center">', sep=""),
-                ''),
-         tag,
-         ifelse(!is.na(popuptext), '</span>', ''),
-         ' </span>', sep = "")
+        'data-html="',
+        popuphtml,
+        '"',
+        sep = ""
+      ),
+      # 'data-variation' is only available in the
+      # fomantic version of semantic.ui
+      # as of writing, semantic.ui does not allow
+      # variation in text-size of javascript-free tag
+      ""
+    ),
+    "> ",
+    ifelse(!is.na(popuptext),
+      paste0('<span data-tooltip = "',
+        popuptext,
+        '" data-variation = "wide huge" data-position = "left center">',
+        sep = ""
+      ),
+      ""
+    ),
+    tag,
+    ifelse(!is.na(popuptext), "</span>", ""),
+    " </span>",
+    sep = ""
+  )
   # paste0 is vectorized version of 'paste'
 }
 
@@ -55,30 +63,38 @@ semantic_tag <- function(tag, colour="", popuptext = NA, popuphtml = NA) {
 #' @return vector of semantic/fomantic buttons
 #'
 #' @export
-semantic_button <- function(button, colour="", popuptext = NA, popuphtml = NA) {
+semantic_button <- function(button, colour = "", popuptext = NA, popuphtml = NA) {
   paste0('<span class="huge ', colour, ' ui button"',
-         ifelse(!is.na(popuphtml),
-                paste0('data-variation="wide" data-position = "left center"',
-                       'data-htmltagX="', # this is a 'dummy' attribute
-                       # to help datatables order this column alphabetically!
-                       button, # will order this column alphabetically by 'button'
-                       '"',
-                       'data-html="',
-                       popuphtml,
-                       '"', sep=""),
-                # 'data-variation' is only available
-                # in the fomantic version of semantic.ui
-                # as of writing, semantic.ui does not allow variation
-                # in text-size of javascript-free tags
-                ''),
-         '> ',
-         ifelse(!is.na(popuptext),
-                paste0('<span data-tooltip = "',
-                       popuptext,
-                       '" data-variation = "wide huge" data-position = "left center">', sep=""),
-                ''),
-         button,
-         ifelse(!is.na(popuptext), '</span>', ''),
-         ' </span>', sep = "")
+    ifelse(!is.na(popuphtml),
+      paste0('data-variation="wide" data-position = "left center"',
+        'data-htmltagX="', # this is a 'dummy' attribute
+        # to help datatables order this column alphabetically!
+        button, # will order this column alphabetically by 'button'
+        '"',
+        'data-html="',
+        popuphtml,
+        '"',
+        sep = ""
+      ),
+      # 'data-variation' is only available
+      # in the fomantic version of semantic.ui
+      # as of writing, semantic.ui does not allow variation
+      # in text-size of javascript-free tags
+      ""
+    ),
+    "> ",
+    ifelse(!is.na(popuptext),
+      paste0('<span data-tooltip = "',
+        popuptext,
+        '" data-variation = "wide huge" data-position = "left center">',
+        sep = ""
+      ),
+      ""
+    ),
+    button,
+    ifelse(!is.na(popuptext), "</span>", ""),
+    " </span>",
+    sep = ""
+  )
   # paste0 is vectorized version of 'paste'
 }

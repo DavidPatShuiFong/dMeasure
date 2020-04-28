@@ -66,6 +66,7 @@ dMeasure class
 \item \href{#method-list_visits}{\code{dMeasure$list_visits()}}
 \item \href{#method-diabetes_list}{\code{dMeasure$diabetes_list()}}
 \item \href{#method-asthma_list}{\code{dMeasure$asthma_list()}}
+\item \href{#method-list_asthma_details}{\code{dMeasure$list_asthma_details()}}
 \item \href{#method-atsi_list}{\code{dMeasure$atsi_list()}}
 \item \href{#method-malignancy_list}{\code{dMeasure$malignancy_list()}}
 \item \href{#method-hiv_list}{\code{dMeasure$hiv_list()}}
@@ -120,6 +121,7 @@ dMeasure class
 \item \href{#method-list_contact_count}{\code{dMeasure$list_contact_count()}}
 \item \href{#method-list_contact_diabetes}{\code{dMeasure$list_contact_diabetes()}}
 \item \href{#method-list_contact_chroniclungdisease}{\code{dMeasure$list_contact_chroniclungdisease()}}
+\item \href{#method-list_contact_asthma}{\code{dMeasure$list_contact_asthma()}}
 \item \href{#method-list_contact_15plus}{\code{dMeasure$list_contact_15plus()}}
 \item \href{#method-list_contact_65plus}{\code{dMeasure$list_contact_65plus()}}
 \item \href{#method-list_contact_45_74}{\code{dMeasure$list_contact_45_74()}}
@@ -150,6 +152,7 @@ dMeasure class
 \item \href{#method-HbA1C_obs}{\code{dMeasure$HbA1C_obs()}}
 \item \href{#method-smoking_obs}{\code{dMeasure$smoking_obs()}}
 \item \href{#method-BloodPressure_obs}{\code{dMeasure$BloodPressure_obs()}}
+\item \href{#method-asthmaplan_obs}{\code{dMeasure$asthmaplan_obs()}}
 \item \href{#method-UrineAlbumin_obs}{\code{dMeasure$UrineAlbumin_obs()}}
 \item \href{#method-PersistentProteinuria_obs}{\code{dMeasure$PersistentProteinuria_obs()}}
 \item \href{#method-eGFR_obs}{\code{dMeasure$eGFR_obs()}}
@@ -159,6 +162,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_fobt"></a>}}
+\if{latex}{\out{\hypertarget{method-list_fobt}{}}}
 \subsection{Method \code{list_fobt()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_fobt(
@@ -166,6 +170,7 @@ dMeasure class
   date_to = NA,
   clinicians = NA,
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   action = FALSE,
   screentag = FALSE,
@@ -176,6 +181,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_cst"></a>}}
+\if{latex}{\out{\hypertarget{method-list_cst}{}}}
 \subsection{Method \code{list_cst()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_cst(
@@ -183,6 +189,7 @@ dMeasure class
   date_to = NA,
   clinicians = NA,
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   action = FALSE,
   screentag = FALSE,
@@ -193,6 +200,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_mammogram"></a>}}
+\if{latex}{\out{\hypertarget{method-list_mammogram}{}}}
 \subsection{Method \code{list_mammogram()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_mammogram(
@@ -200,6 +208,7 @@ dMeasure class
   date_to = NA,
   clinicians = NA,
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   action = FALSE,
   screentag = FALSE,
@@ -210,6 +219,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_zostavax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_zostavax}{}}}
 \subsection{Method \code{list_zostavax()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_zostavax(
@@ -219,6 +229,7 @@ dMeasure class
   intID = NULL,
   intID_Date = Sys.Date(),
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   vaxtag = FALSE,
   vaxtag_print = TRUE
@@ -228,6 +239,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_measlesVax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_measlesVax}{}}}
 \subsection{Method \code{list_measlesVax()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_measlesVax(
@@ -237,6 +249,7 @@ dMeasure class
   intID = NULL,
   intID_Date = Sys.Date(),
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   vaxtag = FALSE,
   vaxtag_print = TRUE
@@ -246,6 +259,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_influenza"></a>}}
+\if{latex}{\out{\hypertarget{method-list_influenza}{}}}
 \subsection{Method \code{list_influenza()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_influenza(
@@ -255,6 +269,7 @@ dMeasure class
   intID = NULL,
   intID_Date = Sys.Date(),
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   vaxtag = FALSE,
   vaxtag_print = TRUE
@@ -264,6 +279,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_vax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_vax}{}}}
 \subsection{Method \code{list_vax()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_vax(
@@ -273,6 +289,7 @@ dMeasure class
   intID = NULL,
   intID_Date = Sys.Date(),
   appointments_list = NULL,
+  include_uptodate = TRUE,
   lazy = FALSE,
   vaxtag = FALSE,
   vaxtag_print = TRUE,
@@ -283,6 +300,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_investigations"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_investigations}{}}}
 \subsection{Method \code{filter_investigations()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_investigations(
@@ -297,6 +315,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_investigations_appointment"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_investigations_appointment}{}}}
 \subsection{Method \code{filter_investigations_appointment()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_investigations_appointment(
@@ -313,6 +332,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_investigations_named"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_investigations_named}{}}}
 \subsection{Method \code{filter_investigations_named()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_investigations_named(
@@ -329,6 +349,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_correspondence"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_correspondence}{}}}
 \subsection{Method \code{filter_correspondence()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_correspondence(
@@ -343,6 +364,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_correspondence_appointment"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_correspondence_appointment}{}}}
 \subsection{Method \code{filter_correspondence_appointment()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_correspondence_appointment(
@@ -359,6 +381,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_correspondence_named"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_correspondence_named}{}}}
 \subsection{Method \code{filter_correspondence_named()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_correspondence_named(
@@ -375,6 +398,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-view_incoming"></a>}}
+\if{latex}{\out{\hypertarget{method-view_incoming}{}}}
 \subsection{Method \code{view_incoming()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$view_incoming(
@@ -393,6 +417,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_appointments"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_appointments}{}}}
 \subsection{Method \code{filter_appointments()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_appointments(
@@ -406,6 +431,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_appointments_time"></a>}}
+\if{latex}{\out{\hypertarget{method-filter_appointments_time}{}}}
 \subsection{Method \code{filter_appointments_time()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$filter_appointments_time(
@@ -420,6 +446,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_appointments"></a>}}
+\if{latex}{\out{\hypertarget{method-list_appointments}{}}}
 \subsection{Method \code{list_appointments()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_appointments(
@@ -434,6 +461,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_visits"></a>}}
+\if{latex}{\out{\hypertarget{method-list_visits}{}}}
 \subsection{Method \code{list_visits()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_visits(
@@ -448,6 +476,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-diabetes_list"></a>}}
+\if{latex}{\out{\hypertarget{method-diabetes_list}{}}}
 \subsection{Method \code{diabetes_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$diabetes_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -456,6 +485,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-asthma_list"></a>}}
+\if{latex}{\out{\hypertarget{method-asthma_list}{}}}
 \subsection{Method \code{asthma_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$asthma_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -463,7 +493,28 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_asthma_details"></a>}}
+\if{latex}{\out{\hypertarget{method-list_asthma_details}{}}}
+\subsection{Method \code{list_asthma_details()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_asthma_details(
+  contact = FALSE,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  contact_type = NA,
+  ignoreOld = FALSE,
+  include_uptodate = TRUE,
+  lazy = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-atsi_list"></a>}}
+\if{latex}{\out{\hypertarget{method-atsi_list}{}}}
 \subsection{Method \code{atsi_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$atsi_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -472,6 +523,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-malignancy_list"></a>}}
+\if{latex}{\out{\hypertarget{method-malignancy_list}{}}}
 \subsection{Method \code{malignancy_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$malignancy_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -480,6 +532,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-hiv_list"></a>}}
+\if{latex}{\out{\hypertarget{method-hiv_list}{}}}
 \subsection{Method \code{hiv_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$hiv_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -488,6 +541,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-haemoglobinopathy_list"></a>}}
+\if{latex}{\out{\hypertarget{method-haemoglobinopathy_list}{}}}
 \subsection{Method \code{haemoglobinopathy_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$haemoglobinopathy_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -496,6 +550,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-asplenic_list"></a>}}
+\if{latex}{\out{\hypertarget{method-asplenic_list}{}}}
 \subsection{Method \code{asplenic_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$asplenic_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -504,6 +559,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-transplant_list"></a>}}
+\if{latex}{\out{\hypertarget{method-transplant_list}{}}}
 \subsection{Method \code{transplant_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$transplant_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -512,6 +568,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-cvd_list"></a>}}
+\if{latex}{\out{\hypertarget{method-cvd_list}{}}}
 \subsection{Method \code{cvd_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$cvd_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -520,6 +577,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-cardiacdisease_list"></a>}}
+\if{latex}{\out{\hypertarget{method-cardiacdisease_list}{}}}
 \subsection{Method \code{cardiacdisease_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$cardiacdisease_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -528,6 +586,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-trisomy21_list"></a>}}
+\if{latex}{\out{\hypertarget{method-trisomy21_list}{}}}
 \subsection{Method \code{trisomy21_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$trisomy21_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -536,6 +595,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-bmi30_list"></a>}}
+\if{latex}{\out{\hypertarget{method-bmi30_list}{}}}
 \subsection{Method \code{bmi30_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$bmi30_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -544,6 +604,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-chroniclungdisease_list"></a>}}
+\if{latex}{\out{\hypertarget{method-chroniclungdisease_list}{}}}
 \subsection{Method \code{chroniclungdisease_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$chroniclungdisease_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -552,6 +613,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-neurologic_list"></a>}}
+\if{latex}{\out{\hypertarget{method-neurologic_list}{}}}
 \subsection{Method \code{neurologic_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$neurologic_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -560,6 +622,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-chronicliverdisease_list"></a>}}
+\if{latex}{\out{\hypertarget{method-chronicliverdisease_list}{}}}
 \subsection{Method \code{chronicliverdisease_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$chronicliverdisease_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -568,6 +631,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-chronicrenaldisease_list"></a>}}
+\if{latex}{\out{\hypertarget{method-chronicrenaldisease_list}{}}}
 \subsection{Method \code{chronicrenaldisease_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$chronicrenaldisease_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -576,6 +640,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-pregnant_list"></a>}}
+\if{latex}{\out{\hypertarget{method-pregnant_list}{}}}
 \subsection{Method \code{pregnant_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$pregnant_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -584,6 +649,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-postnatal_list"></a>}}
+\if{latex}{\out{\hypertarget{method-postnatal_list}{}}}
 \subsection{Method \code{postnatal_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$postnatal_list(
@@ -598,6 +664,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-fifteenplus_list"></a>}}
+\if{latex}{\out{\hypertarget{method-fifteenplus_list}{}}}
 \subsection{Method \code{fifteenplus_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$fifteenplus_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -606,6 +673,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-sixtyfiveplus_list"></a>}}
+\if{latex}{\out{\hypertarget{method-sixtyfiveplus_list}{}}}
 \subsection{Method \code{sixtyfiveplus_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$sixtyfiveplus_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -614,6 +682,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-seventyfiveplus_list"></a>}}
+\if{latex}{\out{\hypertarget{method-seventyfiveplus_list}{}}}
 \subsection{Method \code{seventyfiveplus_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$seventyfiveplus_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -622,6 +691,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ATSI_35_44_list"></a>}}
+\if{latex}{\out{\hypertarget{method-ATSI_35_44_list}{}}}
 \subsection{Method \code{ATSI_35_44_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$ATSI_35_44_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -630,6 +700,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-fortyfiveseventyfour_list"></a>}}
+\if{latex}{\out{\hypertarget{method-fortyfiveseventyfour_list}{}}}
 \subsection{Method \code{fortyfiveseventyfour_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$fortyfiveseventyfour_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -638,6 +709,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-cst_eligible_list"></a>}}
+\if{latex}{\out{\hypertarget{method-cst_eligible_list}{}}}
 \subsection{Method \code{cst_eligible_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$cst_eligible_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -646,6 +718,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-mammogram_eligible_list"></a>}}
+\if{latex}{\out{\hypertarget{method-mammogram_eligible_list}{}}}
 \subsection{Method \code{mammogram_eligible_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$mammogram_eligible_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -654,6 +727,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-familialHypercholesterolaemia_list"></a>}}
+\if{latex}{\out{\hypertarget{method-familialHypercholesterolaemia_list}{}}}
 \subsection{Method \code{familialHypercholesterolaemia_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$familialHypercholesterolaemia_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -662,6 +736,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LVH_list"></a>}}
+\if{latex}{\out{\hypertarget{method-LVH_list}{}}}
 \subsection{Method \code{LVH_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$LVH_list(appointments = NULL)}\if{html}{\out{</div>}}
@@ -670,6 +745,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.insert"></a>}}
+\if{latex}{\out{\hypertarget{method-location.insert}{}}}
 \subsection{Method \code{location.insert()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$location.insert(description)}\if{html}{\out{</div>}}
@@ -678,6 +754,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.update"></a>}}
+\if{latex}{\out{\hypertarget{method-location.update}{}}}
 \subsection{Method \code{location.update()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$location.update(description)}\if{html}{\out{</div>}}
@@ -686,6 +763,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.delete"></a>}}
+\if{latex}{\out{\hypertarget{method-location.delete}{}}}
 \subsection{Method \code{location.delete()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$location.delete(description)}\if{html}{\out{</div>}}
@@ -694,6 +772,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.list"></a>}}
+\if{latex}{\out{\hypertarget{method-location.list}{}}}
 \subsection{Method \code{location.list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$location.list()}\if{html}{\out{</div>}}
@@ -702,6 +781,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.permission"></a>}}
+\if{latex}{\out{\hypertarget{method-location.permission}{}}}
 \subsection{Method \code{location.permission()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$location.permission()}\if{html}{\out{</div>}}
@@ -710,6 +790,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-user_login"></a>}}
+\if{latex}{\out{\hypertarget{method-user_login}{}}}
 \subsection{Method \code{user_login()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$user_login(password)}\if{html}{\out{</div>}}
@@ -718,6 +799,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-empty_password"></a>}}
+\if{latex}{\out{\hypertarget{method-empty_password}{}}}
 \subsection{Method \code{empty_password()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$empty_password()}\if{html}{\out{</div>}}
@@ -726,6 +808,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-user_logout"></a>}}
+\if{latex}{\out{\hypertarget{method-user_logout}{}}}
 \subsection{Method \code{user_logout()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$user_logout()}\if{html}{\out{</div>}}
@@ -734,6 +817,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-password.set"></a>}}
+\if{latex}{\out{\hypertarget{method-password.set}{}}}
 \subsection{Method \code{password.set()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$password.set(newpassword, oldpassword = NULL)}\if{html}{\out{</div>}}
@@ -742,6 +826,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-password.reset"></a>}}
+\if{latex}{\out{\hypertarget{method-password.reset}{}}}
 \subsection{Method \code{password.reset()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$password.reset(user, newpassword = "")}\if{html}{\out{</div>}}
@@ -750,6 +835,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-server.insert"></a>}}
+\if{latex}{\out{\hypertarget{method-server.insert}{}}}
 \subsection{Method \code{server.insert()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$server.insert(description)}\if{html}{\out{</div>}}
@@ -758,6 +844,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-server.update"></a>}}
+\if{latex}{\out{\hypertarget{method-server.update}{}}}
 \subsection{Method \code{server.update()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$server.update(description)}\if{html}{\out{</div>}}
@@ -766,6 +853,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-server.delete"></a>}}
+\if{latex}{\out{\hypertarget{method-server.delete}{}}}
 \subsection{Method \code{server.delete()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$server.delete(description)}\if{html}{\out{</div>}}
@@ -774,6 +862,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-server.list"></a>}}
+\if{latex}{\out{\hypertarget{method-server.list}{}}}
 \subsection{Method \code{server.list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$server.list()}\if{html}{\out{</div>}}
@@ -782,6 +871,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-server.permission"></a>}}
+\if{latex}{\out{\hypertarget{method-server.permission}{}}}
 \subsection{Method \code{server.permission()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$server.permission()}\if{html}{\out{</div>}}
@@ -790,6 +880,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WriteLog"></a>}}
+\if{latex}{\out{\hypertarget{method-WriteLog}{}}}
 \subsection{Method \code{WriteLog()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$WriteLog(message)}\if{html}{\out{</div>}}
@@ -798,6 +889,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userrestriction.change"></a>}}
+\if{latex}{\out{\hypertarget{method-userrestriction.change}{}}}
 \subsection{Method \code{userrestriction.change()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userrestriction.change(restriction, state)}\if{html}{\out{</div>}}
@@ -806,6 +898,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userconfig.insert"></a>}}
+\if{latex}{\out{\hypertarget{method-userconfig.insert}{}}}
 \subsection{Method \code{userconfig.insert()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userconfig.insert(description)}\if{html}{\out{</div>}}
@@ -814,6 +907,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userconfig.update"></a>}}
+\if{latex}{\out{\hypertarget{method-userconfig.update}{}}}
 \subsection{Method \code{userconfig.update()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userconfig.update(description)}\if{html}{\out{</div>}}
@@ -822,6 +916,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userconfig.delete"></a>}}
+\if{latex}{\out{\hypertarget{method-userconfig.delete}{}}}
 \subsection{Method \code{userconfig.delete()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userconfig.delete(description)}\if{html}{\out{</div>}}
@@ -830,6 +925,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userconfig.list"></a>}}
+\if{latex}{\out{\hypertarget{method-userconfig.list}{}}}
 \subsection{Method \code{userconfig.list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userconfig.list()}\if{html}{\out{</div>}}
@@ -838,6 +934,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-userrestriction.list"></a>}}
+\if{latex}{\out{\hypertarget{method-userrestriction.list}{}}}
 \subsection{Method \code{userrestriction.list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$userrestriction.list()}\if{html}{\out{</div>}}
@@ -846,6 +943,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-useradmin.permission"></a>}}
+\if{latex}{\out{\hypertarget{method-useradmin.permission}{}}}
 \subsection{Method \code{useradmin.permission()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$useradmin.permission()}\if{html}{\out{</div>}}
@@ -854,6 +952,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_appointments"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_appointments}{}}}
 \subsection{Method \code{list_contact_appointments()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_appointments(
@@ -867,6 +966,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_visits"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_visits}{}}}
 \subsection{Method \code{list_contact_visits()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_visits(
@@ -880,6 +980,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_services"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_services}{}}}
 \subsection{Method \code{list_contact_services()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_services(date_from = NA, date_to = NA, clinicians = NA)}\if{html}{\out{</div>}}
@@ -888,6 +989,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_count"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_count}{}}}
 \subsection{Method \code{list_contact_count()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_count(
@@ -904,6 +1006,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_diabetes"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_diabetes}{}}}
 \subsection{Method \code{list_contact_diabetes()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_diabetes(
@@ -920,6 +1023,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_chroniclungdisease"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_chroniclungdisease}{}}}
 \subsection{Method \code{list_contact_chroniclungdisease()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_chroniclungdisease(
@@ -935,7 +1039,25 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_contact_asthma"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_asthma}{}}}
+\subsection{Method \code{list_contact_asthma()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_asthma(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  contact_type = NA,
+  lazy = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_15plus"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_15plus}{}}}
 \subsection{Method \code{list_contact_15plus()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_15plus(
@@ -952,6 +1074,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_65plus"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_65plus}{}}}
 \subsection{Method \code{list_contact_65plus()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_65plus(
@@ -968,6 +1091,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_45_74"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_45_74}{}}}
 \subsection{Method \code{list_contact_45_74()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_45_74(
@@ -984,6 +1108,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_75plus"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_75plus}{}}}
 \subsection{Method \code{list_contact_75plus()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_75plus(
@@ -1000,6 +1125,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_ATSI_35_44"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_ATSI_35_44}{}}}
 \subsection{Method \code{list_contact_ATSI_35_44()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_ATSI_35_44(
@@ -1016,6 +1142,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_contact_cst"></a>}}
+\if{latex}{\out{\hypertarget{method-list_contact_cst}{}}}
 \subsection{Method \code{list_contact_cst()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_cst(
@@ -1032,6 +1159,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
+\if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$new()}\if{html}{\out{</div>}}
@@ -1040,6 +1168,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-close"></a>}}
+\if{latex}{\out{\hypertarget{method-close}{}}}
 \subsection{Method \code{close()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$close()}\if{html}{\out{</div>}}
@@ -1048,6 +1177,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-finalize}{}}}
 \subsection{Method \code{finalize()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$finalize()}\if{html}{\out{</div>}}
@@ -1056,6 +1186,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-open_configuration_db"></a>}}
+\if{latex}{\out{\hypertarget{method-open_configuration_db}{}}}
 \subsection{Method \code{open_configuration_db()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$open_configuration_db(
@@ -1066,6 +1197,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-read_configuration_db"></a>}}
+\if{latex}{\out{\hypertarget{method-read_configuration_db}{}}}
 \subsection{Method \code{read_configuration_db()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_configuration_db(config_db = self$config_db)}\if{html}{\out{</div>}}
@@ -1074,6 +1206,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BPdatabaseChoice_new"></a>}}
+\if{latex}{\out{\hypertarget{method-BPdatabaseChoice_new}{}}}
 \subsection{Method \code{BPdatabaseChoice_new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$BPdatabaseChoice_new()}\if{html}{\out{</div>}}
@@ -1082,6 +1215,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-read_subscription_db"></a>}}
+\if{latex}{\out{\hypertarget{method-read_subscription_db}{}}}
 \subsection{Method \code{read_subscription_db()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_subscription_db(forcecheck = FALSE, users = NULL)}\if{html}{\out{</div>}}
@@ -1090,6 +1224,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-update_subscription"></a>}}
+\if{latex}{\out{\hypertarget{method-update_subscription}{}}}
 \subsection{Method \code{update_subscription()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$update_subscription(
@@ -1103,6 +1238,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-check_subscription"></a>}}
+\if{latex}{\out{\hypertarget{method-check_subscription}{}}}
 \subsection{Method \code{check_subscription()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$check_subscription(
@@ -1117,6 +1253,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-match_user"></a>}}
+\if{latex}{\out{\hypertarget{method-match_user}{}}}
 \subsection{Method \code{match_user()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$match_user()}\if{html}{\out{</div>}}
@@ -1125,6 +1262,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clinician_list"></a>}}
+\if{latex}{\out{\hypertarget{method-clinician_list}{}}}
 \subsection{Method \code{clinician_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$clinician_list(view_name = "All", location = NULL)}\if{html}{\out{</div>}}
@@ -1133,6 +1271,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-choose_clinicians"></a>}}
+\if{latex}{\out{\hypertarget{method-choose_clinicians}{}}}
 \subsection{Method \code{choose_clinicians()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$choose_clinicians(choices = "", view_name = "All")}\if{html}{\out{</div>}}
@@ -1141,6 +1280,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-open_emr_db"></a>}}
+\if{latex}{\out{\hypertarget{method-open_emr_db}{}}}
 \subsection{Method \code{open_emr_db()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$open_emr_db(BPdatabaseChoice = NULL)}\if{html}{\out{</div>}}
@@ -1149,6 +1289,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-initialize_emr_tables"></a>}}
+\if{latex}{\out{\hypertarget{method-initialize_emr_tables}{}}}
 \subsection{Method \code{initialize_emr_tables()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$initialize_emr_tables(emr_db)}\if{html}{\out{</div>}}
@@ -1157,6 +1298,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-choose_location"></a>}}
+\if{latex}{\out{\hypertarget{method-choose_location}{}}}
 \subsection{Method \code{choose_location()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$choose_location(location = self$location)}\if{html}{\out{</div>}}
@@ -1165,6 +1307,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-choose_date"></a>}}
+\if{latex}{\out{\hypertarget{method-choose_date}{}}}
 \subsection{Method \code{choose_date()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$choose_date(date_from = self$date_a, date_to = self$date_b)}\if{html}{\out{</div>}}
@@ -1173,6 +1316,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_allergy"></a>}}
+\if{latex}{\out{\hypertarget{method-list_allergy}{}}}
 \subsection{Method \code{list_allergy()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_allergy(
@@ -1189,6 +1333,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_socialHx"></a>}}
+\if{latex}{\out{\hypertarget{method-list_socialHx}{}}}
 \subsection{Method \code{list_socialHx()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_socialHx(
@@ -1205,6 +1350,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_familyHx"></a>}}
+\if{latex}{\out{\hypertarget{method-list_familyHx}{}}}
 \subsection{Method \code{list_familyHx()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_familyHx(
@@ -1221,6 +1367,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-list_dataQuality"></a>}}
+\if{latex}{\out{\hypertarget{method-list_dataQuality}{}}}
 \subsection{Method \code{list_dataQuality()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_dataQuality(
@@ -1238,6 +1385,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-influenzaVax_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-influenzaVax_obs}{}}}
 \subsection{Method \code{influenzaVax_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$influenzaVax_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1246,6 +1394,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-HbA1C_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-HbA1C_obs}{}}}
 \subsection{Method \code{HbA1C_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$HbA1C_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1254,6 +1403,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-smoking_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-smoking_obs}{}}}
 \subsection{Method \code{smoking_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$smoking_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1262,6 +1412,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BloodPressure_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-BloodPressure_obs}{}}}
 \subsection{Method \code{BloodPressure_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$BloodPressure_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1269,7 +1420,17 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-asthmaplan_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-asthmaplan_obs}{}}}
+\subsection{Method \code{asthmaplan_obs()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$asthmaplan_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-UrineAlbumin_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-UrineAlbumin_obs}{}}}
 \subsection{Method \code{UrineAlbumin_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$UrineAlbumin_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1278,6 +1439,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PersistentProteinuria_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-PersistentProteinuria_obs}{}}}
 \subsection{Method \code{PersistentProteinuria_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$PersistentProteinuria_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1286,6 +1448,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-eGFR_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-eGFR_obs}{}}}
 \subsection{Method \code{eGFR_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$eGFR_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1294,6 +1457,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cholesterol_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-Cholesterol_obs}{}}}
 \subsection{Method \code{Cholesterol_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$Cholesterol_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
@@ -1302,6 +1466,7 @@ dMeasure class
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{
