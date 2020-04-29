@@ -998,6 +998,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1015,6 +1016,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1032,6 +1034,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1049,6 +1052,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1066,6 +1070,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1083,6 +1088,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1100,6 +1106,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1117,6 +1124,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1134,6 +1142,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1151,6 +1160,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}

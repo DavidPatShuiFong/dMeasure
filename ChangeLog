@@ -1,5 +1,13 @@
 Changelog
 
+0.9.8 - 29th April 2020
+=======================
+
+* dM$contact_maxDate (and $contact_maxDateR reactive version, and also private version)
+* list_contact_count includes maxDate (in addition to minDate)
+  allows restriction of date of last contact
+  e.g. 'has not had contact in past 2 months'
+
 0.9.7 - 25th April 2020
 =======================
 
