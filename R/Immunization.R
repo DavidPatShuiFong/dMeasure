@@ -122,10 +122,12 @@ list_zostavax <- function(dMeasure_obj,
 
   zostavax_list <- zostavax_list %>>%
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter((InternalID %in% intID) &&
+      dplyr::filter(
+        InternalID %in% intID,
         # those who have had the zostavax vaccine
-        ((VaccineName %LIKE% "%zostavax%") ||
-          (VaccineID == 103))),
+        ((VaccineName %LIKE% "%zostavax%") |
+          (VaccineID == 103))
+      ),
     by = "InternalID",
     copy = TRUE
     ) %>>%
@@ -330,11 +332,13 @@ list_measlesVax <- function(dMeasure_obj,
 
   measlesVax_list <- measlesVax_list %>>%
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter((InternalID %in% intID) &&
+      dplyr::filter(
+        InternalID %in% intID,
         # those who have had the measles vaccine
-        ((VaccineName %LIKE% "%measles%") ||
-          VaccineName %LIKE% "%mmr%" ||
-          (VaccineID %in% measlesVaxID))),
+        ((VaccineName %LIKE% "%measles%") |
+          VaccineName %LIKE% "%mmr%" |
+          (VaccineID %in% measlesVaxID))
+      ),
     by = "InternalID",
     copy = TRUE
     ) %>>%
@@ -537,8 +541,10 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   lprevious <- list_details %>>%
     # those who have had influenza vaccines in the past
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter(InternalID %in% intID &&
-        VaccineID %in% fluvaxID),
+      dplyr::filter(
+        InternalID %in% intID,
+        VaccineID %in% fluvaxID
+      ),
     by = "InternalID",
     copy = TRUE
     ) %>>%

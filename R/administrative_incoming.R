@@ -493,7 +493,7 @@ filter_investigations_appointment <- function(dMeasure_obj,
         },
       by = "InternalID", copy = TRUE
       ) %>>%
-      dplyr::filter(is.na(AppointmentDate) || AppointmentDate > Checked) %>>%
+      dplyr::filter(is.na(AppointmentDate) | AppointmentDate > Checked) %>>%
       # filter appointments, if any, to date after date of checking
       dplyr::mutate(
         Status = trimws(Status),
@@ -936,7 +936,7 @@ filter_correspondence_appointment <- function(dMeasure_obj,
         },
       by = "InternalID", copy = TRUE
       ) %>>%
-      dplyr::filter(is.na(AppointmentDate) || AppointmentDate > CheckDate) %>>%
+      dplyr::filter(is.na(AppointmentDate) | AppointmentDate > CheckDate) %>>%
       # filter appointment date (if any) to after the document was checked
       dplyr::mutate(Status = trimws(Status))
     # further filter against the 'checked' date for each correspondence

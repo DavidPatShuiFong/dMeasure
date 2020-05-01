@@ -23,7 +23,7 @@ NULL
 #' }
 #'
 #' @examples
-#'
+#' 
 #' @export
 dMeasure <-
   R6::R6Class("dMeasure",
@@ -2164,6 +2164,9 @@ initialize_emr_tables <- function(dMeasure_obj,
       InternalID = INTERNALID,
       UserID = USERID,
       DocumentType = DOCUMENTTYPE,
+      # 0 = downloaded document
+      # 1 = uploaded shared health summary
+      # 2 = uploaded event
       DocumentDate = DOCUMENTDATE,
       Created = CREATED, CreatedBy = CREATEDBY,
       Updated = UPDATED, UpdatedBy = UPDATEDBY
