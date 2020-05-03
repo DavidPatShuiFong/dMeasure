@@ -1527,3 +1527,61 @@ LVH_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::pull(InternalID) %>>%
     unique()
 })
+
+#' list of patients who are listed as the head of family
+#' with a child between defined ages
+#'
+#' This is found through the use of 'HeadOfFamilyID' in
+#' db$patientsRaw
+#'
+#' Note that this does *not* include postnatal_list, and
+#' so a separate check is required if requiring postnatal
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#' @param months_min minimum age in months (inclusive, 'from')
+#' @param months_max maximum age in months (exclusive, 'up to')
+#'
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
+parent_list <- function(dMeasure_obj, appointments = NULL,
+  months_min = 0, months_max = 12) {
+  dMeasure_obj$parent_list(appointments)
+}
+.public(dMeasure, "parent_list", function(appointments = NULL,
+  months_min = 0,
+  months_max = 12) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # Returns vector of InternalID of patients who have diabetes
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  intID <- self$db$patientsRaw %>>%
+    dplyr::filter(
+      HeadOfFamilyID %in% intID # exclude possible parents!
+    ) %>>%
+    dplyr::select(InternalID, HeadOfFamilyID, DOB) %>>%
+    dplyr::collect() %>>%
+    dplyr::left_join(
+      appointments,
+      by = c("HeadOfFamilyID" = "InternalID")) %>>%
+    dplyr::filter(InternalID != HeadOfFamilyID) %>>% # can't be parent of yourself
+    dplyr::mutate(AgeInMonths = dMeasure::calc_age_months(as.Date(DOB), as.Date(Date))) %>>%
+    dplyr::filter(AgeInMonths >= months_min & AgeInMonths < months_max) %>>%
+    dplyr::pull(HeadOfFamilyID) %>>%
+    unique()
+
+  return(intID)
+})
