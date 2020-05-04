@@ -1,12 +1,16 @@
 Changelog
 
-0.9.9 - 3rd May 2020
+0.9.9 - 4th May 2020
 ====================
 
 New
 
 * db$patientsRaw (include HeadOfFamilyID)
 * parent_list for those listed as head of family
+
+Change
+
+* increase tolerance of paste2 to unusual Unicode characters
 
 0.9.8 - 29th April 2020
 =======================

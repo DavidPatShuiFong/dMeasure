@@ -549,7 +549,11 @@ paste2 <- function(..., sep = " ", collapse = NULL, na.rm = FALSE) {
   dots <- suppressWarnings(cbind(...))
   res <- apply(dots, 1, function(...) {
     x <- c(...)
-    x <- x[nchar(x) > 0] # get rid of empty strings
+    x <- x[nchar(x, type = "bytes") > 0]
+    # get rid of empty strings
+    # type = 'bytes' returns a count if there are malformed
+    # 'unprintable' unicode control characters '\u00xx' which
+    # do appear in the Best Practice database...
     x <- x[length(x) > 0] # get rid of character(0)
     if (all(is.na(x))) return(c(""))
     do.call(paste, as.list(c(na.omit(x), sep = sep)))
