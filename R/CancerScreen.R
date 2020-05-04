@@ -357,9 +357,11 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
         ),
         dplyr::inner_join(screen_cst_list,
           self$db$investigations %>>%
-            dplyr::filter(InternalID %in% screen_cst_id &&
-              (TestName %like% "%CERVICAL SCREENING%" ||
-                TestName %like% "%PAP SMEAR%")) %>>%
+            dplyr::filter(
+              InternalID %in% screen_cst_id,
+              (TestName %like% "%CERVICAL SCREENING%" |
+                TestName %like% "%PAP SMEAR%")
+            ) %>>%
             dplyr::rename(TestDate = Reported),
           by = "InternalID", copy = TRUE
         )
@@ -545,8 +547,10 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::left_join(
       dplyr::inner_join(screen_mammogram_list,
         self$db$investigations %>>%
-          dplyr::filter(InternalID %in% screen_mammogram_id &&
-            TestName %like% "%mammogram%") %>>%
+          dplyr::filter(
+            InternalID %in% screen_mammogram_id,
+            TestName %like% "%mammogram%"
+          ) %>>%
           dplyr::rename(TestDate = Reported),
         by = "InternalID", copy = TRUE
       ) %>>%

@@ -471,7 +471,7 @@ list_contact_services <- function(dMeasure_obj,
   origin = "1970-01-01"
 ))
 .active(dMeasure, "contact_minDate", function(value) {
-  # minimum number of contacts listed in $list_contact_count
+  # minimum date of most recent contact in $list_contact_count
   if (missing(value)) {
     return(private$.contact_minDate)
   }
@@ -482,9 +482,31 @@ list_contact_services <- function(dMeasure_obj,
     warning("$contact_minDate only accepts as.Date() values.")
   }
 })
-.reactive(dMeasure, "contact_minDateR", as.Date(-Inf,
-  origin = "1970-01-01"
-))
+.reactive(
+  dMeasure, "contact_minDateR",
+  as.Date(-Inf, origin = "1970-01-01")
+)
+
+.private(
+  dMeasure, ".contact_maxDate",
+  as.Date(Sys.Date(), origin = "1970-01-01")
+)
+.active(dMeasure, "contact_maxDate", function(value) {
+  # maximum date of most recent contact in $list_contact_count
+  if (missing(value)) {
+    return(private$.contact_maxDate)
+  }
+  if (inherits(value, "Date")) {
+    private$.contact_maxDate <- value
+    private$set_reactive(self$contact_maxDateR, value)
+  } else {
+    warning("$contact_maxDate only accepts as.Date() values.")
+  }
+})
+.reactive(
+  dMeasure, "contact_maxDateR",
+  as.Date(Sys.Date(), origin = "1970-01-01")
+)
 
 
 
@@ -527,35 +549,48 @@ list_contact_services <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from start date. default is $date_a
-#' @param date_to end date (inclusive). default is $date_b
-#' @param clinicians list of clinicians to view. default is $clinicians
-#' @param min_contact minimum number of contacts. default is $contact_min, initially one (1)
-#' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
-#' @param contact_type contact types which are accepted. default is $contact_type
+#' @param date_from start date.
+#'   default is $date_a
+#' @param date_to end date (inclusive).
+#'   default is $date_b
+#' @param clinicians list of clinicians to view.
+#'   default is $clinicians
+#' @param min_contact minimum number of contacts.
+#'   default is $contact_min, initially one (1)
+#' @param min_date most recent contact must be at least min_date.
+#'   default is $contact_minDate, initially -Inf
+#' @param max_date most recent contact must be before max_date
+#'   default is $contact_maxDate, initially Sys.Date()
+#' @param contact_type contact types which are accepted.
+#'   default is $contact_type
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 #' @export
-list_contact_count <- function(dMeasure_obj,
+list_contact_count <- function(
+                               dMeasure_obj,
                                date_from = NA,
                                date_to = NA,
                                clinicians = NA,
                                min_contact = NA,
                                min_date = NA,
+                               max_date = NA,
                                contact_type = NA,
                                lazy = FALSE) {
   dMeasure_obj$list_contact_count(
     date_from, date_to, clinicians,
-    min_contact, min_date, contact_type,
+    min_contact, min_date, max_date,
+    contact_type,
     lazy
   )
 }
 
-.public(dMeasure, "list_contact_count", function(date_from = NA,
+.public(dMeasure, "list_contact_count", function(
+                                                 date_from = NA,
                                                  date_to = NA,
                                                  clinicians = NA,
                                                  min_contact = NA,
                                                  min_date = NA,
+                                                 max_date = NA,
                                                  contact_type = NA,
                                                  lazy = FALSE) {
   if (is.na(date_from)) {
@@ -575,6 +610,9 @@ list_contact_count <- function(dMeasure_obj,
   }
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
+  }
+  if (is.na(max_date)) {
+    max_date <- self$contact_maxDate
   }
   if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
@@ -662,7 +700,8 @@ list_contact_count <- function(dMeasure_obj,
       } # removed (just as if nrow>0)
     } %>>%
       dplyr::filter(Count >= min_contact) %>>%
-      dplyr::filter(Latest >= min_date)
+      dplyr::filter(Latest >= min_date) %>>%
+      dplyr::filter(Latest <= max_date)
 
     if (self$Log) {
       self$config_db$duration_log_db(log_id)
@@ -681,6 +720,7 @@ list_contact_count <- function(dMeasure_obj,
         self$contact_services_listR(),
         self$contact_minR(),
         self$contact_minDateR(),
+        self$contact_maxDateR(),
         self$contact_typeR()
       ),
       ignoreNULL = FALSE, {

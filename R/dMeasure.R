@@ -142,6 +142,7 @@ dMeasure <-
     self$db$practice <- NULL
     self$db$users <- NULL
     self$db$patients <- NULL
+    self$db$patientsRaw <- NULL
     self$db$clinical <- NULL
     self$db$reactions <- NULL
     self$db$investigations <- NULL
@@ -697,6 +698,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$practice <- NULL
       self$db$users <- NULL
       self$db$patients <- NULL
+      self$db$patientsRaw <- NULL
       self$db$clinical <- NULL
       self$db$reactions <- NULL
       self$db$investigations <- NULL
@@ -1639,6 +1641,15 @@ initialize_emr_tables <- function(dMeasure_obj,
       PostalCity = trimws(PostalCity)
     )
 
+  self$db$patientsRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PATIENTS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      HeadOfFamilyID = HEADOFFAMILYID,
+      DOB
+      ) %>>%
+    dplyr::mutate(DOB = as.Date(DOB))
+
   # fields include InternalID, ExternalID, RecordNo, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
   # DOB, Sex, Ethnicity
@@ -2164,6 +2175,9 @@ initialize_emr_tables <- function(dMeasure_obj,
       InternalID = INTERNALID,
       UserID = USERID,
       DocumentType = DOCUMENTTYPE,
+      # 0 = downloaded document
+      # 1 = uploaded shared health summary
+      # 2 = uploaded event
       DocumentDate = DOCUMENTDATE,
       Created = CREATED, CreatedBy = CREATEDBY,
       Updated = UPDATED, UpdatedBy = UPDATEDBY

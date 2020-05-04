@@ -461,7 +461,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'   )
 #' )
 #' }
-#'
+#' 
 #' @export
 userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
@@ -602,7 +602,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'   )
 #' )
 #' }
-#'
+#' 
 #' @export
 userconfig.update <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.update(description)

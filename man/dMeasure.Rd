@@ -92,6 +92,7 @@ dMeasure class
 \item \href{#method-mammogram_eligible_list}{\code{dMeasure$mammogram_eligible_list()}}
 \item \href{#method-familialHypercholesterolaemia_list}{\code{dMeasure$familialHypercholesterolaemia_list()}}
 \item \href{#method-LVH_list}{\code{dMeasure$LVH_list()}}
+\item \href{#method-parent_list}{\code{dMeasure$parent_list()}}
 \item \href{#method-location.insert}{\code{dMeasure$location.insert()}}
 \item \href{#method-location.update}{\code{dMeasure$location.update()}}
 \item \href{#method-location.delete}{\code{dMeasure$location.delete()}}
@@ -744,6 +745,15 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-parent_list"></a>}}
+\if{latex}{\out{\hypertarget{method-parent_list}{}}}
+\subsection{Method \code{parent_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$parent_list(appointments = NULL, months_min = 0, months_max = 12)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-location.insert"></a>}}
 \if{latex}{\out{\hypertarget{method-location.insert}{}}}
 \subsection{Method \code{location.insert()}}{
@@ -998,6 +1008,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1015,6 +1026,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1032,6 +1044,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1049,6 +1062,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1066,6 +1080,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1083,6 +1098,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1100,6 +1116,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1117,6 +1134,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1134,6 +1152,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}
@@ -1151,6 +1170,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )}\if{html}{\out{</div>}}

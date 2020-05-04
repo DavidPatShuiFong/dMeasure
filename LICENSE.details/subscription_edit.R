@@ -16,7 +16,7 @@ ui <- fluidPage(
     tabPanel("Keys",
              h3("Keys"),
              passwordInput("api_key", "API Key", value = ""),
-             passwordInput("subscription_key", "table key", value = ""))
+             passwordInput("subscription_key", "subscription key", value = ""))
   )
 )
 

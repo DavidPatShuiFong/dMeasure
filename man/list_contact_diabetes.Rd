@@ -11,6 +11,7 @@ list_contact_diabetes(
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   lazy = FALSE
 )
@@ -27,6 +28,8 @@ list_contact_diabetes(
 \item{min_contact}{minimum number of contacts. default is $contact_min, initially one (1)}
 
 \item{min_date}{most recent contact must be at least min_date. default is $contact_minDate, initially -Inf}
+
+\item{max_date}{most recent contact must be at least max_date. default is $contact_maxDate, initially Sys.Date()}
 
 \item{contact_type}{contact types which are accepted. default is $contact_type}
 }
