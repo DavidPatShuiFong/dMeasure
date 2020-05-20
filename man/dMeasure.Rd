@@ -1265,7 +1265,6 @@ dMeasure class
   clinicians = NA,
   date_from = NA,
   date_to = NA,
-  adjustdate = TRUE,
   adjust_days = 7
 )}\if{html}{\out{</div>}}
 }

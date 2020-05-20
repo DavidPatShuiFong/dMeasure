@@ -1221,7 +1221,6 @@ update_subscription <- function(dMeasure_obj,
 #' @param clinicians vector of users to check
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
-#' @param adjustdate will this function change the dates? ($date_a, $date_b)
 #' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
@@ -1237,17 +1236,15 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE,
                                adjust_days = 7) {
   dMeasure_obj$check_subscription(
     users, date_from, date_to,
-    adjustdate, adjust_days
+    adjust_days
   )
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE,
                                                  adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -1290,20 +1287,30 @@ check_subscription <- function(dMeasure_obj,
   if (changedate) {
     if (date_to > (Sys.Date() - adjust_days)) {
       date_to <- Sys.Date() - adjust_days
-      warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
       }
-      if (adjustdate) {
-        # change the dates
-        self$choose_date(date_from, date_to)
-        private$trigger(self$check_subscription_datechange_trigR)
-      }
+      warning(
+        "A chosen user has no subscription for chosen date range. ",
+        "Without subscription, dates need to be minimum ",
+        adjust_days,
+        " days old."
+      )
+      # change the dates
+      new_trigger_value <-
+        -sign(self$check_subscription_datechange_trigR()) * adjust_days
+      # reverses the 'sign' of the trigger
+      private$set_reactive(
+        self$check_subscription_datechange_trigR,
+        new_trigger_value
+      )
     }
   }
   return(list(changedate = changedate, date_from = date_from, date_to = date_to))
 })
-.reactive(dMeasure, "check_subscription_datechange_trigR", 0)
+.reactive(dMeasure, "check_subscription_datechange_trigR", 1)
+# this trigger will 'flip-flop' from positive to negative values
+# the absolute value of the this trigger will be the number of days to be adjusted
 
 ##### User login ##################################################
 
