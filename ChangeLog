@@ -3,6 +3,11 @@ Changelog
 0.9.10 - 20th May 2020
 ======================
 
+* dMeasureCustom - custom patient lists
+  initialize_data_table function read from dMeasureCustom (if available)
+   adds table to configuration SQLite database
+  read_configuration_db function execute from dMeasureCustom (if available)
+
 * remove adjust_date from check_subscription
 * check_subscription_datechange_trigR flip-flops from positive to negative
 

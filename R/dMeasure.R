@@ -796,8 +796,8 @@ open_configuration_db <-
     dMeasure_obj$open_configuration_db(configuration_file_path)
   }
 
-.public(dMeasure, "open_configuration_db", function(
-                                                    configuration_file_path = self$configuration_file_path) {
+.public(dMeasure, "open_configuration_db",
+  function(configuration_file_path = self$configuration_file_path) {
 
   # if no configuration filepath is defined, then try to read one
   if (length(configuration_file_path) == 0) {
@@ -971,9 +971,27 @@ open_configuration_db <-
     # list of restrictions for users
     # use of 'uid' rather than 'id'
     # (this relates to the 'Attributes' field in "Users")
+
+    if (requireNamespace("dMeasureCustom", quietly = TRUE)) {
+      if (
+        exists(
+          "initialize_data_table",
+          where = asNamespace("dMeasureCustom"),
+          mode = "function"
+        )
+      ) {
+        x <- dMeasureCustom::initialize_data_table()
+        initialize_data_table(
+          config_db,
+          tablename = x$tablename,
+          variable_list = x$variable_list
+        )
+      }
+    }
+
   }
   invisible(self)
-})
+  })
 
 #' read the SQL configuration database
 #'
@@ -1041,6 +1059,11 @@ read_configuration_db <- function(dMeasure_obj,
   private$trigger(self$config_db_trigR)
   # notification of configuration database change
 
+  if (exists("dMCustom")) {
+    if (exists("read_configuration_db", where = dMCustom, mode = "function")) {
+      dMCustom$read_configuration_db(config_db$conn())
+    }
+  }
   invisible(self)
 })
 .public(dMeasure, "BPdatabaseChoice_new", function() {
