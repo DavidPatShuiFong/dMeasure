@@ -852,10 +852,14 @@ open_configuration_db <-
 
     if (tablename %in% tablenames) {
       # if table exists in config_db database
-      columns <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% colnames()
-      # list of column (variable) names
-      data <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% dplyr::collect()
+      data <- DBI::dbReadTable(config_db$conn(), tablename) %>>%
+        dplyr::collect()
       # get a copy of the table's data
+      # note that 'config_db$conn() %>>% dplyr::tbl(tablename) can't handle
+      #  a BLOB column
+
+      columns <- data  %>>% colnames()
+      # list of column (variable) names
     } else {
       # table does not exist, needs to be created
       columns <- NULL
