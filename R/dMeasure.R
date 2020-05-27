@@ -2256,6 +2256,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   } else {
     PracticeName <- self$db$practice %>>%
       dplyr::pull(PracticeName)
+    PracticeName <- PracticeName[[1]] # just pull out the first entry
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
