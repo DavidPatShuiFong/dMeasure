@@ -1,6 +1,6 @@
 Changelog
 
-0.9.10 - 27th May 2020
+0.9.10 - 6th June 2020
 ======================
 
 * dMeasureCustom - custom patient lists
@@ -12,6 +12,8 @@ Changelog
 * check_subscription_datechange_trigR flip-flops from positive to negative
 
 * $UserFullConfig uses only the first row in $db$practice to find PracticeName
+
+* Changes for new version of DTedit (v2)
 
 0.9.9 - 4th May 2020
 ====================

@@ -12,7 +12,7 @@ ui <- fluidPage(
     tabPanel(
       "Subscriptions",
       h3("Subscriptions"),
-      dteditUI("subscriptions")
+      dteditmodUI("subscriptions")
     ),
     tabPanel(
       "Bulk import",
@@ -242,8 +242,9 @@ server <- function(input, output) {
     return(data)
   }
 
-  table_DT_gui <- callModule(dtedit, "subscriptions",
-    thedataframe = table_edit,
+  table_DT_gui <- callModule(
+    dteditmod, "subscriptions",
+    thedata = table_edit,
     view.cols = c("Name", "Date", "Comment"),
     edit.cols = c("Name", "Date", "Comment"),
     callback.insert = table.insert.callback,
