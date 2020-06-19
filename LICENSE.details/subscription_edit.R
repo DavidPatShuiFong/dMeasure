@@ -6,18 +6,18 @@ library(dplyr)
 library(dMeasure)
 library(stringi)
 
-ui <- fluidPage(
-  tabsetPanel(
+ui <- shiny::fluidPage(
+  shiny::tabsetPanel(
     type = "tabs",
-    tabPanel(
+    shiny::tabPanel(
       "Subscriptions",
-      h3("Subscriptions"),
-      dteditmodUI("subscriptions")
+      shiny::h3("Subscriptions"),
+      DTedit::dteditmodUI("subscriptions")
     ),
-    tabPanel(
+    shiny::tabPanel(
       "Bulk import",
-      h3("Bulk import"),
-      fileInput(
+      shiny::h3("Bulk import"),
+      shiny::fileInput(
         "file",
         "Choose CSV file",
         accept = c(
@@ -26,30 +26,30 @@ ui <- fluidPage(
           ".csv"
         )
       ),
-      tags$hr(),
-      checkboxInput("header", "Header", TRUE)
+      shiny::tags$hr(),
+      shiny::checkboxInput("header", "Header", TRUE)
     ),
-    tabPanel(
+    shiny::tabPanel(
       "Keys",
-      h3("Keys"),
-      passwordInput("api_key", "API Key", value = ""),
-      passwordInput("subscription_key", "subscription key", value = "")
+      shiny::h3("Keys"),
+      shiny::passwordInput("api_key", "API Key", value = ""),
+      shiny::passwordInput("subscription_key", "subscription key", value = "")
     )
   )
 )
 
 
 server <- function(input, output) {
-  subscriptions <- reactiveVal() # later will point to database
+  subscriptions <- shiny::eactiveVal() # later will point to database
 
-  table_base <- reactiveVal(data.frame(
+  table_base <- shiny::reactiveVal(data.frame(
     id = character(),
     Key = character(), License = character(),
     Comment = character(),
     stringsAsFactors = FALSE
   ))
 
-  table_edit <- reactiveVal(data.frame(
+  table_edit <- shiny::reactiveVal(data.frame(
     id = character(),
     Key = character(), License = character(),
     Comment = character(),
@@ -58,14 +58,17 @@ server <- function(input, output) {
     stringsAsFactors = FALSE
   ))
 
-  observeEvent(input$api_key, ignoreNULL = TRUE, ignoreInit = TRUE, {
+  shiny::observeEvent(input$api_key, ignoreNULL = TRUE, ignoreInit = TRUE, {
     Sys.setenv("AIRTABLE_API_KEY" = input$api_key)
     subscriptions(airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions"))
     # note that this fails very ungracefully if not a valid API_KEY
-    table_base(subscriptions()$Subscriptions$select() %>% dplyr::select(c("id", "Key", "License", "Comment")))
+    table_base(
+      subscriptions()$Subscriptions$select() %>%
+        dplyr::select(c("id", "Key", "License", "Comment"))
+    )
   })
 
-  bulk_csv <- eventReactive(input$file, ignoreNULL = TRUE, ignoreInit = TRUE, {
+  bulk_csv <- shiny::eventReactive(input$file, ignoreNULL = TRUE, ignoreInit = TRUE, {
     inFile <- input$file
     x <- read.csv(
       inFile$datapath,
@@ -80,39 +83,39 @@ server <- function(input, output) {
     x
   })
 
-  observeEvent(bulk_csv(), ignoreNULL = TRUE, {
-    showModal(
-      modalDialog(
-        dateInput(
+  shiny::observeEvent(bulk_csv(), ignoreNULL = TRUE, {
+    shiny::showModal(
+      shiny::modalDialog(
+        shiny::dateInput(
           "bulk_date",
           "Subscription end date",
           value = Sys.Date() + 365,
           min = Sys.Date() + 30,
           max = Sys.Date() + 750
         ),
-        br(),
-        textInput(
+        shiny::br(),
+        shiny::textInput(
           "bulk_comment",
           "Comment",
           value = "",
           placeholder = "General comment (could be prefix)"
         ),
-        br(),
-        checkboxInput(
+        shiny::br(),
+        shiny::checkboxInput(
           "bulk_name_postfix",
           "Add name to comment (postfix)",
           FALSE
         ),
         title = "Subscription details",
-        footer = tagList(
-          modalButton("Cancel"),
-          actionButton("bulk_ok", "OK")
+        footer = shiny::tagList(
+          shiny::modalButton("Cancel"),
+          shiny::actionButton("bulk_ok", "OK")
         )
       )
     )
   })
 
-  observeEvent(input$bulk_ok, ignoreNULL = TRUE, ignoreInit = TRUE, {
+  shiny::observeEvent(input$bulk_ok, ignoreNULL = TRUE, ignoreInit = TRUE, {
     x <- bulk_csv()
     if (input$bulk_name_postfix) {
       x$Comment <- paste(input$bulk_comment, x$Fullname)
@@ -160,25 +163,25 @@ server <- function(input, output) {
           record_data = record_data
         )
         new_df <- table_edit() %>%
-          anti_join(new_df_row, by = "id") %>%
+          dplyr::anti_join(new_df_row, by = "id") %>%
           # remove the duplicate row
           # before adding new_df_row back in again
-          bind_rows(new_df_row)
+          dplyr::bind_rows(new_df_row)
         table_edit(new_df)
       }
     }
-    removeModal()
+    shiny::removeModal()
   })
 
-  observeEvent(
+  shiny::observeEvent(
     input$subscription_key,
     ignoreNULL = TRUE, ignoreInit = TRUE, {
       dummy <- table_base()
       dummy$Name <- table_base() %>%
-        pull(Key) %>%
+        dplyr::pull(Key) %>%
         dMeasure::simple_decode(key = input$subscription_key)
       dummy$Date <- table_base() %>%
-        pull(License) %>%
+        dplyr::pull(License) %>%
         dMeasure::simple_decode(key = input$subscription_key) %>%
         stringi::stri_sub(-10, -1) %>% # doesn't formally check the validity of the License Key
         as.Date()
@@ -242,7 +245,7 @@ server <- function(input, output) {
     return(data)
   }
 
-  table_DT_gui <- callModule(
+  table_DT_gui <- shiny::callModule(
     dteditmod, "subscriptions",
     thedata = table_edit,
     view.cols = c("Name", "Date", "Comment"),
@@ -253,4 +256,4 @@ server <- function(input, output) {
   )
 }
 
-shinyApp(ui = ui, server = server)
+shiny::shinyApp(ui = ui, server = server)
