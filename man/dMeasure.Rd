@@ -46,6 +46,14 @@ dMeasure class
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-list_fobt}{\code{dMeasure$list_fobt()}}
+\item \href{#method-list_cst_details}{\code{dMeasure$list_cst_details()}}
+\item \href{#method-list_cst}{\code{dMeasure$list_cst()}}
+\item \href{#method-list_mammogram}{\code{dMeasure$list_mammogram()}}
+\item \href{#method-list_zostavax}{\code{dMeasure$list_zostavax()}}
+\item \href{#method-list_measlesVax}{\code{dMeasure$list_measlesVax()}}
+\item \href{#method-list_influenza}{\code{dMeasure$list_influenza()}}
+\item \href{#method-list_vax}{\code{dMeasure$list_vax()}}
 \item \href{#method-filter_investigations}{\code{dMeasure$filter_investigations()}}
 \item \href{#method-filter_investigations_appointment}{\code{dMeasure$filter_investigations_appointment()}}
 \item \href{#method-filter_investigations_named}{\code{dMeasure$filter_investigations_named()}}
@@ -57,9 +65,6 @@ dMeasure class
 \item \href{#method-filter_appointments_time}{\code{dMeasure$filter_appointments_time()}}
 \item \href{#method-list_appointments}{\code{dMeasure$list_appointments()}}
 \item \href{#method-list_visits}{\code{dMeasure$list_visits()}}
-\item \href{#method-list_fobt}{\code{dMeasure$list_fobt()}}
-\item \href{#method-list_cst}{\code{dMeasure$list_cst()}}
-\item \href{#method-list_mammogram}{\code{dMeasure$list_mammogram()}}
 \item \href{#method-diabetes_list}{\code{dMeasure$diabetes_list()}}
 \item \href{#method-asthma_list}{\code{dMeasure$asthma_list()}}
 \item \href{#method-list_asthma_details}{\code{dMeasure$list_asthma_details()}}
@@ -125,10 +130,6 @@ dMeasure class
 \item \href{#method-list_contact_75plus}{\code{dMeasure$list_contact_75plus()}}
 \item \href{#method-list_contact_ATSI_35_44}{\code{dMeasure$list_contact_ATSI_35_44()}}
 \item \href{#method-list_contact_cst}{\code{dMeasure$list_contact_cst()}}
-\item \href{#method-list_allergy}{\code{dMeasure$list_allergy()}}
-\item \href{#method-list_socialHx}{\code{dMeasure$list_socialHx()}}
-\item \href{#method-list_familyHx}{\code{dMeasure$list_familyHx()}}
-\item \href{#method-list_dataQuality}{\code{dMeasure$list_dataQuality()}}
 \item \href{#method-new}{\code{dMeasure$new()}}
 \item \href{#method-close}{\code{dMeasure$close()}}
 \item \href{#method-finalize}{\code{dMeasure$finalize()}}
@@ -145,10 +146,10 @@ dMeasure class
 \item \href{#method-initialize_emr_tables}{\code{dMeasure$initialize_emr_tables()}}
 \item \href{#method-choose_location}{\code{dMeasure$choose_location()}}
 \item \href{#method-choose_date}{\code{dMeasure$choose_date()}}
-\item \href{#method-list_zostavax}{\code{dMeasure$list_zostavax()}}
-\item \href{#method-list_measlesVax}{\code{dMeasure$list_measlesVax()}}
-\item \href{#method-list_influenza}{\code{dMeasure$list_influenza()}}
-\item \href{#method-list_vax}{\code{dMeasure$list_vax()}}
+\item \href{#method-list_allergy}{\code{dMeasure$list_allergy()}}
+\item \href{#method-list_socialHx}{\code{dMeasure$list_socialHx()}}
+\item \href{#method-list_familyHx}{\code{dMeasure$list_familyHx()}}
+\item \href{#method-list_dataQuality}{\code{dMeasure$list_dataQuality()}}
 \item \href{#method-influenzaVax_obs}{\code{dMeasure$influenzaVax_obs()}}
 \item \href{#method-HbA1C_obs}{\code{dMeasure$HbA1C_obs()}}
 \item \href{#method-smoking_obs}{\code{dMeasure$smoking_obs()}}
@@ -160,6 +161,157 @@ dMeasure class
 \item \href{#method-Cholesterol_obs}{\code{dMeasure$Cholesterol_obs()}}
 \item \href{#method-clone}{\code{dMeasure$clone()}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_fobt"></a>}}
+\if{latex}{\out{\hypertarget{method-list_fobt}{}}}
+\subsection{Method \code{list_fobt()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_fobt(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE,
+  screentag = FALSE,
+  screentag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_cst_details"></a>}}
+\if{latex}{\out{\hypertarget{method-list_cst_details}{}}}
+\subsection{Method \code{list_cst_details()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_cst_details(
+  screen_cst_list,
+  screen_cst_id = NULL,
+  include_uptodate = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_cst"></a>}}
+\if{latex}{\out{\hypertarget{method-list_cst}{}}}
+\subsection{Method \code{list_cst()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_cst(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE,
+  screentag = FALSE,
+  screentag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_mammogram"></a>}}
+\if{latex}{\out{\hypertarget{method-list_mammogram}{}}}
+\subsection{Method \code{list_mammogram()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_mammogram(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE,
+  screentag = FALSE,
+  screentag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_zostavax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_zostavax}{}}}
+\subsection{Method \code{list_zostavax()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_zostavax(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  vaxtag = FALSE,
+  vaxtag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_measlesVax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_measlesVax}{}}}
+\subsection{Method \code{list_measlesVax()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_measlesVax(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  vaxtag = FALSE,
+  vaxtag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_influenza"></a>}}
+\if{latex}{\out{\hypertarget{method-list_influenza}{}}}
+\subsection{Method \code{list_influenza()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_influenza(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  vaxtag = FALSE,
+  vaxtag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_vax"></a>}}
+\if{latex}{\out{\hypertarget{method-list_vax}{}}}
+\subsection{Method \code{list_vax()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_vax(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  intID = NULL,
+  intID_Date = Sys.Date(),
+  appointments_list = NULL,
+  include_uptodate = TRUE,
+  lazy = FALSE,
+  vaxtag = FALSE,
+  vaxtag_print = TRUE,
+  chosen = self$vaccine_choices
+)}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-filter_investigations"></a>}}
@@ -333,63 +485,6 @@ dMeasure class
   clinicians = NA,
   visit_type = NA,
   lazy = FALSE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_fobt"></a>}}
-\if{latex}{\out{\hypertarget{method-list_fobt}{}}}
-\subsection{Method \code{list_fobt()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_fobt(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  include_uptodate = TRUE,
-  lazy = FALSE,
-  action = FALSE,
-  screentag = FALSE,
-  screentag_print = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_cst"></a>}}
-\if{latex}{\out{\hypertarget{method-list_cst}{}}}
-\subsection{Method \code{list_cst()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_cst(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  include_uptodate = TRUE,
-  lazy = FALSE,
-  action = FALSE,
-  screentag = FALSE,
-  screentag_print = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_mammogram"></a>}}
-\if{latex}{\out{\hypertarget{method-list_mammogram}{}}}
-\subsection{Method \code{list_mammogram()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_mammogram(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  include_uptodate = TRUE,
-  lazy = FALSE,
-  action = FALSE,
-  screentag = FALSE,
-  screentag_print = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1097,75 +1192,6 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_allergy"></a>}}
-\if{latex}{\out{\hypertarget{method-list_allergy}{}}}
-\subsection{Method \code{list_allergy()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_allergy(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  qualitytag = FALSE,
-  qualitytag_print = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_socialHx"></a>}}
-\if{latex}{\out{\hypertarget{method-list_socialHx}{}}}
-\subsection{Method \code{list_socialHx()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_socialHx(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  qualitytag = FALSE,
-  qualitytag_print = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_familyHx"></a>}}
-\if{latex}{\out{\hypertarget{method-list_familyHx}{}}}
-\subsection{Method \code{list_familyHx()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_familyHx(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  qualitytag = FALSE,
-  qualitytag_print = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_dataQuality"></a>}}
-\if{latex}{\out{\hypertarget{method-list_dataQuality}{}}}
-\subsection{Method \code{list_dataQuality()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_dataQuality(
-  date_from = NA,
-  date_to = NA,
-  clinicians = NA,
-  appointments_list = NULL,
-  lazy = FALSE,
-  qualitytag = FALSE,
-  qualitytag_print = TRUE,
-  chosen = self$dataQuality_choices
-)}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
@@ -1322,82 +1348,70 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_zostavax"></a>}}
-\if{latex}{\out{\hypertarget{method-list_zostavax}{}}}
-\subsection{Method \code{list_zostavax()}}{
+\if{html}{\out{<a id="method-list_allergy"></a>}}
+\if{latex}{\out{\hypertarget{method-list_allergy}{}}}
+\subsection{Method \code{list_allergy()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_zostavax(
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_allergy(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  intID = NULL,
-  intID_Date = Sys.Date(),
   appointments_list = NULL,
-  include_uptodate = TRUE,
   lazy = FALSE,
-  vaxtag = FALSE,
-  vaxtag_print = TRUE
+  qualitytag = FALSE,
+  qualitytag_print = TRUE
 )}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_measlesVax"></a>}}
-\if{latex}{\out{\hypertarget{method-list_measlesVax}{}}}
-\subsection{Method \code{list_measlesVax()}}{
+\if{html}{\out{<a id="method-list_socialHx"></a>}}
+\if{latex}{\out{\hypertarget{method-list_socialHx}{}}}
+\subsection{Method \code{list_socialHx()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_measlesVax(
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_socialHx(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  intID = NULL,
-  intID_Date = Sys.Date(),
   appointments_list = NULL,
-  include_uptodate = TRUE,
   lazy = FALSE,
-  vaxtag = FALSE,
-  vaxtag_print = TRUE
+  qualitytag = FALSE,
+  qualitytag_print = TRUE
 )}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_influenza"></a>}}
-\if{latex}{\out{\hypertarget{method-list_influenza}{}}}
-\subsection{Method \code{list_influenza()}}{
+\if{html}{\out{<a id="method-list_familyHx"></a>}}
+\if{latex}{\out{\hypertarget{method-list_familyHx}{}}}
+\subsection{Method \code{list_familyHx()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_influenza(
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_familyHx(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  intID = NULL,
-  intID_Date = Sys.Date(),
   appointments_list = NULL,
-  include_uptodate = TRUE,
   lazy = FALSE,
-  vaxtag = FALSE,
-  vaxtag_print = TRUE
+  qualitytag = FALSE,
+  qualitytag_print = TRUE
 )}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-list_vax"></a>}}
-\if{latex}{\out{\hypertarget{method-list_vax}{}}}
-\subsection{Method \code{list_vax()}}{
+\if{html}{\out{<a id="method-list_dataQuality"></a>}}
+\if{latex}{\out{\hypertarget{method-list_dataQuality}{}}}
+\subsection{Method \code{list_dataQuality()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_vax(
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_dataQuality(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  intID = NULL,
-  intID_Date = Sys.Date(),
   appointments_list = NULL,
-  include_uptodate = TRUE,
   lazy = FALSE,
-  vaxtag = FALSE,
-  vaxtag_print = TRUE,
-  chosen = self$vaccine_choices
+  qualitytag = FALSE,
+  qualitytag_print = TRUE,
+  chosen = self$dataQuality_choices
 )}\if{html}{\out{</div>}}
 }
 

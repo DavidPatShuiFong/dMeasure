@@ -9,9 +9,9 @@ cst_eligible_list(dMeasure_obj, appointments = NULL)
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{appointments}{dataframe of appointments $InternalID and $Date
+\item{appointments}{dataframe of appointments `$InternalID` and `$Date`
 
- if no parameter provided, derives from $appointments_filtered}
+ if no parameter provided, derives from `$appointments_filtered`}
 }
 \value{
 a vector of numbers, which are the InternalIDs
