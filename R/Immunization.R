@@ -691,7 +691,7 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # risk of Reye's syndrome after influenza infection
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths <= 131) %>>%
     dplyr::filter(InternalID %in%
-      (self$db$currentrx %>>%
+      (self$db$currentRx_raw %>>%
         dplyr::filter(RXSTATUS == 1 & PRODUCTID %in%
           c(
             99, 8489, 222, 522, 534, 12254, 545, 546, 547, 549,

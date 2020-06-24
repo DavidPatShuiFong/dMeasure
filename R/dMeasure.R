@@ -155,6 +155,8 @@ dMeasure <-
     self$db$services <- NULL
     self$db$servicesRaw <- NULL
     self$db$history <- NULL
+    self$db$currentRx <- NULL
+    self$db$currentRx_raw <- NULL
     self$db$familyhistory <- NULL
     self$db$familyhistorydetail <- NULL
     self$db$relationcode <- NULL
@@ -712,6 +714,8 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$servicesRaw <- NULL
       self$db$invoices <- NULL
       self$db$history <- NULL
+      self$db$currentRx <- NULL
+      self$db$currentRx_raw <- NULL
       self$db$familyhistory <- NULL
       self$db$familyhistorydetail <- NULL
       self$db$relationcode <- NULL
@@ -2082,6 +2086,23 @@ initialize_emr_tables <- function(dMeasure_obj,
       Condition, ConditionID, Status
     )
 
+  self$db$currentRx <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_CurrentRx")) %>>%
+    dplyr::select(
+      InternalID, DrugName, Dose, Frequency, PRN,
+      Route, Quantity, ProductUnit, Repeats, Indication,
+      LastDate, ProductID
+    ) %>>%
+    dplyr::mutate(
+      DrugName = trimws(DrugName),
+      Dose = trimws(Dose),
+      Frequency = trimws(Frequency),
+      PRN = trimws(PRN),
+      ProductUnit = trimws(ProductUnit),
+      Indication = trimws(Indication),
+      LastDate = as.Date(LastDate)
+    )
+
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
     dplyr::select(
@@ -2152,7 +2173,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   #  17 - Waist, 18 - Hip
   #  21 - WHRatio, 26 - DiabRisk
 
-  self$db$currentrx <- emr_db$conn() %>>%
+  self$db$currentRx_raw <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
     dplyr::select(
       "InternalID" = "INTERNALID", "PRODUCTID",

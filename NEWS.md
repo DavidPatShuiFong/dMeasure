@@ -12,6 +12,7 @@ Changelog
 * `$UserFullConfig` uses only the first row in `$db$practice` to find PracticeName
 * Changes for new version of DTedit (v2)
 * `semantic_tag`/`semantic_button` return empty string if `tag`/`button` is NA
+* change `db$currentrx` to `db$currentRx_raw`. add `db$currentRx`
 
 # 0.9.9
 4th May 2020
