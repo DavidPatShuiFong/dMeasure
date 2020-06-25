@@ -968,7 +968,8 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   }
 
   if ("Zostavax" %in% chosen) {
-    vlist <- rbind(vlist, self$list_zostavax(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_zostavax(
+      date_from, date_to, clinicians,
       intID = intID, intID_Date = intID_Date,
       appointments_list = appointments_list,
       include_uptodate = include_uptodate,
@@ -977,7 +978,8 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
     ))
   }
   if ("Measles" %in% chosen) {
-    vlist <- rbind(vlist, self$list_measlesVax(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_measlesVax(
+      date_from, date_to, clinicians,
       intID = intID, intID_Date = intID_Date,
       appointments_list = appointments_list,
       include_uptodate = include_uptodate,
@@ -986,7 +988,8 @@ list_vax <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
     ))
   }
   if ("Influenza" %in% chosen) {
-    vlist <- rbind(vlist, self$list_influenza(date_from, date_to, clinicians,
+    vlist <- rbind(vlist, self$list_influenza(
+      date_from, date_to, clinicians,
       intID = intID, intID_Date = intID_Date,
       appointments_list,
       include_uptodate = include_uptodate,
