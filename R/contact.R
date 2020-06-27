@@ -467,9 +467,9 @@ list_contact_services <- function(dMeasure_obj,
 })
 .reactive(dMeasure, "contact_minR", 1)
 
-.private(dMeasure, ".contact_minDate", as.Date(-Inf,
-  origin = "1970-01-01"
-))
+.private(dMeasure, ".contact_minDate",
+         as.Date(-Inf,origin = "1970-01-01")
+)
 .active(dMeasure, "contact_minDate", function(value) {
   # minimum date of most recent contact in $list_contact_count
   if (missing(value)) {
@@ -484,7 +484,7 @@ list_contact_services <- function(dMeasure_obj,
 })
 .reactive(
   dMeasure, "contact_minDateR",
-  as.Date(-Inf, origin = "1970-01-01")
+  quote(private$.contact_minDate)
 )
 
 .private(
@@ -505,9 +505,8 @@ list_contact_services <- function(dMeasure_obj,
 })
 .reactive(
   dMeasure, "contact_maxDateR",
-  as.Date(Sys.Date(), origin = "1970-01-01")
+  quote(private$.contact_maxDate)
 )
-
 
 
 .active(dMeasure, "contact_types", function(value) {
@@ -699,9 +698,9 @@ list_contact_count <- function(
         dplyr::select(., -AppointmentDate)
       } # removed (just as if nrow>0)
     } %>>%
-      dplyr::filter(Count >= min_contact) %>>%
-      dplyr::filter(Latest >= min_date) %>>%
-      dplyr::filter(Latest <= max_date)
+      dplyr::filter(Count >= min_contact,
+                    Latest >= min_date,
+                    Latest <= max_date)
 
     if (self$Log) {
       self$config_db$duration_log_db(log_id)
