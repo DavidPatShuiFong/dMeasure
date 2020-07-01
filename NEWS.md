@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.10
-6th June 2020
+1st July 2020
 
 * `dMeasureCustom` - custom patient lists
   `initialize_data_table` function read from dMeasureCustom (if available)
@@ -13,6 +13,7 @@ Changelog
 * Changes for new version of DTedit (v2)
 * `semantic_tag`/`semantic_button` return empty string if `tag`/`button` is NA
 * change `db$currentrx` to `db$currentRx_raw`. add `db$currentRx`
+* 'quote' contact_maxDate to prevent early evaluation
 
 # 0.9.9
 4th May 2020

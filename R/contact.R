@@ -487,9 +487,9 @@ list_contact_services <- function(dMeasure_obj,
   quote(private$.contact_minDate)
 )
 
-.private(
+.private_init(
   dMeasure, ".contact_maxDate",
-  as.Date(Sys.Date(), origin = "1970-01-01")
+  quote(as.Date(Sys.Date(), origin = "1970-01-01"))
 )
 .active(dMeasure, "contact_maxDate", function(value) {
   # maximum date of most recent contact in $list_contact_count
