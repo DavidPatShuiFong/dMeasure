@@ -39,9 +39,9 @@ NULL
 #'   }
 #' @export
 list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
-                      appointments_list = NULL, include_uptodate = TRUE,
-                      lazy = FALSE,
-                      action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE) {
   dMeasure$list_fobt(
     date_from, date_to, clinicians,
     appointments_list, include_uptodate,
@@ -50,9 +50,9 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 }
 
 .public(dMeasure, "list_fobt", function(date_from = NA, date_to = NA, clinicians = NA,
-                                        appointments_list = NULL, include_uptodate = TRUE,
-                                        lazy = FALSE,
-                                        action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -268,15 +268,137 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 
 
 ##### Cervical cancer screening ##############################################
-#' Cervical screening list
+
+#' Cervical screening list details
 #'
+#' @md
+#' @param screen_cst_list appointment list, minimum columns
+#' @param screen_cst_id vector of applicable IDs, if already found
+#'   if not provided, will be calculated from `screen_cst_list`
+#' @param include_uptodate include those who are up-to-date ('green' tags)
+#'
+#' @return returns the screen_cst_list dataframe with added columns, including...
+#'   \describe{
+#'   \item{TestDate}{(date object) - date}
+#'   \item{TestName}{description of the most recent cervical cancer screening test (if any)}
+#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
+#'   }
+#'   and many other result detail columns.
+#'
+#' @export
+list_cst_details <- function(
+  dMeasure,
+  screen_cst_list,
+  screen_cst_id = NULL,
+  include_uptodate = TRUE
+) {
+  dMeasure$list_cst_details(screen_cst_list, screen_cst_id, include_uptodate)
+}
+
+.public(dMeasure, "list_cst_details", function(
+  screen_cst_list,
+  screen_cst_id = NULL,
+  include_uptodate = TRUE
+) {
+  if (is.null(screen_cst_id)) {
+    screen_cst_id <- c(
+      self$cst_eligible_list(
+        screen_cst_list %>>%
+          dplyr::select(
+            InternalID,
+            Date
+          )), -1)
+    # include dummy in case of empty list
+  }
+
+  # requires InternalID, Date columns
+  # add TestDate, TestName, OutofDateTest
+  screen_cst_ix <- screen_cst_list %>>%
+    dplyr::left_join(
+      dplyr::bind_rows(
+        dplyr::inner_join(
+          screen_cst_list,
+          self$db$papsmears %>>%
+            dplyr::filter(InternalID %in% screen_cst_id) %>>%
+            dplyr::rename(
+              TestDate = PapDate,
+              TestName = CSTType
+            ),
+          by = "InternalID", copy = TRUE
+        ),
+        dplyr::inner_join(
+          screen_cst_list,
+          self$db$investigations %>>%
+            dplyr::filter(
+              InternalID %in% screen_cst_id,
+              (TestName %like% "%CERVICAL SCREENING%" |
+                  TestName %like% "%PAP SMEAR%")
+            ) %>>%
+            dplyr::rename(TestDate = Reported),
+          by = "InternalID", copy = TRUE
+        )
+      ) %>>%
+        dplyr::mutate(TestDate = as.Date(substr(TestDate, 1, 10))),
+      # remove time from date
+      by = NULL
+    ) %>>%
+    dplyr::mutate(
+      TestDate = as.Date(
+        ifelse(
+          TestDate > Date, -Inf, TestDate
+          # remove tests that are after the appointment date
+        ), origin = "1970-01-01"
+      ),
+      TestDate = as.Date(
+        ifelse(
+          is.na(TestDate), -Inf, TestDate
+          # set 'no test' to negative infinity
+        ), origin = "1970-01-01"
+      )
+    ) %>>%
+    dplyr::mutate(TestName = ifelse(TestDate == -Inf, NA, TestName)) %>>%
+    # only test dates (and names) less than the joined appointment date are kept
+    dplyr::group_by(InternalID, Date) %>>%
+    # group by patient ID (need most recent investigation for each patient)
+    # only keep the latest(/recent) dated investigation prior to each appointment
+    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+    dplyr::ungroup() %>>%
+    dplyr::mutate(TestAge = dMeasure::interval(TestDate, Date)$year) %>>%
+    dplyr::mutate(
+      OutOfDateTest =
+        dplyr::case_when(
+          (TestDate == -Inf) ~ 1,
+          # if no date (no detected test)
+          TestAge < 2 ~ 3,
+          TestAge >= 5 ~ 2,
+          # if old (5 years for either cervical screening HPV or Pap)
+          grepl("pap", TestName, ignore.case = TRUE) ~ 2,
+          # otherwise if 'Pap' and more than two years
+          # last case is 2 to 4 years (inclusive) and CST
+          TRUE ~ 3 # 'up-to-date'
+        )
+    ) %>>%
+    tidyr::replace_na(list(TestName = "Cervical screening"))
+
+  if (!include_uptodate) {
+    # remove entries which are 'up-to-date'!
+    screen_cst_ix <- screen_cst_ix %>>%
+      dplyr::filter(OutOfDateTest != 3)
+    # 3 = 'up-to-date', 1 = never done, 2 = old
+  }
+  return(screen_cst_ix)
+})
+
+#' Cervical screening list with tags
+#'
+#' @md
 #' @param dMeasure_obj dMeasure R6 object
-#' @param date_from from date range (default $date_a)
-#' @param date_to to date range (default $date_b)
-#' @param clinicians list of clinicians (default $clinicians)
+#' @param date_from from date range (default `$date_a`)
+#' @param date_to to date range (default `$date_b`)
+#' @param clinicians list of clinicians (default `$clinicians`)
 #' @param appointments_list dataframe, list of appointments to search
-#'   if not provided, use $appointments_list
-#'   needs fields Age, InternalID
+#'   * if not provided, use `$appointments_list`
+#'   * needs fields `Age`, `InternalID`, `AppointmentDate`
 #' @param include_uptodate include those who are up-to-date ('green' tags)
 #' @param lazy recalculate an appointment list
 #' @param action includes 'OutOfDate' field
@@ -284,18 +406,13 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
 #' @param screentag_print optionally add a 'printable' description of 'action'
 #'
 #' @return list of appointments (with patient details)
-#'  adds the following fields
+#'  * adds `OutofDateTest` (if `action` is `TRUE`) and `screentag`/`screentag_print`
 #'
-#'  \describe{
-#'   \item{TestDate}{(date object) - date}
-#'   \item{TestName}{description of the most recent cervical cancer screening test (if any)}
-#'   \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
-#'  }
 #' @export
 list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
-                     appointments_list = NULL, include_uptodate = TRUE,
-                     lazy = FALSE,
-                     action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE) {
   dMeasure$list_cst(
     date_from, date_to, clinicians,
     appointments_list, include_uptodate,
@@ -303,10 +420,12 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
   )
 }
 
-.public(dMeasure, "list_cst", function(date_from = NA, date_to = NA, clinicians = NA,
-                                       appointments_list = NULL, include_uptodate = TRUE,
-                                       lazy = FALSE,
-                                       action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+.public(dMeasure, "list_cst", function(
+  date_from = NA, date_to = NA, clinicians = NA,
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE
+) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -334,81 +453,29 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 
   ##### search proper #####################
 
-  screen_cst_id <- c(self$cst_eligible_list(appointments_list %>>%
-    dplyr::select(InternalID,
-      Date = AppointmentDate
-    )), -1)
+  screen_cst_id <- c(
+    self$cst_eligible_list(
+      appointments_list %>>%
+        dplyr::select(InternalID,
+          Date = AppointmentDate
+        )
+      ),
+    -1)
   # include dummy in case of empty list
 
   screen_cst_list <- appointments_list %>>%
     dplyr::filter(InternalID %in% screen_cst_id)
 
-  screen_cst_ix <- screen_cst_list %>>%
-    dplyr::left_join(
-      dplyr::bind_rows(
-        dplyr::inner_join(screen_cst_list,
-          self$db$papsmears %>>%
-            dplyr::filter(InternalID %in% screen_cst_id) %>>%
-            dplyr::rename(
-              TestDate = PapDate,
-              TestName = CSTType
-            ),
-          by = "InternalID", copy = TRUE
-        ),
-        dplyr::inner_join(screen_cst_list,
-          self$db$investigations %>>%
-            dplyr::filter(
-              InternalID %in% screen_cst_id,
-              (TestName %like% "%CERVICAL SCREENING%" |
-                TestName %like% "%PAP SMEAR%")
-            ) %>>%
-            dplyr::rename(TestDate = Reported),
-          by = "InternalID", copy = TRUE
-        )
-      ) %>>%
-        dplyr::mutate(TestDate = as.Date(substr(TestDate, 1, 10))),
-      # remove time from date
-      by = NULL
-    ) %>>%
-    dplyr::mutate(
-      TestDate = as.Date(ifelse(TestDate > AppointmentDate,
-        -Inf,
-        TestDate
-      ), origin = "1970-01-01"),
-      TestDate = as.Date(ifelse(is.na(TestDate), -Inf, TestDate),
-        origin = "1970-01-01"
-      )
-    ) %>>%
-    dplyr::mutate(TestName = ifelse(TestDate == -Inf, NA, TestName)) %>>%
-    # only test dates (and names) less than the joined appointment date are kept
-    dplyr::group_by(InternalID, AppointmentDate) %>>%
-    # group by patient ID (need most recent investigation for each patient)
-    # only keep the latest(/recent) dated investigation prior to each appointment
-    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
-    dplyr::ungroup() %>>%
-    dplyr::mutate(TestAge = dMeasure::interval(TestDate, AppointmentDate)$year) %>>%
-    dplyr::mutate(
-      OutOfDateTest =
-        dplyr::case_when(
-          (TestDate == -Inf) ~ 1,
-          # if no date (no detected test)
-          TestAge < 2 ~ 3,
-          TestAge >= 5 ~ 2,
-          # if old (5 years for either cervical screening HPV or Pap)
-          grepl("pap", TestName, ignore.case = TRUE) ~ 2,
-          # otherwise if 'Pap' and more than two years
-          # last case is 2 to 4 years (inclusive) and CST
-          TRUE ~ 3 # 'up-to-date'
-        )
-    ) %>>%
-    tidyr::replace_na(list(TestName = "Cervical screening"))
-
-  if (!include_uptodate) {
-    # remove entries which are 'up-to-date'!
-    screen_cst_ix <- screen_cst_ix %>>%
-      dplyr::filter(OutOfDateTest != 3)
-    # 3 = 'up-to-date', 1 = never done, 2 = old
-  }
+  screen_cst_ix <- self$list_cst_details(
+    screen_cst_list %>>%
+      dplyr::rename(Date = AppointmentDate),
+    # list_cst_details takes 'Date'
+    screen_cst_id,
+    include_uptodate
+  ) %>>%
+    dplyr::rename(AppointmentDate = Date)
+  # change back to 'AppointmentDate'
+  # will have added TestName, TestDate and OutofDateTest
 
   return_selection <- c(
     "Patient", "InternalID", "AppointmentDate", "AppointmentTime",
@@ -491,9 +558,9 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
 #'  }
 #' @export
 list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA,
-                           appointments_list = NULL, include_uptodate = TRUE,
-                           lazy = FALSE,
-                           action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE) {
   dMeasure$list_mammogram(
     date_from, date_to, clinicians,
     appointments_list, include_uptodate,
@@ -502,9 +569,9 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 }
 
 .public(dMeasure, "list_mammogram", function(date_from = NA, date_to = NA, clinicians = NA,
-                                             appointments_list = NULL, include_uptodate = TRUE,
-                                             lazy = FALSE,
-                                             action = FALSE, screentag = FALSE, screentag_print = TRUE) {
+  appointments_list = NULL, include_uptodate = TRUE,
+  lazy = FALSE,
+  action = FALSE, screentag = FALSE, screentag_print = TRUE) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -534,9 +601,9 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   screen_mammogram_id <- c(
     self$mammogram_eligible_list(appointments_list %>>%
-      dplyr::select(InternalID,
-        Date = AppointmentDate
-      )),
+        dplyr::select(InternalID,
+          Date = AppointmentDate
+        )),
     -1
   ) # include dummy in case of empty list
 

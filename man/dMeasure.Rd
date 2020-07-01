@@ -47,6 +47,7 @@ dMeasure class
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-list_fobt}{\code{dMeasure$list_fobt()}}
+\item \href{#method-list_cst_details}{\code{dMeasure$list_cst_details()}}
 \item \href{#method-list_cst}{\code{dMeasure$list_cst()}}
 \item \href{#method-list_mammogram}{\code{dMeasure$list_mammogram()}}
 \item \href{#method-list_zostavax}{\code{dMeasure$list_zostavax()}}
@@ -176,6 +177,19 @@ dMeasure class
   action = FALSE,
   screentag = FALSE,
   screentag_print = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-list_cst_details"></a>}}
+\if{latex}{\out{\hypertarget{method-list_cst_details}{}}}
+\subsection{Method \code{list_cst_details()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_cst_details(
+  screen_cst_list,
+  screen_cst_id = NULL,
+  include_uptodate = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1265,7 +1279,6 @@ dMeasure class
   clinicians = NA,
   date_from = NA,
   date_to = NA,
-  adjustdate = TRUE,
   adjust_days = 7
 )}\if{html}{\out{</div>}}
 }

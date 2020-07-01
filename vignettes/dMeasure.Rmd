@@ -338,7 +338,7 @@ These active condition lists look at `appointments_list` (which is set by **list
 determine if a chronic disease management billing has occurred in a time period prior to the appointment.
 
 ```{r}
-intID_list <- a$appointments_list %>>%
+intID_list <- a$appointments_list %>%
   dplyr::select(InternalID, AppointmentDate, AppointmentTime, Provider, Age)
 cdm$diabetes_list_cdm(intID_list) %>% head()
 ```

@@ -15,18 +15,20 @@
 #' @export
 semantic_tag <- function(tag, colour = "", popuptext = NA, popuphtml = NA) {
   #
-  paste0('<span class="huge ', colour, ' ui tag label"',
-    ifelse(!is.na(popuphtml),
+  tags <- paste0(
+    '<span class="huge ', colour, ' ui tag label"',
+    ifelse(
+      !is.na(popuphtml),
       paste0('data-variation="wide" data-position = "left center"',
-        'data-htmltagX="', # this is a 'dummy' attribute
-        # to help datatables order this column alphabetically!
-        tag, # will order this column alphabetically by 'tag'
-        '"',
+             'data-htmltagX="', # this is a 'dummy' attribute
+             # to help datatables order this column alphabetically!
+             tag, # will order this column alphabetically by 'tag'
+             '"',
 
-        'data-html="',
-        popuphtml,
-        '"',
-        sep = ""
+             'data-html="',
+             popuphtml,
+             '"',
+             sep = ""
       ),
       # 'data-variation' is only available in the
       # fomantic version of semantic.ui
@@ -35,11 +37,12 @@ semantic_tag <- function(tag, colour = "", popuptext = NA, popuphtml = NA) {
       ""
     ),
     "> ",
-    ifelse(!is.na(popuptext),
+    ifelse(
+      !is.na(popuptext),
       paste0('<span data-tooltip = "',
-        popuptext,
-        '" data-variation = "wide huge" data-position = "left center">',
-        sep = ""
+             popuptext,
+             '" data-variation = "wide huge" data-position = "left center">',
+             sep = ""
       ),
       ""
     ),
@@ -48,6 +51,8 @@ semantic_tag <- function(tag, colour = "", popuptext = NA, popuphtml = NA) {
     " </span>",
     sep = ""
   )
+  tags[is.na(tag)] <- "" # if tag is NA, then return empty string ""
+  return(tags)
   # paste0 is vectorized version of 'paste'
 }
 
@@ -64,17 +69,20 @@ semantic_tag <- function(tag, colour = "", popuptext = NA, popuphtml = NA) {
 #'
 #' @export
 semantic_button <- function(button, colour = "", popuptext = NA, popuphtml = NA) {
-  paste0('<span class="huge ', colour, ' ui button"',
-    ifelse(!is.na(popuphtml),
+
+  buttons <- paste0(
+    '<span class="huge ', colour, ' ui button"',
+    ifelse(
+      !is.na(popuphtml),
       paste0('data-variation="wide" data-position = "left center"',
-        'data-htmltagX="', # this is a 'dummy' attribute
-        # to help datatables order this column alphabetically!
-        button, # will order this column alphabetically by 'button'
-        '"',
-        'data-html="',
-        popuphtml,
-        '"',
-        sep = ""
+             'data-htmltagX="', # this is a 'dummy' attribute
+             # to help datatables order this column alphabetically!
+             button, # will order this column alphabetically by 'button'
+             '"',
+             'data-html="',
+             popuphtml,
+             '"',
+             sep = ""
       ),
       # 'data-variation' is only available
       # in the fomantic version of semantic.ui
@@ -83,11 +91,12 @@ semantic_button <- function(button, colour = "", popuptext = NA, popuphtml = NA)
       ""
     ),
     "> ",
-    ifelse(!is.na(popuptext),
+    ifelse(
+      !is.na(popuptext),
       paste0('<span data-tooltip = "',
-        popuptext,
-        '" data-variation = "wide huge" data-position = "left center">',
-        sep = ""
+             popuptext,
+             '" data-variation = "wide huge" data-position = "left center">',
+             sep = ""
       ),
       ""
     ),
@@ -95,6 +104,7 @@ semantic_button <- function(button, colour = "", popuptext = NA, popuphtml = NA)
     ifelse(!is.na(popuptext), "</span>", ""),
     " </span>",
     sep = ""
-  )
-  # paste0 is vectorized version of 'paste'
+  ) # paste0 is vectorized version of 'paste'
+  buttons[is.na(button)] <- "" # if tag is NA, then return empty string ""
+  return(buttons)
 }

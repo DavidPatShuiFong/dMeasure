@@ -9,7 +9,6 @@ check_subscription(
   clinicians = NA,
   date_from = NA,
   date_to = NA,
-  adjustedate = TRUE,
   adjust_days = 7
 )
 }
@@ -26,8 +25,6 @@ check_subscription(
 
 if the date is adjusted then reactive $check_subscription_datechange_trigR
 is triggered}
-
-\item{adjustdate}{will this function change the dates? ($date_a, $date_b)}
 }
 \value{
 a list $changedate, $date_from, $date_to

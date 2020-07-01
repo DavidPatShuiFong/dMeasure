@@ -155,6 +155,8 @@ dMeasure <-
     self$db$services <- NULL
     self$db$servicesRaw <- NULL
     self$db$history <- NULL
+    self$db$currentRx <- NULL
+    self$db$currentRx_raw <- NULL
     self$db$familyhistory <- NULL
     self$db$familyhistorydetail <- NULL
     self$db$relationcode <- NULL
@@ -712,6 +714,8 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$servicesRaw <- NULL
       self$db$invoices <- NULL
       self$db$history <- NULL
+      self$db$currentRx <- NULL
+      self$db$currentRx_raw <- NULL
       self$db$familyhistory <- NULL
       self$db$familyhistorydetail <- NULL
       self$db$relationcode <- NULL
@@ -796,8 +800,8 @@ open_configuration_db <-
     dMeasure_obj$open_configuration_db(configuration_file_path)
   }
 
-.public(dMeasure, "open_configuration_db", function(
-                                                    configuration_file_path = self$configuration_file_path) {
+.public(dMeasure, "open_configuration_db",
+  function(configuration_file_path = self$configuration_file_path) {
 
   # if no configuration filepath is defined, then try to read one
   if (length(configuration_file_path) == 0) {
@@ -852,10 +856,14 @@ open_configuration_db <-
 
     if (tablename %in% tablenames) {
       # if table exists in config_db database
-      columns <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% colnames()
-      # list of column (variable) names
-      data <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% dplyr::collect()
+      data <- DBI::dbReadTable(config_db$conn(), tablename) %>>%
+        dplyr::collect()
       # get a copy of the table's data
+      # note that 'config_db$conn() %>>% dplyr::tbl(tablename) can't handle
+      #  a BLOB column
+
+      columns <- data  %>>% colnames()
+      # list of column (variable) names
     } else {
       # table does not exist, needs to be created
       columns <- NULL
@@ -971,9 +979,27 @@ open_configuration_db <-
     # list of restrictions for users
     # use of 'uid' rather than 'id'
     # (this relates to the 'Attributes' field in "Users")
+
+    if (requireNamespace("dMeasureCustom", quietly = TRUE)) {
+      if (
+        exists(
+          "initialize_data_table",
+          where = asNamespace("dMeasureCustom"),
+          mode = "function"
+        )
+      ) {
+        x <- dMeasureCustom::initialize_data_table()
+        initialize_data_table(
+          config_db,
+          tablename = x$tablename,
+          variable_list = x$variable_list
+        )
+      }
+    }
+
   }
   invisible(self)
-})
+  })
 
 #' read the SQL configuration database
 #'
@@ -1041,6 +1067,11 @@ read_configuration_db <- function(dMeasure_obj,
   private$trigger(self$config_db_trigR)
   # notification of configuration database change
 
+  if (exists("dMCustom")) {
+    if (exists("read_configuration_db", where = dMCustom, mode = "function")) {
+      dMCustom$read_configuration_db(config_db$conn())
+    }
+  }
   invisible(self)
 })
 .public(dMeasure, "BPdatabaseChoice_new", function() {
@@ -1221,7 +1252,6 @@ update_subscription <- function(dMeasure_obj,
 #' @param clinicians vector of users to check
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
-#' @param adjustdate will this function change the dates? ($date_a, $date_b)
 #' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
@@ -1237,17 +1267,15 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE,
                                adjust_days = 7) {
   dMeasure_obj$check_subscription(
     users, date_from, date_to,
-    adjustdate, adjust_days
+    adjust_days
   )
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE,
                                                  adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -1290,20 +1318,30 @@ check_subscription <- function(dMeasure_obj,
   if (changedate) {
     if (date_to > (Sys.Date() - adjust_days)) {
       date_to <- Sys.Date() - adjust_days
-      warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
       }
-      if (adjustdate) {
-        # change the dates
-        self$choose_date(date_from, date_to)
-        private$trigger(self$check_subscription_datechange_trigR)
-      }
+      warning(
+        "A chosen user has no subscription for chosen date range. ",
+        "Without subscription, dates need to be minimum ",
+        adjust_days,
+        " days old."
+      )
+      # change the dates
+      new_trigger_value <-
+        -sign(self$check_subscription_datechange_trigR()) * adjust_days
+      # reverses the 'sign' of the trigger
+      private$set_reactive(
+        self$check_subscription_datechange_trigR,
+        new_trigger_value
+      )
     }
   }
   return(list(changedate = changedate, date_from = date_from, date_to = date_to))
 })
-.reactive(dMeasure, "check_subscription_datechange_trigR", 0)
+.reactive(dMeasure, "check_subscription_datechange_trigR", 1)
+# this trigger will 'flip-flop' from positive to negative values
+# the absolute value of the this trigger will be the number of days to be adjusted
 
 ##### User login ##################################################
 
@@ -2048,6 +2086,23 @@ initialize_emr_tables <- function(dMeasure_obj,
       Condition, ConditionID, Status
     )
 
+  self$db$currentRx <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_CurrentRx")) %>>%
+    dplyr::select(
+      InternalID, DrugName, Dose, Frequency, PRN,
+      Route, Quantity, ProductUnit, Repeats, Indication,
+      LastDate, ProductID
+    ) %>>%
+    dplyr::mutate(
+      DrugName = trimws(DrugName),
+      Dose = trimws(Dose),
+      Frequency = trimws(Frequency),
+      PRN = trimws(PRN),
+      ProductUnit = trimws(ProductUnit),
+      Indication = trimws(Indication),
+      LastDate = as.Date(LastDate)
+    )
+
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
     dplyr::select(
@@ -2118,7 +2173,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   #  17 - Waist, 18 - Hip
   #  21 - WHRatio, 26 - DiabRisk
 
-  self$db$currentrx <- emr_db$conn() %>>%
+  self$db$currentRx_raw <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
     dplyr::select(
       "InternalID" = "INTERNALID", "PRODUCTID",
@@ -2222,6 +2277,7 @@ initialize_emr_tables <- function(dMeasure_obj,
   } else {
     PracticeName <- self$db$practice %>>%
       dplyr::pull(PracticeName)
+    PracticeName <- PracticeName[[1]] # just pull out the first entry
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)

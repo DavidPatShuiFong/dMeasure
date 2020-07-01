@@ -446,7 +446,8 @@ list_contact_15plus <- function(dMeasure_obj,
                                 date_to = NA,
                                 clinicians = NA,
                                 min_contact = NA,
-                                min_date = NA, max_date = NA,
+                                min_date = NA,
+                                max_date = NA,
                                 contact_type = NA,
                                 lazy = FALSE) {
   dMeasure_obj$list_contact_15plus(

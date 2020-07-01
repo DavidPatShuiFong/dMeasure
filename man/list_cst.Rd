@@ -2,7 +2,7 @@
 % Please edit documentation in R/CancerScreen.R
 \name{list_cst}
 \alias{list_cst}
-\title{Cervical screening list}
+\title{Cervical screening list with tags}
 \usage{
 list_cst(
   dMeasure_obj,
@@ -20,15 +20,17 @@ list_cst(
 \arguments{
 \item{dMeasure_obj}{dMeasure R6 object}
 
-\item{date_from}{from date range (default $date_a)}
+\item{date_from}{from date range (default \verb{$date_a})}
 
-\item{date_to}{to date range (default $date_b)}
+\item{date_to}{to date range (default \verb{$date_b})}
 
-\item{clinicians}{list of clinicians (default $clinicians)}
+\item{clinicians}{list of clinicians (default \verb{$clinicians})}
 
 \item{appointments_list}{dataframe, list of appointments to search
-if not provided, use $appointments_list
-needs fields Age, InternalID}
+\itemize{
+\item if not provided, use \verb{$appointments_list}
+\item needs fields \code{Age}, \code{InternalID}, \code{AppointmentDate}
+}}
 
 \item{include_uptodate}{include those who are up-to-date ('green' tags)}
 
@@ -42,14 +44,10 @@ needs fields Age, InternalID}
 }
 \value{
 list of appointments (with patient details)
- adds the following fields
-
- \describe{
-  \item{TestDate}{(date object) - date}
-  \item{TestName}{description of the most recent cervical cancer screening test (if any)}
-  \item{OutOfDateTest}{1 = never done, 2 = overdue, 3 = 'up-to-date'}
- }
+\itemize{
+\item adds \code{OutofDateTest} (if \code{action} is \code{TRUE}) and \code{screentag}/\code{screentag_print}
+}
 }
 \description{
-Cervical screening list
+Cervical screening list with tags
 }
