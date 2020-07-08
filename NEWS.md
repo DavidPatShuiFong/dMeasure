@@ -5,20 +5,33 @@ Changelog
 
 * change license to Mozilla Public License 2.0
 
+## Bugfix
+
+* if Action is NULL, in `filter_investigations` then no investigations will be listed
+* if Action is NULL, in `filter_correspondence` then no correspondecne will be listed
+
 # 0.9.10
 1st July 2020
+
+## New
 
 * `dMeasureCustom` - custom patient lists
   `initialize_data_table` function read from dMeasureCustom (if available)
    adds table to configuration SQLite database
   `read_configuration_db` function execute from dMeasureCustom (if available)
-* remove adjust_date from check_subscription
-* `check_subscription_datechange_trigR` flip-flops from positive to negative
-* `$UserFullConfig` uses only the first row in `$db$practice` to find PracticeName
+
+## Changes
+
 * Changes for new version of DTedit (v2)
 * `semantic_tag`/`semantic_button` return empty string if `tag`/`button` is NA
 * change `db$currentrx` to `db$currentRx_raw`. add `db$currentRx`
+* remove adjust_date from check_subscription
+* `check_subscription_datechange_trigR` flip-flops from positive to negative
+
+## Bugfix
+
 * 'quote' contact_maxDate to prevent early evaluation
+* `$UserFullConfig` uses only the first row in `$db$practice` to find PracticeName
 
 # 0.9.9
 4th May 2020
