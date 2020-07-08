@@ -1,5 +1,10 @@
 Changelog
 
+# 0.9.11
+8th July 2020
+
+* change license to Mozilla Public License 2.0
+
 # 0.9.10
 1st July 2020
 
