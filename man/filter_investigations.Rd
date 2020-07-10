@@ -26,7 +26,7 @@ filter_investigations(
 a vector of actions (in string form) or NULL
 e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 if NA, will adopt the value of dMeasure_obj$filter_incoming_Action
-if NULL, then no Actions are chosen!}
+if NULL, then no Actions are chosen}
 
 \item{Actioned}{(default NA) Filter by having been 'actioned?' i.e. notified
 can be logical (TRUE or FALSE), a NULL
