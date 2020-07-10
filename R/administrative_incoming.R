@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 #' Administrative list fields and methods
 #'
 #' @name administrative
@@ -268,6 +272,7 @@ NULL
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of dMeasure_obj$filter_incoming_Action
+#'  if NULL, then no Actions are chosen
 #' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
@@ -335,11 +340,9 @@ filter_investigations <- function(dMeasure_obj,
       dplyr::mutate(TestName = trimws(TestName))
     # a database filter on an empty list after %in% will result in an error message
 
-    if (!is.null(Action)) {
-      ActionValue <- Action
-      investigations <- investigations %>>%
-        dplyr::filter(Action %in% ActionValue)
-    }
+    ActionValue <- c(Action, "") # becomes "" if Action is NULL
+    investigations <- investigations %>>%
+      dplyr::filter(Action %in% ActionValue)
 
     if (!is.null(Actioned)) {
       if (is.logical(Actioned)) {
@@ -672,6 +675,7 @@ filter_investigations_named <- function(dMeasure_obj,
 #'  a vector of actions (in string form) or NULL
 #'  e.g. "Urgent Appointment" and/or "Non-urgent Appointment" or "No action"
 #'  if NA, will adopt the value of $filter_incoming_Action
+#'  if NULL, then no Correspondence are chosen
 #' @param Actioned (default NA) Filter by having been 'actioned?' i.e. notified
 #'  can be logical (TRUE or FALSE), a NULL
 #'  or a Date (actioned prior to or by 'Actioned' Date)
@@ -772,17 +776,17 @@ filter_correspondence <- function(dMeasure_obj,
 
     # a database filter on an empty list after %in% will result in an error message
 
-    if (!is.null(Action)) {
-      ActionValue <- match(Action, c(
+    ActionValue <- match(
+      c(Action, ""), # if Action is NULL, then ActionValue will be NA
+      c(
         "No action", "Reception to advise",
         "Nurse to advise", "Doctor to advise",
         "Send routine reminder",
         "Non-urgent appointment", "Urgent appointment"
       ))
-      # the most important being values 6 and 7. could return NA if not found
-      ActionValue <- ActionValue[!is.na(ActionValue)]
-      correspondence <- dplyr::filter(correspondence, ACTION %in% ActionValue)
-    }
+    # the most important being values 6 and 7. could return NA if not found
+    ActionValue <- c(ActionValue[!is.na(ActionValue)], -999) # -999 is a dummy value
+    correspondence <- dplyr::filter(correspondence, ACTION %in% ActionValue)
 
     if (!is.null(Actioned)) {
       if (is.logical(Actioned)) {

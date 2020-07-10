@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 ##### Configuration - user ###########################################
 #' Configuration - user
 #'
@@ -461,7 +465,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #'   )
 #' )
 #' }
-#' 
+#'
 #' @export
 userconfig.insert <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.insert(description)
@@ -602,7 +606,7 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #'   )
 #' )
 #' }
-#' 
+#'
 #' @export
 userconfig.update <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.update(description)
