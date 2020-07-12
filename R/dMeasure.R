@@ -1978,13 +1978,21 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$correspondenceInRaw <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CORRESPONDENCEIN")) %>>%
     dplyr::select(
-      DOCUMENTID, INTERNALID,
-      USERID, CHECKEDBY,
+      DocumentID = DOCUMENTID, InternalID = INTERNALID,
+      UserID = USERID, CheckedBy = CHECKEDBY,
       # both USERID and CHECKEDBY are numbers, not names
-      CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
+      CorrespondenceDate = CORRESPONDENCEDATE, CheckDate = CHECKDATE,
+      ActionDate = ACTIONDATE,
       # three dates
-      CATEGORY, SUBJECT, DETAIL, COMMENT,
-      NOTATION, ACTION
+      Category = CATEGORY, Subject = SUBJECT, Detail = DETAIL,
+      Comment = COMMENT,
+      Notation = NOTATION, Action = ACTION
+    ) %>>%
+    dplyr::mutate(
+      Category = trimws(Category), Subject = trimws(Subject),
+      Detail = trimws(Detail), Comment = trimws(Comment),
+      CorrespondenceDate = as.Date(CorrespondenceDate),
+      CheckDate = as.Date(CheckDate), ActionDate = as.Date(ActionDate)
     )
   # Action includes 6 for Non-urgent appointment,
   # and 7 for Urgent appointment

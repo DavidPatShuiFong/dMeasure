@@ -1,5 +1,13 @@
 Changelog
 
+# 0.9.12
+12th July 2020
+
+# Change
+
+* `db$correspondenceInRaw` name changed to camel-case. string fields trimmed,
+  date fields converted with `as.Date`
+
 # 0.9.11
 8th July 2020
 
