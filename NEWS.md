@@ -1,9 +1,13 @@
 Changelog
 
 # 0.9.12
-12th July 2020
+17th July 2020
 
-# Change
+## New
+
+* add `README.md`
+
+## Change
 
 * `db$correspondenceInRaw` name changed to camel-case. string fields trimmed,
   date fields converted with `as.Date`
