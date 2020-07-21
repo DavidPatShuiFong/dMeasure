@@ -11,6 +11,7 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     dplyr,
+    rlang (>= 0.4.0),
     dbplyr,
     odbc,
     RSQLite,
