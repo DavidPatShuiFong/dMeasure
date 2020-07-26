@@ -86,7 +86,9 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     date_to <- self$date_b
   }
   if (is.na(date_from)) {
-    date_from <- date_to - 365
+    date_from <- as.Date(
+      seq.Date(as.Date(date_to), length = 2, by = "-1 year")[[2]]
+    )
   } else if (date_from == -Inf) {
     date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
   }
@@ -120,6 +122,91 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::mutate(HbA1CDate = as.Date(HbA1CDate))
   # convert to R's 'standard' date format
   # didn't work before collect()
+})
+
+#' List of Glucose observations/recordings
+#'
+#' Filtered by InternalID (vector patient numbers) and dates
+#'
+#' the reference date for 'most recent' measurement is 'date_to'
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param intID vector of InternalID
+#' @param date_from start date. default is $date_b minus 24 months
+#' @param date_to end date (inclusive). default is $date_b
+#'
+#' @return dataframe of InternalID, HbA1CDate, HbA1CValue, HbA1CUnits
+#' @export
+glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
+  dMeasure_obj$glucose_obs(intID, date_from, date_to)
+}
+.public(dMeasure, "glucose_obs", function(intID, date_from = NA, date_to = NA) {
+  intID <- c(intID, -1) # can't search on empty list! add dummy value
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (is.na(date_from)) {
+    date_from <- as.Date(
+      seq.Date(as.Date(date_to), length = 2, by = "-2 year")[[2]]
+    )
+  } else if (date_from == -Inf) {
+    date_from <- as.Date("1900-01-01") # MSSQL doesn't accept -Inf date!
+  }
+
+  # uses BPCode == 14 in $db$reportValues for finding serum glucose results
+  glucose_serum <- self$db$reportValues %>>%
+    dplyr::filter(
+      InternalID %in% intID,
+      BPCode == 14,
+      # BPCode 14 is gluocse
+      ReportDate <= date_to,
+      ReportDate >= date_from
+    ) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    # the most recent glucose report by InternalID
+    dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
+    dplyr::rename(
+      GlucoseDate = ReportDate,
+      GlucoseValue = ResultValue,
+      GlucoseUnits = Units
+    ) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(GlucoseDate = as.Date(GlucoseDate))
+  # convert to R's 'standard' date format
+  # didn't work before collect()
+
+  # look in the 'observation' table (along with BP, weight etc..)
+  glucose_obs <- self$db$observations %>>%
+    dplyr::filter(
+      InternalID %in% intID,
+      ObservationCode == 6,
+      # ObservationCode 6 is gluocse
+      ObservationDate <= date_to,
+      ObservationDate >= date_from
+    ) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::filter(ObservationDate == max(ObservationDate, na.rm = TRUE)) %>>%
+    # the most recent glucose report by InternalID
+    dplyr::select(InternalID, ObservationDate, ObservationValue) %>>%
+    dplyr::rename(
+      GlucoseDate = ObservationDate,
+      GlucoseValue = ObservationValue
+    ) %>>%
+    dplyr::collect() %>>%
+    dplyr::mutate(
+      GlucoseValue = as.numeric(GlucoseValue),
+      GlucoseDate = as.Date(GlucoseDate),
+      GlucoseUnits = "mmol/L"
+    )
+
+  glucose <- rbind(glucose_serum, glucose_obs) %>>%
+    dplyr::group_by(InternalID) %>>%
+    dplyr::arrange(GlucoseDate, .by_group = TRUE) %>>%
+    dplyr::slice(dplyr::n()) %>>% # keeps 'last' (most recent result, resolve 'tie')
+    dplyr::ungroup()
+
+  return(glucose)
 })
 
 #' List of smoking observations/recordings

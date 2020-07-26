@@ -6,6 +6,7 @@ Changelog
 ## New
 
 * add `diabetes_type1_list` and `diabetes_type2_list` methods
+* add `glucose_obs` method
 * add `README.md`
 
 ## Change

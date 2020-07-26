@@ -66,6 +66,8 @@ dMeasure class
 \item \href{#method-list_appointments}{\code{dMeasure$list_appointments()}}
 \item \href{#method-list_visits}{\code{dMeasure$list_visits()}}
 \item \href{#method-diabetes_list}{\code{dMeasure$diabetes_list()}}
+\item \href{#method-diabetes_type1_list}{\code{dMeasure$diabetes_type1_list()}}
+\item \href{#method-diabetes_type2_list}{\code{dMeasure$diabetes_type2_list()}}
 \item \href{#method-asthma_list}{\code{dMeasure$asthma_list()}}
 \item \href{#method-list_asthma_details}{\code{dMeasure$list_asthma_details()}}
 \item \href{#method-atsi_list}{\code{dMeasure$atsi_list()}}
@@ -152,6 +154,7 @@ dMeasure class
 \item \href{#method-list_dataQuality}{\code{dMeasure$list_dataQuality()}}
 \item \href{#method-influenzaVax_obs}{\code{dMeasure$influenzaVax_obs()}}
 \item \href{#method-HbA1C_obs}{\code{dMeasure$HbA1C_obs()}}
+\item \href{#method-glucose_obs}{\code{dMeasure$glucose_obs()}}
 \item \href{#method-smoking_obs}{\code{dMeasure$smoking_obs()}}
 \item \href{#method-BloodPressure_obs}{\code{dMeasure$BloodPressure_obs()}}
 \item \href{#method-asthmaplan_obs}{\code{dMeasure$asthmaplan_obs()}}
@@ -495,6 +498,24 @@ dMeasure class
 \subsection{Method \code{diabetes_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$diabetes_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-diabetes_type1_list"></a>}}
+\if{latex}{\out{\hypertarget{method-diabetes_type1_list}{}}}
+\subsection{Method \code{diabetes_type1_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$diabetes_type1_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-diabetes_type2_list"></a>}}
+\if{latex}{\out{\hypertarget{method-diabetes_type2_list}{}}}
+\subsection{Method \code{diabetes_type2_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$diabetes_type2_list(appointments = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -1431,6 +1452,15 @@ dMeasure class
 \subsection{Method \code{HbA1C_obs()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$HbA1C_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-glucose_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-glucose_obs}{}}}
+\subsection{Method \code{glucose_obs()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$glucose_obs(intID, date_from = NA, date_to = NA)}\if{html}{\out{</div>}}
 }
 
 }
