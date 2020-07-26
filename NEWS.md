@@ -1,10 +1,11 @@
 Changelog
 
 # 0.9.12
-17th July 2020
+26th July 2020
 
 ## New
 
+* add `diabetes_type1_list` and `diabetes_type2_list` methods
 * add `README.md`
 
 ## Change
