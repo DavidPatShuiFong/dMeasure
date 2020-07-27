@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.12
-26th July 2020
+27th July 2020
 
 ## New
 
@@ -13,6 +13,8 @@ Changelog
 
 * `db$correspondenceInRaw` name changed to camel-case. string fields trimmed,
   date fields converted with `as.Date`
+* replace various `dplyr::filter(x == max(x))` with `dplyr::arrange(desc(x), .by_group = TRUE) %>>% dplyr::filter(dplyr::row_number() == 1)`
+  + `arrange` and `slice` breaks ties, where more than one x has the same 'max' value
 
 # 0.9.11
 8th July 2020

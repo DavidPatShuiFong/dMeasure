@@ -52,8 +52,9 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
       GivenDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(GivenDate == max(GivenDate, na.rm = TRUE)) %>>%
-    # most recent fluvax by InternalID
+    dplyr::arrange(dplyr::desc(GivenDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
+    # most recent fluvax by InternalID, breaks 'ties'
     dplyr::rename(
       FluvaxName = VaccineName,
       FluvaxDate = GivenDate
@@ -110,7 +111,8 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
       ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # choose the 'maximum', breaks 'ties'
     # the most recent HbA1C report by InternalID
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
@@ -163,7 +165,8 @@ glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
       ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     # the most recent glucose report by InternalID
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
@@ -186,7 +189,8 @@ glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
       ObservationDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ObservationDate == max(ObservationDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(ObservationDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     # the most recent glucose report by InternalID
     dplyr::select(InternalID, ObservationDate, ObservationValue) %>>%
     dplyr::rename(
@@ -202,8 +206,8 @@ glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
 
   glucose <- rbind(glucose_serum, glucose_obs) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::arrange(GlucoseDate, .by_group = TRUE) %>>%
-    dplyr::slice(dplyr::n()) %>>% # keeps 'last' (most recent result, resolve 'tie')
+    dplyr::arrange(dplyr::desc(GlucoseDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # keeps 'last' (most recent result, resolve 'tie')
     dplyr::ungroup()
 
   return(glucose)
@@ -294,21 +298,22 @@ BloodPressure_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA)
       as.Date(ObservationDate) >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ObservationDate == max(ObservationDate,
-      na.rm = TRUE
-    )) %>>%
+    dplyr::filter(
+      ObservationDate == max(ObservationDate, na.rm = TRUE)
+    ) %>>%
     # only the most recent recording(s) DATE
-    dplyr::filter(ObservationTime == max(ObservationTime,
-      na.rm = TRUE
-    )) %>>%
+    dplyr::filter(
+      ObservationTime == max(ObservationTime, na.rm = TRUE)
+    ) %>>%
     # only the most recent recording TIME
+    # this might keep more than one observation (systolic + diastolic)
     dplyr::ungroup() %>>%
     dplyr::group_by(InternalID, ObservationCode) %>>%
-    dplyr::filter(RECORDID == max(RECORDID,
-      na.rm = TRUE
-    )) %>>%
+    dplyr::filter(RECORDID == max(RECORDID, na.rm = TRUE)) %>>%
+    # this might keep more than 'one' Observation (systolic + diastolic)
     # if still tied (this shouldn't be the case? but it happens
     # in the sample database), filter by most recent RECORDID
+    dplyr::ungroup() %>>%
     dplyr::rename(BPDate = ObservationDate) %>>%
     dplyr::select(-c(RECORDID, ObservationName, ObservationTime)) %>>%
     dplyr::collect() %>>%
@@ -366,7 +371,8 @@ asthmaplan_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     ) %>>%
     dplyr::select(InternalID, PlanDate) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(PlanDate == max(PlanDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(PlanDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     dplyr::ungroup() %>>%
     dplyr::collect() %>>%
     dplyr::mutate(PlanDate = as.Date(PlanDate))
@@ -426,12 +432,16 @@ UrineAlbumin_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
       ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
-    dplyr::filter(ReportID == max(ReportID, na.rm = TRUE)) %>>%
-    dplyr::filter(BPCode == min(BPCode, na.rm = TRUE)) %>>%
+    dplyr::arrange(
+      dplyr::desc(ReportDate), dplyr::desc(ReportID), BPcode,
+      .by_group = TRUE
+      # max of ReportDate and ReportID. min of BPcode
+    ) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     # the most recent HbA1C report by InternalID
     # Best Practice's Diabetes Cycle of Care page will record 7+18
     # TOGETHER at the same time, with the same value and same ReportID
+    dplyr::ungroup() %>>%
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
       UrineAlbuminDate = ReportDate,
@@ -522,7 +532,8 @@ PersistentProteinuria_obs <- function(dMeasure_obj, intID, date_from = NA, date_
 
   latest_result <- results %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     dplyr::ungroup() %>>%
     dplyr::rename(LatestDate = ReportDate) %>>%
     dplyr::collect() %>>%
@@ -579,8 +590,10 @@ eGFR_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
       ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     # the most recent eGFR report by InternalID
+    dplyr::ungroup() %>>%
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
       eGFRDate = ReportDate,
@@ -629,21 +642,20 @@ Cholesterol_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::filter(
       InternalID %in% intID,
       BPCode %in% c(2, 3, 4, 5),
-      # systolic or diastolic blood pressure
-      # 3 = systolic, 4 = diastolic
+      # Cholesterol, HDL, LDL, triglycerides
       ReportDate <= date_to,
       ReportDate >= date_from
     ) %>>%
     dplyr::group_by(InternalID) %>>%
-    dplyr::filter(ReportDate == max(ReportDate,
-      na.rm = TRUE
+    dplyr::filter(
+      ReportDate == max(ReportDate, na.rm = TRUE
     )) %>>%
     # only the most recent recording(s) DATE
+    # this might (and should) keep multiple observations ()
     dplyr::ungroup() %>>%
     dplyr::group_by(InternalID, BPCode) %>>%
-    dplyr::filter(ReportID == max(ReportID,
-      na.rm = TRUE
-    )) %>>%
+    dplyr::arrange(dplyr::desc(ReportID), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
     # if still tied (this shouldn't be the case? but it happens
     # in the sample database), filter by most recent ReportID
     dplyr::ungroup() %>>%

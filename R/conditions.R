@@ -850,7 +850,8 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(ObservationDate <= as.Date(Date)) %>>%
     # observation done before the appointment date
     dplyr::group_by(InternalID, Date) %>>%
-    dplyr::slice(which.max(ObservationDate)) %>>%
+    dplyr::arrange(dplyr::desc(ObservationDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # the 'maximum' ObservationDate, breaking 'ties'
     # choose the observation with the most recent observation date
     # unfortunately, as the code stands, this generates a vector which
     # is not appointment date specific
