@@ -1004,7 +1004,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  status = NA
+  status = NA,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1018,7 +1019,8 @@ dMeasure class
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  visit_type = NA
+  visit_type = NA,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1028,7 +1030,12 @@ dMeasure class
 \if{latex}{\out{\hypertarget{method-list_contact_services}{}}}
 \subsection{Method \code{list_contact_services()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_services(date_from = NA, date_to = NA, clinicians = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$list_contact_services(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  store = TRUE
+)}\if{html}{\out{</div>}}
 }
 
 }
@@ -1045,7 +1052,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1063,7 +1071,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1081,7 +1090,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1117,7 +1127,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1135,7 +1146,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1153,7 +1165,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1171,7 +1184,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1189,7 +1203,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -1207,7 +1222,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 

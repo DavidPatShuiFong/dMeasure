@@ -8,7 +8,8 @@ list_contact_services(
   dMeasure_obj,
   date_from = NA,
   date_to = NA,
-  clinicians = NA
+  clinicians = NA,
+  store = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ list_contact_services(
 \item{date_to}{(default NA -> dMeasure_obj$date_b) end date (inclusive)}
 
 \item{clinicians}{(default NA -> dMeasure_obj$clinicians) list of clinicians to view}
+
+\item{store}{keep result in self$contact_services_list?}
 }
 \value{
 dataframe of Patient (name), InternalID, ServiceDate

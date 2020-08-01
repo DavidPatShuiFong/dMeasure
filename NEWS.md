@@ -1,13 +1,14 @@
 Changelog
 
 # 0.9.12
-27th July 2020
+1st August 2020
 
 ## New
 
 * add `diabetes_type1_list` and `diabetes_type2_list` methods
 * add `glucose_obs` method
 * add `README.md`
+* `store` option for `$list_contact_*`, `contact_*_list`
 
 ## Change
 

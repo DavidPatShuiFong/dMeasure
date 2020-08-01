@@ -101,7 +101,7 @@ NULL
     InternalID = integer(),
     AppointmentDate =
       as.Date(integer(0),
-        origin = "1970-01-01"
+              origin = "1970-01-01"
       ),
     stringsAsFactors = FALSE
   )
@@ -113,7 +113,7 @@ NULL
     InternalID = integer(),
     VisitDate =
       as.Date(integer(0),
-        origin = "1970-01-01"
+              origin = "1970-01-01"
       ),
     stringsAsFactors = FALSE
   )
@@ -125,7 +125,7 @@ NULL
     InternalID = integer(),
     ServiceDate =
       as.Date(integer(0),
-        origin = "1970-01-01"
+              origin = "1970-01-01"
       ),
     stringsAsFactors = FALSE
   )
@@ -138,7 +138,7 @@ NULL
     InternalID = integer(),
     Count = integer(),
     Latest = as.Date(integer(0),
-      origin = "1970-01-01"
+                     origin = "1970-01-01"
     ),
     stringsAsFactors = FALSE
   )
@@ -160,6 +160,7 @@ NULL
 #'  permissible values are 'Booked', 'Completed', 'At billing',
 #'  'Waiting', 'With doctor'
 #'  if NA, adopts from active $appointment_status
+#' @param store keep result in self$contact_appointments_list?
 #'
 #' @return dataframe of Patient (name), InternalID, AppointmentDate
 #' @export
@@ -167,67 +168,75 @@ list_contact_appointments <- function(dMeasure_obj,
                                       date_from = NA,
                                       date_to = NA,
                                       clinicians = NA,
-                                      status = NA) {
-  dMeasure_obj$list_contact_appointments(date_from, date_to, clinicians, status)
+                                      status = NA,
+                                      store = TRUE) {
+  dMeasure_obj$list_contact_appointments(
+    date_from, date_to, clinicians, status, store
+  )
 }
 
-.public(
-  dMeasure, "list_contact_appointments",
-  function(date_from = NA,
-             date_to = NA,
-             clinicians = NA,
-             status = NA) {
-    if (is.na(date_from)) {
-      date_from <- self$date_a
-    }
-    if (is.na(date_to)) {
-      date_to <- self$date_b
-    }
-    if (length(clinicians) == 1 && is.na(clinicians)) {
-      # sometimes clinicians is a list, in which case it cannot be a single NA!
-      # 'if' is not vectorized so will only read the first element of the list
-      # but if clinicians is a single NA, then read $clinicians
-      clinicians <- self$clinicians
-    }
-    if (is.na(status)) {
-      status <- self$appointment_status
-    }
-
-    # no additional clinician filtering based on privileges or user restrictions
-
-    if (all(is.na(clinicians)) || length(clinicians) == 0) {
-      clinicians <- c("") # dplyr::filter does not work on zero-length list()
-    }
-
-    if (self$emr_db$is_open()) {
-      # only if EMR database is open
-      if (self$Log) {
-        log_id <- self$config_db$write_log_db(
-          query = "contact_appointments",
-          data = list(date_from, date_to, clinicians)
-        )
-      }
-
-      self$contact_appointments_list <- self$db$appointments %>>%
-        dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
-        dplyr::filter(Provider %in% clinicians) %>>%
-        dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
-        dplyr::filter(Status %in% status) %>>%
-        dplyr::left_join(self$db$patients, by = "InternalID", copy = TRUE) %>>%
-        # need patients database to access date-of-birth
-        dplyr::group_by(Patient, InternalID, AppointmentDate) %>>%
-        dplyr::summarise() %>>% # plucks out unique appointment dates
-        dplyr::ungroup() %>>%
-        dplyr::collect() %>>%
-        dplyr::mutate(AppointmentDate = as.Date(AppointmentDate))
-
-      if (self$Log) {
-        self$config_db$duration_log_db(log_id)
-      }
-    }
-
-    return(self$contact_appointments_list)
+.public(dMeasure, "list_contact_appointments", function(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  status = NA,
+  store = TRUE) {
+  if (is.na(date_from)) {
+    date_from <- self$date_a
   }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(status)) {
+    status <- self$appointment_status
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  contact_appointments_list <- self$contact_appointments_list
+  if (self$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {
+      log_id <- self$config_db$write_log_db(
+        query = "contact_appointments",
+        data = list(date_from, date_to, clinicians)
+      )
+    }
+
+    contact_appointments_list <- self$db$appointments %>>%
+      dplyr::filter(AppointmentDate >= date_from & AppointmentDate <= date_to) %>>%
+      dplyr::filter(Provider %in% clinicians) %>>%
+      dplyr::mutate(Status = trimws(Status)) %>>% # get rid of redundant whitespace
+      dplyr::filter(Status %in% status) %>>%
+      dplyr::left_join(self$db$patients, by = "InternalID", copy = TRUE) %>>%
+      # need patients database to access date-of-birth
+      dplyr::group_by(Patient, InternalID, AppointmentDate) %>>%
+      dplyr::summarise() %>>% # plucks out unique appointment dates
+      dplyr::ungroup() %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(AppointmentDate = as.Date(AppointmentDate))
+
+    if (store) {
+      self$contact_appointments_list <- contact_appointments_list
+    }
+
+    if (self$Log) {
+      self$config_db$duration_log_db(log_id)
+    }
+  }
+
+  return(contact_appointments_list)
+}
 )
 .reactive_event(
   dMeasure, "contact_appointments_listR",
@@ -262,76 +271,85 @@ list_contact_appointments <- function(dMeasure_obj,
 #'  "Telephone", "SMS", "Email", "Locum Service", "Out of Office",
 #'  "Other", "Hostel", "Telehealth"
 #'  if NA, adopts value from active $visit_type
+#' @param store keep result in self$contact_visits_list?
 #'
 #' @return dataframe of Patient (name), InternalID, VisitDate
 #' @export
-list_contact_visits <- function(dMeasure_obj,
-                                date_from = NA,
-                                date_to = NA,
-                                clinicians = NA,
-                                visit_type = NA) {
-  dMeasure_obj$list_contact_visits(date_from, date_to, clinicians, visit_types)
+list_contact_visits <- function(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  visit_type = NA,
+  store = TRUE) {
+  dMeasure_obj$list_contact_visits(
+    date_from, date_to, clinicians, visit_types, store
+  )
 }
-.public(
-  dMeasure, "list_contact_visits",
-  function(date_from = NA,
-             date_to = NA,
-             clinicians = NA,
-             visit_type = NA) {
-    if (is.na(date_from)) {
-      date_from <- self$date_a
-    }
-    if (is.na(date_to)) {
-      date_to <- self$date_b
-    }
-    if (length(clinicians) == 1 && is.na(clinicians)) {
-      # sometimes clinicians is a list, in which case it cannot be a single NA!
-      # 'if' is not vectorized so will only read the first element of the list
-      # but if clinicians is a single NA, then read $clinicians
-      clinicians <- self$clinicians
-    }
-    if (is.na(visit_type)) {
-      visit_type <- self$visit_type
-    }
-
-    # no additional clinician filtering based on privileges or user restrictions
-
-    if (all(is.na(clinicians)) || length(clinicians) == 0) {
-      clinicians <- c("") # dplyr::filter does not work on zero-length list()
-    }
-
-    if (self$emr_db$is_open()) {
-      # only if EMR database is open
-      if (self$Log) {
-        log_id <- self$config_db$write_log_db(
-          query = "contact_visits",
-          data = list(date_from, date_to, clinicians)
-        )
-      }
-
-      self$contact_visits_list <- self$db$visits %>>%
-        dplyr::filter(VisitDate >= date_from & VisitDate <= date_to) %>>%
-        dplyr::filter(DrName %in% clinicians) %>>% # not just doctors!
-        dplyr::filter(VisitType %in% visit_type) %>>%
-        dplyr::group_by(InternalID, VisitDate) %>>%
-        dplyr::summarise() %>>% # plucks out unique visit dates
-        dplyr::ungroup() %>>%
-        dplyr::left_join(self$db$patients, by = "InternalID", copy = TRUE) %>>%
-        dplyr::select(Firstname, Surname, InternalID, VisitDate) %>>%
-        dplyr::collect() %>>%
-        dplyr::mutate(
-          Patient = paste(trimws(Firstname), trimws(Surname)),
-          VisitDate = as.Date(VisitDate)
-        ) %>>%
-        dplyr::select(Patient, InternalID, VisitDate)
-
-      if (self$Log) {
-        self$config_db$duration_log_db(log_id)
-      }
-    }
-
-    return(self$contact_visits_list)
+.public(dMeasure, "list_contact_visits", function(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  visit_type = NA,
+  store = TRUE) {
+  if (is.na(date_from)) {
+    date_from <- self$date_a
   }
+  if (is.na(date_to)) {
+    date_to <- self$date_b
+  }
+  if (length(clinicians) == 1 && is.na(clinicians)) {
+    # sometimes clinicians is a list, in which case it cannot be a single NA!
+    # 'if' is not vectorized so will only read the first element of the list
+    # but if clinicians is a single NA, then read $clinicians
+    clinicians <- self$clinicians
+  }
+  if (is.na(visit_type)) {
+    visit_type <- self$visit_type
+  }
+
+  # no additional clinician filtering based on privileges or user restrictions
+
+  if (all(is.na(clinicians)) || length(clinicians) == 0) {
+    clinicians <- c("") # dplyr::filter does not work on zero-length list()
+  }
+
+  contact_visits_list <- self$contact_visits_list
+  if (self$emr_db$is_open()) {
+    # only if EMR database is open
+    if (self$Log) {
+      log_id <- self$config_db$write_log_db(
+        query = "contact_visits",
+        data = list(date_from, date_to, clinicians)
+      )
+    }
+
+    contact_visits_list <- self$db$visits %>>%
+      dplyr::filter(VisitDate >= date_from & VisitDate <= date_to) %>>%
+      dplyr::filter(DrName %in% clinicians) %>>% # not just doctors!
+      dplyr::filter(VisitType %in% visit_type) %>>%
+      dplyr::group_by(InternalID, VisitDate) %>>%
+      dplyr::summarise() %>>% # plucks out unique visit dates
+      dplyr::ungroup() %>>%
+      dplyr::left_join(self$db$patients, by = "InternalID", copy = TRUE) %>>%
+      dplyr::select(Firstname, Surname, InternalID, VisitDate) %>>%
+      dplyr::collect() %>>%
+      dplyr::mutate(
+        Patient = paste(trimws(Firstname), trimws(Surname)),
+        VisitDate = as.Date(VisitDate)
+      ) %>>%
+      dplyr::select(Patient, InternalID, VisitDate)
+
+    if (store) {
+      self$contact_visits_list <- contact_visits_list
+    }
+    if (self$Log) {
+      self$config_db$duration_log_db(log_id)
+    }
+  }
+
+  return(contact_visits_list)
+}
 )
 .reactive_event(
   dMeasure, "contact_visits_listR",
@@ -361,19 +379,26 @@ list_contact_visits <- function(dMeasure_obj,
 #' @param date_from (default NA -> dMeasure_obj$date_a) start date
 #' @param date_to (default NA -> dMeasure_obj$date_b) end date (inclusive)
 #' @param clinicians (default NA -> dMeasure_obj$clinicians) list of clinicians to view
+#' @param store keep result in self$contact_services_list?
 #'
 #' @return dataframe of Patient (name), InternalID, ServiceDate
 #' @export
-list_contact_services <- function(dMeasure_obj,
-                                  date_from = NA,
-                                  date_to = NA,
-                                  clinicians = NA) {
-  dMeasure_obj$list_contact_services(date_from, date_to, clinicians)
+list_contact_services <- function(
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  store = TRUE) {
+  dMeasure_obj$list_contact_services(
+    date_from, date_to, clinicians
+  )
 }
 
-.public(dMeasure, "list_contact_services", function(date_from = NA,
-                                                    date_to = NA,
-                                                    clinicians = NA) {
+.public(dMeasure, "list_contact_services", function(
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  store = TRUE) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -396,7 +421,7 @@ list_contact_services <- function(dMeasure_obj,
   if ("UserID" %in% colnames(self$UserFullConfig)) {
     clinicians <-
       c(unlist(self$UserFullConfig[self$UserFullConfig$Fullname %in% clinicians, "UserID"],
-        use.names = FALSE
+               use.names = FALSE
       ), -1)
   } # change to UserID, again minimum length 1
   else {
@@ -405,6 +430,7 @@ list_contact_services <- function(dMeasure_obj,
     # open EMR database
   }
 
+  contact_services_list <- self$contact_services_list
   if (self$emr_db$is_open()) {
     # only if EMR database is open
     if (self$Log) {
@@ -431,12 +457,15 @@ list_contact_services <- function(dMeasure_obj,
       ) %>>%
       dplyr::select(Patient, InternalID, ServiceDate)
 
+    if (store) {
+      self$contact_services_list <- contact_services_list
+    }
     if (self$Log) {
       self$config_db$duration_log_db(log_id)
     }
   }
 
-  return(self$contact_services_list)
+  return(contact_services_list)
 })
 .reactive_event(
   dMeasure, "contact_services_listR",
@@ -566,36 +595,40 @@ list_contact_services <- function(dMeasure_obj,
 #'   default is $contact_maxDate, initially Sys.Date()
 #' @param contact_type contact types which are accepted.
 #'   default is $contact_type
+#' @param lazy force re-calculate?
+#' @param store keep result in self$contact_count_list?
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 #' @export
 list_contact_count <- function(
-                               dMeasure_obj,
-                               date_from = NA,
-                               date_to = NA,
-                               clinicians = NA,
-                               min_contact = NA,
-                               min_date = NA,
-                               max_date = NA,
-                               contact_type = NA,
-                               lazy = FALSE) {
+  dMeasure_obj,
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  max_date = NA,
+  contact_type = NA,
+  lazy = FALSE,
+  store = TRUE) {
   dMeasure_obj$list_contact_count(
     date_from, date_to, clinicians,
     min_contact, min_date, max_date,
     contact_type,
-    lazy
+    lazy, store
   )
 }
 
 .public(dMeasure, "list_contact_count", function(
-                                                 date_from = NA,
-                                                 date_to = NA,
-                                                 clinicians = NA,
-                                                 min_contact = NA,
-                                                 min_date = NA,
-                                                 max_date = NA,
-                                                 contact_type = NA,
-                                                 lazy = FALSE) {
+  date_from = NA,
+  date_to = NA,
+  clinicians = NA,
+  min_contact = NA,
+  min_date = NA,
+  max_date = NA,
+  contact_type = NA,
+  lazy = FALSE,
+  store = TRUE) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -620,6 +653,8 @@ list_contact_count <- function(
   if (is.na(contact_type[[1]])) {
     contact_type <- self$contact_type
   }
+  appointment_status <- self$appointment_status
+  visit_type <- self$visit_type
 
   # no additional clinician filtering based on privileges or user restrictions
 
@@ -627,6 +662,7 @@ list_contact_count <- function(
     clinicians <- c("") # dplyr::filter does not work on zero-length list()
   }
 
+  contact_count_list <- self$contact_count_list
   if (self$emr_db$is_open()) {
     # only if EMR database is open
     if (self$Log) {
@@ -638,30 +674,50 @@ list_contact_count <- function(
 
     if (!lazy) {
       if ("Appointments" %in% contact_type) {
-        self$list_contact_appointments()
+        contact_appointments_list <-
+          self$list_contact_appointments(
+            date_from = date_from, date_to = date_to,
+            clinicians = clinicians, status = appointment_status,
+            store = store
+          )
       }
       if ("Visits" %in% contact_type) {
-        self$list_contact_visits()
+        contact_visits_list <-
+          self$list_contact_visits(
+            date_from = date_from, date_to = date_to,
+            clinicians = clinicians, visit_type = visit_type,
+            store = store
+          )
       }
       if ("Services" %in% contact_type) {
-        self$list_contact_services()
+        contact_services_list <-
+          self$list_contact_services(
+            date_from = date_from, date_to = date_to,
+            clinicians = clinicians, store = store
+          )
       }
+    } else {
+      contact_appointments_list <- self$contact_appointments_list
+      contact_visits_list <- self$contact_visits_list
+      contact_services_list <- self$contact_services_list
     }
 
-    self$contact_count_list <- data.frame(
+    contact_count_list <- data.frame(
       Patient = character(),
       InternalID = integer(),
       Count = integer(),
       AppointmentDate = as.Date(integer(0),
-        origin = "1970-01-01"
+                                origin = "1970-01-01"
       ),
       Latest = as.Date(integer(0),
-        origin = "1970-01-01"
+                       origin = "1970-01-01"
       ),
       stringsAsFactors = FALSE
     ) %>>% {
       if ("Appointments" %in% contact_type) {
-        dplyr::bind_rows(., self$contact_appointments_list)
+        dplyr::bind_rows(
+          .,
+          contact_appointments_list)
       }
       else {
         .
@@ -670,7 +726,7 @@ list_contact_count <- function(
       if ("Visits" %in% contact_type) {
         dplyr::bind_rows(
           .,
-          self$contact_visits_list %>>%
+          contact_visits_list %>>%
             dplyr::rename(AppointmentDate = VisitDate)
         )
       }
@@ -681,7 +737,7 @@ list_contact_count <- function(
       if ("Services" %in% contact_type) {
         dplyr::bind_rows(
           .,
-          self$contact_services_list %>>%
+          contact_services_list %>>%
             dplyr::rename(AppointmentDate = ServiceDate)
         )
       }
@@ -702,16 +758,22 @@ list_contact_count <- function(
         dplyr::select(., -AppointmentDate)
       } # removed (just as if nrow>0)
     } %>>%
-      dplyr::filter(Count >= min_contact,
-                    Latest >= min_date,
-                    Latest <= max_date)
+      dplyr::filter(
+        Count >= min_contact,
+        Latest >= min_date,
+        Latest <= max_date
+      )
+
+    if (store) {
+      self$contact_count_list <- contact_count_list
+    }
 
     if (self$Log) {
       self$config_db$duration_log_db(log_id)
     }
   }
 
-  return(self$contact_count_list)
+  return(contact_count_list)
 })
 .reactive_event(
   dMeasure, "contact_count_listR",
