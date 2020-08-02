@@ -193,7 +193,7 @@ list_contact_appointments <- function(dMeasure_obj,
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
   }
-  if (is.na(status)) {
+  if (length(status) == 1 && is.na(status)) {
     status <- self$appointment_status
   }
 
@@ -304,7 +304,7 @@ list_contact_visits <- function(
     # but if clinicians is a single NA, then read $clinicians
     clinicians <- self$clinicians
   }
-  if (is.na(visit_type)) {
+  if (length(visit_type) == 1 && is.na(visit_type)) {
     visit_type <- self$visit_type
   }
 
