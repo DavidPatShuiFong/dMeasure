@@ -440,7 +440,7 @@ list_contact_services <- function(
       )
     }
 
-    self$contact_services_list <- self$db$servicesRaw %>>%
+    contact_services_list <- self$db$servicesRaw %>>%
       dplyr::filter(ServiceDate >= date_from & ServiceDate <= date_to) %>>%
       dplyr::select(-c(PayerCode)) %>>%
       dplyr::left_join(self$db$invoices, by = "InvoiceID", copy = TRUE) %>>%
