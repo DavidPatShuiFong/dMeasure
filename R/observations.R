@@ -55,6 +55,7 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
     dplyr::arrange(dplyr::desc(GivenDate), .by_group = TRUE) %>>%
     dplyr::filter(dplyr::row_number() == 1) %>>%
     # most recent fluvax by InternalID, breaks 'ties'
+    dplyr::ungroup() %>>%
     dplyr::rename(
       FluvaxName = VaccineName,
       FluvaxDate = GivenDate
@@ -114,6 +115,7 @@ HbA1C_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
     dplyr::filter(dplyr::row_number() == 1) %>>% # choose the 'maximum', breaks 'ties'
     # the most recent HbA1C report by InternalID
+    dplyr::ungroup() %>>%
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
       HbA1CDate = ReportDate,
@@ -168,6 +170,7 @@ glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
     dplyr::arrange(dplyr::desc(ReportDate), .by_group = TRUE) %>>%
     dplyr::filter(dplyr::row_number() == 1) %>>%
     # the most recent glucose report by InternalID
+    dplyr::ungroup() %>>%
     dplyr::select(InternalID, ReportDate, ResultValue, Units) %>>%
     dplyr::rename(
       GlucoseDate = ReportDate,

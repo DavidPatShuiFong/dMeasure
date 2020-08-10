@@ -117,19 +117,21 @@ list_contact_diabetes <- function(
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    diabetesID <- self$contact_count_list %>>%
+    diabetesID <- contact_count_list %>>%
       dplyr::mutate(Date = Latest) %>>%
       self$diabetes_list()
 
 
-    contact_diabetes_list <- self$contact_count_list %>>%
+    contact_diabetes_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% diabetesID)
 
     if (store) {
@@ -261,18 +263,20 @@ list_contact_chroniclungdisease <- function(
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    chroniclungdiseaseID <- self$contact_count_list %>>%
+    chroniclungdiseaseID <- contact_count_list %>>%
       dplyr::mutate(Date = Latest) %>>%
       self$chroniclungdisease_list()
 
-    contact_chroniclungdisease_list <- self$contact_count_list %>>%
+    contact_chroniclungdisease_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% chroniclungdiseaseID)
 
     if (store) {
@@ -327,6 +331,7 @@ list_contact_chroniclungdisease <- function(
 #' @param min_date most recent contact must be at least min_date. default is $contact_minDate, initially -Inf
 #' @param max_date most recent contact must be at most max_date. default is $contact_maxDate, initially Sys.Date()
 #' @param contact_type contact types which are accepted. default is $contact_type
+#' @param store keep result in  self$contact_asthma_list
 #'
 #' @return dataframe of Patient (name), InternalID, Count, and most recent contact date
 #' @export
@@ -352,7 +357,8 @@ list_contact_asthma <- function(dMeasure_obj,
                                                   min_contact = NA,
                                                   min_date = NA, max_date = NA,
                                                   contact_type = NA,
-                                                  lazy = FALSE) {
+                                                  lazy = FALSE,
+                                                  store = TRUE) {
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -394,26 +400,32 @@ list_contact_asthma <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    asthmaID <- self$contact_count_list %>>%
+    asthmaID <- contact_count_list %>>%
       dplyr::mutate(Date = Latest) %>>%
       self$asthma_list()
 
-    self$contact_asthma_list <- self$contact_count_list %>>%
+    contact_asthma_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% asthmaID)
+
+    if (store) {
+      self$contact_asthma_list <- contact_asthma_list
+    }
 
     if (self$Log) {
       self$config_db$duration_log_db(log_id)
     }
   }
 
-  return(self$contact_asthma_list)
+  return(contact_asthma_list)
 })
 .reactive_event(
   dMeasure, "contact_asthma_listR",
@@ -530,18 +542,20 @@ list_contact_15plus <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    fifteenplusID <- self$contact_count_list %>>%
+    fifteenplusID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$fifteenplus_list()
 
-    contact_15plus_list <- self$contact_count_list %>>%
+    contact_15plus_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% fifteenplusID)
 
     if (store) {
@@ -674,18 +688,20 @@ list_contact_65plus <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    sixtyfiveplusID <- self$contact_count_list %>>%
+    sixtyfiveplusID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$sixtyfiveplus_list()
 
-    contact_65plus_list <- self$contact_count_list %>>%
+    contact_65plus_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% sixtyfiveplusID)
 
     if (store) {
@@ -816,18 +832,20 @@ list_contact_45_74 <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    fortyfiveseventyfourID <- self$contact_count_list %>>%
+    fortyfiveseventyfourID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$fortyfiveseventyfour_list()
 
-    contact_45_74_list <- self$contact_count_list %>>%
+    contact_45_74_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% fortyfiveseventyfourID)
 
     if (store) {
@@ -958,18 +976,20 @@ list_contact_75plus <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    seventyfiveplusID <- self$contact_count_list %>>%
+    seventyfiveplusID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$seventyfiveplus_list()
 
-    contact_75plus_list <- self$contact_count_list %>>%
+    contact_75plus_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% seventyfiveplusID)
 
     if (store) {
@@ -1100,18 +1120,20 @@ list_contact_ATSI_35_44 <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    ATSI_35_44ID <- self$contact_count_list %>>%
+    ATSI_35_44ID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$ATSI_35_44_list()
 
-    contact_ATSI_35_44_list <- self$contact_count_list %>>%
+    contact_ATSI_35_44_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% ATSI_35_44ID)
 
     if (store) {
@@ -1252,18 +1274,20 @@ list_contact_cst <- function(dMeasure_obj,
     }
 
     if (!lazy) {
-      self$list_contact_count(
+      contact_count_list <- self$list_contact_count(
         date_from, date_to, clinicians,
         min_contact, min_date, max_date, contact_type,
-        lazy
+        lazy, store
       )
+    } else {
+      contact_count_list <- self$contact_count_list
     }
 
-    cstID <- self$contact_count_list %>>%
+    cstID <- contact_count_list %>>%
       dplyr::mutate(Date = date_to) %>>%
       self$cst_eligible_list()
 
-    contact_cst_list <- self$contact_count_list %>>%
+    contact_cst_list <- contact_count_list %>>%
       dplyr::filter(InternalID %in% cstID)
     if (store) {
       self$contact_cst_list <- contact_cst_list
