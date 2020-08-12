@@ -207,7 +207,10 @@ glucose_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) {
       GlucoseUnits = "mmol/L"
     )
 
-  glucose <- rbind(glucose_serum, glucose_obs) %>>%
+  glucose <- rbind( # glucose_serum and glucose_obs are tibbles, which don't rbind well!
+    as.data.frame(glucose_serum),
+    as.data.frame(glucose_obs)
+    ) %>>%
     dplyr::group_by(InternalID) %>>%
     dplyr::arrange(dplyr::desc(GlucoseDate), .by_group = TRUE) %>>%
     dplyr::filter(dplyr::row_number() == 1) %>>% # keeps 'last' (most recent result, resolve 'tie')
