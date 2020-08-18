@@ -1163,11 +1163,18 @@ read_subscription_db <- function(dMeasure_obj,
     #  the search will return an empty list! (instead of a dataframe)
 
     a <- a %>>%
-      dplyr::left_join(airtable$Subscriptions$select(filterByFormula = search_string) %>>%
-        # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
-        dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
-        dplyr::select(IdentifierUpper, NewLicense = License),
-      by = "IdentifierUpper"
+      dplyr::left_join(
+        airtable$Subscriptions$select(filterByFormula = search_string) %>>%
+          # should return a dataframe with (id, Key, License, Comment, createdTime), all characters
+          # but *could* return an empty list
+          dplyr::bind_rows(data.frame(
+            id = character(), Key = character(), License = character(),
+            Comment = character(), createdTime = character()
+          )) %>>%
+          # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
+          dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
+          dplyr::select(IdentifierUpper, NewLicense = License),
+        by = "IdentifierUpper"
       ) %>>%
       dplyr::mutate(
         License =
@@ -1179,7 +1186,7 @@ read_subscription_db <- function(dMeasure_obj,
               # and also need to update our configuration database
 
               if (nrow(self$userconfig.list() %>>%
-                dplyr::filter(Fullname == x)) == 0) {
+                       dplyr::filter(Fullname == x)) == 0) {
                 # the user has NO entry in the configuration database, so create one
                 self$userconfig.insert(list(Fullname = x))
               }

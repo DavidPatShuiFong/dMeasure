@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.12
-13th August 2020
+18th August 2020
 
 ## New
 
@@ -20,6 +20,7 @@ Changelog
 ## Bugfix
 
 * avoid rbinding tibble in `$gluocse_obs`
+* `$read_subscription_db` handles situation where no relevant registrations are found
 
 # 0.9.11
 8th July 2020
