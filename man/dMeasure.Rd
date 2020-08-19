@@ -1109,7 +1109,8 @@ dMeasure class
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )}\if{html}{\out{</div>}}
 }
 

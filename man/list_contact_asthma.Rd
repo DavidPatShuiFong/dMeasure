@@ -32,6 +32,8 @@ list_contact_asthma(
 \item{max_date}{most recent contact must be at most max_date. default is $contact_maxDate, initially Sys.Date()}
 
 \item{contact_type}{contact types which are accepted. default is $contact_type}
+
+\item{store}{keep result in  self$contact_asthma_list}
 }
 \value{
 dataframe of Patient (name), InternalID, Count, and most recent contact date
