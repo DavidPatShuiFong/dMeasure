@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.12
-18th August 2020
+19th August 2020
 
 ## New
 
