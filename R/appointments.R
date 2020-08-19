@@ -111,7 +111,7 @@ filter_appointments <- function(dMeasure_obj,
       # but if clinicians is a single NA, then read $clinicians
       clinicians <- self$clinicians
     }
-    if (is.na(status)) {
+    if (length(status) == 1 && is.na(status)) {
       status <- self$appointment_status_types
       # by default, include all appointments status types
       # e.g. Booked, Waiting, Complete
@@ -393,7 +393,7 @@ list_visits <- function(dMeasure_obj,
     if (all(is.na(clinicians)) || length(clinicians) == 0) {
       clinicians <- c("")
     }
-    if (is.na(visit_type)) {
+    if (length(visit_type) == 1 && is.na(visit_type)) {
       visit_type <- self$visit_type
     }
 

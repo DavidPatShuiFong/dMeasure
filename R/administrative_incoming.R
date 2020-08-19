@@ -53,10 +53,10 @@ NULL
     ActionDate = as.Date(integer(0),
       origin = "1970-01-01"
     ),
-    CHECKEDBY = numeric(), # this will be a number! (UserID)
-    NOTATION = numeric(), # this will be a number!
+    CheckedBy = numeric(), # this will be a number! (UserID)
+    Notation = numeric(), # this will be a number!
     Comment = character(),
-    ACTION = numeric(),
+    Action = numeric(),
     stringsAsFactors = FALSE
   )
 ) # this will be a number!
@@ -109,10 +109,10 @@ NULL
     ActionDate = as.Date(integer(0),
       origin = "1970-01-01"
     ),
-    CHECKEDBY = numeric(), # this will be a number! (UserID)
-    NOTATION = numeric(), # this will be a number!
+    CheckedBy = numeric(), # this will be a number! (UserID)
+    Notation = numeric(), # this will be a number!
     Comment = character(),
-    ACTION = numeric(), # this will be a number!
+    Action = numeric(), # this will be a number!
     Patient = character(),
     AppointmentDate = as.Date(integer(0),
       origin = "1970-01-01"
@@ -751,28 +751,14 @@ filter_correspondence <- function(dMeasure_obj,
     }
 
     correspondence <- self$db$correspondenceInRaw %>>%
-      dplyr::filter(CHECKDATE >= date_from & CHECKDATE <= date_to) %>>%
-      dplyr::filter(CHECKEDBY %in% clinician_n) %>>%
+      dplyr::filter(CheckDate >= date_from & CheckDate <= date_to) %>>%
+      dplyr::filter(CheckedBy %in% clinician_n) %>>%
       dplyr::select(
-        INTERNALID, DOCUMENTID,
-        CATEGORY, SUBJECT, DETAIL,
-        CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
-        CHECKEDBY, NOTATION, COMMENT, ACTION
-      ) %>>%
-      dplyr::rename(
-        InternalID = INTERNALID, DocumentID = DOCUMENTID,
-        Category = CATEGORY, Subject = SUBJECT, Detail = DETAIL,
-        CorrespondenceDate = CORRESPONDENCEDATE,
-        CheckDate = CHECKDATE, ActionDate = ACTIONDATE,
-        Comment = COMMENT
-      ) %>>%
-      dplyr::mutate(
-        Category = trimws(Category),
-        Subject = trimws(Subject),
-        Detail = trimws(Detail)
+        InternalID, DocumentID,
+        Category, Subject, Detail,
+        CorrespondenceDate, CheckDate, ActionDate,
+        CheckedBy, Notation, Comment, Action
       )
-    # note leaves CHECKEDBY, NOTATION and ACTION in original names
-    # as these values are in numeric (UserID etc.) rather than 'named'/string form
 
     # a database filter on an empty list after %in% will result in an error message
 
@@ -786,7 +772,7 @@ filter_correspondence <- function(dMeasure_obj,
       ))
     # the most important being values 6 and 7. could return NA if not found
     ActionValue <- c(ActionValue[!is.na(ActionValue)], -999) # -999 is a dummy value
-    correspondence <- dplyr::filter(correspondence, ACTION %in% ActionValue)
+    correspondence <- dplyr::filter(correspondence, Action %in% ActionValue)
 
     if (!is.null(Actioned)) {
       if (is.logical(Actioned)) {
@@ -978,7 +964,7 @@ filter_correspondence_appointment <- function(dMeasure_obj,
 #' Filtered by date, and chosen clinicians
 #' Stores result in $correspondence_filtered_named
 #' Values stored as numeric in $correspondence_filtered_appointments
-#' are changed to 'human-readable' character strings e.g. ACTION
+#' are changed to 'human-readable' character strings e.g. Action
 #'
 #' @param dMeasure_obj dMeasure R6 object
 #' @param date_from (default dMeasure_obj$date_a) start date
@@ -1057,7 +1043,7 @@ filter_correspondence_named <- function(dMeasure_obj,
     }
 
     n_UserNames <- length(c(self$UserFullConfig$Fullname))
-    # needed later for changing CHECKEDBY to a user name
+    # needed later for changing CheckedBy to a user name
 
     self$correspondence_filtered_named <- self$correspondence_filtered_appointment %>>%
       dplyr::left_join(self$db$patients, by = "InternalID", copy = TRUE) %>>%
@@ -1066,8 +1052,8 @@ filter_correspondence_named <- function(dMeasure_obj,
         Firstname, Surname,
         DOB, InternalID, RecordNo, DocumentID,
         Category, Subject, Detail,
-        CorrespondenceDate, CheckDate, CHECKEDBY,
-        NOTATION, ACTION, ActionDate, Comment,
+        CorrespondenceDate, CheckDate, CheckedBy,
+        Notation, Action, ActionDate, Comment,
         AppointmentDate, AppointmentTime, Provider, Status
       ) %>>%
       dplyr::collect() %>>%
@@ -1112,28 +1098,28 @@ filter_correspondence_named <- function(dMeasure_obj,
       dplyr::mutate(
         CheckedBy = c(self$UserFullConfig$Fullname, "")
         [dplyr::if_else(
-            CHECKEDBY == 0,
+            CheckedBy == 0,
             as.integer(n_UserNames + 1),
-            CHECKEDBY
+            CheckedBy
           )],
-        # this strange incantation is to deal with '0' CHECKEDBY
+        # this strange incantation is to deal with '0' CheckedBy
         Notation = c(
           "Normal", "Abnormal", "Stable",
           "Acceptable", "Unacceptable", "Being treated",
           "Under specialist care", ""
         )
-        [dplyr::if_else(NOTATION == 0, as.integer(9), NOTATION)],
-        # this strange if_else is to deal with 'empty' NOTATION
+        [dplyr::if_else(Notation == 0, as.integer(9), Notation)],
+        # this strange if_else is to deal with 'empty' Notation
         Action = c(
           "No action", "Reception to advise",
           "Nurse to advise", "Doctor to advise",
           "Send routine reminder", "Non-urgent appointment",
           "Urgent appointment", ""
         )
-        # this strange if_else is to deal with 'empty' ACTION
-        [dplyr::if_else(ACTION == 0, as.integer(8), ACTION)]
+        # this strange if_else is to deal with 'empty' Action
+        [dplyr::if_else(Action == 0, as.integer(8), Action)]
       ) %>>%
-      dplyr::select(-c(CHECKEDBY, NOTATION, ACTION))
+      dplyr::select(-c(CheckedBy, Notation, Action))
   }
 
   return(self$correspondence_filtered_named)

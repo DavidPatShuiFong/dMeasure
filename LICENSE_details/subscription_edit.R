@@ -40,7 +40,7 @@ ui <- shiny::fluidPage(
 
 
 server <- function(input, output) {
-  subscriptions <- shiny::eactiveVal() # later will point to database
+  subscriptions <- shiny::reactiveVal() # later will point to database
 
   table_base <- shiny::reactiveVal(data.frame(
     id = character(),

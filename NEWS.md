@@ -1,5 +1,27 @@
 Changelog
 
+# 0.9.12
+19th August 2020
+
+## New
+
+* add `diabetes_type1_list` and `diabetes_type2_list` methods
+* add `glucose_obs` method
+* add `README.md`
+* `store` option for `$list_contact_*`, `contact_*_list`
+
+## Change
+
+* `db$correspondenceInRaw` name changed to camel-case. string fields trimmed,
+  date fields converted with `as.Date`
+* replace various `dplyr::filter(x == max(x))` with `dplyr::arrange(desc(x), .by_group = TRUE) %>>% dplyr::filter(dplyr::row_number() == 1)`
+  + `arrange` and `slice` breaks ties, where more than one x has the same 'max' value
+
+## Bugfix
+
+* avoid rbinding tibble in `$gluocse_obs`
+* `$read_subscription_db` handles situation where no relevant registrations are found
+
 # 0.9.11
 8th July 2020
 

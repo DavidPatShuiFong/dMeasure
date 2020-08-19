@@ -13,7 +13,8 @@ list_contact_count(
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ default is $contact_maxDate, initially Sys.Date()}
 
 \item{contact_type}{contact types which are accepted.
 default is $contact_type}
+
+\item{lazy}{force re-calculate?}
+
+\item{store}{keep result in self$contact_count_list?}
 }
 \value{
 dataframe of Patient (name), InternalID, Count, and most recent contact date

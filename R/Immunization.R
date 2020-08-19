@@ -561,7 +561,9 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # 'ifelse' does not preserve date type in this circumstance
     dplyr::group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>>%
     # group by appointment
-    dplyr::slice(which.max(GivenDate)) %>>%
+    dplyr::arrange(dplyr::desc(GivenDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>%
+    # the 'maximum' TestDate, breaking 'ties'
     dplyr::ungroup() %>>%
     # (one) item with latest vaccinedate (prior to appointmentdate/Date)
     dplyr::mutate(Reason = paste0("Given : ", GivenDate)) %>>%

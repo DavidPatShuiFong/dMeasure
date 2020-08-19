@@ -13,7 +13,8 @@ list_contact_chroniclungdisease(
   min_date = NA,
   max_date = NA,
   contact_type = NA,
-  lazy = FALSE
+  lazy = FALSE,
+  store = TRUE
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ list_contact_chroniclungdisease(
 \item{max_date}{most recent contact must be at most max_date. default is $contact_maxDate, initially Sys.Date()}
 
 \item{contact_type}{contact types which are accepted. default is $contact_type}
+
+\item{lazy}{force re-calculation?}
+
+\item{store}{keep result in self$contact_chroniclungdisease_list}
 }
 \value{
 dataframe of Patient (name), InternalID, Count, and most recent contact date

@@ -51,6 +51,85 @@ diabetes_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
+#' list of patients with diabetes type 1
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'
+#'  If no dataframe provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
+diabetes_type1_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$diabetes_type1_list(appointments)
+}
+.public(dMeasure, "diabetes_type1_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # Returns vector of InternalID of patients who have diabetes
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  # Best Practice Diabetes code
+  diabetes_codes <- c(776)
+
+  self$db$history %>>%
+    dplyr::filter(
+      ConditionID %in% diabetes_codes,
+      InternalID %in% intID
+    ) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
+
+#' list of patients with diabetes type 2
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'
+#'  If no dataframe provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
+diabetes_type2_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$diabetes_type2_list(appointments)
+}
+.public(dMeasure, "diabetes_type2_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # Returns vector of InternalID of patients who have diabetes
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  # Best Practice Diabetes code
+  diabetes_codes <- c(778)
+
+  self$db$history %>>%
+    dplyr::filter(
+      ConditionID %in% diabetes_codes,
+      InternalID %in% intID
+    ) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
 
 ### Asthma sub-code
 #' list of patients with asthma
@@ -771,7 +850,8 @@ bmi30_list <- function(dMeasure_obj, appointments = NULL) {
     dplyr::filter(ObservationDate <= as.Date(Date)) %>>%
     # observation done before the appointment date
     dplyr::group_by(InternalID, Date) %>>%
-    dplyr::slice(which.max(ObservationDate)) %>>%
+    dplyr::arrange(dplyr::desc(ObservationDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # the 'maximum' ObservationDate, breaking 'ties'
     # choose the observation with the most recent observation date
     # unfortunately, as the code stands, this generates a vector which
     # is not appointment date specific

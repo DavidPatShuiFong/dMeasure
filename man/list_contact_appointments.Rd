@@ -9,7 +9,8 @@ list_contact_appointments(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  status = NA
+  status = NA,
+  store = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ list_contact_appointments(
 permissible values are 'Booked', 'Completed', 'At billing',
 'Waiting', 'With doctor'
 if NA, adopts from active $appointment_status}
+
+\item{store}{keep result in self$contact_appointments_list?}
 }
 \value{
 dataframe of Patient (name), InternalID, AppointmentDate

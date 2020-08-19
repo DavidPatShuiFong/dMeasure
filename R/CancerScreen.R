@@ -196,7 +196,8 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
     dplyr::group_by(InternalID, AppointmentDate) %>>%
     # group by patient ID (need most recent investigation for each patient)
     # only keep the latest(/recent) dated investigation prior to each appointment
-    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(TestDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # the 'maximum' TestDate, breaking 'ties'
     dplyr::ungroup() %>>%
     dplyr::mutate(
       OutOfDateTest =
@@ -365,7 +366,8 @@ list_cst_details <- function(
     dplyr::group_by(InternalID, Date) %>>%
     # group by patient ID (need most recent investigation for each patient)
     # only keep the latest(/recent) dated investigation prior to each appointment
-    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(TestDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # the 'maximum' TestDate, breaking 'ties'
     dplyr::ungroup() %>>%
     dplyr::mutate(TestAge = dMeasure::interval(TestDate, Date)$year) %>>%
     dplyr::mutate(
@@ -643,7 +645,8 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     dplyr::group_by(InternalID, AppointmentDate) %>>%
     # group by patient ID (need most recent investigation for each patient)
     # only keep the latest(/recent) dated investigation prior to each appointment
-    dplyr::filter(TestDate == max(TestDate, na.rm = TRUE)) %>>%
+    dplyr::arrange(dplyr::desc(TestDate), .by_group = TRUE) %>>%
+    dplyr::filter(dplyr::row_number() == 1) %>>% # the 'maximum' TestDate, breaking 'ties'
     dplyr::ungroup() %>>%
     dplyr::mutate(TestAge = dMeasure::interval(TestDate, AppointmentDate)$year) %>>%
     dplyr::mutate(
