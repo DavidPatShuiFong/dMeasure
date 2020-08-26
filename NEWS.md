@@ -1,5 +1,13 @@
 Changelog
 
+# 0.9.13
+26th August 2020
+
+## Bugfix
+
+* `read_subscripton_db` can now handle (much) more than 700 names in the list
+  + not many practices should have that many users, but mine does...
+
 # 0.9.12
 19th August 2020
 
