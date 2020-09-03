@@ -3,6 +3,11 @@ Changelog
 # 0.9.13
 26th August 2020
 
+## Changes
+
+* `self$db$users` now based on `USERS` rather than `BPS_Users` to include 'inactive'
+  users.
+
 ## Bugfix
 
 * `read_subscripton_db` can now handle (much) more than 700 names in the list

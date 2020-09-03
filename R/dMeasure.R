@@ -1688,19 +1688,33 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(PracticeName = PRACTICENAME) %>>%
     dplyr::mutate(PracticeName = trimws(PracticeName))
 
-  self$db$users <- emr_db$conn() %>>%
+  self$db$users <-
+    emr_db$conn() %>>%
     # this is a function! a collect() is later called prior to mutate/join,
     # (as a result is no longer a 'lazy eval') and cannot be evaluated just once.
     # output - Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
-    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Users")) %>>%
-    dplyr::select(c(
-      "UserID", "Surname", "Firstname",
-      "LocationName", "Title", "ProviderNo"
-    )) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "USERS")) %>>%
+    # 'BPS_Users' doesn't include 'inactive' users
+    dplyr::select(USERID, USERSTATUS, SURNAME, FIRSTNAME, LOCATIONID, TITLECODE, PROVIDERNO) %>>%
+    dplyr::left_join(
+      self$emr_db$conn() %>>%
+        dplyr::tbl(dbplyr::in_schema("dbo", "LOCATIONS")) %>>%
+        dplyr::select(LOCATIONID, LOCATIONNAME),
+      by = "LOCATIONID") %>>%
+    dplyr::left_join(
+      self$emr_db$conn() %>>%
+        dplyr::tbl(dbplyr::in_schema("dbo", "TITLES")),
+      by = "TITLECODE") %>>%
+    dplyr::filter(USERSTATUS %in% c(1, 2)) %>>% # active and inactive users
+    dplyr::select(
+      UserID = USERID, Surname = SURNAME, Firstname = FIRSTNAME,
+      ProviderNo = PROVIDERNO, LocationName = LOCATIONNAME, Title = TITLE
+    ) %>>%
     dplyr::mutate(
       Surname = trimws(Surname),
       Firstname = trimws(Firstname),
       Title = trimws(Title),
+      LocationName = trimws(LocationName),
       ProviderNo = trimws(ProviderNo)
     )
   invisible(self$UserConfig)
