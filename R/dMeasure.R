@@ -1999,22 +1999,22 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$vaccine_disease <- emr_db$conn() %>>%
     # vaccineIDs linked to diseases
     # e.g. diseasecode 7+30 are for influenza vaccines
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
   self$db$vaccines <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINES")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINES")) %>>%
     # there is also ACIRCODE, CHIDLHOOD, GENERIC
     dplyr::select("VACCINEID", "VACCINENAME") %>>%
     dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
     dplyr::mutate(VaccineName = trimws(VACCINENAME))
 
   self$db$vaccine_disease <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
   self$db$vaxdiseases <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VAXDISEASES")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VAXDISEASES")) %>>%
     dplyr::select("DISEASECODE", "DISEASENAME") %>>%
     dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
     dplyr::mutate(DiseaseName = trimws(DISEASENAME))

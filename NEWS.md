@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.13
-26th August 2020
+17th November 2020
 
 ## Changes
 
@@ -12,6 +12,8 @@ Changelog
 
 * `read_subscripton_db` can now handle (much) more than 700 names in the list
   + not many practices should have that many users, but mine does...
+* change call to `dbplyr::in_schema` to opt out of quoting for schemas
+  + change required for `dbplyr` version 2.0.0
 
 # 0.9.12
 19th August 2020
