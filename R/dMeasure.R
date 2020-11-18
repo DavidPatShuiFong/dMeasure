@@ -341,13 +341,6 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
 # $config_db_trigR will trigger (0/1) with each configuration
 # database change
 
-.public_init(dMeasure, "subscription_db", quote(dbConnection::dbConnection$new()))
-# R6 connection to subscription database
-# using either DBI or pool
-# two subscription databases available
-#  1. vkelim.3322.org and 2. vkelim.dsmynas.com
-#  port 3306, username = "guest", password - not required, dbname = "DailyMeasureUsers"
-
 BPdatabase_empty <- data.frame(
   id = integer(),
   Name = character(),
@@ -1241,9 +1234,6 @@ read_subscription_db <- function(dMeasure_obj,
         )
 
     }
-
-    # close before exit
-    self$subscription_db$close()
 
     return(self$UserFullConfig) # this contains the updated license informatioin
   } else {

@@ -14,6 +14,7 @@ Changelog
   + not many practices should have that many users, but mine does...
 * change call to `dbplyr::in_schema` to opt out of quoting for schemas
   + change required for `dbplyr` version 2.0.0
+* `filter_correspondence_named` no longer removes `CheckedBy`, `Notation` and `Action`
 
 # 0.9.12
 19th August 2020

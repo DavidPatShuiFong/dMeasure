@@ -1118,8 +1118,7 @@ filter_correspondence_named <- function(dMeasure_obj,
         )
         # this strange if_else is to deal with 'empty' Action
         [dplyr::if_else(Action == 0, as.integer(8), Action)]
-      ) %>>%
-      dplyr::select(-c(CheckedBy, Notation, Action))
+      )
   }
 
   return(self$correspondence_filtered_named)
