@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.13
-17th November 2020
+21st November 2020
 
 ## Changes
 
@@ -15,6 +15,7 @@ Changelog
 * change call to `dbplyr::in_schema` to opt out of quoting for schemas
   + change required for `dbplyr` version 2.0.0
 * `filter_correspondence_named` no longer removes `CheckedBy`, `Notation` and `Action`
+* `view_incoming` no longer separates past and future appointments
 
 # 0.9.12
 19th August 2020
