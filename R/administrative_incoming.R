@@ -1346,6 +1346,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
           Checked, Actioned,
           CheckedBy, Notation, Comment, Action
         ) %>>%
+        dplyr::arrange(AppointmentDetail, .by_group = TRUE) %>>%
         # group appointments by the investigation report or Document
         # gathers appointments referring to the same report/correspondence into a single row
         dplyr::summarise(labeltag = paste(viewtag, collapse = "")) %>>%
@@ -1356,7 +1357,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
       incoming <- incoming %>>%
         dplyr::mutate(viewtag_print = paste(dplyr::if_else(
           PastAppointment,
-          "Past : ",
+          "(Past) ",
           ""
         ),
         AppointmentDetail,
@@ -1368,6 +1369,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
           Reported, Checked, Actioned,
           CheckedBy, Notation, Comment, Action
         ) %>>%
+        dplyr::arrange(AppointmentDetail, .by_group = TRUE) %>>%
         # group appointments by the investigation report or Document
         # gathers appointments referring to the same report/correspondence into a single row
         dplyr::summarise(
