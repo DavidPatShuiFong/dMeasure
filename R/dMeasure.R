@@ -160,7 +160,7 @@ dMeasure <-
     self$db$servicesRaw <- NULL
     self$db$history <- NULL
     self$db$currentRx <- NULL
-    self$db$currentRx_raw <- NULL
+    # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
     self$db$familyhistory <- NULL
     self$db$familyhistorydetail <- NULL
     self$db$relationcode <- NULL
@@ -712,7 +712,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$invoices <- NULL
       self$db$history <- NULL
       self$db$currentRx <- NULL
-      self$db$currentRx_raw <- NULL
+      # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
       self$db$familyhistory <- NULL
       self$db$familyhistorydetail <- NULL
       self$db$relationcode <- NULL
@@ -1994,14 +1994,10 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$vaccines <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINES")) %>>%
-    # there is also ACIRCODE, CHIDLHOOD, GENERIC
+    # there is also ACIRCODE, CHILDHOOD, GENERIC
     dplyr::select("VACCINEID", "VACCINENAME") %>>%
     dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
     dplyr::mutate(VaccineName = trimws(VACCINENAME))
-
-  self$db$vaccine_disease <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINE_DISEASE")) %>>%
-    dplyr::select("VACCINEID", "DISEASECODE")
 
   self$db$vaxdiseases <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VAXDISEASES")) %>>%
@@ -2163,6 +2159,15 @@ initialize_emr_tables <- function(dMeasure_obj,
       LastDate = as.Date(LastDate)
     )
 
+  # self$db$currentRx_raw <- emr_db$conn() %>>%
+  #   dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
+  #   dplyr::select(
+  #     "InternalID" = "INTERNALID", "PRODUCTID",
+  #     "DRUGNAME", "RXSTATUS"
+  #   )
+  # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
+  # no longer present in Best Practice Saffron version
+
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
     dplyr::select(
@@ -2232,14 +2237,6 @@ initialize_emr_tables <- function(dMeasure_obj,
   #  10 - Head circumference
   #  17 - Waist, 18 - Hip
   #  21 - WHRatio, 26 - DiabRisk
-
-  self$db$currentRx_raw <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
-    dplyr::select(
-      "InternalID" = "INTERNALID", "PRODUCTID",
-      "DRUGNAME", "RXSTATUS"
-    )
-  # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
 
   self$db$obgyndetail <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "OBSGYNDETAIL")) %>>%

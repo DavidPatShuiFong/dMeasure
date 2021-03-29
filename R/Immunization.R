@@ -126,20 +126,20 @@ list_zostavax <- function(dMeasure_obj,
 
   zostavax_list <- zostavax_list %>>%
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter(
-        InternalID %in% intID,
-        # those who have had the zostavax vaccine
-        ((VaccineName %LIKE% "%zostavax%") |
-          (VaccineID == 103))
-      ),
-    by = "InternalID",
-    copy = TRUE
+                       dplyr::filter(
+                         InternalID %in% intID,
+                         # those who have had the zostavax vaccine
+                         ((VaccineName %LIKE% "%zostavax%") |
+                            (VaccineID == 103))
+                       ),
+                     by = "InternalID",
+                     copy = TRUE
     ) %>>%
     dplyr::left_join(self$db$preventive_health %>>%
-      # those who have been removed from the reminder system for Zostavax
-      dplyr::filter(ITEMID == 15),
-    by = "InternalID",
-    copy = TRUE
+                       # those who have been removed from the reminder system for Zostavax
+                       dplyr::filter(ITEMID == 15),
+                     by = "InternalID",
+                     copy = TRUE
     ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
@@ -309,7 +309,7 @@ list_measlesVax <- function(dMeasure_obj,
     # just the InternalID
     measlesVax_list <- appointments_list %>>%
       dplyr::filter(DOB >= as.Date("1966-01-01") &
-        DOB <= as.Date("1997-12-31")) %>>%
+                      DOB <= as.Date("1997-12-31")) %>>%
       # from DOB 1966 to 1997 inclusive
       dplyr::mutate(Date = AppointmentDate) # used to compare with vax date
   } else {
@@ -317,7 +317,7 @@ list_measlesVax <- function(dMeasure_obj,
       dplyr::filter(InternalID %in% c(intID, -1)) %>>%
       dplyr::select(InternalID, DOB) %>>%
       dplyr::filter(DOB >= as.Date("1966-01-01") &
-        DOB <= as.Date("1997-12-31")) %>>%
+                      DOB <= as.Date("1997-12-31")) %>>%
       dplyr::pull(InternalID) %>>%
       unique() %>>% c(-1)
 
@@ -328,23 +328,23 @@ list_measlesVax <- function(dMeasure_obj,
   # pregnancy is a contra-indication to measles vax
 
   measlesVaxID <- unlist(self$db$vaccine_disease %>>%
-    dplyr::filter(DISEASECODE %in% c(9)) %>>%
-    dplyr::select(VACCINEID) %>>%
-    dplyr::collect(), use.names = FALSE)
+                           dplyr::filter(DISEASECODE %in% c(9)) %>>%
+                           dplyr::select(VACCINEID) %>>%
+                           dplyr::collect(), use.names = FALSE)
   # there are several measles vaccines, these can be found
   # via the db$vaccine_disease database
 
   measlesVax_list <- measlesVax_list %>>%
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter(
-        InternalID %in% intID,
-        # those who have had the measles vaccine
-        ((VaccineName %LIKE% "%measles%") |
-          VaccineName %LIKE% "%mmr%" |
-          (VaccineID %in% measlesVaxID))
-      ),
-    by = "InternalID",
-    copy = TRUE
+                       dplyr::filter(
+                         InternalID %in% intID,
+                         # those who have had the measles vaccine
+                         ((VaccineName %LIKE% "%measles%") |
+                            VaccineName %LIKE% "%mmr%" |
+                            (VaccineID %in% measlesVaxID))
+                       ),
+                     by = "InternalID",
+                     copy = TRUE
     ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
@@ -521,9 +521,9 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     intID_Date <- data.frame(InternalID = intID, Date = intID_Date)
     list_details <- intID_Date %>>%
       dplyr::left_join(self$db$patients %>>%
-        dplyr::filter(InternalID %in% c(intID, -1)) %>>%
-        dplyr::select(InternalID, DOB),
-      by = "InternalID", copy = TRUE
+                         dplyr::filter(InternalID %in% c(intID, -1)) %>>%
+                         dplyr::select(InternalID, DOB),
+                       by = "InternalID", copy = TRUE
       ) %>>%
       dplyr::mutate(DOB = as.Date(DOB)) %>>%
       dplyr::mutate(
@@ -536,21 +536,21 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   }
 
   fluvaxID <- unlist(self$db$vaccine_disease %>>%
-    dplyr::filter(DISEASECODE %in% c(7, 30)) %>>%
-    dplyr::select(VACCINEID) %>>%
-    dplyr::collect(), use.names = FALSE)
+                       dplyr::filter(DISEASECODE %in% c(7, 30)) %>>%
+                       dplyr::select(VACCINEID) %>>%
+                       dplyr::collect(), use.names = FALSE)
   # there are many, many influenza vaccine IDs, but these can be found
   # via the db$vaccine_disease database
 
   lprevious <- list_details %>>%
     # those who have had influenza vaccines in the past
     dplyr::left_join(self$db$immunizations %>>%
-      dplyr::filter(
-        InternalID %in% intID,
-        VaccineID %in% fluvaxID
-      ),
-    by = "InternalID",
-    copy = TRUE
+                       dplyr::filter(
+                         InternalID %in% intID,
+                         VaccineID %in% fluvaxID
+                       ),
+                     by = "InternalID",
+                     copy = TRUE
     ) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
     dplyr::filter(GivenDate <= Date) %>>%
@@ -587,8 +587,8 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # pre-term infants
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths < 24) %>>%
     dplyr::filter(InternalID %in%
-      (self$db$history %>>% dplyr::filter(ConditionID == 2973) %>>%
-        dplyr::pull(InternalID))) %>>%
+                    (self$db$history %>>% dplyr::filter(ConditionID == 2973) %>>%
+                       dplyr::pull(InternalID))) %>>%
     dplyr::mutate(
       GivenDate = as.Date(-Inf, origin = "1970-01-01"),
       Reason = "Premature infant (if <37 weeks gestation)"
@@ -696,22 +696,26 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # children aged 6 months to 10 years on long-term aspirin
     # risk of Reye's syndrome after influenza infection
     dplyr::filter(AgeInMonths >= 6 & AgeInMonths <= 131) %>>%
-    dplyr::filter(InternalID %in%
-      (self$db$currentRx_raw %>>%
-        dplyr::filter(RXSTATUS == 1 & PRODUCTID %in%
-          c(
-            99, 8489, 222, 522, 534, 12254, 545, 546, 547, 549,
-            548, 550, 554, 551, 552, 553, 555,
-            8726, 11362, 540, 8060, 8062, 8061, 8063, 8064, 541,
-            8304, 560, 559, 558, 562, 563, 8071,
-            710, 13262, 1131, 1148, 11361, 11327, 1612, 1613, 1614,
-            1619, 11360, 1917, 16891, 2328,
-            2340, 2341, 2342, 2345, 2344, 11326, 14681, 2523, 3531,
-            16877, 6827, 6918, 12519,
-            7651, 7704
-          )) %>>%
-        # RXSTATUS == 1 (long-term medication), many aspirin productIDs!
-        dplyr::pull(InternalID))) %>>%
+    dplyr::filter(
+      InternalID %in%
+        (self$db$currentRx %>>%
+           # unfortunately currentRx_raw is not available in BP version Saffron
+           # which would allow to filter via RXSTATUS == 1 (long-term)
+           # RXSTATUS == 1 (long-term medication), many aspirin productIDs!
+           dplyr::filter(
+             ProductID %in%
+               c(
+                 99, 8489, 222, 522, 534, 12254, 545, 546, 547, 549,
+                 548, 550, 554, 551, 552, 553, 555,
+                 8726, 11362, 540, 8060, 8062, 8061, 8063, 8064, 541,
+                 8304, 560, 559, 558, 562, 563, 8071,
+                 710, 13262, 1131, 1148, 11361, 11327, 1612, 1613, 1614,
+                 1619, 11360, 1917, 16891, 2328,
+                 2340, 2341, 2342, 2345, 2344, 11326, 14681, 2523, 3531,
+                 16877, 6827, 6918, 12519,
+                 7651, 7704
+               )) %>>%
+           dplyr::pull(InternalID))) %>>%
     dplyr::mutate(
       GivenDate = as.Date(-Inf, origin = "1970-01-01"),
       Reason = "Child aged 6 months to 10 years on long-term aspirin"
@@ -727,9 +731,9 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
   lhomeless <- list_details %>>%
     # homeless infants
     dplyr::filter(InternalID %in%
-      (self$db$history %>>% dplyr::filter(ConditionID == 3017 &
-        Status == "Active") %>>%
-        dplyr::pull(InternalID))) %>>%
+                    (self$db$history %>>% dplyr::filter(ConditionID == 3017 &
+                                                          Status == "Active") %>>%
+                       dplyr::pull(InternalID))) %>>%
     dplyr::mutate(
       GivenDate = as.Date(-Inf, origin = "1970-01-01"),
       Reason = "Homeless"
@@ -752,18 +756,18 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
     # join unique Reasons together
     dplyr::ungroup() %>>%
     dplyr::left_join(self$db$preventive_health %>>%
-      # those who have been removed from the reminder system for influenza
-      dplyr::filter(ITEMID == 1),
-    by = "InternalID",
-    copy = TRUE
+                       # those who have been removed from the reminder system for influenza
+                       dplyr::filter(ITEMID == 1),
+                     by = "InternalID",
+                     copy = TRUE
     ) %>>%
     dplyr::collect()
 
   if (!include_uptodate) {
     l <- l %>>%
       dplyr::filter(is.na(GivenDate) |
-        GivenDate == as.Date(-Inf, origin = "1970-01-01") |
-        format(GivenDate, "%Y") != format(AppointmentDate, "%Y"))
+                      GivenDate == as.Date(-Inf, origin = "1970-01-01") |
+                      format(GivenDate, "%Y") != format(AppointmentDate, "%Y"))
     # remove entries which are 'up-to-date'!
     # anyone who has had a flu vax  in the same year as appointment date
     # (and so has a valid 'GivenDate') is 'up-to-date'!
