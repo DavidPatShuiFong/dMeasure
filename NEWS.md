@@ -1,5 +1,13 @@
 Changelog
 
+# 0.9.14
+30th March 2021
+
+## Bugfix
+
+* remove references to `CURRENTRX` table, which is no longer accessible in Best Practice (probably since version Saffron)
+* remove redundant definitions of `self$db$vaccine_disease`
+
 # 0.9.13
 21st November 2020
 
