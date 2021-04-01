@@ -1,7 +1,11 @@
 Changelog
 
 # 0.9.14
-30th March 2021
+1st April 2021
+
+## New
+
+* `db$actions`, fields : `InternalID`, `UserID`, `Added`, `Performed`, `ActionText`, `Comment`
 
 ## Bugfix
 

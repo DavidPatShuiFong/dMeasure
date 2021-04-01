@@ -2006,7 +2006,7 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::mutate(DiseaseName = trimws(DISEASENAME))
 
   self$db$preventive_health <- emr_db$conn() %>>%
-    # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
+    # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
     dplyr::tbl(dbplyr::in_schema("dbo", "PreventiveHealth")) %>>%
     dplyr::select("InternalID" = "INTERNALID", "ITEMID")
 
@@ -2040,6 +2040,19 @@ initialize_emr_tables <- function(dMeasure_obj,
     )
   # Action includes 6 for Non-urgent appointment,
   # and 7 for Urgent appointment
+
+  self$db$actions <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ACTIONS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID, UserID = USERID,
+      Added = ADDED, Performed = PERFORMED,
+      ActionText = ACTIONTEXT, Comment = COMMENT
+    ) %>>%
+    dplyr::mutate(
+      Added = as.Date(Added), Performed = as.Date(Performed),
+      ActionText = trimws(as.character(ActionText)),
+      Comment = trimws(as.character(Comment))
+    )
 
   self$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
