@@ -2045,11 +2045,12 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::tbl(dbplyr::in_schema("dbo", "ACTIONS")) %>>%
     dplyr::select(
       InternalID = INTERNALID, UserID = USERID,
-      Added = ADDED, Performed = PERFORMED,
+      Added = ADDED, DueDate = DUEDATE, Performed = PERFORMED,
       ActionText = ACTIONTEXT, Comment = COMMENT
     ) %>>%
     dplyr::mutate(
-      Added = as.Date(Added), Performed = as.Date(Performed),
+      Added = as.Date(Added), DueDate = as.Date(DueDate),
+      Performed = as.Date(Performed),
       ActionText = trimws(as.character(ActionText)),
       Comment = trimws(as.character(Comment))
     )
