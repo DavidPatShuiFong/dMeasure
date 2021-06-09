@@ -1,5 +1,34 @@
 Changelog
 
+# 0.9.14
+4th April 2021
+
+## New
+
+* `db$actions`, fields : `InternalID`, `UserID`, `Added`, `DueDate`, `Performed`, `ActionText`, `Comment`
+
+## Bugfix
+
+* remove references to `CURRENTRX` table, which is no longer accessible in Best Practice (probably since version Saffron)
+* remove redundant definitions of `self$db$vaccine_disease`
+
+# 0.9.13
+21st November 2020
+
+## Changes
+
+* `self$db$users` now based on `USERS` rather than `BPS_Users` to include 'inactive'
+  users.
+
+## Bugfix
+
+* `read_subscripton_db` can now handle (much) more than 700 names in the list
+  + not many practices should have that many users, but mine does...
+* change call to `dbplyr::in_schema` to opt out of quoting for schemas
+  + change required for `dbplyr` version 2.0.0
+* `filter_correspondence_named` no longer removes `CheckedBy`, `Notation` and `Action`
+* `view_incoming` no longer separates past and future appointments
+
 # 0.9.12
 19th August 2020
 

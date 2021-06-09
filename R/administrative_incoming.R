@@ -1118,8 +1118,7 @@ filter_correspondence_named <- function(dMeasure_obj,
         )
         # this strange if_else is to deal with 'empty' Action
         [dplyr::if_else(Action == 0, as.integer(8), Action)]
-      ) %>>%
-      dplyr::select(-c(CheckedBy, Notation, Action))
+      )
   }
 
   return(self$correspondence_filtered_named)
@@ -1280,25 +1279,24 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
       # (that is automatically done by calling the above methods
     }
 
-    incoming <- dplyr::bind_rows(incoming, self$investigations_filtered_named)
-
-    incoming <- dplyr::bind_rows(
-      incoming,
-      dplyr::rename(self$correspondence_filtered_named,
-        TestName = DocumentName,
-        Reported = CorrespondenceDate,
-        Checked = CheckDate,
-        Actioned = ActionDate
-      )
-    )
-
     incoming <- incoming %>>%
+      dplyr::bind_rows(self$investigations_filtered_named) %>>%
+      dplyr::bind_rows(
+        self$correspondence_filtered_named %>>%
+          dplyr::rename(
+            TestName = DocumentName,
+            Reported = CorrespondenceDate,
+            Checked = CheckDate,
+            Actioned = ActionDate
+          )
+      ) %>>%
       dplyr::mutate(PastAppointment = AppointmentDate < Sys.Date()) %>>%
       # the listed appointment has already 'past'
       dplyr::mutate(AppointmentDetail = paste(AppointmentDate, " ", AppointmentTime,
         " ", Provider, " (", Status, ")",
         sep = ""
       ))
+
     if (screentag) {
       incoming <- incoming %>>%
         dplyr::mutate(
@@ -1346,9 +1344,9 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
           patienttag, InternalID, RecordNo,
           testtag, ReportID, DocumentID,
           Checked, Actioned,
-          CheckedBy, Notation, Comment, Action,
-          PastAppointment
+          CheckedBy, Notation, Comment, Action
         ) %>>%
+        dplyr::arrange(AppointmentDetail, .by_group = TRUE) %>>%
         # group appointments by the investigation report or Document
         # gathers appointments referring to the same report/correspondence into a single row
         dplyr::summarise(labeltag = paste(viewtag, collapse = "")) %>>%
@@ -1359,7 +1357,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
       incoming <- incoming %>>%
         dplyr::mutate(viewtag_print = paste(dplyr::if_else(
           PastAppointment,
-          "Past : ",
+          "(Past) ",
           ""
         ),
         AppointmentDetail,
@@ -1369,9 +1367,9 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
           Patient, InternalID, RecordNo, DOB, Age,
           TestName, ReportID, DocumentID,
           Reported, Checked, Actioned,
-          CheckedBy, Notation, Comment, Action,
-          PastAppointment
+          CheckedBy, Notation, Comment, Action
         ) %>>%
+        dplyr::arrange(AppointmentDetail, .by_group = TRUE) %>>%
         # group appointments by the investigation report or Document
         # gathers appointments referring to the same report/correspondence into a single row
         dplyr::summarise(
@@ -1384,7 +1382,7 @@ incoming_view <- function(dMeasure_obj, date_from = NA, date_to = NA,
 
   incoming <- dplyr::select(
     incoming,
-    -c(InternalID, ReportID, DocumentID, PastAppointment)
+    -c(InternalID, ReportID, DocumentID)
   )
 
   return(incoming)
