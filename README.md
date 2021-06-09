@@ -1,6 +1,6 @@
 ## dMeasure
 
-v0.9.13 (12th July 2020)
+v0.9.14 (9th June 2021)
 
 Mozilla Public License 2.0
 
