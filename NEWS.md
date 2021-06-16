@@ -6,6 +6,7 @@ Changelog
 ## Bugfix
 
 * allow `USERSTATUS` == 3 for `self$db$users`
+* empty user list data.frame had 'factorized' strings. change to normal strings
 
 # 0.9.14
 4th April 2021

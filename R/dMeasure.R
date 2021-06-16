@@ -561,7 +561,8 @@ UserConfigLicense <- function(dMeasure_obj) {
         Identifier = character(),
         LicenseDate = as.Date(numeric(0),
                               origin = "1970-01-01"
-        )
+        ),
+        stringsAsFactors = FALSE
       )
   }
   return(userconfiglicense)
