@@ -1695,7 +1695,10 @@ initialize_emr_tables <- function(dMeasure_obj,
       self$emr_db$conn() %>>%
         dplyr::tbl(dbplyr::in_schema("dbo", "TITLES")),
       by = "TITLECODE") %>>%
-    dplyr::filter(USERSTATUS %in% c(1, 2)) %>>% # active and inactive users
+    dplyr::filter(!(USERSTATUS == 999)) %>>%
+    # active and inactive users (1 and 2)
+    # meaning of '3' uncertain, but appears to be an active user
+    # only 999 appears to be invalid
     dplyr::select(
       UserID = USERID, Surname = SURNAME, Firstname = FIRSTNAME,
       ProviderNo = PROVIDERNO, LocationName = LOCATIONNAME, Title = TITLE

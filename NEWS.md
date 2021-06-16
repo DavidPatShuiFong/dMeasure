@@ -1,5 +1,12 @@
 Changelog
 
+# 0.9.15
+16th June 2021
+
+## Bugfix
+
+* allow `USERSTATUS` == 3 for `self$db$users`
+
 # 0.9.14
 4th April 2021
 
