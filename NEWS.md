@@ -11,6 +11,7 @@ Changelog
   + date of formats to be used in GPstat! shiny GUI
   + default value is `2021-01-17` (YYYY-mm-dd or %Y-%-m-%d)
   + value read from config_db `Settings` table, with the `setting` value of `dateformat`
+  + associated choices `self$dateformat_choices`, a vector of character strings
 
 # 0.9.15
 16th June 2021

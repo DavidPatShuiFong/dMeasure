@@ -770,6 +770,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 
 .reactive(dMeasure, "dateformat", "2021-01-17") # date format
 # only used for GPstat! shiny GUI interfacec
+.public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))
 
 ## methods
 
