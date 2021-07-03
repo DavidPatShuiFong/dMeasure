@@ -768,6 +768,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
 
+.reactive(dMeasure, "dateformat", "2021-01-17") # date format
+# only used for GPstat! shiny GUI interfacec
+
 ## methods
 
 #' Open the SQL connection to the configuration from the SQL configuration file
@@ -995,6 +998,28 @@ open_configuration_db <-
               }
             }
 
+            initialize_data_table(
+              config_db, "Settings",
+              list(
+                c("setting", "character"),
+                c("value", "character")
+                # name of setting, and then the value
+              )
+            )
+            if (requireNamespace("lubridate", quietly = TRUE)) {
+              # date format for GPstat! shiny GUI interface
+              # depends on lubridate::stamp_date
+              if (length(config_db$conn() %>>%
+                         dplyr::tbl("Settings") %>>%
+                         dplyr::filter(setting == "dateformat") %>>%
+                         dplyr::pull(value)) == 0) { # empty table
+                query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+                data_for_sql <- as.list.data.frame(c("dateformat", "2021-01-17"))
+                # default is the standard date format YYYY-mm-dd (%Y-%0m-%d)
+                config_db$dbSendQuery(query, data_for_sql)
+              }
+            }
+
           }
           invisible(self)
         })
@@ -1070,8 +1095,16 @@ read_configuration_db <- function(dMeasure_obj,
       dMCustom$read_configuration_db(config_db$conn())
     }
   }
+
+  dateformat <- config_db$conn() %>>%
+    dplyr::tbl("Settings") %>>%
+    dplyr::filter(setting == "dateformat") %>>%
+    dplyr::pull(value)
+  private$set_reactive(self$dateformat, dateformat)
+
   invisible(self)
 })
+
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
