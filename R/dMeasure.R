@@ -830,7 +830,7 @@ dateformat_choice <- function(dMeasure_obj, choice) {
       # write to SQLite configuration database
     }
 
-    self$dateformat <- choice
+    self$dateformat(choice)
 
     return(choice)
   }
