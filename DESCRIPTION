@@ -35,7 +35,7 @@ Suggests:
     dMeasureQIM,
     dMeasureBillings,
     dMeasureCDM
-RoxygenNote: 7.1.0.9000
+RoxygenNote: 7.1.1
 Collate: 
     'fomantic_definitions_tags.R'
     'r6_helpers.R'

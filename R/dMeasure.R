@@ -614,7 +614,7 @@ UserConfigLicense <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param choice (optional) name of database choice
 #'
-#'  posible value includes "None", which will close any current database
+#'  possible value includes "None", which will close any current database
 #'
 #' @return the current database choice, if choice not provided
 #'
@@ -771,6 +771,70 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 .reactive(dMeasure, "dateformat", "2021-01-17") # date format
 # only used for GPstat! shiny GUI interfacec
 .public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))
+
+#' choose (or read) dateformat choice
+#'
+#' This must be one of `self$dateformat_choices`
+#'
+#' Sets `self$dateformat` reactive, if shiny/reactive
+#' environment available
+#'
+#' @name dateformat_choice
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choice name of database choice
+#'
+#'  possible values must be one of `self$dateformat_choices`
+#'
+#' @return the current choice, if choice not provided
+#'
+#' @examples
+#' dMeasure_obj$dateformat_choice # returns the current choice
+#' dMeasure_obj$dateformat_choice <- "2021-01-17" # sets dataformat choice
+#' @export
+dateformat_choice <- function(dMeasure_obj, choice) {
+  if (missing(choice)) {
+    return(dMeasure_obj$dateformat_choice)
+  } else {
+    dMeasure_obj$dateformat_choice <- choice
+  }
+}
+.active(dMeasure, "dateformat_choice", function(choice) {
+  if (missing(choice)) {
+    return(shiny::isolate(self$dateformat()))
+  } else {
+    if (!(choice %in% self$dateformat_choices)) {
+      stop(paste0(
+        "Dateformat hoice must be one of ",
+        paste0("'", self$dateformat_choices, collapse = ", ")
+      ))
+    }
+
+    if (nrow(self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+             dplyr::filter(setting == "dateformat") %>>% dplyr::collect()) == 0) {
+      # create a new entry
+      query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c("dateformat", self$dateformat_choices[1]))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    if ((self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+         dplyr::filter(setting == "dateformat") %>>%
+         dplyr::pull(value)) != choice) {
+      # if new choice is not recorded in current configuration database
+      # already an entry in the ServerChoice table
+      query <- "UPDATE Settings SET value = ? WHERE setting = ?"
+      data_for_sql <- as.list.data.frame(c(choice, "dateformat"))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    self$dateformat <- choice
+
+    return(choice)
+  }
+})
 
 ## methods
 
