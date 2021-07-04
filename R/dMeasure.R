@@ -2125,9 +2125,10 @@ initialize_emr_tables <- function(dMeasure_obj,
   # ... 'Telehealth'
 
   self$db$immunizations <- emr_db$conn() %>>%
-    # InternalID, GivenDate, VaccineName, VaccineID
+    # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
+    # NotGivenHere - 0 if given at practice, 1 if recorded as given elsewhere
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Immunisations")) %>>%
-    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID")) %>>%
+    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID", "NotGivenHere")) %>>%
     dplyr::mutate(
       GivenDate = as.Date(GivenDate),
       VaccineName = trimws(VaccineName)
