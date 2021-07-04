@@ -181,6 +181,7 @@ asthma_list <- function(dMeasure_obj, appointments = NULL) {
 #' @param clinicians by default, is dM$clinicians
 #' @param min_contact used for the 'contact' system. minimum number of contacts in time period
 #' @param min_date used for the 'contact' system. must have been seen since min_date
+#' @param max_date used for the 'contact' system. must have been before the max_date
 #' @param contact_type used for the 'contact' system
 #' @param ignoreOld ignore old administrations (>15 months from date_to).
 #'  by default, FALSE
@@ -197,7 +198,8 @@ list_asthma_details <- function(dMeasure_obj,
                                 contact = FALSE,
                                 date_from = NA, date_to = NA,
                                 clinicians = NA,
-                                min_contact = NA, min_date = NA, contact_type = NA,
+                                min_contact = NA, min_date = NA, max_date = NA,
+                                contact_type = NA,
                                 ignoreOld = FALSE,
                                 include_uptodate = TRUE,
                                 lazy = FALSE) {
@@ -205,7 +207,7 @@ list_asthma_details <- function(dMeasure_obj,
     contact,
     date_from, date_to,
     clinicians,
-    min_contact, min_date,
+    min_contact, min_date, max_date,
     contact_type,
     ignoreOld,
     include_uptodate,
@@ -219,6 +221,7 @@ list_asthma_details <- function(dMeasure_obj,
                                                   clinicians = NA,
                                                   min_contact = NA,
                                                   min_date = NA,
+                                                  max_date = NA,
                                                   contact_type = NA,
                                                   ignoreOld = FALSE,
                                                   include_uptodate = TRUE,
@@ -240,6 +243,12 @@ list_asthma_details <- function(dMeasure_obj,
   }
   if (is.na(min_date)) {
     min_date <- self$contact_minDate
+  }
+  if (is.na(max_date)) {
+    max_date <- self$contact_maxDate
+  }
+  if (is.na(contact_type[[1]])) {
+    contact_type <- self$contact_type
   }
 
   # no additional clinician filtering based on privileges or user restrictions
@@ -271,7 +280,7 @@ list_asthma_details <- function(dMeasure_obj,
       if (!lazy) {
         self$list_contact_asthma(
           date_from, date_to, clinicians,
-          min_contact, min_date,
+          min_contact, min_date, max_date,
           contact_type,
           lazy
         )
@@ -355,7 +364,8 @@ list_asthma_details <- function(dMeasure_obj,
         # anyone who has had a flu vax  in the same year as end of contact period
         # (and so has a valid 'GivenDate') is 'up-to-date'!
         # or plan date less than one year old
-      } else { # appointment method
+      } else {
+        # appointment method
         detailed_asthma_list <- detailed_asthma_list %>>%
           dplyr::filter(
             is.na(FluvaxDate) |

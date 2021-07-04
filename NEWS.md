@@ -21,6 +21,14 @@ Changelog
   + if lubridate package is not available, returns `function(x) {as.character(x)}`
   + reactive version is `self$formatdateR`, reacts to `self$dateformat()`
 
+## Change
+
+* `self$list_asthma_details` includes `max_date` parameter
+
+## Bugfix
+
+* `self$list_asthma_details` incorrectly called `self$list_contact_asthma`
+
 # 0.9.15
 16th June 2021
 

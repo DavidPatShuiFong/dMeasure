@@ -541,6 +541,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   ignoreOld = FALSE,
   include_uptodate = TRUE,

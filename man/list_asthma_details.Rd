@@ -12,6 +12,7 @@ list_asthma_details(
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   ignoreOld = FALSE,
   include_uptodate = TRUE,
@@ -32,6 +33,8 @@ list_asthma_details(
 \item{min_contact}{used for the 'contact' system. minimum number of contacts in time period}
 
 \item{min_date}{used for the 'contact' system. must have been seen since min_date}
+
+\item{max_date}{used for the 'contact' system. must have been before the max_date}
 
 \item{contact_type}{used for the 'contact' system}
 
