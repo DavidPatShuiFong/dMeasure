@@ -2155,6 +2155,12 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
+    # ITEMID - exclusion for reminder
+    # - 1 Influenza vaccination
+    # - 2 Pneumonia vaccination
+    # - 3 Diabetes review
+    # - 5 Care plan review
+    # - 15 Herpes zoster vaccination
     dplyr::tbl(dbplyr::in_schema("dbo", "PreventiveHealth")) %>>%
     dplyr::select("InternalID" = "INTERNALID", "ITEMID")
 
