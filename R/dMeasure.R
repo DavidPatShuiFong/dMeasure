@@ -840,26 +840,26 @@ dateformat_choice <- function(dMeasure_obj, choice) {
     return(choice)
   }
 })
-#' dateformat function
+#' formatdate function
 #'
 #' Returns function which formats date using `self$dateformat_choice`
 #'
 #' if lubridate  package is not available, return function which
 #' converts date to character string using default `as.character` method.
 #'
-#' reactive version is `dateformat_functionR`, reacts to `self$dateformat()`
+#' reactive version is `formatdateR`, reacts to `self$dateformat()`
 #'
-#' @name dateformat_function
+#' @name formatdate
 #'
 #' @param none
 #'
 #' @return a function which formats the date to a character string
 #'
 #' @export
-dateformat_function <- function(dMeasure_obj) {
-  dMeasure_obj$dateformat_function()
+formatdate <- function(dMeasure_obj) {
+  dMeasure_obj$formatdate()
 }
-.public(dMeasure, "dateformat_function", function() {
+.public(dMeasure, "formatdate", function() {
   # `dateformat` is a function to convert dates into desired date format
   if (requireNamespace("lubridate", quietly = TRUE)) {
     dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
@@ -871,11 +871,11 @@ dateformat_function <- function(dMeasure_obj) {
   return(dateformat_function)
 })
 .reactive_event(
-  dMeasure, "dateformat_functionR",
+  dMeasure, "formatdateR",
   quote(
     shiny::eventReactive(
       c(self$dateformat()), {
-        self$dateformat_function()
+        self$formatdate()
       }
     )
   )

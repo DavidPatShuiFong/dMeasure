@@ -235,7 +235,7 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
           dMeasure::semantic_tag(
             trimws(TestName),
             colour = c("red", "yellow", "green")[OutOfDateTest],
-            popuphtml = paste0("<h4>Date : ", TestDate, "</h4>")
+            popuphtml = paste0("<h4>Date : ", self$formatdate()(TestDate), "</h4>")
           )
       )
 
@@ -256,7 +256,7 @@ list_fobt <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = N
             ),
             dplyr::if_else(
               OutOfDateTest != 1,
-              paste0("(Date:", TestDate, ")"),
+              paste0("(Date:", self$formatdate()(TestDate), ")"),
               ""
             )
           ))
@@ -500,7 +500,7 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
           dMeasure::semantic_tag(
             trimws(TestName),
             colour = c("red", "yellow", "green")[OutOfDateTest],
-            popuphtml = paste0("<h4>Date : ", TestDate, "</h4>")
+            popuphtml = paste0("<h4>Date : ", self$formatdate()(TestDate), "</h4>")
           )
       )
 
@@ -521,7 +521,7 @@ list_cst <- function(dMeasure_obj, date_from = NA, date_to = NA, clinicians = NA
             ),
             dplyr::if_else(
               OutOfDateTest != 1,
-              paste0("(Date:", TestDate, ")"),
+              paste0("(Date:", self$formatdate()(TestDate), ")"),
               ""
             )
           ))
@@ -686,7 +686,7 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
           dMeasure::semantic_tag(
             trimws(TestName),
             colour = c("red", "yellow", "green")[OutOfDateTest],
-            popuphtml = paste0("<h4>Date : ", TestDate, "</h4>")
+            popuphtml = paste0("<h4>Date : ", self$formatdate()(TestDate), "</h4>")
           )
       )
 
@@ -707,7 +707,7 @@ list_mammogram <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
             ),
             dplyr::if_else(
               OutOfDateTest != 1,
-              paste0("(Date:", TestDate, ")"),
+              paste0("(Date:", self$formatdate()(TestDate), ")"),
               ""
             )
           ))

@@ -135,7 +135,7 @@ dMeasure class
 \item \href{#method-new}{\code{dMeasure$new()}}
 \item \href{#method-close}{\code{dMeasure$close()}}
 \item \href{#method-finalize}{\code{dMeasure$finalize()}}
-\item \href{#method-dateformat_function}{\code{dMeasure$dateformat_function()}}
+\item \href{#method-formatdate}{\code{dMeasure$formatdate()}}
 \item \href{#method-open_configuration_db}{\code{dMeasure$open_configuration_db()}}
 \item \href{#method-read_configuration_db}{\code{dMeasure$read_configuration_db()}}
 \item \href{#method-BPdatabaseChoice_new}{\code{dMeasure$BPdatabaseChoice_new()}}
@@ -1258,11 +1258,11 @@ dMeasure class
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-dateformat_function"></a>}}
-\if{latex}{\out{\hypertarget{method-dateformat_function}{}}}
-\subsection{Method \code{dateformat_function()}}{
+\if{html}{\out{<a id="method-formatdate"></a>}}
+\if{latex}{\out{\hypertarget{method-formatdate}{}}}
+\subsection{Method \code{formatdate()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dMeasure$dateformat_function()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$formatdate()}\if{html}{\out{</div>}}
 }
 
 }
