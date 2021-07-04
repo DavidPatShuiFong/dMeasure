@@ -15,6 +15,11 @@ Changelog
 * new `self$dateformat_choice` active variable.
   + reads current value of `self$dateformat` OR
   + writes to `self$dateformat` and writes to config_db `Settings`
+  + if shiny package not available, default is the first of `self$dateformat_choices`
+* new `self$dateformat_function`
+  + returns function to format date, based on `self$dateformat_choice`
+  + if lubridate package is not available, returns `function(x) {as.character(x)}`
+  + reactive version is `self$dateformat_functionR`, reacts to `self$dateformat()`
 
 # 0.9.15
 16th June 2021

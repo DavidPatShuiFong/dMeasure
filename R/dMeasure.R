@@ -801,11 +801,16 @@ dateformat_choice <- function(dMeasure_obj, choice) {
 }
 .active(dMeasure, "dateformat_choice", function(choice) {
   if (missing(choice)) {
-    return(shiny::isolate(self$dateformat()))
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      return(shiny::isolate(self$dateformat()))
+    } else {
+      return(self$dateformat_choices[[1]])
+      # just return default dateformat if shiny is not available
+    }
   } else {
     if (!(choice %in% self$dateformat_choices)) {
       stop(paste0(
-        "Dateformat hoice must be one of ",
+        "Dateformat choice must be one of ",
         paste0("'", self$dateformat_choices, collapse = ", ")
       ))
     }
@@ -835,6 +840,46 @@ dateformat_choice <- function(dMeasure_obj, choice) {
     return(choice)
   }
 })
+#' dateformat function
+#'
+#' Returns function which formats date using `self$dateformat_choice`
+#'
+#' if lubridate  package is not available, return function which
+#' converts date to character string using default `as.character` method.
+#'
+#' reactive version is `dateformat_functionR`, reacts to `self$dateformat()`
+#'
+#' @name dateformat_function
+#'
+#' @param none
+#'
+#' @return a function which formats the date to a character string
+#'
+#' @export
+dateformat_function <- function(dMeasure_obj) {
+  dMeasure_obj$dateformat_function()
+}
+.public(dMeasure, "dateformat_function", function() {
+  # `dateformat` is a function to convert dates into desired date format
+  if (requireNamespace("lubridate", quietly = TRUE)) {
+    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    # formats date into desired format
+  } else {
+    # if no lubridate library is available then, just return the date in default format
+    dateformat_function <- function(x) {as.character(x)}
+  }
+  return(dateformat_function)
+})
+.reactive_event(
+  dMeasure, "dateformat_functionR",
+  quote(
+    shiny::eventReactive(
+      c(self$dateformat()), {
+        self$dateformat_function()
+      }
+    )
+  )
+)
 
 ## methods
 
