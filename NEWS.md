@@ -20,7 +20,7 @@ Changelog
   + returns function to format date, based on `self$dateformat_choice`
   + if lubridate package is not available, returns `function(x) {as.character(x)}`
   + reactive version is `self$formatdateR`, reacts to `self$dateformat()`
-  + suggestion of Dat Le, thanks
+  + suggestion of RN Dat Le, thanks
 * add `NotGivenHere` to `self$db$immunizations`
 
 ## Change
