@@ -1,5 +1,36 @@
 Changelog
 
+# 0.9.16
+3rd July 2021
+
+## New
+
+* new config_db table `Settings`
+  + `setting` `value` pairs (character)
+* new `self$dateformat` reactive
+  + date of formats to be used in GPstat! shiny GUI
+  + default value is `2021-01-17` (YYYY-mm-dd or %Y-%-m-%d)
+  + value read from config_db `Settings` table, with the `setting` value of `dateformat`
+  + associated choices `self$dateformat_choices`, a vector of character strings
+* new `self$dateformat_choice` active variable.
+  + reads current value of `self$dateformat` OR
+  + writes to `self$dateformat` and writes to config_db `Settings`
+  + if shiny package not available, default is the first of `self$dateformat_choices`
+* new `self$formatdate`
+  + returns function to format date, based on `self$dateformat_choice`
+  + if lubridate package is not available, returns `function(x) {as.character(x)}`
+  + reactive version is `self$formatdateR`, reacts to `self$dateformat()`
+  + suggestion of Dat Le, thanks
+* add `NotGivenHere` to `self$db$immunizations`
+
+## Change
+
+* `self$list_asthma_details` includes `max_date` parameter
+
+## Bugfix
+
+* `self$list_asthma_details` incorrectly called `self$list_contact_asthma`
+
 # 0.9.15
 16th June 2021
 

@@ -614,7 +614,7 @@ UserConfigLicense <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param choice (optional) name of database choice
 #'
-#'  posible value includes "None", which will close any current database
+#'  possible value includes "None", which will close any current database
 #'
 #' @return the current database choice, if choice not provided
 #'
@@ -767,6 +767,119 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
   }
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
+
+.reactive(dMeasure, "dateformat", "2021-01-17") # date format
+# only used for GPstat! shiny GUI interfacec
+.public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))
+
+#' choose (or read) dateformat choice
+#'
+#' This must be one of `self$dateformat_choices`
+#'
+#' Sets `self$dateformat` reactive, if shiny/reactive
+#' environment available
+#'
+#' @name dateformat_choice
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choice name of database choice
+#'
+#'  possible values must be one of `self$dateformat_choices`
+#'
+#' @return the current choice, if choice not provided
+#'
+#' @examples
+#' dMeasure_obj$dateformat_choice # returns the current choice
+#' dMeasure_obj$dateformat_choice <- "2021-01-17" # sets dataformat choice
+#' @export
+dateformat_choice <- function(dMeasure_obj, choice) {
+  if (missing(choice)) {
+    return(dMeasure_obj$dateformat_choice)
+  } else {
+    dMeasure_obj$dateformat_choice <- choice
+  }
+}
+.active(dMeasure, "dateformat_choice", function(choice) {
+  if (missing(choice)) {
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      return(shiny::isolate(self$dateformat()))
+    } else {
+      return(self$dateformat_choices[[1]])
+      # just return default dateformat if shiny is not available
+    }
+  } else {
+    if (!(choice %in% self$dateformat_choices)) {
+      stop(paste0(
+        "Dateformat choice must be one of ",
+        paste0("'", self$dateformat_choices, collapse = ", ")
+      ))
+    }
+
+    if (nrow(self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+             dplyr::filter(setting == "dateformat") %>>% dplyr::collect()) == 0) {
+      # create a new entry
+      query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c("dateformat", self$dateformat_choices[1]))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    if ((self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+         dplyr::filter(setting == "dateformat") %>>%
+         dplyr::pull(value)) != choice) {
+      # if new choice is not recorded in current configuration database
+      # already an entry in the ServerChoice table
+      query <- "UPDATE Settings SET value = ? WHERE setting = ?"
+      data_for_sql <- as.list.data.frame(c(choice, "dateformat"))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    self$dateformat(choice)
+
+    return(choice)
+  }
+})
+#' formatdate function
+#'
+#' Returns function which formats date using `self$dateformat_choice`
+#'
+#' if lubridate  package is not available, return function which
+#' converts date to character string using default `as.character` method.
+#'
+#' reactive version is `formatdateR`, reacts to `self$dateformat()`
+#'
+#' @name formatdate
+#'
+#' @param none
+#'
+#' @return a function which formats the date to a character string
+#'
+#' @export
+formatdate <- function(dMeasure_obj) {
+  dMeasure_obj$formatdate()
+}
+.public(dMeasure, "formatdate", function() {
+  # `dateformat` is a function to convert dates into desired date format
+  if (requireNamespace("lubridate", quietly = TRUE)) {
+    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    # formats date into desired format
+  } else {
+    # if no lubridate library is available then, just return the date in default format
+    dateformat_function <- function(x) {as.character(x)}
+  }
+  return(dateformat_function)
+})
+.reactive_event(
+  dMeasure, "formatdateR",
+  quote(
+    shiny::eventReactive(
+      c(self$dateformat()), {
+        self$formatdate()
+      }
+    )
+  )
+)
 
 ## methods
 
@@ -995,6 +1108,28 @@ open_configuration_db <-
               }
             }
 
+            initialize_data_table(
+              config_db, "Settings",
+              list(
+                c("setting", "character"),
+                c("value", "character")
+                # name of setting, and then the value
+              )
+            )
+            if (requireNamespace("lubridate", quietly = TRUE)) {
+              # date format for GPstat! shiny GUI interface
+              # depends on lubridate::stamp_date
+              if (length(config_db$conn() %>>%
+                         dplyr::tbl("Settings") %>>%
+                         dplyr::filter(setting == "dateformat") %>>%
+                         dplyr::pull(value)) == 0) { # empty table
+                query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+                data_for_sql <- as.list.data.frame(c("dateformat", "2021-01-17"))
+                # default is the standard date format YYYY-mm-dd (%Y-%0m-%d)
+                config_db$dbSendQuery(query, data_for_sql)
+              }
+            }
+
           }
           invisible(self)
         })
@@ -1070,8 +1205,16 @@ read_configuration_db <- function(dMeasure_obj,
       dMCustom$read_configuration_db(config_db$conn())
     }
   }
+
+  dateformat <- config_db$conn() %>>%
+    dplyr::tbl("Settings") %>>%
+    dplyr::filter(setting == "dateformat") %>>%
+    dplyr::pull(value)
+  private$set_reactive(self$dateformat, dateformat)
+
   invisible(self)
 })
+
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
@@ -1982,9 +2125,10 @@ initialize_emr_tables <- function(dMeasure_obj,
   # ... 'Telehealth'
 
   self$db$immunizations <- emr_db$conn() %>>%
-    # InternalID, GivenDate, VaccineName, VaccineID
+    # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
+    # NotGivenHere - 0 if given at practice, 1 if recorded as given elsewhere
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Immunisations")) %>>%
-    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID")) %>>%
+    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID", "NotGivenHere")) %>>%
     dplyr::mutate(
       GivenDate = as.Date(GivenDate),
       VaccineName = trimws(VaccineName)
@@ -2011,6 +2155,12 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
+    # ITEMID - exclusion for reminder
+    # - 1 Influenza vaccination
+    # - 2 Pneumonia vaccination
+    # - 3 Diabetes review
+    # - 5 Care plan review
+    # - 15 Herpes zoster vaccination
     dplyr::tbl(dbplyr::in_schema("dbo", "PreventiveHealth")) %>>%
     dplyr::select("InternalID" = "INTERNALID", "ITEMID")
 
