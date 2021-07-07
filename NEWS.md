@@ -5,7 +5,8 @@ Changelog
 
 ## New
 
-* add `self$intellectualDisability_list`
+* add `self$intellectualDisability_list` - patients with a history of intellectual disability
+* add `self$refugeeAsylum_list` - patients with a history of refugee or asylum seeker
 
 # 0.9.16
 3rd July 2021

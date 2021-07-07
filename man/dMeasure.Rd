@@ -96,6 +96,7 @@ dMeasure class
 \item \href{#method-familialHypercholesterolaemia_list}{\code{dMeasure$familialHypercholesterolaemia_list()}}
 \item \href{#method-LVH_list}{\code{dMeasure$LVH_list()}}
 \item \href{#method-intellectualDisability_list}{\code{dMeasure$intellectualDisability_list()}}
+\item \href{#method-refugeeAsylum_list}{\code{dMeasure$refugeeAsylum_list()}}
 \item \href{#method-parent_list}{\code{dMeasure$parent_list()}}
 \item \href{#method-location.insert}{\code{dMeasure$location.insert()}}
 \item \href{#method-location.update}{\code{dMeasure$location.update()}}
@@ -788,6 +789,15 @@ dMeasure class
 \subsection{Method \code{intellectualDisability_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$intellectualDisability_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-refugeeAsylum_list"></a>}}
+\if{latex}{\out{\hypertarget{method-refugeeAsylum_list}{}}}
+\subsection{Method \code{refugeeAsylum_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$refugeeAsylum_list(appointments = NULL)}\if{html}{\out{</div>}}
 }
 
 }
