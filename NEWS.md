@@ -1,5 +1,12 @@
 Changelog
 
+# 0.9.17
+7th July 2021
+
+## New
+
+* add `self$intellectualDisability_list`
+
 # 0.9.16
 3rd July 2021
 

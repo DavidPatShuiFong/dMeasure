@@ -1160,9 +1160,6 @@ list_contact_ATSI_35_44 <- function(dMeasure_obj,
   )
 )
 
-
-
-
 ##### cervical screening (cst) eligible fields ###########################################
 # used for Practice Incentive Program Quality Improvement Measures
 # cervical screening (QIM 09)

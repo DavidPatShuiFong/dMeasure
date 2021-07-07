@@ -1563,7 +1563,7 @@ familialHypercholesterolaemia_list <- function(dMeasure_obj,
     # @param Appointments dataframe of $InternalID and $Date
     #  if no parameter provided, derives from $appointments_filtered
     #
-    # Returns vector of InternalID of patients who have diabetes
+    # Returns vector of InternalID of patients who have familial hypercholesterolaemia
 
     if (is.null(appointments)) {
       appointments <- self$appointments_filtered %>>%
@@ -1601,7 +1601,7 @@ LVH_list <- function(dMeasure_obj, appointments = NULL) {
   # @param Appointments dataframe of $InternalID and $Date
   #  if no parameter provided, derives from $appointments_filtered
   #
-  # Returns vector of InternalID of patients who have diabetes
+  # Returns vector of InternalID of patients who have LVH
 
   if (is.null(appointments)) {
     appointments <- self$appointments_filtered %>>%
@@ -1616,6 +1616,43 @@ LVH_list <- function(dMeasure_obj, appointments = NULL) {
   self$db$history %>>%
     dplyr::filter(
       ConditionID == 2214,
+      InternalID %in% intID
+    ) %>>%
+    dplyr::pull(InternalID) %>>%
+    unique()
+})
+
+#' list of patients with intellectual disability
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param appointments dataframe of appointments $InternalID and $Date
+#'
+#'  if no parameter provided, derives from $appointments_filtered
+#'
+#' @return a vector of numbers, which are the InternalIDs
+#' @export
+intellectualDisability_list <- function(dMeasure_obj, appointments = NULL) {
+  dMeasure_obj$intellectualDisability_list(appointments)
+}
+.public(dMeasure, "intellectualDisability_list", function(appointments = NULL) {
+  # @param Appointments dataframe of $InternalID and $Date
+  #  if no parameter provided, derives from $appointments_filtered
+  #
+  # Returns vector of InternalID of patients who have intellectual disability
+
+  if (is.null(appointments)) {
+    appointments <- self$appointments_filtered %>>%
+      dplyr::select(InternalID, AppointmentDate) %>>%
+      dplyr::rename(Date = AppointmentDate)
+    # just needs $InternalID and $Date
+  }
+
+  intID <- c(dplyr::pull(appointments, InternalID), -1)
+  # internalID in appointments. add a -1 in case this is an empty list
+
+  self$db$history %>>%
+    dplyr::filter(
+      ConditionID == 2284,
       InternalID %in% intID
     ) %>>%
     dplyr::pull(InternalID) %>>%
