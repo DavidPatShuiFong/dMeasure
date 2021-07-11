@@ -1,5 +1,13 @@
 Changelog
 
+# 0.9.17
+11th July 2021
+
+## New
+
+* add `self$intellectualDisability_list` - patients with a history of intellectual disability
+* add `self$refugeeAsylum_list` - patients with a history of refugee or asylum seeker
+
 # 0.9.16
 3rd July 2021
 
@@ -20,7 +28,7 @@ Changelog
   + returns function to format date, based on `self$dateformat_choice`
   + if lubridate package is not available, returns `function(x) {as.character(x)}`
   + reactive version is `self$formatdateR`, reacts to `self$dateformat()`
-  + suggestion of Dat Le, thanks
+  + suggestion of RN Dat Le, thanks
 * add `NotGivenHere` to `self$db$immunizations`
 
 ## Change
