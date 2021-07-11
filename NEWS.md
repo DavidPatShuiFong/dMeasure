@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.17
-7th July 2021
+11th July 2021
 
 ## New
 
