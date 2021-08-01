@@ -1,5 +1,12 @@
 Changelog
 
+# 0.9.18
+1st August 2021
+
+## New
+
+* add `NoPap`, `OptOut` and `OptOutReason` to `self$db$obgyndetail`
+
 # 0.9.17
 11th July 2021
 

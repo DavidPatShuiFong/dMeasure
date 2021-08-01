@@ -2411,7 +2411,15 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(
       "InternalID" = "INTERNALID", "NOMINALLMP",
       "LASTPAPDATE", "LASTPAPRESULT", "BREASTFEEDING",
-      "MammogramStatus", "LastMammogramDate", "MammogramResult"
+      "MammogramStatus", "LastMammogramDate", "MammogramResult",
+      "NoPap" = "NOPAP", # 'no longer requires cervical screening (CST)' : 1 (TRUE) or 0 (FALSE)
+      "OptOut" = "OPTOUT", "OptOutReason" = "OPTOUTREASON" # CST opt-out
+      # OptOut 1 (TRUE) or 0 (FALSE). if true, then there can be a reason
+      # OptOutReason 'Has screening at another practice', 'Has screening done by specialist'
+      # 'Doesn't want reminders sent', 'Refuses to have screening'
+    ) %>>%
+    dplyr::mutate(
+      OptOutReason = trimws(OptOutReason)
     )
 
   self$db$pregnancies <- emr_db$conn() %>>%
