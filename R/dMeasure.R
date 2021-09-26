@@ -2109,8 +2109,11 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(c(
       "Patient", "InternalID",
       "AppointmentDate", "AppointmentTime",
-      "Provider", "Status"
-    ))
+      "Provider", "Status", "AppointmentType"
+    )) %>>%
+    dplyr::mutate(
+      Status = trimws(Status), AppointmentType = trimws(AppointmentType)
+    )
   # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
 
   self$db$visits <- emr_db$conn() %>>%
