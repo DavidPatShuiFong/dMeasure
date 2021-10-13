@@ -1875,7 +1875,10 @@ initialize_emr_tables <- function(dMeasure_obj,
       Address2 = trimws(Address2),
       City = trimws(City),
       PostalAddress = trimws(PostalAddress),
-      PostalCity = trimws(PostalCity)
+      PostalCity = trimws(PostalCity),
+      HomePhone = trimws(HomePhone),
+      WorkPhone = trimws(WorkPhone),
+      MobilePhone = trimws(MobilePhone)
     )
 
   self$db$patientsRaw <- emr_db$conn() %>>%

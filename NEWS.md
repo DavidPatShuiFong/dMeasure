@@ -1,7 +1,7 @@
 Changelog
 
 # 0.9.19
-26th September 2021
+13th October 2021
 
 ## New
 
@@ -9,7 +9,8 @@ Changelog
 
 ## Change
 
-* `Status` in `self$db$appointments` has 'trimmed white space `trimws`' applied.
+* `Status` in `self$db$appointments` has 'trimmed white space `trimws` applied.
+* `HomePhone`, `WorkPhone` and `MobilePhone` in `self$db$patients` has 'trimmed white space `trimws` applied.
 
 # 0.9.18
 1st August 2021
