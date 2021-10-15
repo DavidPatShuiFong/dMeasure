@@ -1,11 +1,12 @@
 Changelog
 
 # 0.9.19
-13th October 2021
+15th October 2021
 
 ## New
 
 * add `AppointmentType` to `self$db$appointments`
+* `initialize_data_table`, which initializes/modifies tables to configuration database, now exported
 
 ## Change
 
