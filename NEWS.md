@@ -1,12 +1,15 @@
 Changelog
 
-# 0.9.19
-15th October 2021
+# 0.10.0
+16th October 2021
 
 ## New
 
 * add `AppointmentType` to `self$db$appointments`
 * `initialize_data_table`, which initializes/modifies tables to configuration database, now exported
+* `$read_dMeasureModules` discovers available dMeasure module packages
+  + returns result and stores in `$dMeasureModules`
+  + this functionality is transferred from `DailyMeasure`
 
 ## Change
 

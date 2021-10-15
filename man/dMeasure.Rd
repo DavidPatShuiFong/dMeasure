@@ -138,6 +138,7 @@ dMeasure class
 \item \href{#method-close}{\code{dMeasure$close()}}
 \item \href{#method-finalize}{\code{dMeasure$finalize()}}
 \item \href{#method-formatdate}{\code{dMeasure$formatdate()}}
+\item \href{#method-read_dMeasureModules}{\code{dMeasure$read_dMeasureModules()}}
 \item \href{#method-open_configuration_db}{\code{dMeasure$open_configuration_db()}}
 \item \href{#method-read_configuration_db}{\code{dMeasure$read_configuration_db()}}
 \item \href{#method-BPdatabaseChoice_new}{\code{dMeasure$BPdatabaseChoice_new()}}
@@ -1284,6 +1285,15 @@ dMeasure class
 \subsection{Method \code{formatdate()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$formatdate()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-read_dMeasureModules"></a>}}
+\if{latex}{\out{\hypertarget{method-read_dMeasureModules}{}}}
+\subsection{Method \code{read_dMeasureModules()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_dMeasureModules()}\if{html}{\out{</div>}}
 }
 
 }

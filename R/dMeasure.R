@@ -883,6 +883,144 @@ formatdate <- function(dMeasure_obj) {
 
 ## methods
 
+#' read_dMeasureModules
+#'
+#' @name read_dMeasureModules
+#'
+#' @md
+#'
+#' @description discover available dMeasure module packages
+#'
+#' @details
+#'
+#' dMeasure's function is extended by modules, such as `dMeasureAppointments`,
+#'   `dMeasureMedication`, `dMeasureQIM` and `dMeasureBilling`
+#'
+#'   `read_dMeasureModules` detects which of these modules (R packages) have
+#'   been installed and reads the details.
+#'
+#'   * dMeasure modules all start with the prefix `dMeasure`
+#'   * dMeasure modules all export the function `dMeasureIntegration`
+#'     + the function `dMeasureIntegration` (and others) can return details of the module package
+#'       - typically `Package`, `Provides`, `Requires`, `moduleID`
+#'       - `Package` - the module package name
+#'       - `Provides` - the functionality the module package provides
+#'       - `Requires` - the dependencies of the module package. Can be just `dMeasure`, but also can be other modules
+#'       - `moduleID` - the ID when the server component of the module is executed. can be multiple IDs
+#'         * can be a list of IDs with optional `$extraargs` extra arguments to pass to server component of module
+#'       - `configID` - optional ID of server component of configuration panel
+#'   * dMeasure modules can provide additional information
+#'     + optional `sidebarmenuPriority` function helps arrange position of module in left sidebar.
+#'
+#'   `read_dMeasureModules` stores the results in `$dMeasureModules` and returns the dataframe
+#'
+#' @param none
+#'
+#' @return a dataframe providing module details e.g. Package name
+#'
+#' @export
+#'
+#'
+dMeasureModules <- function(dMeasure_obj) {
+  dMeasure_obj$read_dMeasureModules()
+}
+.public(dMeasure, "dMeasureModules", NULL)
+.public(dMeasure, "read_dMeasureModules", function() {
+  self$dMeasureModules <- as.data.frame(installed.packages(), stringsAsFactors = FALSE) %>>%
+    dplyr::filter(grepl("dMeasure", Package)) %>>% # must have 'dMeasure' in part of the name
+    dplyr::filter(sapply(Package, function(x) {
+      # exists does not accept a vector for 'where', so use sapply (which returns a vector)
+      # check if the package contains the 'dMeasureIntegration' function
+      exists("dMeasureIntegration", where = asNamespace(x), mode = "function")
+    })) %>>%
+    dplyr::select(Package) %>>% # just need the package names
+    dplyr::mutate( # now fill in description (Provides/Requires)
+      Provides = sapply(
+        # usually a character vector with a single element
+        # however, it could be a list of character vectors
+        #  for an example, see dMeasureQIM
+        # if there are several elements, the Provides need to align
+        #  with moduleID
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Provides")
+          )
+        }
+      ),
+      Requires = sapply(
+        # a single character element (usually 'dMeasure')
+        #  or a vector/list of characters
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Requires")
+          )
+        }
+      ),
+      moduleID = sapply(
+        # the ID of modules to create
+        #
+        # this can either return a vector of character
+        #  (possibly a one-element vector)
+        #  in which case the characters are IDs
+        # *or* alternatively a list of lists
+        #  (maybe just one list)
+        #  a list contains $ID (a character vector)
+        #  and $extraArgs (a character vector)
+        #  $extraArgs are passed to the call to
+        #  datatableServer (a call to a module)
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "moduleID")
+          )
+        }
+      ),
+      configID = sapply(
+        # the ID of modules to create
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "configID")
+          )
+        }
+      ),
+      sidebarmenuPriority = sapply(
+        Package,
+        function(x) {
+          if (exists("sidebarmenuPriority", where = asNamespace(x), mode = "function")) {
+            do.call(
+              what = "sidebarmenuPriority",
+              envir = asNamespace(x),
+              args = list()
+            )
+          } else {
+            50 # middle priority. larger numbers have higher priority
+          }
+        }
+      )
+    ) %>>%
+    dplyr::arrange(desc(sidebarmenuPriority)) %>>%
+    # order packages by display priority (50 being medium, 90 being high and 10 being low)
+    dplyr::add_row( # add a row for the dMeasure object
+      Package = "dMeasure",
+      Provides = list("dMeasure"),
+      # needs to be list because some packages have two 'provides'
+      Requires = list(NULL)
+    )
+
+  return(self$dMeasureModules)
+})
+
 #' initialize_data_table
 #'
 #' @name initialize_data_table
