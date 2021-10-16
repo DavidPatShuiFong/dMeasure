@@ -46,4 +46,7 @@ been installed and reads the details.
 }
 
 \code{read_dMeasureModules} stores the results in \verb{$dMeasureModules} and returns the dataframe
++ \verb{$dMeasureModules} is used in methods such as \verb{$open_configuration_db}, and so
+\code{read_dMeasureModules} may need to be called early in the work-flow if the configuration
+information is required.
 }

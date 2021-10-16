@@ -913,6 +913,9 @@ formatdate <- function(dMeasure_obj) {
 #'     + optional `sidebarmenuPriority` function helps arrange position of module in left sidebar.
 #'
 #'   `read_dMeasureModules` stores the results in `$dMeasureModules` and returns the dataframe
+#'     + `$dMeasureModules` is used in methods such as `$open_configuration_db`, and so
+#'       `read_dMeasureModules` may need to be called early in the work-flow if the configuration
+#'       information is required.
 #'
 #' @param none
 #'
@@ -1084,7 +1087,14 @@ initialize_data_table <- function(config_db, tablename, variable_list) {
 
 #' Open the SQL connection to the configuration from the SQL configuration file
 #'
-#' Opens SQL connection to SQLite configuration file.
+#' @name open_configuration_db
+#'
+#' @md
+#'
+#' @description Opens SQL connection to SQLite configuration file.
+#'
+#' @detail
+#'
 #' Does not read the configuration file (that is done by $read_configuration_db)
 #'
 #' Also check the SQL database
@@ -1092,6 +1102,9 @@ initialize_data_table <- function(config_db, tablename, variable_list) {
 #' are checked to see if all required fields/columns
 #' are present. if a field/column is missing, then
 #' the missing field/column is added.
+#'
+#' Will initialize the configuration tables of dMeasure module packages
+#' *if* self$dMeasureModules is defined by $read_dMeasureModules
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param configuration_file_path (location of SQL configuration)
@@ -1241,20 +1254,25 @@ open_configuration_db <-
       # use of 'uid' rather than 'id'
       # (this relates to the 'Attributes' field in "Users")
 
-      if (requireNamespace("dMeasureCustom", quietly = TRUE)) {
-        if (
-          exists(
-            "initialize_data_table",
-            where = asNamespace("dMeasureCustom"),
-            mode = "function"
-          )
-        ) {
-          x <- dMeasureCustom::initialize_data_table()
-          initialize_data_table(
-            config_db,
-            tablename = x$tablename,
-            variable_list = x$variable_list
-          )
+      # handle write configuration tables for dMeasure module packages
+      for (i in seq_len(max(nrow(self$dMeasureModules), 0))) {
+        # iterate through available modules
+        # if $read_dMeasureModules has not been called, then
+        # self$dMeasureModules could be NULL
+        if (self$dMeasureModules[[i, "Package"]] != "dMeasure") {
+          if (
+            exists(
+              "initialize_configuration_db",
+              where = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              mode = "function")
+          ) {
+            # if the module has a initialize_configuration_db function, then use it
+            do.call(
+              what = "initialize_configuration_db",
+              envir = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              args = list(config_db = config_db)
+            )
+          }
         }
       }
 
@@ -1349,12 +1367,6 @@ read_configuration_db <- function(dMeasure_obj,
 
   private$trigger(self$config_db_trigR)
   # notification of configuration database change
-
-  if (exists("dMCustom")) {
-    if (exists("read_configuration_db", where = dMCustom, mode = "function")) {
-      dMCustom$read_configuration_db(config_db$conn())
-    }
-  }
 
   dateformat <- config_db$conn() %>>%
     dplyr::tbl("Settings") %>>%

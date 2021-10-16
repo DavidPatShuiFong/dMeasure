@@ -10,6 +10,9 @@ Changelog
 * `$read_dMeasureModules` discovers available dMeasure module packages
   + returns result and stores in `$dMeasureModules`
   + this functionality is transferred from `DailyMeasure`
+* `$open_configuration_db` initializes/modifies configuration tables of dMeasure module packages
+  + *if* `$dMeasureModules` is defined first by calling `$read_dMeasureModules`
+  + calls function (not method) `initialize_configuration_db` of modules found in `$dMeasureModules`
 
 ## Change
 
