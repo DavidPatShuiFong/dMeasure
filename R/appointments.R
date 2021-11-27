@@ -159,8 +159,20 @@ filter_appointments <- function(dMeasure_obj,
   quote(
     shiny::eventReactive(
       c(
-        self$date_aR(), self$date_bR(),
-        self$cliniciansR(), self$appointment_statusR()
+        self$cliniciansR(), self$appointment_statusR(),
+        self$date_aR(), self$date_bR()
+        # bizarrely, if $date_aR() and $date_bR() are listed
+        # *before* the $cliniciansR() then there is an error
+        # reported regarding date conversion
+        #
+        # 'Warning: Error in charToDate:
+        # character string is not in a standard unambiguous format'
+        #
+        # (this happens when
+        # before the code included in the 'curly braces' below is executed).
+        #
+        # this error does not occur with R 3.5 and shiny 1.5,
+        # but does occur with R 4.0/4.1 (or shiny 1.6?)
       ), {
         # update if reactive version of $date_a Rdate_b
         # or $clinicians are updated.
