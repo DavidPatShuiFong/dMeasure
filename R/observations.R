@@ -39,6 +39,7 @@ influenzaVax_obs <- function(dMeasure_obj, intID, date_from = NA, date_to = NA) 
   # via the db$vaccine_disease database
 
   self$db$immunizations %>>%
+    dplyr::select(-NotGivenHere) %>>%
     dplyr::filter(
       InternalID %in% intID,
       VaccineID %in% fluvaxID,

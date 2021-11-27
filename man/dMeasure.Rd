@@ -95,6 +95,8 @@ dMeasure class
 \item \href{#method-mammogram_eligible_list}{\code{dMeasure$mammogram_eligible_list()}}
 \item \href{#method-familialHypercholesterolaemia_list}{\code{dMeasure$familialHypercholesterolaemia_list()}}
 \item \href{#method-LVH_list}{\code{dMeasure$LVH_list()}}
+\item \href{#method-intellectualDisability_list}{\code{dMeasure$intellectualDisability_list()}}
+\item \href{#method-refugeeAsylum_list}{\code{dMeasure$refugeeAsylum_list()}}
 \item \href{#method-parent_list}{\code{dMeasure$parent_list()}}
 \item \href{#method-location.insert}{\code{dMeasure$location.insert()}}
 \item \href{#method-location.update}{\code{dMeasure$location.update()}}
@@ -135,6 +137,8 @@ dMeasure class
 \item \href{#method-new}{\code{dMeasure$new()}}
 \item \href{#method-close}{\code{dMeasure$close()}}
 \item \href{#method-finalize}{\code{dMeasure$finalize()}}
+\item \href{#method-formatdate}{\code{dMeasure$formatdate()}}
+\item \href{#method-read_dMeasureModules}{\code{dMeasure$read_dMeasureModules()}}
 \item \href{#method-open_configuration_db}{\code{dMeasure$open_configuration_db()}}
 \item \href{#method-read_configuration_db}{\code{dMeasure$read_configuration_db()}}
 \item \href{#method-BPdatabaseChoice_new}{\code{dMeasure$BPdatabaseChoice_new()}}
@@ -540,6 +544,7 @@ dMeasure class
   clinicians = NA,
   min_contact = NA,
   min_date = NA,
+  max_date = NA,
   contact_type = NA,
   ignoreOld = FALSE,
   include_uptodate = TRUE,
@@ -776,6 +781,24 @@ dMeasure class
 \subsection{Method \code{LVH_list()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$LVH_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-intellectualDisability_list"></a>}}
+\if{latex}{\out{\hypertarget{method-intellectualDisability_list}{}}}
+\subsection{Method \code{intellectualDisability_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$intellectualDisability_list(appointments = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-refugeeAsylum_list"></a>}}
+\if{latex}{\out{\hypertarget{method-refugeeAsylum_list}{}}}
+\subsection{Method \code{refugeeAsylum_list()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$refugeeAsylum_list(appointments = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -1253,6 +1276,24 @@ dMeasure class
 \subsection{Method \code{finalize()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dMeasure$finalize()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-formatdate"></a>}}
+\if{latex}{\out{\hypertarget{method-formatdate}{}}}
+\subsection{Method \code{formatdate()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$formatdate()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-read_dMeasureModules"></a>}}
+\if{latex}{\out{\hypertarget{method-read_dMeasureModules}{}}}
+\subsection{Method \code{read_dMeasureModules()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dMeasure$read_dMeasureModules()}\if{html}{\out{</div>}}
 }
 
 }

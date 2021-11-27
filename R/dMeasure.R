@@ -614,7 +614,7 @@ UserConfigLicense <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param choice (optional) name of database choice
 #'
-#'  posible value includes "None", which will close any current database
+#'  possible value includes "None", which will close any current database
 #'
 #' @return the current database choice, if choice not provided
 #'
@@ -768,11 +768,333 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
 
+.reactive(dMeasure, "dateformat", "2021-01-17") # date format
+# only used for GPstat! shiny GUI interfacec
+.public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))
+
+#' choose (or read) dateformat choice
+#'
+#' This must be one of `self$dateformat_choices`
+#'
+#' Sets `self$dateformat` reactive, if shiny/reactive
+#' environment available
+#'
+#' @name dateformat_choice
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choice name of database choice
+#'
+#'  possible values must be one of `self$dateformat_choices`
+#'
+#' @return the current choice, if choice not provided
+#'
+#' @examples
+#' dMeasure_obj$dateformat_choice # returns the current choice
+#' dMeasure_obj$dateformat_choice <- "2021-01-17" # sets dataformat choice
+#' @export
+dateformat_choice <- function(dMeasure_obj, choice) {
+  if (missing(choice)) {
+    return(dMeasure_obj$dateformat_choice)
+  } else {
+    dMeasure_obj$dateformat_choice <- choice
+  }
+}
+.active(dMeasure, "dateformat_choice", function(choice) {
+  if (missing(choice)) {
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      return(shiny::isolate(self$dateformat()))
+    } else {
+      return(self$dateformat_choices[[1]])
+      # just return default dateformat if shiny is not available
+    }
+  } else {
+    if (!(choice %in% self$dateformat_choices)) {
+      stop(paste0(
+        "Dateformat choice must be one of ",
+        paste0("'", self$dateformat_choices, collapse = ", ")
+      ))
+    }
+
+    if (nrow(self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+             dplyr::filter(setting == "dateformat") %>>% dplyr::collect()) == 0) {
+      # create a new entry
+      query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c("dateformat", self$dateformat_choices[1]))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    if ((self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+         dplyr::filter(setting == "dateformat") %>>%
+         dplyr::pull(value)) != choice) {
+      # if new choice is not recorded in current configuration database
+      # already an entry in the ServerChoice table
+      query <- "UPDATE Settings SET value = ? WHERE setting = ?"
+      data_for_sql <- as.list.data.frame(c(choice, "dateformat"))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    self$dateformat(choice)
+
+    return(choice)
+  }
+})
+#' formatdate function
+#'
+#' Returns function which formats date using `self$dateformat_choice`
+#'
+#' if lubridate  package is not available, return function which
+#' converts date to character string using default `as.character` method.
+#'
+#' reactive version is `formatdateR`, reacts to `self$dateformat()`
+#'
+#' @name formatdate
+#'
+#' @param none
+#'
+#' @return a function which formats the date to a character string
+#'
+#' @export
+formatdate <- function(dMeasure_obj) {
+  dMeasure_obj$formatdate()
+}
+.public(dMeasure, "formatdate", function() {
+  # `dateformat` is a function to convert dates into desired date format
+  if (requireNamespace("lubridate", quietly = TRUE)) {
+    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    # formats date into desired format
+  } else {
+    # if no lubridate library is available then, just return the date in default format
+    dateformat_function <- function(x) {as.character(x)}
+  }
+  return(dateformat_function)
+})
+.reactive_event(
+  dMeasure, "formatdateR",
+  quote(
+    shiny::eventReactive(
+      c(self$dateformat()), {
+        self$formatdate()
+      }
+    )
+  )
+)
+
 ## methods
+
+#' read_dMeasureModules
+#'
+#' @name read_dMeasureModules
+#'
+#' @md
+#'
+#' @description discover available dMeasure module packages
+#'
+#' @details
+#'
+#' dMeasure's function is extended by modules, such as `dMeasureAppointments`,
+#'   `dMeasureMedication`, `dMeasureQIM` and `dMeasureBilling`
+#'
+#'   `read_dMeasureModules` detects which of these modules (R packages) have
+#'   been installed and reads the details.
+#'
+#'   * dMeasure modules all start with the prefix `dMeasure`
+#'   * dMeasure modules all export the function `dMeasureIntegration`
+#'     + the function `dMeasureIntegration` (and others) can return details of the module package
+#'       - typically `Package`, `Provides`, `Requires`, `moduleID`
+#'       - `Package` - the module package name
+#'       - `Provides` - the functionality the module package provides
+#'       - `Requires` - the dependencies of the module package. Can be just `dMeasure`, but also can be other modules
+#'       - `moduleID` - the ID when the server component of the module is executed. can be multiple IDs
+#'         * can be a list of IDs with optional `$extraargs` extra arguments to pass to server component of module
+#'       - `configID` - optional ID of server component of configuration panel
+#'   * dMeasure modules can provide additional information
+#'     + optional `sidebarmenuPriority` function helps arrange position of module in left sidebar.
+#'
+#'   `read_dMeasureModules` stores the results in `$dMeasureModules` and returns the dataframe
+#'     + `$dMeasureModules` is used in methods such as `$open_configuration_db`, and so
+#'       `read_dMeasureModules` may need to be called early in the work-flow if the configuration
+#'       information is required.
+#'
+#' @param none
+#'
+#' @return a dataframe providing module details e.g. Package name
+#'
+#' @export
+#'
+#'
+dMeasureModules <- function(dMeasure_obj) {
+  dMeasure_obj$read_dMeasureModules()
+}
+.public(dMeasure, "dMeasureModules", NULL)
+.public(dMeasure, "read_dMeasureModules", function() {
+  self$dMeasureModules <- as.data.frame(installed.packages(), stringsAsFactors = FALSE) %>>%
+    dplyr::filter(grepl("dMeasure", Package)) %>>% # must have 'dMeasure' in part of the name
+    dplyr::filter(sapply(Package, function(x) {
+      # exists does not accept a vector for 'where', so use sapply (which returns a vector)
+      # check if the package contains the 'dMeasureIntegration' function
+      exists("dMeasureIntegration", where = asNamespace(x), mode = "function")
+    })) %>>%
+    dplyr::select(Package) %>>% # just need the package names
+    dplyr::mutate( # now fill in description (Provides/Requires)
+      Provides = sapply(
+        # usually a character vector with a single element
+        # however, it could be a list of character vectors
+        #  for an example, see dMeasureQIM
+        # if there are several elements, the Provides need to align
+        #  with moduleID
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Provides")
+          )
+        }
+      ),
+      Requires = sapply(
+        # a single character element (usually 'dMeasure')
+        #  or a vector/list of characters
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Requires")
+          )
+        }
+      ),
+      moduleID = sapply(
+        # the ID of modules to create
+        #
+        # this can either return a vector of character
+        #  (possibly a one-element vector)
+        #  in which case the characters are IDs
+        # *or* alternatively a list of lists
+        #  (maybe just one list)
+        #  a list contains $ID (a character vector)
+        #  and $extraArgs (a character vector)
+        #  $extraArgs are passed to the call to
+        #  datatableServer (a call to a module)
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "moduleID")
+          )
+        }
+      ),
+      configID = sapply(
+        # the ID of modules to create
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "configID")
+          )
+        }
+      ),
+      sidebarmenuPriority = sapply(
+        Package,
+        function(x) {
+          if (exists("sidebarmenuPriority", where = asNamespace(x), mode = "function")) {
+            do.call(
+              what = "sidebarmenuPriority",
+              envir = asNamespace(x),
+              args = list()
+            )
+          } else {
+            50 # middle priority. larger numbers have higher priority
+          }
+        }
+      )
+    ) %>>%
+    dplyr::arrange(desc(sidebarmenuPriority)) %>>%
+    # order packages by display priority (50 being medium, 90 being high and 10 being low)
+    dplyr::add_row( # add a row for the dMeasure object
+      Package = "dMeasure",
+      Provides = list("dMeasure"),
+      # needs to be list because some packages have two 'provides'
+      Requires = list(NULL)
+    )
+
+  return(self$dMeasureModules)
+})
+
+#' initialize_data_table
+#'
+#' @name initialize_data_table
+#'
+#' @description write tables to configuration database
+#'
+#' @details
+#'
+#' Make sure the table in the database has all the right variable headings.
+#'   Creates table if table does not yet exist.
+#'   Allows 'update' of old databases.
+#'   Alters table in configuration database directly.
+#'
+#'   Used by `$open_configuration_db`
+#'
+#' @param config_db R6 object of configuration database
+#' @param tablename name of table
+#' @param variable_list list of variable headings, with variable type
+#'   e.g. list(c("id", "integer"), c("Name", "character"))
+#'
+#' @return nothing
+#'
+#' @export
+initialize_data_table <- function(config_db, tablename, variable_list) {
+
+  tablenames <- config_db$conn() %>>% DBI::dbListTables()
+
+  if (tablename %in% tablenames) {
+    # if table exists in config_db database
+    data <- DBI::dbReadTable(config_db$conn(), tablename) %>>%
+      dplyr::collect()
+    # get a copy of the table's data
+    # note that 'config_db$conn() %>>% dplyr::tbl(tablename) can't handle
+    #  a BLOB column
+
+    columns <- data  %>>% colnames()
+    # list of column (variable) names
+  } else {
+    # table does not exist, needs to be created
+    columns <- NULL
+    data <- data.frame(NULL)
+  }
+
+  changed <- FALSE
+  # haven't changed anything yet
+
+  for (a in variable_list) {
+    if (!(a[[1]] %in% columns)) {
+      # if a required variable name is not in the table
+      data <- data %>>%
+        dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
+      # use of !! and := to dynamically specify a[[1]] as a column name
+      # potentially could use data[,a[[1]]] <- ...
+      changed <- TRUE
+    }
+  }
+  if (changed == TRUE) {
+    DBI::dbWriteTable(config_db$conn(), tablename, data, overwrite = TRUE)
+  }
+}
 
 #' Open the SQL connection to the configuration from the SQL configuration file
 #'
-#' Opens SQL connection to SQLite configuration file.
+#' @name open_configuration_db
+#'
+#' @md
+#'
+#' @description Opens SQL connection to SQLite configuration file.
+#'
+#' @detail
+#'
 #' Does not read the configuration file (that is done by $read_configuration_db)
 #'
 #' Also check the SQL database
@@ -780,6 +1102,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 #' are checked to see if all required fields/columns
 #' are present. if a field/column is missing, then
 #' the missing field/column is added.
+#'
+#' Will initialize the configuration tables of dMeasure module packages
+#' *if* self$dMeasureModules is defined by $read_dMeasureModules
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param configuration_file_path (location of SQL configuration)
@@ -798,206 +1123,184 @@ open_configuration_db <-
     dMeasure_obj$open_configuration_db(configuration_file_path)
   }
 
-.public(dMeasure, "open_configuration_db",
-        function(configuration_file_path = self$configuration_file_path) {
+.public(
+  dMeasure, "open_configuration_db",
+  function(configuration_file_path = self$configuration_file_path) {
 
-          # if no configuration filepath is defined, then try to read one
-          if (length(configuration_file_path) == 0) {
-            configuration_file_path <- self$configuration_file_path
+    # if no configuration filepath is defined, then try to read one
+    if (length(configuration_file_path) == 0) {
+      configuration_file_path <- self$configuration_file_path
+    }
+
+    config_db <- self$config_db # for convenience
+
+    if (file.exists(configuration_file_path)) {
+      # open config database file
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
+    } else {
+      # if the config database doesn't exist,
+      # then create it (note create = TRUE option)
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
+      # create = TRUE not a valid option?
+      # always tries to create file if it doesn't exist
+    }
+
+    if (!config_db$is_open()) {
+      # failed to read, or create, configuration database
+      if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+        # shinyapps.io environment
+        self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
+      } else {
+        self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
+      }
+      # try to create the default configuration file
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
+    }
+
+    if (!is.null(config_db$conn())) {
+      # check that tables exist in the config file
+      # also create new columns (variables) as necessary
+      initialize_data_table(
+        config_db, "Server",
+        list(
+          c("id", "integer"),
+          c("Name", "character"),
+          c("Driver", "character"), # which MSSQL ODBC driver to use
+          c("Address", "character"),
+          c("Database", "character"),
+          c("UserID", "character"),
+          c("dbPassword", "character")
+        )
+      )
+      # initialize_data_table will create table and/or
+      # ADD 'missing' columns to existing table
+
+      initialize_data_table(
+        config_db, "ServerChoice",
+        list(
+          c("id", "integer"),
+          c("Name", "character")
+        )
+      )
+      # there should only be (at most) one entry in this table!
+      # with id '1', and a 'Name' the same as the chosen entry in table "Server"
+      if (length(config_db$conn() %>>%
+                 dplyr::tbl("ServerChoice") %>>%
+                 dplyr::filter(id == 1) %>>%
+                 dplyr::pull(Name)) == 0) { # empty table
+        query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
+        data_for_sql <- as.list.data.frame(c(1, "None"))
+        config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+      }
+
+      initialize_data_table(
+        config_db, "LogSettings",
+        list(
+          c("id", "integer"), # will always be '1'
+          c("Log", "integer"),
+          c("Filename", "character")
+        )
+      )
+      # Log = true (1) if logging, or false (0) if not
+      # Filename = SQLite log file
+      # there should only be (at most) one entry in this table!
+      # with id '1', and a 'Log' set to 0/1 (FALSE/TRUE), and
+      # perhaps a filename
+      if (length(config_db$conn() %>>%
+                 dplyr::tbl("LogSettings") %>>%
+                 dplyr::filter(id == 1) %>>%
+                 dplyr::pull(Log)) == 0) { # empty table})
+        query <- "INSERT INTO LogSettings (id, Log, Filename) VALUES (?, ?, ?)"
+        data_for_sql <- as.list.data.frame(c(1, as.numeric(FALSE), ""))
+        config_db$dbSendQuery(query, data_for_sql) # starts as 'FALSE'
+      }
+
+      initialize_data_table(
+        config_db, "Location",
+        list(
+          c("id", "integer"),
+          c("Name", "character"),
+          c("Description", "character")
+        )
+      )
+
+      initialize_data_table(
+        config_db, "Users",
+        list(
+          c("id", "integer"),
+          c("Fullname", "character"),
+          c("AuthIdentity", "character"),
+          c("Location", "character"),
+          c("Password", "character"),
+          c("Attributes", "character"),
+          c("License", "character") # contains license code (if any)
+        )
+      )
+
+      initialize_data_table(
+        config_db, "UserRestrictions",
+        list(
+          c("uid", "integer"),
+          c("Restriction", "character")
+        )
+      )
+      # list of restrictions for users
+      # use of 'uid' rather than 'id'
+      # (this relates to the 'Attributes' field in "Users")
+
+      # handle write configuration tables for dMeasure module packages
+      for (i in seq_len(max(nrow(self$dMeasureModules), 0))) {
+        # iterate through available modules
+        # if $read_dMeasureModules has not been called, then
+        # self$dMeasureModules could be NULL
+        if (self$dMeasureModules[[i, "Package"]] != "dMeasure") {
+          if (
+            exists(
+              "initialize_configuration_db",
+              where = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              mode = "function")
+          ) {
+            # if the module has a initialize_configuration_db function, then use it
+            do.call(
+              what = "initialize_configuration_db",
+              envir = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              args = list(config_db = config_db)
+            )
           }
+        }
+      }
 
-          config_db <- self$config_db # for convenience
+      initialize_data_table(
+        config_db, "Settings",
+        list(
+          c("setting", "character"),
+          c("value", "character")
+          # name of setting, and then the value
+        )
+      )
+      if (requireNamespace("lubridate", quietly = TRUE)) {
+        # date format for GPstat! shiny GUI interface
+        # depends on lubridate::stamp_date
+        if (length(config_db$conn() %>>%
+                   dplyr::tbl("Settings") %>>%
+                   dplyr::filter(setting == "dateformat") %>>%
+                   dplyr::pull(value)) == 0) { # empty table
+          query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+          data_for_sql <- as.list.data.frame(c("dateformat", "2021-01-17"))
+          # default is the standard date format YYYY-mm-dd (%Y-%0m-%d)
+          config_db$dbSendQuery(query, data_for_sql)
+        }
+      }
 
-          if (file.exists(configuration_file_path)) {
-            # open config database file
-            config_db$connect(RSQLite::SQLite(),
-                              dbname = self$configuration_file_path
-            )
-          } else {
-            # if the config database doesn't exist,
-            # then create it (note create = TRUE option)
-            config_db$connect(RSQLite::SQLite(),
-                              dbname = self$configuration_file_path
-            )
-            # create = TRUE not a valid option?
-            # always tries to create file if it doesn't exist
-          }
-
-          if (!config_db$is_open()) {
-            # failed to read, or create, configuration database
-            if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
-              # shinyapps.io environment
-              self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
-            } else {
-              self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
-            }
-            # try to create the default configuration file
-            config_db$connect(RSQLite::SQLite(),
-                              dbname = self$configuration_file_path
-            )
-          }
-
-          initialize_data_table <- function(config_db, tablename, variable_list) {
-            # make sure the table in the database has all the right variable headings
-            # allows 'update' of old databases
-            #
-            # input - config_db : R6 object of configuration database
-            # input - tablename : name of table
-            # input - variable_list : list of variable headings, with variable type
-            #   e.g. list(c("id", "integer"), c("Name", "character"))
-            #
-            # alters table in database directly
-            #
-            # returns - nothing
-
-            tablenames <- config_db$conn() %>>% DBI::dbListTables()
-
-            if (tablename %in% tablenames) {
-              # if table exists in config_db database
-              data <- DBI::dbReadTable(config_db$conn(), tablename) %>>%
-                dplyr::collect()
-              # get a copy of the table's data
-              # note that 'config_db$conn() %>>% dplyr::tbl(tablename) can't handle
-              #  a BLOB column
-
-              columns <- data  %>>% colnames()
-              # list of column (variable) names
-            } else {
-              # table does not exist, needs to be created
-              columns <- NULL
-              data <- data.frame(NULL)
-            }
-
-            changed <- FALSE
-            # haven't changed anything yet
-
-            for (a in variable_list) {
-              if (!(a[[1]] %in% columns)) {
-                # if a required variable name is not in the table
-                data <- data %>>%
-                  dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
-                # use of !! and := to dynamically specify a[[1]] as a column name
-                # potentially could use data[,a[[1]]] <- ...
-                changed <- TRUE
-              }
-            }
-            if (changed == TRUE) {
-              DBI::dbWriteTable(config_db$conn(), tablename, data, overwrite = TRUE)
-            }
-          }
-
-
-          if (!is.null(config_db$conn())) {
-            # check that tables exist in the config file
-            # also create new columns (variables) as necessary
-            initialize_data_table(
-              config_db, "Server",
-              list(
-                c("id", "integer"),
-                c("Name", "character"),
-                c("Driver", "character"), # which MSSQL ODBC driver to use
-                c("Address", "character"),
-                c("Database", "character"),
-                c("UserID", "character"),
-                c("dbPassword", "character")
-              )
-            )
-            # initialize_data_table will create table and/or
-            # ADD 'missing' columns to existing table
-
-            initialize_data_table(
-              config_db, "ServerChoice",
-              list(
-                c("id", "integer"),
-                c("Name", "character")
-              )
-            )
-            # there should only be (at most) one entry in this table!
-            # with id '1', and a 'Name' the same as the chosen entry in table "Server"
-            if (length(config_db$conn() %>>%
-                       dplyr::tbl("ServerChoice") %>>%
-                       dplyr::filter(id == 1) %>>%
-                       dplyr::pull(Name)) == 0) { # empty table
-              query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
-              data_for_sql <- as.list.data.frame(c(1, "None"))
-              config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
-            }
-
-            initialize_data_table(
-              config_db, "LogSettings",
-              list(
-                c("id", "integer"), # will always be '1'
-                c("Log", "integer"),
-                c("Filename", "character")
-              )
-            )
-            # Log = true (1) if logging, or false (0) if not
-            # Filename = SQLite log file
-            # there should only be (at most) one entry in this table!
-            # with id '1', and a 'Log' set to 0/1 (FALSE/TRUE), and
-            # perhaps a filename
-            if (length(config_db$conn() %>>%
-                       dplyr::tbl("LogSettings") %>>%
-                       dplyr::filter(id == 1) %>>%
-                       dplyr::pull(Log)) == 0) { # empty table})
-              query <- "INSERT INTO LogSettings (id, Log, Filename) VALUES (?, ?, ?)"
-              data_for_sql <- as.list.data.frame(c(1, as.numeric(FALSE), ""))
-              config_db$dbSendQuery(query, data_for_sql) # starts as 'FALSE'
-            }
-
-            initialize_data_table(
-              config_db, "Location",
-              list(
-                c("id", "integer"),
-                c("Name", "character"),
-                c("Description", "character")
-              )
-            )
-
-            initialize_data_table(
-              config_db, "Users",
-              list(
-                c("id", "integer"),
-                c("Fullname", "character"),
-                c("AuthIdentity", "character"),
-                c("Location", "character"),
-                c("Password", "character"),
-                c("Attributes", "character"),
-                c("License", "character") # contains license code (if any)
-              )
-            )
-
-            initialize_data_table(
-              config_db, "UserRestrictions",
-              list(
-                c("uid", "integer"),
-                c("Restriction", "character")
-              )
-            )
-            # list of restrictions for users
-            # use of 'uid' rather than 'id'
-            # (this relates to the 'Attributes' field in "Users")
-
-            if (requireNamespace("dMeasureCustom", quietly = TRUE)) {
-              if (
-                exists(
-                  "initialize_data_table",
-                  where = asNamespace("dMeasureCustom"),
-                  mode = "function"
-                )
-              ) {
-                x <- dMeasureCustom::initialize_data_table()
-                initialize_data_table(
-                  config_db,
-                  tablename = x$tablename,
-                  variable_list = x$variable_list
-                )
-              }
-            }
-
-          }
-          invisible(self)
-        })
+    }
+    invisible(self)
+  })
 
 #' read the SQL configuration database
 #'
@@ -1065,13 +1368,15 @@ read_configuration_db <- function(dMeasure_obj,
   private$trigger(self$config_db_trigR)
   # notification of configuration database change
 
-  if (exists("dMCustom")) {
-    if (exists("read_configuration_db", where = dMCustom, mode = "function")) {
-      dMCustom$read_configuration_db(config_db$conn())
-    }
-  }
+  dateformat <- config_db$conn() %>>%
+    dplyr::tbl("Settings") %>>%
+    dplyr::filter(setting == "dateformat") %>>%
+    dplyr::pull(value)
+  private$set_reactive(self$dateformat, dateformat)
+
   invisible(self)
 })
+
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
@@ -1732,7 +2037,10 @@ initialize_emr_tables <- function(dMeasure_obj,
       Address2 = trimws(Address2),
       City = trimws(City),
       PostalAddress = trimws(PostalAddress),
-      PostalCity = trimws(PostalCity)
+      PostalCity = trimws(PostalCity),
+      HomePhone = trimws(HomePhone),
+      WorkPhone = trimws(WorkPhone),
+      MobilePhone = trimws(MobilePhone)
     )
 
   self$db$patientsRaw <- emr_db$conn() %>>%
@@ -1966,8 +2274,11 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(c(
       "Patient", "InternalID",
       "AppointmentDate", "AppointmentTime",
-      "Provider", "Status"
-    ))
+      "Provider", "Status", "AppointmentType"
+    )) %>>%
+    dplyr::mutate(
+      Status = trimws(Status), AppointmentType = trimws(AppointmentType)
+    )
   # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
 
   self$db$visits <- emr_db$conn() %>>%
@@ -1982,9 +2293,10 @@ initialize_emr_tables <- function(dMeasure_obj,
   # ... 'Telehealth'
 
   self$db$immunizations <- emr_db$conn() %>>%
-    # InternalID, GivenDate, VaccineName, VaccineID
+    # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
+    # NotGivenHere - 0 if given at practice, 1 if recorded as given elsewhere
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Immunisations")) %>>%
-    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID")) %>>%
+    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID", "NotGivenHere")) %>>%
     dplyr::mutate(
       GivenDate = as.Date(GivenDate),
       VaccineName = trimws(VaccineName)
@@ -2011,6 +2323,12 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
+    # ITEMID - exclusion for reminder
+    # - 1 Influenza vaccination
+    # - 2 Pneumonia vaccination
+    # - 3 Diabetes review
+    # - 5 Care plan review
+    # - 15 Herpes zoster vaccination
     dplyr::tbl(dbplyr::in_schema("dbo", "PreventiveHealth")) %>>%
     dplyr::select("InternalID" = "INTERNALID", "ITEMID")
 
@@ -2261,7 +2579,15 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(
       "InternalID" = "INTERNALID", "NOMINALLMP",
       "LASTPAPDATE", "LASTPAPRESULT", "BREASTFEEDING",
-      "MammogramStatus", "LastMammogramDate", "MammogramResult"
+      "MammogramStatus", "LastMammogramDate", "MammogramResult",
+      "NoPap" = "NOPAP", # 'no longer requires cervical screening (CST)' : 1 (TRUE) or 0 (FALSE)
+      "OptOut" = "OPTOUT", "OptOutReason" = "OPTOUTREASON" # CST opt-out
+      # OptOut 1 (TRUE) or 0 (FALSE). if true, then there can be a reason
+      # OptOutReason 'Has screening at another practice', 'Has screening done by specialist'
+      # 'Doesn't want reminders sent', 'Refuses to have screening'
+    ) %>>%
+    dplyr::mutate(
+      OptOutReason = trimws(OptOutReason)
     )
 
   self$db$pregnancies <- emr_db$conn() %>>%

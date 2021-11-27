@@ -125,21 +125,24 @@ list_zostavax <- function(dMeasure_obj,
   }
 
   zostavax_list <- zostavax_list %>>%
-    dplyr::left_join(self$db$immunizations %>>%
-                       dplyr::filter(
-                         InternalID %in% intID,
-                         # those who have had the zostavax vaccine
-                         ((VaccineName %LIKE% "%zostavax%") |
-                            (VaccineID == 103))
-                       ),
-                     by = "InternalID",
-                     copy = TRUE
+    dplyr::left_join(
+      self$db$immunizations %>>%
+        dplyr::select(-NotGivenHere) %>>%
+        dplyr::filter(
+          InternalID %in% intID,
+          # those who have had the zostavax vaccine
+          ((VaccineName %LIKE% "%zostavax%") |
+             (VaccineID == 103))
+        ),
+      by = "InternalID",
+      copy = TRUE
     ) %>>%
-    dplyr::left_join(self$db$preventive_health %>>%
-                       # those who have been removed from the reminder system for Zostavax
-                       dplyr::filter(ITEMID == 15),
-                     by = "InternalID",
-                     copy = TRUE
+    dplyr::left_join(
+      self$db$preventive_health %>>%
+        # those who have been removed from the reminder system for Zostavax
+        dplyr::filter(ITEMID == 15),
+      by = "InternalID",
+      copy = TRUE
     ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
@@ -335,16 +338,18 @@ list_measlesVax <- function(dMeasure_obj,
   # via the db$vaccine_disease database
 
   measlesVax_list <- measlesVax_list %>>%
-    dplyr::left_join(self$db$immunizations %>>%
-                       dplyr::filter(
-                         InternalID %in% intID,
-                         # those who have had the measles vaccine
-                         ((VaccineName %LIKE% "%measles%") |
-                            VaccineName %LIKE% "%mmr%" |
-                            (VaccineID %in% measlesVaxID))
-                       ),
-                     by = "InternalID",
-                     copy = TRUE
+    dplyr::left_join(
+      self$db$immunizations %>>%
+        dplyr::select(-NotGivenHere) %>>%
+        dplyr::filter(
+          InternalID %in% intID,
+          # those who have had the measles vaccine
+          ((VaccineName %LIKE% "%measles%") |
+             VaccineName %LIKE% "%mmr%" |
+             (VaccineID %in% measlesVaxID))
+        ),
+      by = "InternalID",
+      copy = TRUE
     ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
@@ -544,13 +549,15 @@ list_influenza <- function(dMeasure_obj, date_from = NA, date_to = NA, clinician
 
   lprevious <- list_details %>>%
     # those who have had influenza vaccines in the past
-    dplyr::left_join(self$db$immunizations %>>%
-                       dplyr::filter(
-                         InternalID %in% intID,
-                         VaccineID %in% fluvaxID
-                       ),
-                     by = "InternalID",
-                     copy = TRUE
+    dplyr::left_join(
+      self$db$immunizations %>>%
+        dplyr::select(-NotGivenHere) %>>%
+        dplyr::filter(
+          InternalID %in% intID,
+          VaccineID %in% fluvaxID
+        ),
+      by = "InternalID",
+      copy = TRUE
     ) %>>%
     dplyr::mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>>%
     dplyr::filter(GivenDate <= Date) %>>%
