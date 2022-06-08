@@ -158,6 +158,15 @@ a <- dMeasure::dMeasure$new()
 a$open_emr_db() # this will try to open the most recent database description choice, in this case, 'Main'
 ```
 
+## Best Practice database SQL firewall configuration
+
+Ports to open on te server (according to 'BPS_SQLportsV2' utility)
+
+* TCP 139 - File and Print sharing
+* TCP 49715 - BP Dynamic - SQL Express
+* UDP 137 - File and Print sharing
+* UDP 1434 - SQL Browser
+
 # User configuration
 
 ```{r}
