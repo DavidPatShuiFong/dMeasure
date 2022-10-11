@@ -11,7 +11,7 @@ BPdatabaseChoice(dMeasure_obj, choice)
 
 \item{choice}{(optional) name of database choice
 
- posible value includes "None", which will close any current database}
+ possible value includes "None", which will close any current database}
 }
 \value{
 the current database choice, if choice not provided

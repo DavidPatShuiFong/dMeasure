@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 ##### dMeasure ###########################################
 
 #' @include r6_helpers.R
@@ -28,8 +32,7 @@ NULL
 dMeasure <-
   R6::R6Class("dMeasure",
               public = list(
-                initialize = function () {
-
+                initialize = function() {
                   if (length(public_init_fields$name) > 0) { # only if any defined
                     for (i in 1:length(public_init_fields$name)) {
                       if (public_init_fields$obj[[i]] == "dMeasure") {
@@ -104,7 +107,8 @@ dMeasure <-
   if (self$config_db$is_open()) {
     if (self$config_db$keep_log) { # if currently logging
       log_id <- self$config_db$write_log_db(
-        query = "Closing databases")
+        query = "Closing databases"
+      )
       self$config_db$close_log_db() # close logging database
     }
     self$config_db$close()
@@ -113,23 +117,26 @@ dMeasure <-
     private$.BPdatabase <- BPdatabase_empty
     private$.BPdatabaseChoice <- "None"
 
-    private$PracticeLocations <- data.frame(id = numeric(),
-                                            Name = character(),
-                                            Description = character())
+    private$PracticeLocations <- data.frame(
+      id = numeric(),
+      Name = character(),
+      Description = character()
+    )
     invisible(self$location_list)
     # $location_list() will refresh the reactive location_listR if available
 
     private$.UserConfig <- UserConfig_empty
     invisible(self$UserConfig) # this will also set $userConfigR reactive version
 
-    private$.UserRestrictions <- data.frame(uid = integer(),
-                                            Restriction = character(),
-                                            stringsAsFactors = FALSE)
+    private$.UserRestrictions <- data.frame(
+      uid = integer(),
+      Restriction = character(),
+      stringsAsFactors = FALSE
+    )
     private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
 
     invisible(self$.identified_user)
     # see if 'identified' system user is matched with a configured user
-
   }
   if (self$emr_db$is_open()) {
     if (self$emr_db$keep_log) { # if currently logging
@@ -139,6 +146,7 @@ dMeasure <-
     self$db$practice <- NULL
     self$db$users <- NULL
     self$db$patients <- NULL
+    self$db$patientsRaw <- NULL
     self$db$clinical <- NULL
     self$db$reactions <- NULL
     self$db$investigations <- NULL
@@ -149,13 +157,16 @@ dMeasure <-
     self$db$correspondenceIn <- NULL
     self$db$reportValues <- NULL
     self$db$services <- NULL
+    self$db$servicesRaw <- NULL
     self$db$history <- NULL
+    self$db$currentRx <- NULL
+    # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
     self$db$familyhistory <- NULL
     self$db$familyhistorydetail <- NULL
     self$db$relationcode <- NULL
     self$clinician_choice_list <- NULL
   }
-  self$authenticated = FALSE
+  self$authenticated <- FALSE
 
   invisible(self)
 })
@@ -200,7 +211,7 @@ dMeasure <-
 #' dMeasure_obj <- dMeasure$new()
 #' dMeasure_obj$configuration_file_path # read filepath
 #' dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
-#'  # sets filepath
+#' # sets filepath
 #' @export
 configuration_file_path <- function(dMeasure_obj, value) {
   if (missing(value)) {
@@ -209,8 +220,7 @@ configuration_file_path <- function(dMeasure_obj, value) {
     dMeasure_obj$configuration_file_path <- value
   }
 }
-.active(dMeasure, "configuration_file_path", function (filepath) {
-
+.active(dMeasure, "configuration_file_path", function(filepath) {
   if (missing(filepath)) {
     # reads configuration file (if it exists)
     private$local_config <- self$configuration_file_yaml
@@ -260,8 +270,7 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
     dMeasure_obj$configuration_file_yaml <- value
   }
 }
-.active(dMeasure, "configuration_file_yaml", function (filepath) {
-
+.active(dMeasure, "configuration_file_yaml", function(filepath) {
   if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
     # shinyapps.io environment
     yaml_config_filepath <- ".DailyMeasure_cfg.yaml"
@@ -332,20 +341,15 @@ configuration_file_yaml <- function(dMeasure_obj, value) {
 # $config_db_trigR will trigger (0/1) with each configuration
 # database change
 
-.public_init(dMeasure, "subscription_db", quote(dbConnection::dbConnection$new()))
-# R6 connection to subscription database
-# using either DBI or pool
-# two subscription databases available
-#  1. vkelim.3322.org and 2. vkelim.dsmynas.com
-#  port 3306, username = "guest", password - not required, dbname = "DailyMeasureUsers"
-
-BPdatabase_empty <- data.frame(id = integer(),
-                               Name = character(),
-                               Address = character(),
-                               Database = character(),
-                               UserID = character(),
-                               dbPassword = character(),
-                               stringsAsFactors = FALSE)
+BPdatabase_empty <- data.frame(
+  id = integer(),
+  Name = character(),
+  Address = character(),
+  Database = character(),
+  UserID = character(),
+  dbPassword = character(),
+  stringsAsFactors = FALSE
+)
 .private(dMeasure, ".BPdatabase", BPdatabase_empty)
 #' show database configurations
 #'
@@ -386,14 +390,16 @@ BPdatabase <- function(dMeasure_obj) {
     }
   }
 })
-.reactive(dMeasure, "BPdatabaseR", quote(data.frame(id = integer(),
-                                                    Name = character(),
-                                                    Address = character(),
-                                                    Database = character(),
-                                                    Driver = character(),
-                                                    UserID = character(),
-                                                    dbPassword = character(),
-                                                    stringsAsFactors = FALSE)))
+.reactive(dMeasure, "BPdatabaseR", quote(data.frame(
+  id = integer(),
+  Name = character(),
+  Address = character(),
+  Database = character(),
+  Driver = character(),
+  UserID = character(),
+  dbPassword = character(),
+  stringsAsFactors = FALSE
+)))
 #' show database configuration names
 #'
 #' @name BPdatabase
@@ -421,21 +427,25 @@ BPdatabaseNames <- function(dMeasure_obj) {
 .private(dMeasure, ".BPdatabaseChoice", "None")
 # database choice will be the same as the 'Name' of
 # the chosen entry in BPdatabase
-.private(dMeasure, "PracticeLocations", data.frame(id = integer(),
-                                                   Name = character(),
-                                                   Description = character(),
-                                                   stringsAsFactors = FALSE))
+.private(dMeasure, "PracticeLocations", data.frame(
+  id = integer(),
+  Name = character(),
+  Description = character(),
+  stringsAsFactors = FALSE
+))
 # id needed for editing this dataframe later
 # need default value for practice location filter
 # interface initialization
-UserConfig_empty <- data.frame(id = integer(),
-                               Fullname = character(),
-                               AuthIdentity = character(),
-                               Location = character(),
-                               Attributes = character(),
-                               Password = character(),
-                               License = character(),
-                               stringsAsFactors = FALSE)
+UserConfig_empty <- data.frame(
+  id = integer(),
+  Fullname = character(),
+  AuthIdentity = character(),
+  Location = character(),
+  Attributes = character(),
+  Password = character(),
+  License = character(),
+  stringsAsFactors = FALSE
+)
 .private(dMeasure, ".UserConfig", UserConfig_empty)
 #' show user configurations
 #'
@@ -466,34 +476,42 @@ UserConfig <- function(dMeasure_obj) {
     stop("self$UserConfig is read-only!")
   }
 
-  empty_as_na <- function(x){
-    if("factor" %in% class(x)) x <- as.character(x) # since ifelse wont work with factors
+  empty_as_na <- function(x) {
+    if ("factor" %in% class(x)) x <- as.character(x) # since ifelse wont work with factors
     ifelse(as.character(x) != "", x, NA)
   }
   if (self$config_db$is_open()) {
     userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
-      dplyr::mutate(Location = stringi::stri_split(Location, regex = ";"),
-                    Attributes = stringi::stri_split(Attributes, regex = ";")) %>>%
+      dplyr::mutate(
+        Location = stringi::stri_split(Location, regex = ";"),
+        Attributes = stringi::stri_split(Attributes, regex = ";")
+      ) %>>%
       # splits Location and Attributes into multiple entries (in the same column)
       dplyr::mutate(License = empty_as_na(License)) %>>%
       dplyr::select(-Password) # same as $.UserConfig, except the password
   } else {
     userconfig <-
-      data.frame(id = integer(), Fullname = character(),
-                 AuthIdentity = character(),
-                 Location = character(),
-                 Attributes = character(),
-                 License = character())
+      data.frame(
+        id = integer(), Fullname = character(),
+        AuthIdentity = character(),
+        Location = character(),
+        Attributes = character(),
+        License = character()
+      )
   }
   private$set_reactive(self$UserConfigR, userconfig) # set reactive version
   return(userconfig)
 })
-.reactive(dMeasure, "UserConfigR",
-          quote(data.frame(id = integer(), Fullname = character(),
-                           AuthIdentity = character(),
-                           Location = character(),
-                           Attributes = character(),
-                           License = character())))
+.reactive(
+  dMeasure, "UserConfigR",
+  quote(data.frame(
+    id = integer(), Fullname = character(),
+    AuthIdentity = character(),
+    Location = character(),
+    Attributes = character(),
+    License = character()
+  ))
+)
 
 #' show user configurations with license
 #'
@@ -530,35 +548,47 @@ UserConfigLicense <- function(dMeasure_obj) {
     userconfiglicense <- self$UserConfig %>>%
       dplyr::left_join(self$UserFullConfig %>>%
                          dplyr::select(Fullname, Identifier, LicenseDate),
-                       by = "Fullname")
+                       by = "Fullname"
+      )
   } else {
     userconfiglicense <-
-      data.frame(id = integer(), Fullname = character(),
-                 AuthIdentity = character(),
-                 Location = character(),
-                 Attributes = character(),
-                 License = character(),
-                 Identifier = character(),
-                 LicenseDate = as.Date(numeric(0),
-                                       origin = "1970-01-01"))
+      data.frame(
+        id = integer(), Fullname = character(),
+        AuthIdentity = character(),
+        Location = character(),
+        Attributes = character(),
+        License = character(),
+        Identifier = character(),
+        LicenseDate = as.Date(numeric(0),
+                              origin = "1970-01-01"
+        ),
+        stringsAsFactors = FALSE
+      )
   }
   return(userconfiglicense)
 })
-.reactive_event(dMeasure, "UserConfigLicenseR",
-                quote(
-                  shiny::eventReactive(
-                    c(self$UserConfigR()), {
-                      self$UserConfigLicense
-                    })
-                ))
+.reactive_event(
+  dMeasure, "UserConfigLicenseR",
+  quote(
+    shiny::eventReactive(
+      c(self$UserConfigR()), {
+        self$UserConfigLicense
+      }
+    )
+  )
+)
 
-.private(dMeasure, ".UserRestrictions", data.frame(uid = integer(),
-                                                   Restriction = character(),
-                                                   stringsAsFactors = FALSE))
+.private(dMeasure, ".UserRestrictions", data.frame(
+  uid = integer(),
+  Restriction = character(),
+  stringsAsFactors = FALSE
+))
 
-.reactive(dMeasure, "UserRestrictions", quote(data.frame(uid = integer(),
-                                                         Restriction = character(),
-                                                         stringsAsFactors = FALSE)))
+.reactive(dMeasure, "UserRestrictions", quote(data.frame(
+  uid = integer(),
+  Restriction = character(),
+  stringsAsFactors = FALSE
+)))
 
 # this lists the 'enabled' restrictions,
 #  relevant to the 'Attributes' field of 'UserConfig'
@@ -584,7 +614,7 @@ UserConfigLicense <- function(dMeasure_obj) {
 #' @param dMeasure_obj dMeasure R6 object
 #' @param choice (optional) name of database choice
 #'
-#'  posible value includes "None", which will close any current database
+#'  possible value includes "None", which will close any current database
 #'
 #' @return the current database choice, if choice not provided
 #'
@@ -604,9 +634,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     return(private$.BPdatabaseChoice)
   } else {
     if (!(choice %in% c("None", private$.BPdatabase$Name))) {
-      stop(paste0("Database choice must be one of ",
-                  paste0("'", private$.BPdatabase$Name, "'", collapse = ", "),
-                  " or 'None'."))
+      stop(paste0(
+        "Database choice must be one of ",
+        paste0("'", private$.BPdatabase$Name, "'", collapse = ", "),
+        " or 'None'."
+      ))
     }
 
     # close existing database connection
@@ -634,10 +666,12 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         server_driver <- server$Driver
       }
 
-      self$emr_db$connect(odbc::odbc(), driver = server_driver,
+      self$emr_db$connect(odbc::odbc(),
+                          driver = server_driver,
                           server = server$Address, database = server$Database,
                           uid = server$UserID,
-                          pwd = dMeasure::simple_decode(server$dbPassword))
+                          pwd = dMeasure::simple_decode(server$dbPassword)
+      )
       # the open firewall ports required at the Best Practice database server are:
       #  TCP - 139    : File & Print Sharing - Subnet
       #  TCP - 54968  : BP Dynamic - SQL Express
@@ -664,6 +698,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$practice <- NULL
       self$db$users <- NULL
       self$db$patients <- NULL
+      self$db$patientsRaw <- NULL
       self$db$clinical <- NULL
       self$db$reactions <- NULL
       self$db$investigations <- NULL
@@ -677,6 +712,8 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       self$db$servicesRaw <- NULL
       self$db$invoices <- NULL
       self$db$history <- NULL
+      self$db$currentRx <- NULL
+      # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
       self$db$familyhistory <- NULL
       self$db$familyhistorydetail <- NULL
       self$db$relationcode <- NULL
@@ -686,7 +723,8 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       if (self$Log) {
         log_id <- self$config_db$write_log_db(
           query = "opened EMR database",
-          data = choice)
+          data = choice
+        )
       }
       # successfully opened database
       # set choice of database to attempted choice
@@ -730,11 +768,333 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
 
+.reactive(dMeasure, "dateformat", "2021-01-17") # date format
+# only used for GPstat! shiny GUI interfacec
+.public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))
+
+#' choose (or read) dateformat choice
+#'
+#' This must be one of `self$dateformat_choices`
+#'
+#' Sets `self$dateformat` reactive, if shiny/reactive
+#' environment available
+#'
+#' @name dateformat_choice
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param choice name of database choice
+#'
+#'  possible values must be one of `self$dateformat_choices`
+#'
+#' @return the current choice, if choice not provided
+#'
+#' @examples
+#' dMeasure_obj$dateformat_choice # returns the current choice
+#' dMeasure_obj$dateformat_choice <- "2021-01-17" # sets dataformat choice
+#' @export
+dateformat_choice <- function(dMeasure_obj, choice) {
+  if (missing(choice)) {
+    return(dMeasure_obj$dateformat_choice)
+  } else {
+    dMeasure_obj$dateformat_choice <- choice
+  }
+}
+.active(dMeasure, "dateformat_choice", function(choice) {
+  if (missing(choice)) {
+    if (requireNamespace("shiny", quietly = TRUE)) {
+      return(shiny::isolate(self$dateformat()))
+    } else {
+      return(self$dateformat_choices[[1]])
+      # just return default dateformat if shiny is not available
+    }
+  } else {
+    if (!(choice %in% self$dateformat_choices)) {
+      stop(paste0(
+        "Dateformat choice must be one of ",
+        paste0("'", self$dateformat_choices, collapse = ", ")
+      ))
+    }
+
+    if (nrow(self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+             dplyr::filter(setting == "dateformat") %>>% dplyr::collect()) == 0) {
+      # create a new entry
+      query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+      data_for_sql <- as.list.data.frame(c("dateformat", self$dateformat_choices[1]))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    if ((self$config_db$conn() %>>% dplyr::tbl("Settings") %>>%
+         dplyr::filter(setting == "dateformat") %>>%
+         dplyr::pull(value)) != choice) {
+      # if new choice is not recorded in current configuration database
+      # already an entry in the ServerChoice table
+      query <- "UPDATE Settings SET value = ? WHERE setting = ?"
+      data_for_sql <- as.list.data.frame(c(choice, "dateformat"))
+      self$config_db$dbSendQuery(query, data_for_sql)
+      # write to SQLite configuration database
+    }
+
+    self$dateformat(choice)
+
+    return(choice)
+  }
+})
+#' formatdate function
+#'
+#' Returns function which formats date using `self$dateformat_choice`
+#'
+#' if lubridate  package is not available, return function which
+#' converts date to character string using default `as.character` method.
+#'
+#' reactive version is `formatdateR`, reacts to `self$dateformat()`
+#'
+#' @name formatdate
+#'
+#' @param none
+#'
+#' @return a function which formats the date to a character string
+#'
+#' @export
+formatdate <- function(dMeasure_obj) {
+  dMeasure_obj$formatdate()
+}
+.public(dMeasure, "formatdate", function() {
+  # `dateformat` is a function to convert dates into desired date format
+  if (requireNamespace("lubridate", quietly = TRUE)) {
+    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    # formats date into desired format
+  } else {
+    # if no lubridate library is available then, just return the date in default format
+    dateformat_function <- function(x) {as.character(x)}
+  }
+  return(dateformat_function)
+})
+.reactive_event(
+  dMeasure, "formatdateR",
+  quote(
+    shiny::eventReactive(
+      c(self$dateformat()), {
+        self$formatdate()
+      }
+    )
+  )
+)
+
 ## methods
+
+#' read_dMeasureModules
+#'
+#' @name read_dMeasureModules
+#'
+#' @md
+#'
+#' @description discover available dMeasure module packages
+#'
+#' @details
+#'
+#' dMeasure's function is extended by modules, such as `dMeasureAppointments`,
+#'   `dMeasureMedication`, `dMeasureQIM` and `dMeasureBilling`
+#'
+#'   `read_dMeasureModules` detects which of these modules (R packages) have
+#'   been installed and reads the details.
+#'
+#'   * dMeasure modules all start with the prefix `dMeasure`
+#'   * dMeasure modules all export the function `dMeasureIntegration`
+#'     + the function `dMeasureIntegration` (and others) can return details of the module package
+#'       - typically `Package`, `Provides`, `Requires`, `moduleID`
+#'       - `Package` - the module package name
+#'       - `Provides` - the functionality the module package provides
+#'       - `Requires` - the dependencies of the module package. Can be just `dMeasure`, but also can be other modules
+#'       - `moduleID` - the ID when the server component of the module is executed. can be multiple IDs
+#'         * can be a list of IDs with optional `$extraargs` extra arguments to pass to server component of module
+#'       - `configID` - optional ID of server component of configuration panel
+#'   * dMeasure modules can provide additional information
+#'     + optional `sidebarmenuPriority` function helps arrange position of module in left sidebar.
+#'
+#'   `read_dMeasureModules` stores the results in `$dMeasureModules` and returns the dataframe
+#'     + `$dMeasureModules` is used in methods such as `$open_configuration_db`, and so
+#'       `read_dMeasureModules` may need to be called early in the work-flow if the configuration
+#'       information is required.
+#'
+#' @param none
+#'
+#' @return a dataframe providing module details e.g. Package name
+#'
+#' @export
+#'
+#'
+dMeasureModules <- function(dMeasure_obj) {
+  dMeasure_obj$read_dMeasureModules()
+}
+.public(dMeasure, "dMeasureModules", NULL)
+.public(dMeasure, "read_dMeasureModules", function() {
+  self$dMeasureModules <- as.data.frame(installed.packages(), stringsAsFactors = FALSE) %>>%
+    dplyr::filter(grepl("dMeasure", Package)) %>>% # must have 'dMeasure' in part of the name
+    dplyr::filter(sapply(Package, function(x) {
+      # exists does not accept a vector for 'where', so use sapply (which returns a vector)
+      # check if the package contains the 'dMeasureIntegration' function
+      exists("dMeasureIntegration", where = asNamespace(x), mode = "function")
+    })) %>>%
+    dplyr::select(Package) %>>% # just need the package names
+    dplyr::mutate( # now fill in description (Provides/Requires)
+      Provides = sapply(
+        # usually a character vector with a single element
+        # however, it could be a list of character vectors
+        #  for an example, see dMeasureQIM
+        # if there are several elements, the Provides need to align
+        #  with moduleID
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Provides")
+          )
+        }
+      ),
+      Requires = sapply(
+        # a single character element (usually 'dMeasure')
+        #  or a vector/list of characters
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "Requires")
+          )
+        }
+      ),
+      moduleID = sapply(
+        # the ID of modules to create
+        #
+        # this can either return a vector of character
+        #  (possibly a one-element vector)
+        #  in which case the characters are IDs
+        # *or* alternatively a list of lists
+        #  (maybe just one list)
+        #  a list contains $ID (a character vector)
+        #  and $extraArgs (a character vector)
+        #  $extraArgs are passed to the call to
+        #  datatableServer (a call to a module)
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "moduleID")
+          )
+        }
+      ),
+      configID = sapply(
+        # the ID of modules to create
+        Package,
+        function(x) {
+          do.call(
+            what = "dMeasureIntegration",
+            envir = asNamespace(x),
+            args = list(information = "configID")
+          )
+        }
+      ),
+      sidebarmenuPriority = sapply(
+        Package,
+        function(x) {
+          if (exists("sidebarmenuPriority", where = asNamespace(x), mode = "function")) {
+            do.call(
+              what = "sidebarmenuPriority",
+              envir = asNamespace(x),
+              args = list()
+            )
+          } else {
+            50 # middle priority. larger numbers have higher priority
+          }
+        }
+      )
+    ) %>>%
+    dplyr::arrange(desc(sidebarmenuPriority)) %>>%
+    # order packages by display priority (50 being medium, 90 being high and 10 being low)
+    dplyr::add_row( # add a row for the dMeasure object
+      Package = "dMeasure",
+      Provides = list("dMeasure"),
+      # needs to be list because some packages have two 'provides'
+      Requires = list(NULL)
+    )
+
+  return(self$dMeasureModules)
+})
+
+#' initialize_data_table
+#'
+#' @name initialize_data_table
+#'
+#' @description write tables to configuration database
+#'
+#' @details
+#'
+#' Make sure the table in the database has all the right variable headings.
+#'   Creates table if table does not yet exist.
+#'   Allows 'update' of old databases.
+#'   Alters table in configuration database directly.
+#'
+#'   Used by `$open_configuration_db`
+#'
+#' @param config_db R6 object of configuration database
+#' @param tablename name of table
+#' @param variable_list list of variable headings, with variable type
+#'   e.g. list(c("id", "integer"), c("Name", "character"))
+#'
+#' @return nothing
+#'
+#' @export
+initialize_data_table <- function(config_db, tablename, variable_list) {
+
+  tablenames <- config_db$conn() %>>% DBI::dbListTables()
+
+  if (tablename %in% tablenames) {
+    # if table exists in config_db database
+    data <- DBI::dbReadTable(config_db$conn(), tablename) %>>%
+      dplyr::collect()
+    # get a copy of the table's data
+    # note that 'config_db$conn() %>>% dplyr::tbl(tablename) can't handle
+    #  a BLOB column
+
+    columns <- data  %>>% colnames()
+    # list of column (variable) names
+  } else {
+    # table does not exist, needs to be created
+    columns <- NULL
+    data <- data.frame(NULL)
+  }
+
+  changed <- FALSE
+  # haven't changed anything yet
+
+  for (a in variable_list) {
+    if (!(a[[1]] %in% columns)) {
+      # if a required variable name is not in the table
+      data <- data %>>%
+        dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
+      # use of !! and := to dynamically specify a[[1]] as a column name
+      # potentially could use data[,a[[1]]] <- ...
+      changed <- TRUE
+    }
+  }
+  if (changed == TRUE) {
+    DBI::dbWriteTable(config_db$conn(), tablename, data, overwrite = TRUE)
+  }
+}
 
 #' Open the SQL connection to the configuration from the SQL configuration file
 #'
-#' Opens SQL connection to SQLite configuration file.
+#' @name open_configuration_db
+#'
+#' @md
+#'
+#' @description Opens SQL connection to SQLite configuration file.
+#'
+#' @detail
+#'
 #' Does not read the configuration file (that is done by $read_configuration_db)
 #'
 #' Also check the SQL database
@@ -742,6 +1102,9 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 #' are checked to see if all required fields/columns
 #' are present. if a field/column is missing, then
 #' the missing field/column is added.
+#'
+#' Will initialize the configuration tables of dMeasure module packages
+#' *if* self$dMeasureModules is defined by $read_dMeasureModules
 #'
 #' @param dMeasure_obj dMeasure object
 #' @param configuration_file_path (location of SQL configuration)
@@ -760,158 +1123,184 @@ open_configuration_db <-
     dMeasure_obj$open_configuration_db(configuration_file_path)
   }
 
-.public(dMeasure, "open_configuration_db", function (
-  configuration_file_path = self$configuration_file_path) {
+.public(
+  dMeasure, "open_configuration_db",
+  function(configuration_file_path = self$configuration_file_path) {
 
-  # if no configuration filepath is defined, then try to read one
-  if (length(configuration_file_path) == 0) {
-    configuration_file_path <- self$configuration_file_path
-  }
-
-  config_db <- self$config_db # for convenience
-
-  if (file.exists(configuration_file_path)) {
-    # open config database file
-    config_db$connect(RSQLite::SQLite(),
-                      dbname = self$configuration_file_path)
-  } else {
-    # if the config database doesn't exist,
-    # then create it (note create = TRUE option)
-    config_db$connect(RSQLite::SQLite(),
-                      dbname = self$configuration_file_path)
-    # create = TRUE not a valid option?
-    # always tries to create file if it doesn't exist
-  }
-
-  if (!config_db$is_open()) {
-    # failed to read, or create, configuration database
-    if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
-      # shinyapps.io environment
-      self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
-    } else {
-      self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
-    }
-    # try to create the default configuration file
-    config_db$connect(RSQLite::SQLite(),
-                      dbname = self$configuration_file_path)
-  }
-
-  initialize_data_table = function(config_db, tablename, variable_list ) {
-    # make sure the table in the database has all the right variable headings
-    # allows 'update' of old databases
-    #
-    # input - config_db : R6 object of configuration database
-    # input - tablename : name of table
-    # input - variable_list : list of variable headings, with variable type
-    #   e.g. list(c("id", "integer"), c("Name", "character"))
-    #
-    # alters table in database directly
-    #
-    # returns - nothing
-
-    tablenames <- config_db$conn() %>>% DBI::dbListTables()
-
-    if (tablename %in% tablenames) {
-      # if table exists in config_db database
-      columns <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% colnames()
-      # list of column (variable) names
-      data <- config_db$conn() %>>% dplyr::tbl(tablename) %>>% dplyr::collect()
-      # get a copy of the table's data
-    } else {
-      # table does not exist, needs to be created
-      columns <- NULL
-      data <- data.frame(NULL)
+    # if no configuration filepath is defined, then try to read one
+    if (length(configuration_file_path) == 0) {
+      configuration_file_path <- self$configuration_file_path
     }
 
-    changed <- FALSE
-    # haven't changed anything yet
+    config_db <- self$config_db # for convenience
 
-    for (a in variable_list) {
-      if (!(a[[1]] %in% columns)) {
-        # if a required variable name is not in the table
-        data <- data %>>%
-          dplyr::mutate(!!a[[1]] := vector(a[[2]], nrow(data)))
-        # use of !! and := to dynamically specify a[[1]] as a column name
-        # potentially could use data[,a[[1]]] <- ...
-        changed <- TRUE
+    if (file.exists(configuration_file_path)) {
+      # open config database file
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
+    } else {
+      # if the config database doesn't exist,
+      # then create it (note create = TRUE option)
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
+      # create = TRUE not a valid option?
+      # always tries to create file if it doesn't exist
+    }
+
+    if (!config_db$is_open()) {
+      # failed to read, or create, configuration database
+      if (Sys.getenv("R_CONFIG_ACTIVE") == "shinyapps") {
+        # shinyapps.io environment
+        self$configuration_file_path <- ".DailyMeasure_cfg.sqlite"
+      } else {
+        self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
       }
-    }
-    if (changed == TRUE) {
-      DBI::dbWriteTable(config_db$conn(), tablename, data, overwrite = TRUE)
-    }
-  }
-
-
-  if (!is.null(config_db$conn())) {
-    # check that tables exist in the config file
-    # also create new columns (variables) as necessary
-    initialize_data_table(config_db, "Server",
-                          list(c("id", "integer"),
-                               c("Name", "character"),
-                               c("Driver", "character"), # which MSSQL ODBC driver to use
-                               c("Address", "character"),
-                               c("Database", "character"),
-                               c("UserID", "character"),
-                               c("dbPassword", "character")))
-    # initialize_data_table will create table and/or
-    # ADD 'missing' columns to existing table
-
-    initialize_data_table(config_db, "ServerChoice",
-                          list(c("id", "integer"),
-                               c("Name", "character")))
-    # there should only be (at most) one entry in this table!
-    # with id '1', and a 'Name' the same as the chosen entry in table "Server"
-    if (length(config_db$conn() %>>%
-               dplyr::tbl("ServerChoice") %>>%
-               dplyr::filter(id == 1) %>>%
-               dplyr::pull(Name)) == 0) { # empty table
-      query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
-      data_for_sql <- as.list.data.frame(c(1, "None"))
-      config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+      # try to create the default configuration file
+      config_db$connect(RSQLite::SQLite(),
+                        dbname = self$configuration_file_path
+      )
     }
 
-    initialize_data_table(config_db, "LogSettings",
-                          list(c("id", "integer"), # will always be '1'
-                               c("Log", "integer"),
-                               c("Filename", "character")))
-    # Log = true (1) if logging, or false (0) if not
-    # Filename = SQLite log file
-    # there should only be (at most) one entry in this table!
-    # with id '1', and a 'Log' set to 0/1 (FALSE/TRUE), and
-    # perhaps a filename
-    if (length(config_db$conn() %>>%
-               dplyr::tbl("LogSettings") %>>%
-               dplyr::filter(id == 1) %>>%
-               dplyr::pull(Log)) == 0) { # empty table})
-      query <- "INSERT INTO LogSettings (id, Log, Filename) VALUES (?, ?, ?)"
-      data_for_sql <- as.list.data.frame(c(1, as.numeric(FALSE), ""))
-      config_db$dbSendQuery(query, data_for_sql) # starts as 'FALSE'
+    if (!is.null(config_db$conn())) {
+      # check that tables exist in the config file
+      # also create new columns (variables) as necessary
+      initialize_data_table(
+        config_db, "Server",
+        list(
+          c("id", "integer"),
+          c("Name", "character"),
+          c("Driver", "character"), # which MSSQL ODBC driver to use
+          c("Address", "character"),
+          c("Database", "character"),
+          c("UserID", "character"),
+          c("dbPassword", "character")
+        )
+      )
+      # initialize_data_table will create table and/or
+      # ADD 'missing' columns to existing table
+
+      initialize_data_table(
+        config_db, "ServerChoice",
+        list(
+          c("id", "integer"),
+          c("Name", "character")
+        )
+      )
+      # there should only be (at most) one entry in this table!
+      # with id '1', and a 'Name' the same as the chosen entry in table "Server"
+      if (length(config_db$conn() %>>%
+                 dplyr::tbl("ServerChoice") %>>%
+                 dplyr::filter(id == 1) %>>%
+                 dplyr::pull(Name)) == 0) { # empty table
+        query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
+        data_for_sql <- as.list.data.frame(c(1, "None"))
+        config_db$dbSendQuery(query, data_for_sql) # populate with "None" choice
+      }
+
+      initialize_data_table(
+        config_db, "LogSettings",
+        list(
+          c("id", "integer"), # will always be '1'
+          c("Log", "integer"),
+          c("Filename", "character")
+        )
+      )
+      # Log = true (1) if logging, or false (0) if not
+      # Filename = SQLite log file
+      # there should only be (at most) one entry in this table!
+      # with id '1', and a 'Log' set to 0/1 (FALSE/TRUE), and
+      # perhaps a filename
+      if (length(config_db$conn() %>>%
+                 dplyr::tbl("LogSettings") %>>%
+                 dplyr::filter(id == 1) %>>%
+                 dplyr::pull(Log)) == 0) { # empty table})
+        query <- "INSERT INTO LogSettings (id, Log, Filename) VALUES (?, ?, ?)"
+        data_for_sql <- as.list.data.frame(c(1, as.numeric(FALSE), ""))
+        config_db$dbSendQuery(query, data_for_sql) # starts as 'FALSE'
+      }
+
+      initialize_data_table(
+        config_db, "Location",
+        list(
+          c("id", "integer"),
+          c("Name", "character"),
+          c("Description", "character")
+        )
+      )
+
+      initialize_data_table(
+        config_db, "Users",
+        list(
+          c("id", "integer"),
+          c("Fullname", "character"),
+          c("AuthIdentity", "character"),
+          c("Location", "character"),
+          c("Password", "character"),
+          c("Attributes", "character"),
+          c("License", "character") # contains license code (if any)
+        )
+      )
+
+      initialize_data_table(
+        config_db, "UserRestrictions",
+        list(
+          c("uid", "integer"),
+          c("Restriction", "character")
+        )
+      )
+      # list of restrictions for users
+      # use of 'uid' rather than 'id'
+      # (this relates to the 'Attributes' field in "Users")
+
+      # handle write configuration tables for dMeasure module packages
+      for (i in seq_len(max(nrow(self$dMeasureModules), 0))) {
+        # iterate through available modules
+        # if $read_dMeasureModules has not been called, then
+        # self$dMeasureModules could be NULL
+        if (self$dMeasureModules[[i, "Package"]] != "dMeasure") {
+          if (
+            exists(
+              "initialize_configuration_db",
+              where = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              mode = "function")
+          ) {
+            # if the module has a initialize_configuration_db function, then use it
+            do.call(
+              what = "initialize_configuration_db",
+              envir = asNamespace(self$dMeasureModules[[i, "Package"]]),
+              args = list(config_db = config_db)
+            )
+          }
+        }
+      }
+
+      initialize_data_table(
+        config_db, "Settings",
+        list(
+          c("setting", "character"),
+          c("value", "character")
+          # name of setting, and then the value
+        )
+      )
+      if (requireNamespace("lubridate", quietly = TRUE)) {
+        # date format for GPstat! shiny GUI interface
+        # depends on lubridate::stamp_date
+        if (length(config_db$conn() %>>%
+                   dplyr::tbl("Settings") %>>%
+                   dplyr::filter(setting == "dateformat") %>>%
+                   dplyr::pull(value)) == 0) { # empty table
+          query <- "INSERT INTO Settings (setting, value) VALUES (?, ?)"
+          data_for_sql <- as.list.data.frame(c("dateformat", "2021-01-17"))
+          # default is the standard date format YYYY-mm-dd (%Y-%0m-%d)
+          config_db$dbSendQuery(query, data_for_sql)
+        }
+      }
+
     }
-
-    initialize_data_table(config_db, "Location",
-                          list(c("id", "integer"),
-                               c("Name", "character"),
-                               c("Description", "character")))
-
-    initialize_data_table(config_db, "Users",
-                          list(c("id", "integer"),
-                               c("Fullname", "character"),
-                               c("AuthIdentity", "character"),
-                               c("Location", "character"),
-                               c("Password", "character"),
-                               c("Attributes", "character"),
-                               c("License", "character") # contains license code (if any)
-                          ))
-
-    initialize_data_table(config_db, "UserRestrictions",
-                          list(c("uid", "integer"),
-                               c("Restriction", "character")))
-    # list of restrictions for users
-    # use of 'uid' rather than 'id'
-    # (this relates to the 'Attributes' field in "Users")
-  }
-  invisible(self)
-})
+    invisible(self)
+  })
 
 #' read the SQL configuration database
 #'
@@ -934,7 +1323,6 @@ read_configuration_db <- function(dMeasure_obj,
   }
 }
 .public(dMeasure, "read_configuration_db", function(config_db = self$config_db) {
-
   if (!config_db$is_open()) {
     # if config_db is not yet opened/defined
     # then try to open configuration database
@@ -980,8 +1368,15 @@ read_configuration_db <- function(dMeasure_obj,
   private$trigger(self$config_db_trigR)
   # notification of configuration database change
 
+  dateformat <- config_db$conn() %>>%
+    dplyr::tbl("Settings") %>>%
+    dplyr::filter(setting == "dateformat") %>>%
+    dplyr::pull(value)
+  private$set_reactive(self$dateformat, dateformat)
+
   invisible(self)
 })
+
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
@@ -1026,7 +1421,10 @@ read_subscription_db <- function(dMeasure_obj,
 
   subscription_is_open <-
     is.list(tryCatch(airtable$Subscriptions$select(filterByFormula = "Key = 'dummy'"),
-                     error = function(e) {NA}))
+                     error = function(e) {
+                       NA
+                     }
+    ))
   #
 
   if (subscription_is_open &&
@@ -1042,63 +1440,111 @@ read_subscription_db <- function(dMeasure_obj,
     }
 
     a <- a %>>%
-      dplyr::mutate(LicenseCheck =
-                      forcecheck |
-                      # if forcecheck == TRUE
-                      (is.na(LicenseDate) |
-                         # check if no valid license expiry
-                         # or license is expiring soon
-                         LicenseDate < (Sys.Date() + 60)),
-                    IdentifierUpper = toupper(Identifier)) # convert identifier to upper-case
+      dplyr::mutate(
+        LicenseCheck =
+          forcecheck |
+          # if forcecheck == TRUE
+          (is.na(LicenseDate) |
+             # check if no valid license expiry
+             # or license is expiring soon
+             LicenseDate < (Sys.Date() + 60)),
+        IdentifierUpper = toupper(Identifier)
+      ) # convert identifier to upper-case
 
     b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
       dplyr::pull(IdentifierUpper) %>>% simple_encode(key = "karibuni")
     # vector of Identifier to check in subscription database
     # these are 'encoded'
-    search_string <- paste0("OR(", paste0("{Key} = '", c(b, "dummy"), "'", collapse = ", "),")")
+    #
+    # is some databases there could be many identifiers to search
+    # but subsequent interrogation of the airtable database fails if there
+    # are many more than 700 identifiers to search
+    b_groups <- list()
+    if (length(b) < 500) {
+      b_groups[[1]] <- b
+    } else {
+      b_groups <- split(
+        b,
+        cut(seq_along(b), length(b) %/% 500 + 1, labels = FALSE)
+      )
+    }
+
+    search_strings <- lapply(
+      b_groups,
+      function(x) {
+        paste0(
+          "OR(",
+          paste0("{Key} = '", c(x, "dummy"), "'", collapse = ", "),
+          ")"
+        )
+      }
+    )
     # this ends up looking something like....
     #  "OR({Key} = 'a', {Key} = 'j', {Key} = 'tea')"
     #  adds 'dummy' to the vector, because if no entries are returned, then
     #  the search will return an empty list! (instead of a dataframe)
 
-    a <- a %>>%
-      dplyr::left_join(airtable$Subscriptions$select(filterByFormula = search_string) %>>%
-                         # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
-                         dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
-                         dplyr::select(IdentifierUpper, NewLicense = License),
-                       by = "IdentifierUpper") %>>%
-      dplyr::mutate(License =
-                      mapply(function(x, y, z, zz) {
-                        if (is.na(z)) {
-                          y # no new expiry date, 'License'
-                        } else {
-                          # need to set to new license
-                          # and also need to update our configuration database
+    if (length(b) > 0) {
+      subscriptions <- data.frame(
+        IdentifierUpper = character(),
+        NewLicense = character()
+      )
+      for (search_string in search_strings) {
+        subscriptions <- rbind(
+          subscriptions,
+          airtable$Subscriptions$select(filterByFormula = search_string) %>>%
+            # should return a dataframe with (id, Key, License, Comment, createdTime), all characters
+            # but *could* return an empty list
+            dplyr::bind_rows(data.frame(
+              id = character(), Key = character(), License = character(),
+              Comment = character(), createdTime = character()
+            )) %>>%
+            # dplyr::filter(Key != "dummy") %>>% # get rid of the dummy, interferes with decode
+            dplyr::mutate(IdentifierUpper = simple_decode(Key, key = "karibuni")) %>>%
+            dplyr::select(IdentifierUpper, NewLicense = License)
+        )
+      }
 
-                          if (nrow(self$userconfig.list() %>>%
-                                   dplyr::filter(Fullname == x)) == 0) {
-                            # the user has NO entry in the configuration database, so create one
-                            self$userconfig.insert(list(Fullname = x))
-                          }
-                          # update the license
-                          self$update_subscription(Fullname = x,
-                                                   License = z, # new license
-                                                   Identifier = zz,
-                                                   verify = FALSE)
-                          # not verified at this stage
-                          z # NewLicence
-                        }
-                      }, Fullname, License, NewLicense, Identifier,
-                      USE.NAMES = FALSE))
+      a <- a %>>%
+        dplyr::left_join(
+          subscriptions,
+          by = "IdentifierUpper"
+        ) %>>%
+        dplyr::mutate(
+          License =
+            mapply(function(x, y, z, zz) {
+              if (is.na(z)) {
+                y # no new expiry date, 'License'
+              } else {
+                # need to set to new license
+                # and also need to update our configuration database
 
-    # close before exit
-    self$subscription_db$close()
+                if (nrow(self$userconfig.list() %>>%
+                         dplyr::filter(Fullname == x)) == 0) {
+                  # the user has NO entry in the configuration database, so create one
+                  self$userconfig.insert(list(Fullname = x))
+                }
+                # update the license
+                self$update_subscription(
+                  Fullname = x,
+                  License = z, # new license
+                  Identifier = zz,
+                  verify = FALSE
+                )
+                # not verified at this stage
+                z # NewLicence
+              }
+            }, Fullname, License, NewLicense, Identifier,
+            USE.NAMES = FALSE
+            )
+        )
+
+    }
 
     return(self$UserFullConfig) # this contains the updated license informatioin
   } else {
     warning("Unable to open subscription database")
   }
-
 })
 
 #' Update subscription database
@@ -1117,19 +1563,20 @@ update_subscription <- function(dMeasure_obj,
                                 License = NA,
                                 Identifier = NA,
                                 verify = TRUE) {
-  dMeasure_obj$update_subscription(Fullname, License, Identifier,
-                                   verify)
+  dMeasure_obj$update_subscription(
+    Fullname, License, Identifier,
+    verify
+  )
 }
 .public(dMeasure, "update_subscription", function(Fullname = NA,
                                                   License = NA,
                                                   Identifier = NA,
                                                   verify = TRUE) {
-
   if (verify) {
     verified <- !is.na(dMeasure::verify_license(License, Identifier))
     # verify_license returns NA if not a valid license
   }
-  if (!verify || verified ) {
+  if (!verify || verified) {
     # either no verification required, or is verified
     query <- paste("UPDATE Users SET License = ? WHERE Fullname = ?")
     data_for_sql <- as.list.data.frame(c(License, Fullname))
@@ -1141,7 +1588,6 @@ update_subscription <- function(dMeasure_obj,
   } else {
     return(FALSE)
   }
-
 })
 
 #' check the subscription database
@@ -1150,7 +1596,6 @@ update_subscription <- function(dMeasure_obj,
 #' @param clinicians vector of users to check
 #' @param date_from date from, by default $date_a
 #' @param date_to date to, by default $date_b
-#' @param adjustdate will this function change the dates? ($date_a, $date_b)
 #' @param adjust_days number of days to adjust
 #'
 #' if the date is adjusted then reactive $check_subscription_datechange_trigR
@@ -1166,15 +1611,15 @@ update_subscription <- function(dMeasure_obj,
 check_subscription <- function(dMeasure_obj,
                                clinicians = NA,
                                date_from = NA, date_to = NA,
-                               adjustedate = TRUE,
                                adjust_days = 7) {
-  dMeasure_obj$check_subscription(users, date_from, date_to,
-                                  adjustdate, adjust_days)
+  dMeasure_obj$check_subscription(
+    users, date_from, date_to,
+    adjust_days
+  )
 }
 .public(dMeasure, "check_subscription", function(clinicians = NA,
                                                  date_from = NA,
                                                  date_to = NA,
-                                                 adjustdate = TRUE,
                                                  adjust_days = 7) {
   if (is.na(date_from)) {
     date_from <- self$date_a
@@ -1217,20 +1662,30 @@ check_subscription <- function(dMeasure_obj,
   if (changedate) {
     if (date_to > (Sys.Date() - adjust_days)) {
       date_to <- Sys.Date() - adjust_days
-      warning("A chosen user has no subscription for chosen date range. Dates changed (minimum one week old).")
       if (date_from > date_to) {
         date_from <- date_to
       }
-      if (adjustdate) {
-        # change the dates
-        self$choose_date(date_from, date_to)
-        private$trigger(self$check_subscription_datechange_trigR)
-      }
+      warning(
+        "A chosen user has no subscription for chosen date range. ",
+        "Without subscription, dates need to be minimum ",
+        adjust_days,
+        " days old."
+      )
+      # change the dates
+      new_trigger_value <-
+        -sign(self$check_subscription_datechange_trigR()) * adjust_days
+      # reverses the 'sign' of the trigger
+      private$set_reactive(
+        self$check_subscription_datechange_trigR,
+        new_trigger_value
+      )
     }
   }
   return(list(changedate = changedate, date_from = date_from, date_to = date_to))
 })
-.reactive(dMeasure, "check_subscription_datechange_trigR", 0)
+.reactive(dMeasure, "check_subscription_datechange_trigR", 1)
+# this trigger will 'flip-flop' from positive to negative values
+# the absolute value of the this trigger will be the number of days to be adjusted
 
 ##### User login ##################################################
 
@@ -1254,10 +1709,11 @@ check_subscription <- function(dMeasure_obj,
   current_user <- Sys.info()[["user"]]
   d <- NULL
   if (self$config_db$is_open()) {
-    private$set_reactive(self$identified_user,
-                         self$UserConfig %>>%
-                           dplyr::filter(AuthIdentity == current_user) %>>%
-                           dplyr::select(Fullname, AuthIdentity, Location, Attributes)
+    private$set_reactive(
+      self$identified_user,
+      self$UserConfig %>>%
+        dplyr::filter(AuthIdentity == current_user) %>>%
+        dplyr::select(Fullname, AuthIdentity, Location, Attributes)
     )
     # set reactive version if reactive (shiny) environment available
     # does not include password
@@ -1299,10 +1755,11 @@ match_user <- function(dMeasure_obj) {
 
 .public(dMeasure, "match_user", function() {
   current_user <- Sys.info()[["user"]]
-  private$set_reactive(self$identified_user,
-                       self$UserConfig %>>%
-                         dplyr::filter(AuthIdentity == current_user) %>>%
-                         dplyr::select(Fullname, AuthIdentity, Location, Attributes)
+  private$set_reactive(
+    self$identified_user,
+    self$UserConfig %>>%
+      dplyr::filter(AuthIdentity == current_user) %>>%
+      dplyr::select(Fullname, AuthIdentity, Location, Attributes)
   )
   # set reactive version if reactive (shiny) environment available
   # does not include password
@@ -1334,12 +1791,18 @@ match_user <- function(dMeasure_obj) {
   # the specified topic
   # this restriction does not apply if the user has the
   # 'Global' attribute for the topic in the user's attribute list
-  list(restriction = "GlobalActionView",
-       view_to_hide = list("immunization", "cancerscreen")),
-  list(restriction = "GlobalBillView",
-       view_to_hide = list("billings")),
-  list(restriction = "GlobalCDMView",
-       view_to_hide = list("cdm"))
+  list(
+    restriction = "GlobalActionView",
+    view_to_hide = list("immunization", "cancerscreen")
+  ),
+  list(
+    restriction = "GlobalBillView",
+    view_to_hide = list("billings")
+  ),
+  list(
+    restriction = "GlobalCDMView",
+    view_to_hide = list("cdm")
+  )
 ))
 
 ## methods
@@ -1365,20 +1828,23 @@ clinician_list <- function(dMeasure_obj,
 
 .public(dMeasure, "clinician_list", function(view_name = "All",
                                              location = NULL) {
-
   if (is.null(location)) {
     location <- self$location
   } else {
     self$location <- location
   }
-  if (self$location == 'All') {
+  if (self$location == "All") {
     # note that 'ifelse' only returns result in the
     # same 'shape' as the comparison statement
     clinician_list <- self$UserFullConfig$Fullname
   } else {
-    clinician_list <- subset(self$UserConfig$Fullname,
-                             sapply(self$UserConfig$Location,
-                                    function (y) self$location %in% y))
+    clinician_list <- subset(
+      self$UserConfig$Fullname,
+      sapply(
+        self$UserConfig$Location,
+        function(y) self$location %in% y
+      )
+    )
     # filter clinicians by location choice
     # it is possible for a clinician to have multiple locations
     # initially, $Location might include a lot of NA
@@ -1400,8 +1866,10 @@ clinician_list <- function(dMeasure_obj,
           # if user is not authenticated or
           # if the current user does not have this 'Global' attribute
           # then can only view one's own appointments
-          clinician_list <- subset(clinician_list,
-                                   clinician_list == self$.identified_user$Fullname)
+          clinician_list <- subset(
+            clinician_list,
+            clinician_list == self$.identified_user$Fullname
+          )
         }
       }
     }
@@ -1465,8 +1933,7 @@ open_emr_db <- function(dMeasure_obj,
   dMeasure_obj$open_emr_db(BPdatabaseChoice)
 }
 
-.public(dMeasure, "open_emr_db",function(BPdatabaseChoice = NULL) {
-
+.public(dMeasure, "open_emr_db", function(BPdatabaseChoice = NULL) {
   if (!self$config_db$is_open() || length(self$BPdatabaseChoice) == 0) {
     # no BPdatabase has been defined, or the current configuration is not valid
     # try to define the current configuration and open the BP database
@@ -1517,50 +1984,85 @@ initialize_emr_tables <- function(dMeasure_obj,
     dplyr::select(PracticeName = PRACTICENAME) %>>%
     dplyr::mutate(PracticeName = trimws(PracticeName))
 
-  self$db$users <- emr_db$conn() %>>%
+  self$db$users <-
+    emr_db$conn() %>>%
     # this is a function! a collect() is later called prior to mutate/join,
     # (as a result is no longer a 'lazy eval') and cannot be evaluated just once.
     # output - Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Users')) %>>%
-    dplyr::select(c('UserID', 'Surname', 'Firstname',
-                    'LocationName', 'Title', 'ProviderNo')) %>>%
-    dplyr::mutate(Surname = trimws(Surname),
-                  Firstname = trimws(Firstname),
-                  Title = trimws(Title),
-                  ProviderNo = trimws(ProviderNo))
+    dplyr::tbl(dbplyr::in_schema("dbo", "USERS")) %>>%
+    # 'BPS_Users' doesn't include 'inactive' users
+    dplyr::select(USERID, USERSTATUS, SURNAME, FIRSTNAME, LOCATIONID, TITLECODE, PROVIDERNO) %>>%
+    dplyr::left_join(
+      self$emr_db$conn() %>>%
+        dplyr::tbl(dbplyr::in_schema("dbo", "LOCATIONS")) %>>%
+        dplyr::select(LOCATIONID, LOCATIONNAME),
+      by = "LOCATIONID") %>>%
+    dplyr::left_join(
+      self$emr_db$conn() %>>%
+        dplyr::tbl(dbplyr::in_schema("dbo", "TITLES")),
+      by = "TITLECODE") %>>%
+    dplyr::filter(!(USERSTATUS == 999)) %>>%
+    # active and inactive users (1 and 2)
+    # meaning of '3' uncertain, but appears to be an active user
+    # only 999 appears to be invalid
+    dplyr::select(
+      UserID = USERID, Surname = SURNAME, Firstname = FIRSTNAME,
+      ProviderNo = PROVIDERNO, LocationName = LOCATIONNAME, Title = TITLE
+    ) %>>%
+    dplyr::mutate(
+      Surname = trimws(Surname),
+      Firstname = trimws(Firstname),
+      Title = trimws(Title),
+      LocationName = trimws(LocationName),
+      ProviderNo = trimws(ProviderNo)
+    )
   invisible(self$UserConfig)
   # will also set $UserConfigR reactive
   # does not include password in public/reactive
 
   self$db$patients <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Patients')) %>>%
-    dplyr::mutate(Title = trimws(Title),
-                  Firstname = trimws(Firstname),
-                  Middlename = trimws(Middlename),
-                  Surname = trimws(Surname),
-                  Ethnicity = trimws(Ethnicity),
-                  Sex = trimws(Sex),
-                  RecordNo = trimws(RecordNo),
-                  ExternalID = trimws(ExternalID),
-                  StatusText = trimws(StatusText),
-                  Preferredname = trimws(Preferredname),
-                  Address1 = trimws(Address1),
-                  Address2 = trimws(Address2),
-                  City = trimws(City),
-                  PostalAddress = trimws(PostalAddress),
-                  PostalCity = trimws(PostalCity))
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Patients")) %>>%
+    dplyr::mutate(
+      Title = trimws(Title),
+      Firstname = trimws(Firstname),
+      Middlename = trimws(Middlename),
+      Surname = trimws(Surname),
+      Ethnicity = trimws(Ethnicity),
+      Sex = trimws(Sex),
+      RecordNo = trimws(RecordNo),
+      ExternalID = trimws(ExternalID),
+      StatusText = trimws(StatusText),
+      Preferredname = trimws(Preferredname),
+      Address1 = trimws(Address1),
+      Address2 = trimws(Address2),
+      City = trimws(City),
+      PostalAddress = trimws(PostalAddress),
+      PostalCity = trimws(PostalCity),
+      HomePhone = trimws(HomePhone),
+      WorkPhone = trimws(WorkPhone),
+      MobilePhone = trimws(MobilePhone)
+    )
+
+  self$db$patientsRaw <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PATIENTS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      HeadOfFamilyID = HEADOFFAMILYID,
+      DOB
+    ) %>>%
+    dplyr::mutate(DOB = as.Date(DOB))
 
   # fields include InternalID, ExternalID, RecordNo, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
   # DOB, Sex, Ethnicity
 
   self$db$MARITALSTATUS <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'MARITALSTATUS'))
+    dplyr::tbl(dbplyr::in_schema("dbo", "MARITALSTATUS"))
   # has the fields MARITALSTATUSCODE (a number)
   # and MARITALSTATUSNAME (a string)
 
   self$db$SEXUALITY <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'SEXUALITY'))
+    dplyr::tbl(dbplyr::in_schema("dbo", "SEXUALITY"))
   # has the fields SEXUALITYCODE (a number)
   # and SEXUALITYNAME (a string)
 
@@ -1582,32 +2084,40 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$clinical <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CLINICAL")) %>>%
-    dplyr::select(INTERNALID, KNOWNALLERGIES, MARITALSTATUS, SEXUALITY,
-                  SOCIALHX, ACCOMODATION, LIVESWITH, HASCARER, ISCARER,
-                  SMOKINGSTATUS, ALCOHOLSTATUS, RECREATION,
-                  CREATED, UPDATED) %>>%
+    dplyr::select(
+      INTERNALID, KNOWNALLERGIES, MARITALSTATUS, SEXUALITY,
+      SOCIALHX, ACCOMODATION, LIVESWITH, HASCARER, ISCARER,
+      SMOKINGSTATUS, ALCOHOLSTATUS, RECREATION,
+      CREATED, UPDATED
+    ) %>>%
     dplyr::left_join(self$db$MARITALSTATUS,
-                     by = c("MARITALSTATUS" = "MARITALSTATUSCODE")) %>>%
+                     by = c("MARITALSTATUS" = "MARITALSTATUSCODE")
+    ) %>>%
     dplyr::left_join(self$db$SEXUALITY,
-                     by = c("SEXUALITY" = "SEXUALITYCODE")) %>>%
+                     by = c("SEXUALITY" = "SEXUALITYCODE")
+    ) %>>%
     dplyr::select(-c(MARITALSTATUS, SEXUALITY)) %>>%
-    dplyr::rename(InternalID = INTERNALID,
-                  KnownAllergies = KNOWNALLERGIES, # 0 = not recorded, 1 = unknown, 2 = some recorded
-                  MaritalStatus = MARITALSTATUSNAME,
-                  SocialHx = SOCIALHX,
-                  # note that social history details are also available in other fields
-                  # such as ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
-                  # HASCARER = 0 '', 1 - 'Yes', 2 - 'No', 3 - 'Self' (?)
-                  # ISCARER = 0 '', 1 - 'Yes, 2 - 'No'
-                  Accomodation = ACCOMODATION,
-                  LivesWith = LIVESWITH,
-                  HasCarer = HASCARER, IsCarer = ISCARER,
-                  Recreation = RECREATION,
-                  Sexuality = SEXUALITYNAME) %>>%
-    dplyr::mutate(MaritalStatus = trimws(MaritalStatus),
-                  Sexuality = trimws(Sexuality),
-                  Recreation = trimws(Recreation),
-                  SocialHx = trimws(SocialHx)) %>>%
+    dplyr::rename(
+      InternalID = INTERNALID,
+      KnownAllergies = KNOWNALLERGIES, # 0 = not recorded, 1 = unknown, 2 = some recorded
+      MaritalStatus = MARITALSTATUSNAME,
+      SocialHx = SOCIALHX,
+      # note that social history details are also available in other fields
+      # such as ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
+      # HASCARER = 0 '', 1 - 'Yes', 2 - 'No', 3 - 'Self' (?)
+      # ISCARER = 0 '', 1 - 'Yes, 2 - 'No'
+      Accomodation = ACCOMODATION,
+      LivesWith = LIVESWITH,
+      HasCarer = HASCARER, IsCarer = ISCARER,
+      Recreation = RECREATION,
+      Sexuality = SEXUALITYNAME
+    ) %>>%
+    dplyr::mutate(
+      MaritalStatus = trimws(MaritalStatus),
+      Sexuality = trimws(Sexuality),
+      Recreation = trimws(Recreation),
+      SocialHx = trimws(SocialHx)
+    ) %>>%
     # for some reason, dbo.BPS_Clinical contains multiple entries per InternalID
     #  (which are not dated or given additional identifiers)
     # MaritalStatusName and SexualityName provided as strings
@@ -1617,17 +2127,21 @@ initialize_emr_tables <- function(dMeasure_obj,
     #
     # this table appears to have one entry per patient
     dplyr::left_join(self$db$SMOKINGSTATUS,
-                     by = c("SMOKINGSTATUS" = "SMOKINGCODE")) %>>%
+                     by = c("SMOKINGSTATUS" = "SMOKINGCODE")
+    ) %>>%
     # current SMOKINGCODE is 0 - nothing, 1 = "Non smoker",
     # 2 - "Ex smoker", 3 - "Smoker"
     dplyr::select(-c(SMOKINGSTATUS)) %>>%
     dplyr::rename(SmokingStatus = SMOKINGTEXT) %>>%
     dplyr::left_join(self$db$ALCOHOLSTATUS,
-                     by = c("ALCOHOLSTATUS" = "ALCOHOLCODE")) %>>%
+                     by = c("ALCOHOLSTATUS" = "ALCOHOLCODE")
+    ) %>>%
     dplyr::select(-c(ALCOHOLSTATUS)) %>>%
-    dplyr::rename(AlcoholStatus = ALCOHOLTEXT,
-                  Created = CREATED,
-                  Updated = UPDATED)
+    dplyr::rename(
+      AlcoholStatus = ALCOHOLTEXT,
+      Created = CREATED,
+      Updated = UPDATED
+    )
   # 0 - no entry, 1 = Nil, 2 = Occasional
   # 3 - Moderate, 4 = Heavy
   # note that '0' in the CLINICAL will be the case
@@ -1635,61 +2149,76 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   # two tables providing 'decoding' for social history elements in db$clinical
   self$db$accomodation <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'ACCOMODATION')) %>>%
-    dplyr::rename(AccomodationCode = ACCOMODATIONCODE,
-                  AccomodationText = ACCOMODATIONTEXT) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ACCOMODATION")) %>>%
+    dplyr::rename(
+      AccomodationCode = ACCOMODATIONCODE,
+      AccomodationText = ACCOMODATIONTEXT
+    ) %>>%
     dplyr::mutate(AccomodationText = trimws(AccomodationText))
   # currently 0 '', 1 'Own home', 2 "Relative's home", 3 'Other private house'
   # 4 'Hostel', 5 'Nursing home (RACF), 6 'Homeless', 7 'Rental home'
   self$db$liveswith <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'LIVESWITH')) %>>%
-    dplyr::rename(LivesWithCode = LIVESWITHCODE,
-                  LivesWithText = LIVESWITHTEXT) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "LIVESWITH")) %>>%
+    dplyr::rename(
+      LivesWithCode = LIVESWITHCODE,
+      LivesWithText = LIVESWITHTEXT
+    ) %>>%
     dplyr::mutate(LivesWithText = trimws(LivesWithText))
   # currently 0 '', 1 'Spouse', 2 'Relative', 3 'Friend', 4 'Alone'
   self$db$carer <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'CARER')) %>>%
-    dplyr::select(INTERNALID, TITLECODE, SURNAME, FIRSTNAME,
-                  ADDRESS, CITY, POSTCODE, CONTACTPHONE, CONTACTPHONE2, RELATIONSHIP,
-                  CREATED, UPDATED) %>>%
-    dplyr::rename(InternalID = INTERNALID,
-                  TitleCode = TITLECODE,
-                  Surname = SURNAME, Firstname = FIRSTNAME,
-                  Address = ADDRESS, City = CITY, Postcode = POSTCODE,
-                  ContactPhone = CONTACTPHONE,
-                  ContactPhone2 = CONTACTPHONE2,
-                  Relationship = RELATIONSHIP,
-                  Created = CREATED, Updated = UPDATED) %>>%
-    dplyr::mutate(Surname = trimws(Surname), Firstname = trimws(Firstname),
-                  Address = trimws(Address), City = trimws(City),
-                  Postcode = trimws(Postcode), ContactPhone = trimws(ContactPhone),
-                  ContactPhone2 = trimws(ContactPhone2),
-                  Relationship = trimws(Relationship))
+    dplyr::tbl(dbplyr::in_schema("dbo", "CARER")) %>>%
+    dplyr::select(
+      INTERNALID, TITLECODE, SURNAME, FIRSTNAME,
+      ADDRESS, CITY, POSTCODE, CONTACTPHONE, CONTACTPHONE2, RELATIONSHIP,
+      CREATED, UPDATED
+    ) %>>%
+    dplyr::rename(
+      InternalID = INTERNALID,
+      TitleCode = TITLECODE,
+      Surname = SURNAME, Firstname = FIRSTNAME,
+      Address = ADDRESS, City = CITY, Postcode = POSTCODE,
+      ContactPhone = CONTACTPHONE,
+      ContactPhone2 = CONTACTPHONE2,
+      Relationship = RELATIONSHIP,
+      Created = CREATED, Updated = UPDATED
+    ) %>>%
+    dplyr::mutate(
+      Surname = trimws(Surname), Firstname = trimws(Firstname),
+      Address = trimws(Address), City = trimws(City),
+      Postcode = trimws(Postcode), ContactPhone = trimws(ContactPhone),
+      ContactPhone2 = trimws(ContactPhone2),
+      Relationship = trimws(Relationship)
+    )
 
   self$db$titles <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'TITLES')) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "TITLES")) %>>%
     dplyr::select(TITLECODE, TITLE) %>>%
     dplyr::rename(TitleCode = TITLECODE, Title = TITLE) %>>%
     dplyr::mutate(Title = trimws(Title))
 
   self$db$reactions <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Reactions')) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Reactions")) %>>%
     dplyr::select(InternalID, ItemName, Reaction, Severity, Comment) %>>%
     # for some reason, error when selecting 'Created'
-    dplyr::mutate(ItemName = trimws(ItemName),
-                  Reaction = trimws(Reaction),
-                  Severity = trimws(Severity))
+    dplyr::mutate(
+      ItemName = trimws(ItemName),
+      Reaction = trimws(Reaction),
+      Severity = trimws(Severity)
+    )
 
   self$db$alcohol <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Alcohol')) %>>%
-    dplyr::select(InternalID,
-                  NonDrinker, DaysPerweek, DrinksPerday, Description,
-                  # NonDrinker - 'Yes' or 'No'
-                  PastAlcoholLevel, YearStarted, YearStopped, Comment) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Alcohol")) %>>%
+    dplyr::select(
+      InternalID,
+      NonDrinker, DaysPerweek, DrinksPerday, Description,
+      # NonDrinker - 'Yes' or 'No'
+      PastAlcoholLevel, YearStarted, YearStopped, Comment
+    ) %>>%
     dplyr::mutate(NonDrinker = trimws(Nondrinker)) %>>%
     dplyr::left_join(self$db$clinical %>>%
                        dplyr::select(InternalID, Updated),
-                     by = c("InternalID" = "InternalID"))
+                     by = c("InternalID" = "InternalID")
+    )
   # strangely 'by' needs to be explicit, perhaps because of lazy eval?
   # to tell if the patient has a alcohol history requires...
   # NonDrinker = 'Yes' OR DaysPerweek/DrinksPerday to be non-zero
@@ -1704,16 +2233,18 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$investigations <- emr_db$conn() %>>%
     # output - InternalID, Collected (Date), TestName
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Investigations')) %>>%
-    dplyr::select(InternalID, ReportID,
-                  TestName,
-                  Reported, Checked, Actioned,
-                  # three dates
-                  CheckedBy,
-                  # a name of the provider who checked
-                  Notation, Action,
-                  # Action includes 'Urgent Appointment' and 'Non-urgent Appointment'
-                  Comment) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Investigations")) %>>%
+    dplyr::select(
+      InternalID, ReportID,
+      TestName,
+      Reported, Checked, Actioned,
+      # three dates
+      CheckedBy,
+      # a name of the provider who checked
+      Notation, Action,
+      # Action includes 'Urgent Appointment' and 'Non-urgent Appointment'
+      Comment
+    ) %>>%
     # as of Jan/2019, the odbc engine for MSSQL can't handle the
     # full ('Select *') Investigations table
     # due to some type of bug/standards non-compliance.
@@ -1723,112 +2254,160 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$papsmears <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_PapSmears")) %>>%
-    dplyr::select(InternalID, PapDate, CSTType,
-                  HPV16, HPV18, HPVOther, Result,
-                  HPVChanges, EndocervicalCells, Comment) %>>%
-    dplyr::mutate(CSTType = trimws(CSTType),
-                  HPV16 = trimws(HPV16), HPV18 = trimws(HPV18), HPVOther = trimws(HPVOther),
-                  Result = trimws(Result), HPVChanges = trimws(HPVChanges),
-                  EndocervicalCells = trimws(EndocervicalCells))
+    dplyr::select(
+      InternalID, PapDate, CSTType,
+      HPV16, HPV18, HPVOther, Result,
+      HPVChanges, EndocervicalCells, Comment
+    ) %>>%
+    dplyr::mutate(
+      CSTType = trimws(CSTType),
+      HPV16 = trimws(HPV16), HPV18 = trimws(HPV18), HPVOther = trimws(HPVOther),
+      Result = trimws(Result), HPVChanges = trimws(HPVChanges),
+      EndocervicalCells = trimws(EndocervicalCells)
+    )
   # CSTType includes 'PAP'
   # Result includes 'Negative'
 
   self$db$appointments <- emr_db$conn() %>>%
     # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Appointments')) %>>%
-    dplyr::select(c('Patient', 'InternalID',
-                    'AppointmentDate', 'AppointmentTime',
-                    'Provider', 'Status'))
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Appointments")) %>>%
+    dplyr::select(c(
+      "Patient", "InternalID",
+      "AppointmentDate", "AppointmentTime",
+      "Provider", "Status", "AppointmentType"
+    )) %>>%
+    dplyr::mutate(
+      Status = trimws(Status), AppointmentType = trimws(AppointmentType)
+    )
   # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
 
   self$db$visits <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Visits')) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Visits")) %>>%
     dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName) %>>%
-    dplyr::mutate(VisitType = trimws(VisitType),
-                  DrName = trimws(DrName))
+    dplyr::mutate(
+      VisitType = trimws(VisitType),
+      DrName = trimws(DrName)
+    )
   # VisitType : 'Surgery', 'Home', "Non Visit', 'Hospital', 'RACF', 'Telephone'
   # ... 'SMS', 'Email', 'Locum Service', 'Out of Office', 'Other', 'Hostel'
   # ... 'Telehealth'
 
   self$db$immunizations <- emr_db$conn() %>>%
-    # InternalID, GivenDate, VaccineName, VaccineID
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Immunisations')) %>>%
-    dplyr::select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID')) %>>%
-    dplyr::mutate(GivenDate = as.Date(GivenDate),
-                  VaccineName = trimws(VaccineName))
+    # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
+    # NotGivenHere - 0 if given at practice, 1 if recorded as given elsewhere
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Immunisations")) %>>%
+    dplyr::select(c("InternalID", "GivenDate", "VaccineName", "VaccineID", "NotGivenHere")) %>>%
+    dplyr::mutate(
+      GivenDate = as.Date(GivenDate),
+      VaccineName = trimws(VaccineName)
+    )
 
   self$db$vaccine_disease <- emr_db$conn() %>>%
     # vaccineIDs linked to diseases
     # e.g. diseasecode 7+30 are for influenza vaccines
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINE_DISEASE")) %>>%
     dplyr::select("VACCINEID", "DISEASECODE")
 
   self$db$vaccines <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINES")) %>>%
-    # there is also ACIRCODE, CHIDLHOOD, GENERIC
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINES")) %>>%
+    # there is also ACIRCODE, CHILDHOOD, GENERIC
     dplyr::select("VACCINEID", "VACCINENAME") %>>%
     dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
     dplyr::mutate(VaccineName = trimws(VACCINENAME))
 
-  self$db$vaccine_disease <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VACCINE_DISEASE")) %>>%
-    dplyr::select("VACCINEID", "DISEASECODE")
-
   self$db$vaxdiseases <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("bpsdrugs.dbo", "VAXDISEASES")) %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VAXDISEASES")) %>>%
     dplyr::select("DISEASECODE", "DISEASENAME") %>>%
     dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
     dplyr::mutate(DiseaseName = trimws(DISEASENAME))
 
   self$db$preventive_health <- emr_db$conn() %>>%
-    # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
-    dplyr::tbl(dbplyr::in_schema('dbo', 'PreventiveHealth')) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'ITEMID')
+    # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
+    # ITEMID - exclusion for reminder
+    # - 1 Influenza vaccination
+    # - 2 Pneumonia vaccination
+    # - 3 Diabetes review
+    # - 5 Care plan review
+    # - 15 Herpes zoster vaccination
+    dplyr::tbl(dbplyr::in_schema("dbo", "PreventiveHealth")) %>>%
+    dplyr::select("InternalID" = "INTERNALID", "ITEMID")
 
   self$db$correspondenceIn <- emr_db$conn() %>>%
     # InternalID, CorrespondenceDate, Subject, Detail
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_CorrespondenceIn')) %>>%
-    dplyr::select(InternalID, DocumentID,
-                  CorrespondenceDate,
-                  Subject, Detail, Comment)
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_CorrespondenceIn")) %>>%
+    dplyr::select(
+      InternalID, DocumentID,
+      CorrespondenceDate,
+      Subject, Detail, Comment
+    )
 
   self$db$correspondenceInRaw <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "CORRESPONDENCEIN")) %>>%
-    dplyr::select(DOCUMENTID, INTERNALID,
-                  USERID, CHECKEDBY,
-                  # both USERID and CHECKEDBY are numbers, not names
-                  CORRESPONDENCEDATE, CHECKDATE, ACTIONDATE,
-                  # three dates
-                  CATEGORY, SUBJECT, DETAIL, COMMENT,
-                  NOTATION, ACTION)
+    dplyr::select(
+      DocumentID = DOCUMENTID, InternalID = INTERNALID,
+      UserID = USERID, CheckedBy = CHECKEDBY,
+      # both USERID and CHECKEDBY are numbers, not names
+      CorrespondenceDate = CORRESPONDENCEDATE, CheckDate = CHECKDATE,
+      ActionDate = ACTIONDATE,
+      # three dates
+      Category = CATEGORY, Subject = SUBJECT, Detail = DETAIL,
+      Comment = COMMENT,
+      Notation = NOTATION, Action = ACTION
+    ) %>>%
+    dplyr::mutate(
+      Category = trimws(Category), Subject = trimws(Subject),
+      Detail = trimws(Detail), Comment = trimws(Comment),
+      CorrespondenceDate = as.Date(CorrespondenceDate),
+      CheckDate = as.Date(CheckDate), ActionDate = as.Date(ActionDate)
+    )
   # Action includes 6 for Non-urgent appointment,
   # and 7 for Urgent appointment
 
+  self$db$actions <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ACTIONS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID, UserID = USERID,
+      Added = ADDED, DueDate = DUEDATE, Performed = PERFORMED,
+      ActionText = ACTIONTEXT, Comment = COMMENT
+    ) %>>%
+    dplyr::mutate(
+      Added = as.Date(Added), DueDate = as.Date(DueDate),
+      Performed = as.Date(Performed),
+      ActionText = trimws(as.character(ActionText)),
+      Comment = trimws(as.character(Comment))
+    )
+
   self$db$reportValues <- emr_db$conn() %>>%
     # InternalID, ReportDate, ResultName, LoincCode
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_ReportValues')) %>>%
-    dplyr::select(InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
-                  ResultValue, Units, Range) %>>%
-    dplyr::mutate(ReportDate = as_datetime(ReportDate),
-                  LoincCode = trimws(LoincCode),
-                  ResultName = trimws(ResultName),
-                  Range = trimws(Range),
-                  BPCode = as.numeric(BPCode),
-                  Units = trimws(Units),
-                  # "ResultValue = as.numeric(ResultValue),"
-                  # this coercion only works in my modified version of dbplyr 1.4.2
-                  # (if there are non-numeric characters in ResultValue)
-                  # modified dbplyr translates as.numeric (and as.Date) as a 'try_cast'
-                  # the default sample database contains ResultValue which are
-                  # not purely numeric e.g. "<0.5", and results in an error
-                  # when just trying to 'cast', if those characters are not removed
-                  ResultValue = trimws(ResultValue),
-                  # get rid of leading "<" or ">", this will result in an 'assigned' value
-                  # equal to the limit of the test
-                  ResultValue = dplyr::case_when(substr(ResultValue, 1, 1) %LIKE% "%[<>]%" ~
-                                                   substr(ResultValue, 2, 100), # assume nchar <= 100
-                                                 # doesn't accept nchar(ResultValue)
-                                                 TRUE ~ ResultValue)) %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_ReportValues")) %>>%
+    dplyr::select(
+      InternalID, ReportID, ReportDate, LoincCode, BPCode, ResultName,
+      ResultValue, Units, Range
+    ) %>>%
+    dplyr::mutate(
+      ReportDate = as_datetime(ReportDate),
+      LoincCode = trimws(LoincCode),
+      ResultName = trimws(ResultName),
+      Range = trimws(Range),
+      BPCode = as.numeric(BPCode),
+      Units = trimws(Units),
+      # "ResultValue = as.numeric(ResultValue),"
+      # this coercion only works in my modified version of dbplyr 1.4.2
+      # (if there are non-numeric characters in ResultValue)
+      # modified dbplyr translates as.numeric (and as.Date) as a 'try_cast'
+      # the default sample database contains ResultValue which are
+      # not purely numeric e.g. "<0.5", and results in an error
+      # when just trying to 'cast', if those characters are not removed
+      ResultValue = trimws(ResultValue),
+      # get rid of leading "<" or ">", this will result in an 'assigned' value
+      # equal to the limit of the test
+      ResultValue = dplyr::case_when(
+        substr(ResultValue, 1, 1) %LIKE% "%[<>]%" ~
+          substr(ResultValue, 2, 100), # assume nchar <= 100
+        # doesn't accept nchar(ResultValue)
+        TRUE ~ ResultValue
+      )
+    ) %>>%
     # need separate mutate to work after trimming "<" and ">" from ResultValue
     dplyr::mutate(ResultValue = as.double(ResultValue))
   # modified version of dbplyr also required for 'as.double' to cast as a FLOAT
@@ -1856,19 +2435,36 @@ initialize_emr_tables <- function(dMeasure_obj,
   #   as BPCode 18, with the same ReportDate and ReportID!, if units are "mcg/min"
 
   self$db$services <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'BPS_Services')) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'ServiceDate' = 'SERVICEDATE',
-                  'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Services")) %>>%
+    dplyr::select(
+      "InternalID" = "INTERNALID", "ServiceDate" = "SERVICEDATE",
+      "MBSItem" = "MBSITEM", "Description" = "DESCRIPTION"
+    )
 
   self$db$servicesRaw <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'SERVICES')) %>>%
-    dplyr::select('InvoiceID' = 'INVOICEID', 'ServiceDate' = 'SERVICEDATE',
-                  'MBSItem' = 'MBSITEM', 'Description' = 'DESCRIPTION')
+    # PAYERCODE = 0 unknown
+    # PAYERCODE = 1 private (patient)
+    # PAYERCODE = 2 bulk-billing (Medicare direct billing)
+    # PAYERCODE = 3 DVA
+    # PAYERCODE = 4 WorkCover
+    # PAYERCODE = 5 private (head of family)
+    # PAYERCODE = 8 private (other)
+    dplyr::tbl(dbplyr::in_schema("dbo", "SERVICES")) %>>%
+    dplyr::filter(SERVICESTATUS != 9, RECORDSTATUS != 2) %>>%
+    # RECORDSTATUS 2 appears to be cancelled services
+    # SERVICESTATUS 9 appears to be 'reversal' of services
+    dplyr::select(
+      "InvoiceID" = "INVOICEID", "ServiceDate" = "SERVICEDATE",
+      "MBSItem" = "MBSITEM", "Description" = "DESCRIPTION",
+      "PayerCode" = "PAYERCODE"
+    )
 
   self$db$invoices <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema('dbo', 'INVOICES')) %>>%
-    dplyr::select(InvoiceID = INVOICEID, UserID = USERID, Total = TOTAL,
-                  InternalID = INTERNALID, SENTTOWORKCOVER)
+    dplyr::tbl(dbplyr::in_schema("dbo", "INVOICES")) %>>%
+    dplyr::select(
+      InvoiceID = INVOICEID, UserID = USERID, Total = TOTAL,
+      InternalID = INTERNALID, SENTTOWORKCOVER
+    )
   # some versions of BP appear to require an extraneous field
   # so that UserID/InternalID are not converted to zeros!
   # in this case, the extraneous field is 'SENTTOWORKCOVER'
@@ -1877,55 +2473,98 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$history <- emr_db$conn() %>>%
     # InternalID, Year, Condition, ConditionID, Status
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_History")) %>>%
-    dplyr::select(InternalID, Year,
-                  Condition, ConditionID, Status)
+    dplyr::select(
+      InternalID, Year,
+      Condition, ConditionID, Status
+    )
+
+  self$db$currentRx <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_CurrentRx")) %>>%
+    dplyr::select(
+      InternalID, DrugName, Dose, Frequency, PRN,
+      Route, Quantity, ProductUnit, Repeats, Indication,
+      LastDate, ProductID
+    ) %>>%
+    dplyr::mutate(
+      DrugName = trimws(DrugName),
+      Dose = trimws(Dose),
+      Frequency = trimws(Frequency),
+      PRN = trimws(PRN),
+      ProductUnit = trimws(ProductUnit),
+      Indication = trimws(Indication),
+      LastDate = as.Date(LastDate)
+    )
+
+  # self$db$currentRx_raw <- emr_db$conn() %>>%
+  #   dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
+  #   dplyr::select(
+  #     "InternalID" = "INTERNALID", "PRODUCTID",
+  #     "DRUGNAME", "RXSTATUS"
+  #   )
+  # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
+  # no longer present in Best Practice Saffron version
 
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
-    dplyr::select(RelationCode = RELATIONCODE,
-                  RelationName = RELATIONNAME) %>>%
+    dplyr::select(
+      RelationCode = RELATIONCODE,
+      RelationName = RELATIONNAME
+    ) %>>%
     dplyr::mutate(RelationName = trimws(RelationName))
 
   self$db$familyhistorydetail <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_FamilyHistoryDetail")) %>>%
-    dplyr::select(InternalID, Relation = RelationName,
+    dplyr::select(InternalID,
+                  Relation = RelationName,
                   Condition, DiseaseCode,
-                  DiseaseComment = Comment) %>>%
-    dplyr::mutate(Relation = trimws(Relation),
-                  Condition = trimws(Condition),
-                  DiseaseComment = trimws(DiseaseComment))
+                  DiseaseComment = Comment
+    ) %>>%
+    dplyr::mutate(
+      Relation = trimws(Relation),
+      Condition = trimws(Condition),
+      DiseaseComment = trimws(DiseaseComment)
+    )
 
   self$db$familyhistory <- emr_db$conn() %>>%
     # incorporates db$familyhistorydetail
     dplyr::tbl(dbplyr::in_schema("dbo", "FAMILYHISTORY")) %>>%
-    dplyr::select(InternalID = INTERNALID, Unknown = ADOPTED,
-                  # Unknown : 0 - FALSE, 1 = TRUE
-                  FatherAlive = PATALIVE, MotherAlive = MATALIVE,
-                  # 0 - unknown, 1 - No, 2 - Yes
-                  FatherAgeAtDeath = PATAGEATDEATH, MotherAgeAtDeath = MATAGEATDEATH,
-                  FatherCauseOfDeath = PATCAUSEOFDEATH,
-                  MotherCauseOfDeath = MATCAUSEOFDEATH,
-                  FatherCauseOfDeathCode = PATCAUSEOFDEATHCODE,
-                  MotherCauseOfDeathCode = MATCAUSEOFDEATHCODE,
-                  Comment = FHCOMMENT) %>>%
+    dplyr::select(
+      InternalID = INTERNALID, Unknown = ADOPTED,
+      # Unknown : 0 - FALSE, 1 = TRUE
+      FatherAlive = PATALIVE, MotherAlive = MATALIVE,
+      # 0 - unknown, 1 - No, 2 - Yes
+      FatherAgeAtDeath = PATAGEATDEATH, MotherAgeAtDeath = MATAGEATDEATH,
+      FatherCauseOfDeath = PATCAUSEOFDEATH,
+      MotherCauseOfDeath = MATCAUSEOFDEATH,
+      FatherCauseOfDeathCode = PATCAUSEOFDEATHCODE,
+      MotherCauseOfDeathCode = MATCAUSEOFDEATHCODE,
+      Comment = FHCOMMENT
+    ) %>>%
     # unfortunately the CREATED column does not have the date of first entry
     # so there is no accurate date of first entry
-    dplyr::mutate(FatherCauseOfDeath = trimws(FatherCauseOfDeath),
-                  MotherCauseOfDeath = trimws(MotherCauseOfDeath),
-                  Comment = trimws(Comment)) %>>%
+    dplyr::mutate(
+      FatherCauseOfDeath = trimws(FatherCauseOfDeath),
+      MotherCauseOfDeath = trimws(MotherCauseOfDeath),
+      Comment = trimws(Comment)
+    ) %>>%
     dplyr::left_join(self$db$familyhistorydetail,
-                     by = "InternalID")
+                     by = "InternalID"
+    )
   # after joining with db$familyhistorydetail,
   # there may be multiple rows per InternalID, each with a different relative
 
 
   self$db$observations <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Observations")) %>>%
-    dplyr::select(InternalID, RECORDID, ObservationCode, ObservationName,
-                  ObservationDate, ObservationTime, ObservationValue) %>>%
-    dplyr::mutate(ObservationDate = as.Date(ObservationDate),
-                  ObservationName = trimws(ObservationName),
-                  ObservationValue = trimws(ObservationValue))
+    dplyr::select(
+      InternalID, RECORDID, ObservationCode, ObservationName,
+      ObservationDate, ObservationTime, ObservationValue
+    ) %>>%
+    dplyr::mutate(
+      ObservationDate = as.Date(ObservationDate),
+      ObservationName = trimws(ObservationName),
+      ObservationValue = trimws(ObservationValue)
+    )
 
   # ObservationCode
   #  1 - temp, 2 - pulse (rate)
@@ -1935,31 +2574,70 @@ initialize_emr_tables <- function(dMeasure_obj,
   #  17 - Waist, 18 - Hip
   #  21 - WHRatio, 26 - DiabRisk
 
-  self$db$currentrx <- emr_db$conn() %>>%
-    dplyr::tbl(dbplyr::in_schema("dbo", "CURRENTRX")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'PRODUCTID',
-                  'DRUGNAME', 'RXSTATUS')
-  # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
-
   self$db$obgyndetail <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "OBSGYNDETAIL")) %>>%
-    dplyr::select('InternalID' = 'INTERNALID', 'NOMINALLMP',
-                  'LASTPAPDATE', 'LASTPAPRESULT', 'BREASTFEEDING',
-                  'MammogramStatus', 'LastMammogramDate', 'MammogramResult')
+    dplyr::select(
+      "InternalID" = "INTERNALID", "NOMINALLMP",
+      "LASTPAPDATE", "LASTPAPRESULT", "BREASTFEEDING",
+      "MammogramStatus", "LastMammogramDate", "MammogramResult",
+      "NoPap" = "NOPAP", # 'no longer requires cervical screening (CST)' : 1 (TRUE) or 0 (FALSE)
+      "OptOut" = "OPTOUT", "OptOutReason" = "OPTOUTREASON" # CST opt-out
+      # OptOut 1 (TRUE) or 0 (FALSE). if true, then there can be a reason
+      # OptOutReason 'Has screening at another practice', 'Has screening done by specialist'
+      # 'Doesn't want reminders sent', 'Refuses to have screening'
+    ) %>>%
+    dplyr::mutate(
+      OptOutReason = trimws(OptOutReason)
+    )
 
   self$db$pregnancies <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "PREGNANCIES")) %>>%
-    dplyr::select(InternalID = INTERNALID, EDCbyDate = EDCBYDATE, EDCbyScan = EDCBYSCAN,
-                  UseScan = USESCAN, ActualLMP = ACTUALLMP, NominalLMP = NOMINALLMP,
-                  EndDate = ENDDATE, OutcomeCode = OUTCOMECODE) %>>%
-    dplyr::mutate(EDCbyDate = as.Date(EDCbyDate), EDCbyScan = as.Date(EDCbyScan),
-                  ActualLMP = as.Date(ActualLMP), NominalLMP = as.Date(NominalLMP),
-                  EndDate = as.Date(EndDate))
-  #'   OutcomeCode :0 = none recorded, 1 = "Live birth",
-  #'   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
-  #'   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
-  #'   7 = hydatiform mole
+    dplyr::select(
+      InternalID = INTERNALID, EDCbyDate = EDCBYDATE, EDCbyScan = EDCBYSCAN,
+      UseScan = USESCAN, ActualLMP = ACTUALLMP, NominalLMP = NOMINALLMP,
+      EndDate = ENDDATE, OutcomeCode = OUTCOMECODE
+    ) %>>%
+    dplyr::mutate(
+      EDCbyDate = as.Date(EDCbyDate), EDCbyScan = as.Date(EDCbyScan),
+      ActualLMP = as.Date(ActualLMP), NominalLMP = as.Date(NominalLMP),
+      EndDate = as.Date(EndDate)
+    )
+  #   OutcomeCode :0 = none recorded, 1 = "Live birth",
+  #   2 = Miscarriage, 3 = Termination, 4 = Ectopic,
+  #   5 = IUFD (intra-uterine fetal death), 6 = stillbirth
+  #   7 = hydatiform mole
+  #
 
+  self$db$asthmaplan <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "ASTHMAPLAN")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      UserID = USERID,
+      PlanDate = PLANDATE,
+      BestPEFR = BESTPEFR,
+      Mild = MILD, Moderate = MODERATE, Severe = SEVERE,
+      Emergency = EMERGENCY, Exercise = EXERCISE
+    ) %>>%
+    dplyr::mutate(
+      PlanDate = as.Date(PlanDate),
+      Mild = trimws(Mild), Moderate = trimws(Moderate),
+      Severe = trimws(Severe), Emergency = trimws(Emergency),
+      Exercise = trimws(Exercise)
+    )
+
+  self$db$pcehrdocuments <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "PCEHRDOCUMENTS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      UserID = USERID,
+      DocumentType = DOCUMENTTYPE,
+      # 0 = downloaded document
+      # 1 = uploaded shared health summary
+      # 2 = uploaded event
+      DocumentDate = DOCUMENTDATE,
+      Created = CREATED, CreatedBy = CREATEDBY,
+      Updated = UPDATED, UpdatedBy = UPDATEDBY
+    )
 
   self$db$dbversion <- self$db$dbversion + 1
   print(paste("dbversion:", self$db$dbversion))
@@ -1991,44 +2669,55 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   if (is.null(self$db$users)) {
     UserFullConfig <- self$UserConfig %>>%
-      dplyr::mutate(Identifier = as.character(NA),
-                    LicenseDate = as.Date(NA, origin = "1970-01-01"))
+      dplyr::mutate(
+        Identifier = as.character(NA),
+        LicenseDate = as.Date(NA, origin = "1970-01-01")
+      )
     # just the .UserConfig except the passwords
     # mutate to the same shape even if database is not open
   } else {
     PracticeName <- self$db$practice %>>%
       dplyr::pull(PracticeName)
+    PracticeName <- PracticeName[[1]] # just pull out the first entry
     UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
-      dplyr::mutate(Fullname =
-                      trimws(paste(Title, Firstname, Surname, sep = ' '))) %>>%
+      dplyr::mutate(
+        Fullname =
+          trimws(paste(Title, Firstname, Surname, sep = " "))
+      ) %>>%
       # include 'Fullname'
-      dplyr::left_join(self$UserConfig, by = 'Fullname') %>>%
+      dplyr::left_join(self$UserConfig, by = "Fullname") %>>%
       # add user details including practice locations
       # next section decodes the LicenseDate
       # the Identifier is used in $read_subscription_db to interrogate the
       # license database
       # and is also used to help 'decode' the LicenseDate
-      dplyr::mutate(Identifier = paste0(vapply(ProviderNo,
-                                               # create verification string
-                                               function(n) if (is.na(n) || nchar(n) == 0) {
-                                                 # practice name if no provider number
-                                                 PracticeName
-                                               }
-                                               else {
-                                                 n # the provider number
-                                               },
-                                               FUN.VALUE = character(1),
-                                               USE.NAMES = FALSE), "::",
-                                        Fullname, "::")) %>>%
-      dplyr::mutate(LicenseDate =
-                      # decrypt License
-                      as.Date(mapply(function(y,z) {
-                        dMeasure::verify_license(y, z)
-                      }, License, Identifier, USE.NAMES = FALSE),
-                      origin = "1970-01-01"))
+      dplyr::mutate(Identifier = paste0(
+        vapply(ProviderNo,
+               # create verification string
+               function(n) if (is.na(n) || nchar(n) == 0) {
+                 # practice name if no provider number
+                 PracticeName
+               }
+               else {
+                 n # the provider number
+               },
+               FUN.VALUE = character(1),
+               USE.NAMES = FALSE
+        ), "::",
+        Fullname, "::"
+      )) %>>%
+      dplyr::mutate(
+        LicenseDate =
+          # decrypt License
+          as.Date(mapply(function(y, z) {
+            dMeasure::verify_license(y, z)
+          }, License, Identifier, USE.NAMES = FALSE),
+          origin = "1970-01-01"
+          )
+      )
   }
 
   return(UserFullConfig)
@@ -2044,7 +2733,6 @@ initialize_emr_tables <- function(dMeasure_obj,
 #'
 #' @export
 verify_license <- function(License, Identifier) {
-
   if (is.na(License)) { # if NA for License
     LicenseDate <- NA # remain unchanged
   } else { # otherwise decode
@@ -2068,7 +2756,7 @@ verify_license <- function(License, Identifier) {
 
 ## fields
 
-.public(dMeasure, "location", "All")    # location/group. by default, it is 'All'
+.public(dMeasure, "location", "All") # location/group. by default, it is 'All'
 
 ## methods
 
@@ -2090,25 +2778,30 @@ location_list <- function(dMeasure_obj) {
   }
   locations <- c("All") # 'everyone', but not itself a group
   if (!is.null(private$PracticeLocations)) {
-    locations <- c(locations,
-                   private$PracticeLocations %>>%
-                     dplyr::pull(Name))
+    locations <- c(
+      locations,
+      private$PracticeLocations %>>%
+        dplyr::pull(Name)
+    )
   }
   # set reactive versions, only if shiny is available
   private$set_reactive(self$location_listR, locations)
   private$set_reactive(self$location_groupR, locations[!locations %in% "All"])
   # exclude "All" in $locations_groupR
-  private$set_reactive(self$PracticeLocationsR,
-                       as.data.frame(private$PracticeLocations))
+  private$set_reactive(
+    self$PracticeLocationsR,
+    as.data.frame(private$PracticeLocations)
+  )
 
   return(locations)
-
 })
 .reactive(dMeasure, "location_listR", quote("All")) # includes 'All'
 .reactive(dMeasure, "location_groupR", quote("")) # does not include 'All'
-.reactive(dMeasure, "PracticeLocationsR", quote(data.frame(id = numeric(),
-                                                           Name = character(),
-                                                           Description = character())))
+.reactive(dMeasure, "PracticeLocationsR", quote(data.frame(
+  id = numeric(),
+  Name = character(),
+  Description = character()
+)))
 #' Choose location
 #'
 #' Location is used in subsequent list of clinicians available

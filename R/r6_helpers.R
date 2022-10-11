@@ -1,7 +1,11 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 ##### functions to fill in R6 classes ######################
 # first argument is the object generator of the class
 
-.public <- function(obj, name, f) obj$set("public",  name, f)
+.public <- function(obj, name, f) obj$set("public", name, f)
 .private <- function(obj, name, f) obj$set("private", name, f)
 .active <- function(obj, name, f) obj$set("active", name, f)
 

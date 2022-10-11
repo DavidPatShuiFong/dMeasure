@@ -32,11 +32,16 @@ not a list, userconfig.insert will turn them into a list
 The description to update is defined by $Fullname
 }
 \examples{
+\dontrun{
+dMeasure_obj <- dMeasure::dMeasure$new()
+dMeasure_obj$open_emr_db()
+dMeasure_obj$userconfig.update(
+  list(
+    Fullname = "Mrs. Diabetes Educator",
+    Location = list(c("Jemena", "Lakeside")),
+    Attributes = list(c("UserAdmin", "ServerAdmin"))
+  )
+)
+}
 
- dMeasure_obj <- dMeasure::dMeasure$new()
- dMeasure_obj$open_emr_db()
- dMeasure_obj$userconfig.update(
-   list(Fullname = "Mrs. Diabetes Educator",
-        Location = list(c("Jemena", "Lakeside")),
-        Attributes = list(c("UserAdmin", "ServerAdmin")))
 }

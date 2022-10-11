@@ -9,7 +9,8 @@ list_contact_visits(
   date_from = NA,
   date_to = NA,
   clinicians = NA,
-  visit_type = NA
+  visit_type = NA,
+  store = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ list_contact_visits(
 \item{date_to}{(default NA -> dMeasure_obj$date_b) end date (inclusive)}
 
 \item{clinicians}{(default NA -> dMeasure_obj$clinicians) list of clinicians to view}
+
+\item{store}{keep result in self$contact_visits_list?}
 
 \item{visit_types}{(default NA) filter by 'visit_type' if not NA
 permissible values are "Surgery", "Home", "Non Visit", "Hospital", "RACF",

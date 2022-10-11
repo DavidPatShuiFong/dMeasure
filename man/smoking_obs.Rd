@@ -11,7 +11,7 @@ smoking_obs(dMeasure_obj, intID, date_from = NA, date_to = NA)
 
 \item{intID}{vector of InternalID}
 
-\item{date_from}{start date. default is $date_b minus 15 months}
+\item{date_from}{start date. default is $date_b minus 12 months}
 
 \item{date_to}{end date (inclusive). default is $date_b}
 }

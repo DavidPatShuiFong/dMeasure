@@ -47,5 +47,5 @@ list of correspondence
 Filtered by date, and chosen clinicians
 Stores result in $correspondence_filtered_named
 Values stored as numeric in $correspondence_filtered_appointments
-are changed to 'human-readable' character strings e.g. ACTION
+are changed to 'human-readable' character strings e.g. Action
 }

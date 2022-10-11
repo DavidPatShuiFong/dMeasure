@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 ##### Data Quality ###########################################
 #' Data Quality
 #'
@@ -33,10 +37,12 @@ list_allergy <- function(dMeasure_obj,
                          appointments_list = NULL,
                          lazy = FALSE,
                          qualitytag = FALSE, qualitytag_print = TRUE) {
-  dMeasure_obj$list_zostavax(date_from, date_to , clinicians,
-                             appointments_list,
-                             lazy,
-                             qualitytag, qualitytag_print)
+  dMeasure_obj$list_zostavax(
+    date_from, date_to, clinicians,
+    appointments_list,
+    lazy,
+    qualitytag, qualitytag_print
+  )
 }
 
 .public(dMeasure, "list_allergy", function(date_from = NA, date_to = NA, clinicians = NA,
@@ -76,14 +82,17 @@ list_allergy <- function(dMeasure_obj,
 
   allergy_list <- appointments_list %>>%
     dplyr::left_join(self$db$clinical %>>%
-                       dplyr::filter(InternalID %in% intID) %>>%
-                       dplyr::select(InternalID, KnownAllergies, Created, Updated),
-                     by = "InternalID",
-                     copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::select(InternalID, KnownAllergies, Created, Updated),
+    by = "InternalID",
+    copy = TRUE
+    ) %>>%
     dplyr::left_join(self$db$reactions %>>%
-                       # those who have been removed from the reminder system for Zostavax
-                       dplyr::filter(InternalID %in% intID), by = "InternalID",
-                     copy = TRUE) %>>%
+      # those who have been removed from the reminder system for Zostavax
+      dplyr::filter(InternalID %in% intID),
+    by = "InternalID",
+    copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(Created = as.Date(substr(Created, 1, 10))) %>>%
     dplyr::mutate(Created = dplyr::if_else(Created <= AppointmentDate, Created, as.Date(NA))) %>>%
@@ -93,55 +102,87 @@ list_allergy <- function(dMeasure_obj,
     # note that 'if_else' vectorizes,
     # demanding same datatype for TRUE/FALSE alternatives
     # 'ifelse' does not preserve date type in this circumstance
-    {if (qualitytag)
-    {dplyr::mutate(., reaction_string = paste0("<b>", ItemName , "</b> : ", Reaction)) %>>%
-        dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider, DOB, Age, Created, KnownAllergies) %>>%
-        dplyr::summarise(reaction_string = paste(reaction_string, collapse = "<br>")) %>>%
-        dplyr::ungroup()} else {.}} %>>%
-        {if (qualitytag_print)
-        {dplyr::mutate(., reaction_string = paste2(ItemName,
-                                                   paste2(Reaction, Severity, Comment, sep = " - ", na.rm = TRUE),
-                                                   sep = " : ", na.rm = TRUE))} else {.}}
+    {
+      if (qualitytag) {
+        dplyr::mutate(., reaction_string = paste0("<b>", ItemName, "</b> : ", Reaction)) %>>%
+          dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider, DOB, Age, Created, KnownAllergies) %>>%
+          dplyr::summarise(reaction_string = paste(reaction_string, collapse = "<br>")) %>>%
+          dplyr::ungroup()
+      } else {
+        .
+      }
+    } %>>% {
+      if (qualitytag_print) {
+        dplyr::mutate(., reaction_string = paste2(ItemName,
+          paste2(Reaction, Severity, Comment, sep = " - ", na.rm = TRUE),
+          sep = " : ", na.rm = TRUE
+        ))
+      } else {
+        .
+      }
+    }
 
   if (qualitytag) {
     allergy_list <- allergy_list %>>%
-      dplyr::mutate(qualitytag =
-                      dMeasure::semantic_tag(
-                        paste0(' Allergy '),
-                        colour =
-                          dplyr::if_else(is.na(Created) | KnownAllergies == 0,
-                                         # if no entry in 'clinical' table at all (at this date)
-                                         # or if KnownAllergies is 'none recorded'
-                                         c('red'),
-                                         c('green')),
-                        # red if not given, purple if removed from herpes zoster vax reminders
-                        # and green if has had the vax
-                        popuphtml =
-                          paste0("<h4>",
-                                 dplyr::if_else(is.na(Created) | KnownAllergies == 0,
-                                                "No recording",
-                                                dplyr::if_else(KnownAllergies == 1,
-                                                               "Nil known",
-                                                               reaction_string)),
-                                 "</h4>")))
+      dplyr::mutate(
+        qualitytag =
+          dMeasure::semantic_tag(
+            paste0(" Allergy "),
+            colour =
+              dplyr::if_else(
+                is.na(Created) | KnownAllergies == 0,
+                # if no entry in 'clinical' table at all (at this date)
+                # or if KnownAllergies is 'none recorded'
+                c("red"),
+                c("green")
+              ),
+            # red if not given, purple if removed from herpes zoster vax reminders
+            # and green if has had the vax
+            popuphtml =
+              paste0(
+                "<h4>",
+                dplyr::if_else(
+                  is.na(Created) | KnownAllergies == 0,
+                  "No recording",
+                  dplyr::if_else(
+                    KnownAllergies == 1,
+                    "Nil known",
+                    reaction_string
+                  )
+                ),
+                "</h4>"
+              )
+          )
+      )
   }
 
   if (qualitytag_print) {
     allergy_list <- allergy_list %>>%
-      dplyr::mutate(qualitytag_print =
-                      paste0("Allergy", " ", # printable version of information
-                             dplyr::if_else(is.na(Created) | KnownAllergies == 0,
-                                            "(No recording)",
-                                            dplyr::if_else(KnownAllergies == 1,
-                                                           "(Nil known)",
-                                                           paste0("(", reaction_string, ")")))
-                      ))
+      dplyr::mutate(
+        qualitytag_print =
+          paste0(
+            "Allergy", " ", # printable version of information
+            dplyr::if_else(
+              is.na(Created) | KnownAllergies == 0,
+              "(No recording)",
+              dplyr::if_else(
+                KnownAllergies == 1,
+                "(Nil known)",
+                paste0("(", reaction_string, ")")
+              )
+            )
+          )
+      )
   }
 
   allergy_list <- allergy_list %>>%
-    dplyr::select(intersect(names(allergy_list),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
-                              "Provider", "DOB", "Age", "qualitytag", "qualitytag_print")))
+    dplyr::select(intersect(
+      names(allergy_list),
+      c(
+        "Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+        "Provider", "DOB", "Age", "qualitytag", "qualitytag_print"
+      )
+    ))
 
   return(allergy_list)
 })
@@ -166,10 +207,12 @@ list_socialHx <- function(dMeasure_obj,
                           appointments_list = NULL,
                           lazy = FALSE,
                           qualitytag = FALSE, qualitytag_print = TRUE) {
-  dMeasure_obj$list_socialHx(date_from, date_to , clinicians,
-                             appointments_list,
-                             lazy,
-                             qualitytag, qualitytag_print)
+  dMeasure_obj$list_socialHx(
+    date_from, date_to, clinicians,
+    appointments_list,
+    lazy,
+    qualitytag, qualitytag_print
+  )
 }
 
 .public(dMeasure, "list_socialHx", function(date_from = NA, date_to = NA, clinicians = NA,
@@ -209,19 +252,24 @@ list_socialHx <- function(dMeasure_obj,
 
   socialHx_list <- appointments_list %>>%
     dplyr::left_join(self$db$clinical %>>%
-                       dplyr::filter(InternalID %in% intID) %>>%
-                       dplyr::select(InternalID, SocialHx, Accomodation, LivesWith,
-                                     HasCarer, IsCarer, Recreation,
-                                     Created, Updated) %>>%
-                       dplyr::left_join(self$db$accomodation,
-                                        by = c("Accomodation" = "AccomodationCode")) %>>%
-                       dplyr::left_join(self$db$liveswith,
-                                        by = c("LivesWith" = "LivesWithCode")) %>>%
-                       dplyr::select(-c(Accomodation, LivesWith)) %>>%
-                       # remove the 'index column', and replace with the text
-                       dplyr::rename(Accomodation = AccomodationText, LivesWith = LivesWithText),
-                     by = "InternalID",
-                     copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::select(
+        InternalID, SocialHx, Accomodation, LivesWith,
+        HasCarer, IsCarer, Recreation,
+        Created, Updated
+      ) %>>%
+      dplyr::left_join(self$db$accomodation,
+        by = c("Accomodation" = "AccomodationCode")
+      ) %>>%
+      dplyr::left_join(self$db$liveswith,
+        by = c("LivesWith" = "LivesWithCode")
+      ) %>>%
+      dplyr::select(-c(Accomodation, LivesWith)) %>>%
+      # remove the 'index column', and replace with the text
+      dplyr::rename(Accomodation = AccomodationText, LivesWith = LivesWithText),
+    by = "InternalID",
+    copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
     dplyr::mutate(Created = as.Date(substr(Created, 1, 10))) %>>%
     dplyr::mutate(Created = dplyr::if_else(Created <= AppointmentDate, Created, as.Date(NA))) %>>%
@@ -232,57 +280,88 @@ list_socialHx <- function(dMeasure_obj,
     # note that 'if_else' vectorizes,
     # demanding same datatype for TRUE/FALSE alternatives
     # 'ifelse' does not preserve date type in this circumstance
-    dplyr::mutate(LivesWith = dplyr::if_else(paste2(LivesWith, na.rm = TRUE) == "",
-                                             # force to empty string if NULL/NA
-                                             "",
-                                             paste0("Lives with ", LivesWith))) %>>%
-                                             {if (qualitytag)
-                                             {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
-                                                                                        sep = ", ", na.rm = TRUE))}
-                                               else {.}} %>>%
+    dplyr::mutate(LivesWith = dplyr::if_else(
+      paste2(LivesWith, na.rm = TRUE) == "",
+      # force to empty string if NULL/NA
+      "",
+      paste0("Lives with ", LivesWith)
+    )) %>>% {
+      if (qualitytag) {
+        dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+          sep = ", ", na.rm = TRUE
+        ))
+      }
+      else {
+        .
+      }
+    } %>>%
     # paste2 changes NULL to empty string
     # there are other potential social history elements which could be included
     # from fields RETIRED, ACCOMODATION, LIVESWITH, HASCARER, ISCARER, RECREATION
-                                               {if (qualitytag_print)
-                                               {dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
-                                                                                          sep = ", ", na.rm = TRUE))}
-                                                 else {.}}
+    {
+      if (qualitytag_print) {
+        dplyr::mutate(., socialHx_string = paste2(SocialHx, Accomodation, Recreation,
+          sep = ", ", na.rm = TRUE
+        ))
+      }
+      else {
+        .
+      }
+    }
 
   if (qualitytag) {
     socialHx_list <- socialHx_list %>>%
-      dplyr::mutate(qualitytag =
-                      dMeasure::semantic_tag(
-                        paste0(' Social History '),
-                        colour =
-                          dplyr::if_else(is.na(Created) | socialHx_string == "",
-                                         # if no entry in 'clinical' table at all (at this date)
-                                         # or string is empty
-                                         c('red'),
-                                         c('green')),
-                        # red if not recorded
-                        # and green if social history recording
-                        popuphtml =
-                          paste0("<h4>",
-                                 dplyr::if_else(is.na(Created) | socialHx_string == "",
-                                                "No recording",
-                                                socialHx_string),
-                                 "</h4>")))
+      dplyr::mutate(
+        qualitytag =
+          dMeasure::semantic_tag(
+            paste0(" Social History "),
+            colour =
+              dplyr::if_else(
+                is.na(Created) | socialHx_string == "",
+                # if no entry in 'clinical' table at all (at this date)
+                # or string is empty
+                c("red"),
+                c("green")
+              ),
+            # red if not recorded
+            # and green if social history recording
+            popuphtml =
+              paste0(
+                "<h4>",
+                dplyr::if_else(
+                  is.na(Created) | socialHx_string == "",
+                  "No recording",
+                  socialHx_string
+                ),
+                "</h4>"
+              )
+          )
+      )
   }
 
   if (qualitytag_print) {
     socialHx_list <- socialHx_list %>>%
-      dplyr::mutate(qualitytag_print =
-                      paste0("Social History", " ", # printable version of information
-                             dplyr::if_else(is.na(Created) | socialHx_string == "",
-                                            "(No recording)",
-                                            paste0("(", socialHx_string, ")"))
-                      ))
+      dplyr::mutate(
+        qualitytag_print =
+          paste0(
+            "Social History", " ", # printable version of information
+            dplyr::if_else(
+              is.na(Created) | socialHx_string == "",
+              "(No recording)",
+              paste0("(", socialHx_string, ")")
+            )
+          )
+      )
   }
 
   socialHx_list <- socialHx_list %>>%
-    dplyr::select(intersect(names(socialHx_list),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
-                              "Provider", "DOB", "Age", "qualitytag", "qualitytag_print")))
+    dplyr::select(intersect(
+      names(socialHx_list),
+      c(
+        "Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+        "Provider", "DOB", "Age", "qualitytag", "qualitytag_print"
+      )
+    ))
 
   return(socialHx_list)
 })
@@ -307,10 +386,12 @@ list_familyHx <- function(dMeasure_obj,
                           appointments_list = NULL,
                           lazy = FALSE,
                           qualitytag = FALSE, qualitytag_print = TRUE) {
-  dMeasure_obj$list_familyHx(date_from, date_to , clinicians,
-                             appointments_list,
-                             lazy,
-                             qualitytag, qualitytag_print)
+  dMeasure_obj$list_familyHx(
+    date_from, date_to, clinicians,
+    appointments_list,
+    lazy,
+    qualitytag, qualitytag_print
+  )
 }
 
 .public(dMeasure, "list_familyHx", function(date_from = NA, date_to = NA, clinicians = NA,
@@ -350,99 +431,144 @@ list_familyHx <- function(dMeasure_obj,
 
   familyHx_list <- appointments_list %>>%
     dplyr::left_join(self$db$familyhistory %>>%
-                       dplyr::filter(InternalID %in% intID) %>>%
-                       dplyr::select(InternalID, Unknown,
-                                     FatherAlive, MotherAlive,
-                                     FatherCauseOfDeath, MotherCauseOfDeath,
-                                     FatherAgeAtDeath, MotherAgeAtDeath,
-                                     Comment,
-                                     Relation, Condition, DiseaseComment),
-                     # Relation, Condition, DiseaseComment are
-                     # relation-specific information
-                     # so there can be multiple rows per InternalID
-                     by = "InternalID",
-                     copy = TRUE) %>>%
+      dplyr::filter(InternalID %in% intID) %>>%
+      dplyr::select(
+        InternalID, Unknown,
+        FatherAlive, MotherAlive,
+        FatherCauseOfDeath, MotherCauseOfDeath,
+        FatherAgeAtDeath, MotherAgeAtDeath,
+        Comment,
+        Relation, Condition, DiseaseComment
+      ),
+    # Relation, Condition, DiseaseComment are
+    # relation-specific information
+    # so there can be multiple rows per InternalID
+    by = "InternalID",
+    copy = TRUE
+    ) %>>%
     dplyr::collect() %>>%
-    dplyr::mutate(EmptyFamilyHistory = # TRUE if no recording
-                    (FatherAlive == 0 & MotherAlive == 0 & Unknown == 0 &
-                       (is.null(Comment) | Comment == "") &
-                       is.null(Relation)),
-                  Unknown = dplyr::if_else(Unknown == 0, "", "Unknown"),
-                  FatherAgeAtDeath = dplyr::if_else(paste2(FatherAgeAtDeath, na.rm = TRUE) == 0,
-                                                    "",
-                                                    paste0("(", FatherAgeAtDeath, ")")),
-                  MotherAgeAtDeath = dplyr::if_else(paste2(MotherAgeAtDeath, na.rm = TRUE) == 0,
-                                                    "",
-                                                    paste0("(", MotherAgeAtDeath, ")")),
-                  FatherCauseOfDeath = paste2(FatherCauseOfDeath, na.rm = TRUE),
-                  MotherCauseOfDeath = paste2(MotherCauseOfDeath, na.rm = TRUE),
-                  Father = dplyr::if_else(FatherAlive == 0,
-                                          "",
-                                          dplyr::if_else(FatherAlive == 2,
-                                                         "Father alive",
-                                                         paste0("Father deceased",
-                                                                FatherCauseOfDeath,
-                                                                FatherAgeAtDeath,
-                                                                sep = " "))),
-                  Mother = dplyr::if_else(MotherAlive == 0,
-                                          "",
-                                          dplyr::if_else(MotherAlive == 2,
-                                                         "Mother alive",
-                                                         paste0("Mother deceased",
-                                                                MotherCauseOfDeath,
-                                                                MotherAgeAtDeath,
-                                                                sep = " "))),
-                  DiseaseComment = dplyr::if_else(paste2(DiseaseComment, na.rm = TRUE) == "",
-                                                  # force to empty string if NULL/NA
-                                                  "",
-                                                  paste0("(", DiseaseComment, ")")),
-                  RelativeDetail = dplyr::if_else(is.na(Relation),
-                                                  "",
-                                                  paste2(Relation, ":", Condition, DiseaseComment,
-                                                         sep = ""))) %>>%
-    dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Status, Provider,
-                    DOB, Age, EmptyFamilyHistory, Unknown, Father, Mother, Comment) %>>%
+    dplyr::mutate(
+      EmptyFamilyHistory = # TRUE if no recording
+      (FatherAlive == 0 & MotherAlive == 0 & Unknown == 0 &
+        (is.null(Comment) | Comment == "") &
+        is.null(Relation)),
+      Unknown = dplyr::if_else(Unknown == 0, "", "Unknown"),
+      FatherAgeAtDeath = dplyr::if_else(
+        paste2(FatherAgeAtDeath, na.rm = TRUE) == 0,
+        "",
+        paste0("(", FatherAgeAtDeath, ")")
+      ),
+      MotherAgeAtDeath = dplyr::if_else(
+        paste2(MotherAgeAtDeath, na.rm = TRUE) == 0,
+        "",
+        paste0("(", MotherAgeAtDeath, ")")
+      ),
+      FatherCauseOfDeath = paste2(FatherCauseOfDeath, na.rm = TRUE),
+      MotherCauseOfDeath = paste2(MotherCauseOfDeath, na.rm = TRUE),
+      Father = dplyr::if_else(
+        FatherAlive == 0,
+        "",
+        dplyr::if_else(
+          FatherAlive == 2,
+          "Father alive",
+          paste0("Father deceased",
+            FatherCauseOfDeath,
+            FatherAgeAtDeath,
+            sep = " "
+          )
+        )
+      ),
+      Mother = dplyr::if_else(
+        MotherAlive == 0,
+        "",
+        dplyr::if_else(
+          MotherAlive == 2,
+          "Mother alive",
+          paste0("Mother deceased",
+            MotherCauseOfDeath,
+            MotherAgeAtDeath,
+            sep = " "
+          )
+        )
+      ),
+      DiseaseComment = dplyr::if_else(
+        paste2(DiseaseComment, na.rm = TRUE) == "",
+        # force to empty string if NULL/NA
+        "",
+        paste0("(", DiseaseComment, ")")
+      ),
+      RelativeDetail = dplyr::if_else(
+        is.na(Relation),
+        "",
+        paste2(Relation, ":", Condition, DiseaseComment,
+          sep = ""
+        )
+      )
+    ) %>>%
+    dplyr::group_by(
+      Patient, InternalID, AppointmentDate, AppointmentTime, Status, Provider,
+      DOB, Age, EmptyFamilyHistory, Unknown, Father, Mother, Comment
+    ) %>>%
     dplyr::summarise(RelativeDetails = paste(RelativeDetail, collapse = ", ")) %>>%
     dplyr::ungroup() %>>%
     dplyr::mutate(familyHx_string = paste2(Unknown, Father, Mother, Comment,
-                                           RelativeDetails,
-                                           sep = ", ", na.rm = TRUE))
+      RelativeDetails,
+      sep = ", ", na.rm = TRUE
+    ))
 
   if (qualitytag) {
     familyHx_list <- familyHx_list %>>%
-      dplyr::mutate(qualitytag =
-                      dMeasure::semantic_tag(
-                        paste0(' Family History '),
-                        colour =
-                          dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
-                                         # if no details in family history at all
-                                         # or string is empty
-                                         c('red'),
-                                         c('green')),
-                        # red if no recordings,
-                        # and green if there is a recording
-                        popuphtml =
-                          paste0("<h4>",
-                                 dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
-                                                "No recording",
-                                                familyHx_string),
-                                 "</h4>")))
+      dplyr::mutate(
+        qualitytag =
+          dMeasure::semantic_tag(
+            paste0(" Family History "),
+            colour =
+              dplyr::if_else(
+                EmptyFamilyHistory | familyHx_string == "",
+                # if no details in family history at all
+                # or string is empty
+                c("red"),
+                c("green")
+              ),
+            # red if no recordings,
+            # and green if there is a recording
+            popuphtml =
+              paste0(
+                "<h4>",
+                dplyr::if_else(
+                  EmptyFamilyHistory | familyHx_string == "",
+                  "No recording",
+                  familyHx_string
+                ),
+                "</h4>"
+              )
+          )
+      )
   }
 
   if (qualitytag_print) {
     familyHx_list <- familyHx_list %>>%
-      dplyr::mutate(qualitytag_print =
-                      paste0("Family History", " ", # printable version of information
-                             dplyr::if_else(EmptyFamilyHistory | familyHx_string == "",
-                                            "(No recording)",
-                                            paste0("(", familyHx_string, ")"))
-                      ))
+      dplyr::mutate(
+        qualitytag_print =
+          paste0(
+            "Family History", " ", # printable version of information
+            dplyr::if_else(
+              EmptyFamilyHistory | familyHx_string == "",
+              "(No recording)",
+              paste0("(", familyHx_string, ")")
+            )
+          )
+      )
   }
 
   familyHx_list <- familyHx_list %>>%
-    dplyr::select(intersect(names(familyHx_list),
-                            c("Patient", "InternalID", "AppointmentDate", "AppointmentTime",
-                              "Provider", "DOB", "Age", "qualitytag", "qualitytag_print")))
+    dplyr::select(intersect(
+      names(familyHx_list),
+      c(
+        "Patient", "InternalID", "AppointmentDate", "AppointmentTime",
+        "Provider", "DOB", "Age", "qualitytag", "qualitytag_print"
+      )
+    ))
 
   return(familyHx_list)
 })
@@ -477,11 +603,13 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
                              lazy = FALSE,
                              qualitytag = FALSE, qualitytag_print = TRUE,
                              chosen = self$dataQuality_choices) {
-  dMeasure_obj$list_dataQuality(date_from, date_to, clinicians,
-                                appointments_list,
-                                lazy,
-                                qualitytag, qualitytag_print,
-                                chosen)
+  dMeasure_obj$list_dataQuality(
+    date_from, date_to, clinicians,
+    appointments_list,
+    lazy,
+    qualitytag, qualitytag_print,
+    chosen
+  )
 }
 
 .public(dMeasure, "list_dataQuality", function(date_from = NA, date_to = NA, clinicians = NA,
@@ -489,7 +617,6 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
                                                lazy = FALSE,
                                                qualitytag = FALSE, qualitytag_print = TRUE,
                                                chosen = self$dataQuality_choices) {
-
   if (is.na(date_from)) {
     date_from <- self$date_a
   }
@@ -511,10 +638,12 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
     appointments_list <- self$appointments_list
   }
 
-  vlist <- data.frame(Patient = character(), InternalID = integer(),
-                      AppointmentDate = as.Date(integer(), origin = "1970-01-01"),
-                      AppointmentTime = character(), Provider = character(),
-                      DOB = as.Date(integer(), origin = "1970-01-01"), Age = double())
+  vlist <- data.frame(
+    Patient = character(), InternalID = integer(),
+    AppointmentDate = as.Date(integer(), origin = "1970-01-01"),
+    AppointmentTime = character(), Provider = character(),
+    DOB = as.Date(integer(), origin = "1970-01-01"), Age = double()
+  )
 
   if (qualitytag) {
     vlist <- cbind(vlist, qualitytag = character())
@@ -526,35 +655,54 @@ list_dataQuality <- function(dMeasure_obj, date_from = NA, date_to = NA, clinici
   if (nrow(appointments_list) > 0) { # only if there are appointments to search
     # if nrow == 0, it is possible that the database is not even open!
     if ("Allergies" %in% chosen) {
-      vlist <- rbind(vlist, self$list_allergy(date_from, date_to, clinicians,
-                                              appointments_list,
-                                              lazy,
-                                              qualitytag, qualitytag_print))}
+      vlist <- rbind(vlist, self$list_allergy(
+        date_from, date_to, clinicians,
+        appointments_list,
+        lazy,
+        qualitytag, qualitytag_print
+      ))
+    }
     if ("Social History" %in% chosen) {
-      vlist <- rbind(vlist, self$list_socialHx(date_from, date_to, clinicians,
-                                               appointments_list,
-                                               lazy,
-                                               qualitytag, qualitytag_print))}
+      vlist <- rbind(vlist, self$list_socialHx(
+        date_from, date_to, clinicians,
+        appointments_list,
+        lazy,
+        qualitytag, qualitytag_print
+      ))
+    }
     if ("Family History" %in% chosen) {
-      vlist <- rbind(vlist, self$list_familyHx(date_from, date_to, clinicians,
-                                               appointments_list,
-                                               lazy,
-                                               qualitytag, qualitytag_print))}
+      vlist <- rbind(vlist, self$list_familyHx(
+        date_from, date_to, clinicians,
+        appointments_list,
+        lazy,
+        qualitytag, qualitytag_print
+      ))
+    }
   }
   if (nrow(vlist) > 0) {
     vlist <- vlist %>>%
-      dplyr::group_by(Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
-                      DOB, Age) %>>%
+      dplyr::group_by(
+        Patient, InternalID, AppointmentDate, AppointmentTime, Provider,
+        DOB, Age
+      ) %>>%
       # gathers vaccination notifications on the same appointment into a single row
-                      {if (qualitytag)
-                      {dplyr::summarise(., qualitytag = paste(qualitytag, collapse = ""))}
-                        else {.}} %>>%
-                        {if (qualitytag_print)
-                        {dplyr::summarise(., qualitytag_print = paste(qualitytag_print, collapse = ", "))}
-                          else {.}} %>>%
+      {
+        if (qualitytag) {
+          dplyr::summarise(., qualitytag = paste(qualitytag, collapse = ""))
+        }
+        else {
+          .
+        }
+      } %>>% {
+        if (qualitytag_print) {
+          dplyr::summarise(., qualitytag_print = paste(qualitytag_print, collapse = ", "))
+        }
+        else {
+          .
+        }
+      } %>>%
       dplyr::ungroup()
   }
 
   return(vlist)
 })
-

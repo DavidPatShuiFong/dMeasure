@@ -1,16 +1,17 @@
 Package: dMeasure
 Type: Package
 Title: case finding in the EMR (Best Practice)
-Version: 0.9.6
+Version: 0.10.0
 Author: David Fong
 Maintainer: David Fong <vkelim@bigpond.com>
 Description: Search for health interventions in the Best Practice EMR database.
     Looks through patient lists, particularly those who are currently booked to see a health care provider.
-License: (c) 2019. All rights reserved
+License: file LICENSE Mozilla Public License v2.0
 Encoding: UTF-8
 LazyData: true
 Imports:
     dplyr,
+    rlang (>= 0.4.0),
     dbplyr,
     odbc,
     RSQLite,
@@ -30,10 +31,11 @@ Suggests:
     knitr,
     printr,
     rmarkdown,
+    lubridate,
     dMeasureQIM,
     dMeasureBillings,
     dMeasureCDM
-RoxygenNote: 7.0.2.9000
+RoxygenNote: 7.1.1
 Collate: 
     'fomantic_definitions_tags.R'
     'r6_helpers.R'

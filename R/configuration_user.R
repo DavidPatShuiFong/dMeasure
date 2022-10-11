@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 ##### Configuration - user ###########################################
 #' Configuration - user
 #'
@@ -33,7 +37,7 @@ restrictionTypes_list <- function() {
         Description = "Only ServerAdmin users can change database server settings",
         userAttribute = TRUE,
         # is this actually a userattribute
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # these callbacks have no immediate access to the parent environment
           # only called if state is changed from the old state
           # @param state          : attempted new state
@@ -46,9 +50,9 @@ restrictionTypes_list <- function() {
           #
           # note that this function does not change UserRestrictions()
           # changing UserRestrictions() is the responsibility of the calling function
-          newstate = state # note, can't use "<-" as operator in subsequent data.frame(Reduce(...))
-          error = list() # will hold $message and $title if set
-          warn = list() # will hold $message and $title if set
+          newstate <- state # note, can't use "<-" as operator in subsequent data.frame(Reduce(...))
+          error <- list() # will hold $message and $title if set
+          warn <- list() # will hold $message and $title if set
 
           if (state == TRUE) {
             # if trying to turn on ServerAdmin restriction
@@ -56,19 +60,19 @@ restrictionTypes_list <- function() {
               # no user is listed as having ServerAdmin attribute!
               # if this restriction is established, no one can edit the server
               # (though this could be worked around by changing user settings)
-              error$message =
+              error$message <-
                 "At least one user must have 'ServerAdmin' attribute to enable 'ServerAdmin' restriction."
-              error$title =  "Can't enable 'ServerAdmin' restriction"
-              newstate = FALSE
+              error$title <- "Can't enable 'ServerAdmin' restriction"
+              newstate <- FALSE
             } else {
-              newstate = TRUE
+              newstate <- TRUE
               # allow ServerAdmin to be restricted
             }
           } else {
             # turning off ServerAdmin restriction
-            warn$message =
+            warn$message <-
               "Without this restriction, anyone can edit and change Best Practice database settings!"
-            warn$title = "Disabling 'ServerAdmin' restriction"
+            warn$title <- "Disabling 'ServerAdmin' restriction"
           }
           return(list(state = newstate, error = error, warn = warn))
         }
@@ -77,7 +81,7 @@ restrictionTypes_list <- function() {
         id = "UserAdmin", label = "User Administrator",
         Description = "Only UserAdmin users can change user permissions",
         userAttribute = TRUE,
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # these callbacks have no immediate access to the parent environment
           # only called if state is changed from the old state
           # @param state          : attempted new state
@@ -90,27 +94,27 @@ restrictionTypes_list <- function() {
           #
           # note that this function does not change UserRestrictions()
           # changing UserRestrictions() is the responsibility of the calling function
-          newstate = state
-          error = list() # will hold $message and $title if set
-          warn = list() # will hold $message and $title if set
+          newstate <- state
+          error <- list() # will hold $message and $title if set
+          warn <- list() # will hold $message and $title if set
 
           if (state == TRUE) {
             # if trying to turn on ServerAdmin restriction
             if (!("UserAdmin" %in% AttributeList)) {
               # no user is listed as having UserAdmin attribute!
               # if this restriction is established, no one can edit the user settings
-              error$message =
+              error$message <-
                 "A least one user must have 'UserAdmin' attribute to enable the 'UserAdmin' restriction."
-              error$title = "Can't enable 'UserAdmin' restriction"
-              newstate = FALSE
+              error$title <- "Can't enable 'UserAdmin' restriction"
+              newstate <- FALSE
             } else {
-              newstate = TRUE
+              newstate <- TRUE
               # allow UserAdmin to be restricted
             }
           } else {
-            warn$message =
+            warn$message <-
               "Without this restriction, anyone can edit and change user permission settings!"
-            warn$title = "Disabling 'UserAdmin' restriction"
+            warn$title <- "Disabling 'UserAdmin' restriction"
           }
           return(list(state = newstate, error = error, warn = warn))
         }
@@ -119,15 +123,16 @@ restrictionTypes_list <- function() {
         id = "GlobalActionView", label = "Global Action View",
         Description = "GlobalActionView users can view actions in 'other' appointment lists",
         userAttribute = TRUE,
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # this can always be set/unset
-          return(list(state = state, error = list(), warn = list()))}
+          return(list(state = state, error = list(), warn = list()))
+        }
       ),
       list(
         id = "GlobalBillView", label = "Global Bill View",
         Description = "GlobalBillView users can view billing status in 'other' appointment lists",
         userAttribute = TRUE,
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # this can always be set/unset
           return(list(state = state, error = list(), warn = list()))
         }
@@ -136,7 +141,7 @@ restrictionTypes_list <- function() {
         id = "GlobalCDMView", label = "Global CDM View",
         Description = "GlobalCDMView users can view CDM status in 'other' appointment lists",
         userAttribute = TRUE,
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # this can always be set/unset
           return(list(state = state, error = list(), warn = list()))
         }
@@ -146,7 +151,7 @@ restrictionTypes_list <- function() {
         Description = "Password required from all users",
         userAttribute = FALSE,
         # 'RequirePasswords' is not actually a user attribute
-        callback = function (state, AttributeList, anyPassword) {
+        callback = function(state, AttributeList, anyPassword) {
           # these callbacks have no immediate access to the parent environment
           # only called if state is changed from the old state
           # @param state          : attempted new state
@@ -159,27 +164,27 @@ restrictionTypes_list <- function() {
           #
           # note that this function does not change UserRestrictions()
           # changing UserRestrictions() is the responsibility of the calling function
-          newstate = state
-          error = list() # will hold $message and $title if set
-          warn = list() # will hold $message and $title if set
+          newstate <- state
+          error <- list() # will hold $message and $title if set
+          warn <- list() # will hold $message and $title if set
 
           if (state == TRUE) {
             # if trying to turn on RequirePasswords restriction
             if (anyPassword == FALSE) {
               # no user is listed as having a password!
               # if this restriction is established, no one will be able to log in
-              error$message =
+              error$message <-
                 "A least one user must have a password to enable the 'Require Passwords' restriction."
-              error$title = "Can't enable 'Require Passwords' restriction"
-              newstate = FALSE
+              error$title <- "Can't enable 'Require Passwords' restriction"
+              newstate <- FALSE
             } else {
-              newstate = TRUE
+              newstate <- TRUE
               # allow RequirePassword
             }
           } else {
-            warn$message =
+            warn$message <-
               "Without this restriction, users do not require passwords"
-            warn$title = "Disabling 'Require Passwords' restriction"
+            warn$title <- "Disabling 'Require Passwords' restriction"
           }
           return(list(state = newstate, error = error, warn = warn))
         }
@@ -193,18 +198,28 @@ restrictionTypes_list <- function() {
 ))
 
 
-.public_init(dMeasure, "restrictionTypes_df",
-             quote(data.frame(Reduce(rbind, self$restrictionTypes))))
+.public_init(
+  dMeasure, "restrictionTypes_df",
+  quote(data.frame(Reduce(rbind, self$restrictionTypes)))
+)
 
 # converts the list to a dataframe
-.public_init(dMeasure, "restrictionTypes_id",
-             quote(unlist(self$restrictionTypes_df$id,
-                          use.names = FALSE)))
+.public_init(
+  dMeasure, "restrictionTypes_id",
+  quote(unlist(self$restrictionTypes_df$id,
+    use.names = FALSE
+  ))
+)
 
-.public_init(dMeasure, "user_attribute_types",
-             quote(unlist(dplyr::filter(self$restrictionTypes_df,
-                                        userAttribute == TRUE)$id,
-                          use.names = FALSE)))
+.public_init(
+  dMeasure, "user_attribute_types",
+  quote(unlist(dplyr::filter(
+    self$restrictionTypes_df,
+    userAttribute == TRUE
+  )$id,
+  use.names = FALSE
+  ))
+)
 
 # user attribute types is defined in restrictionTypes. only those with userAttribute TRUE
 
@@ -225,11 +240,13 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 }
 
 .public(dMeasure, "userrestriction.change", function(restriction, state) {
-
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to change user restrictions")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to change user restrictions"
+      ))
+  )
 
   if (!restriction %in% self$restrictionTypes_id) {
     stop("That restriction is not recognized.")
@@ -277,14 +294,17 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       state,
       self$UserConfig %>>% dplyr::pull(Attributes) %>>% unlist(),
       # list of attributes in use
-      (nchar(paste(apply(cbind(private$.UserConfig %>>%
-                                 dplyr::pull(Password)),
-                         1,
-                         function(x)
-                           paste(x[!is.na(x)],
-                                 collapse = "")),
-                   collapse = "")
-      ) > 0)
+      (nchar(paste(apply(
+        cbind(private$.UserConfig %>>%
+          dplyr::pull(Password)),
+        1,
+        function(x)
+          paste(x[!is.na(x)],
+            collapse = ""
+          )
+      ),
+      collapse = ""
+      )) > 0)
       # any passwords are set?
     )
   # the code to concatenate strings, NA or not, was found on StackOverflow
@@ -300,11 +320,15 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
     # state returned is the same as the attempted change
     if (state == TRUE) {
       d <- # new restrictions
-        dplyr::bind_rows(private$.UserRestrictions %>>% dplyr::collect(),
-                         data.frame(uid = max(private$.UserRestrictions %>>%
-                                                dplyr::pull(uid), 0) + 1,
-                                    Restriction = restriction,
-                                    stringsAsFactors = FALSE))
+        dplyr::bind_rows(
+          private$.UserRestrictions %>>% dplyr::collect(),
+          data.frame(
+            uid = max(private$.UserRestrictions %>>%
+              dplyr::pull(uid), 0) + 1,
+            Restriction = restriction,
+            stringsAsFactors = FALSE
+          )
+        )
       # add entry to datatable of UserRestrictions
       # add one to maximum UID (at least zero), and add restriction to new row
       # note that this table in the database uses 'uid' rather than 'id'
@@ -312,7 +336,6 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
       update_UserRestrictions_database(d)
       # only if reactive environments available, make public
       private$set_reactive(self$UserRestrictions, private$.UserRestrictions)
-
     } else {
       # remove entry in datatable of UserRestrictions
       d <- private$.UserRestrictions %>>% # new restriction
@@ -333,36 +356,50 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   if (!(description$Fullname %in% self$UserFullConfig$Fullname)) {
     # does this user name exist at all?
-    stop(paste0("'",
-                description$Fullname,
-                "' is not a recognized user name."))
+    stop(paste0(
+      "'",
+      description$Fullname,
+      "' is not a recognized user name."
+    ))
   }
 
-  if (length(setdiff(description$Location[[1]],
-                     # note that 'setdiff' is assymetrical
-                     # need to pick first element of list (which is itself a list)
-                     c("", (private$PracticeLocations %>>%
-                            dplyr::collect())$Name))) > 0) {
+  if (length(setdiff(
+    description$Location[[1]],
+    # note that 'setdiff' is assymetrical
+    # need to pick first element of list (which is itself a list)
+    c("", (private$PracticeLocations %>>%
+      dplyr::collect())$Name)
+  )) > 0) {
     # if there is an location being set which is not in self$location_list, or ""
-    stop(paste0("'",
-                paste(setdiff(description$Location[[1]],
-                              c("", (private$PracticeLocations %>>%
-                                       dplyr::collect())$Name)),
-                      collapse = ", "),
-                "', not recognized location(s)/group(s)."))
+    stop(paste0(
+      "'",
+      paste(setdiff(
+        description$Location[[1]],
+        c("", (private$PracticeLocations %>>%
+          dplyr::collect())$Name)
+      ),
+      collapse = ", "
+      ),
+      "', not recognized location(s)/group(s)."
+    ))
   }
 
-  if (length(setdiff(description$Attributes[[1]],
-                     c(self$user_attribute_types, ""))) > 0) {
+  if (length(setdiff(
+    description$Attributes[[1]],
+    c(self$user_attribute_types, "")
+  )) > 0) {
     # if there is an attribute being set which is not in user_attribute_types, or ""
-    stop(paste0("'",
-                paste(setdiff(description$Attributes[[1]],
-                              c(self$user_attribute_types, "")), collapse = ", "),
-                "', not recognized user attribute type(s)."))
+    stop(paste0(
+      "'",
+      paste(setdiff(
+        description$Attributes[[1]],
+        c(self$user_attribute_types, "")
+      ), collapse = ", "),
+      "', not recognized user attribute type(s)."
+    ))
   }
 
   return(TRUE)
-
 })
 
 .private(dMeasure, "validate.proposed.userconfig", function(proposed_UserConfig) {
@@ -377,7 +414,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   # then at least one user must have the restricted attribute
   if ("ServerAdmin" %in% self$userrestriction.list()) {
     if (!("ServerAdmin" %in% unlist(proposed_UserConfig %>>%
-                                    dplyr::select(Attributes), use.names = FALSE))) {
+      dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with ServerAdmin attribute
       stop("Only 'ServerAdmin' users can change server settings.
              At least one user must have the 'ServerAdmin' attribute!")
@@ -386,7 +423,7 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 
   if ("UserAdmin" %in% self$userrestriction.list()) {
     if (!("UserAdmin" %in% unlist(proposed_UserConfig %>>%
-                                  dplyr::select(Attributes), use.names = FALSE))) {
+      dplyr::select(Attributes), use.names = FALSE))) {
       # modified data would no longer have anyone with UserAdmin attribute
       stop("Only 'UserAdmin' users can change user permissions.
              At least one user must have the 'UserAdmin' attribute!")
@@ -394,7 +431,6 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
   }
 
   return(TRUE)
-
 })
 
 #' userconfig.insert
@@ -418,13 +454,17 @@ userrestriction.change <- function(dMeasure_obj, restriction, state) {
 #' @return $UserConfig
 #'
 #' @examples
-#'
-#'  dMeasure_obj <- dMeasure::dMeasure$new()
-#'  dMeasure_obj$open_emr_db()
-#'  dMeasure_obj$userconfig.insert(
-#'    list(Fullname = "Mrs. Diabetes Educator",
-#'         Location = list(c("Jemena", "Lakeside")),
-#'         Attributes = list(c("UserAdmin", "ServerAdmin")))
+#' \dontrun{
+#' dMeasure_obj <- dMeasure::dMeasure$new()
+#' dMeasure_obj$open_emr_db()
+#' dMeasure_obj$userconfig.insert(
+#'   list(
+#'     Fullname = "Mrs. Diabetes Educator",
+#'     Location = list(c("Jemena", "Lakeside")),
+#'     Attributes = list(c("UserAdmin", "ServerAdmin"))
+#'   )
+#' )
+#' }
 #'
 #' @export
 userconfig.insert <- function(dMeasure_obj, description) {
@@ -435,9 +475,12 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # adding a new user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to change user configuration")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to change user configuration"
+      ))
+  )
 
   if (!is.null(description$password)) { # actually, this isn't written subsequently...
     description$password <- dMeasure::simple_encode(description$password)
@@ -475,24 +518,34 @@ userconfig.insert <- function(dMeasure_obj, description) {
     description$Attributes <- list(description$Attributes)
   }
 
-  tryCatch({private$validate.userconfig.description(description)},
-           # find invalid Location or Attribute descriptions
-           error = function(e) {
-             stop(paste("Error in description validation : ", e[[1]],
-                        "Unable to insert this user description"))})
+  tryCatch({
+    private$validate.userconfig.description(description)
+  },
+  # find invalid Location or Attribute descriptions
+  error = function(e) {
+    stop(paste(
+      "Error in description validation : ", e[[1]],
+      "Unable to insert this user description"
+    ))
+  }
+  )
 
   newid <- max(private$.UserConfig %>>% dplyr::pull(id), 0) + 1
   # initially, $.UserConfig$id might be an empty set, so need to append a '0'
   description$id <- newid
 
-  query <- paste0("INSERT INTO Users",
-                  "(id, Fullname, AuthIdentity, Location, Attributes, License)",
-                  "VALUES ($id, $fn, $au, $lo, $at, $li)")
-  data_for_sql <- list(id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
-                       # $Location and $Attribute could both have multiple (or no) entries
-                       lo = paste0(description$Location[[1]], "", collapse = ";"),
-                       at = paste0(description$Attributes[[1]], "", collapse = ";"),
-                       li = description$License)
+  query <- paste0(
+    "INSERT INTO Users",
+    "(id, Fullname, AuthIdentity, Location, Attributes, License)",
+    "VALUES ($id, $fn, $au, $lo, $at, $li)"
+  )
+  data_for_sql <- list(
+    id = newid, fn = description$Fullname, au = paste0(description$AuthIdentity, ""),
+    # $Location and $Attribute could both have multiple (or no) entries
+    lo = paste0(description$Location[[1]], "", collapse = ";"),
+    at = paste0(description$Attributes[[1]], "", collapse = ";"),
+    li = description$License
+  )
   # [[1]] 'de-lists' $Location and $Attributes, which prevents some strange
   # behaviour which *sometimes* results in a string being created in the form
   # of 'c("ServerAdmin", "UserAdmin")'
@@ -517,7 +570,6 @@ userconfig.insert <- function(dMeasure_obj, description) {
   # calculating self$UserConfig will 'auto-calculate'
   # self$UserConfig and also $UserConfigR (if reactive/shiny available)
   return(self$UserConfigLicense)
-
 })
 
 #' userconfig.update
@@ -543,26 +595,33 @@ userconfig.insert <- function(dMeasure_obj, description) {
 #' @return self$UserConfig
 #'
 #' @examples
+#' \dontrun{
+#' dMeasure_obj <- dMeasure::dMeasure$new()
+#' dMeasure_obj$open_emr_db()
+#' dMeasure_obj$userconfig.update(
+#'   list(
+#'     Fullname = "Mrs. Diabetes Educator",
+#'     Location = list(c("Jemena", "Lakeside")),
+#'     Attributes = list(c("UserAdmin", "ServerAdmin"))
+#'   )
+#' )
+#' }
 #'
-#'  dMeasure_obj <- dMeasure::dMeasure$new()
-#'  dMeasure_obj$open_emr_db()
-#'  dMeasure_obj$userconfig.update(
-#'    list(Fullname = "Mrs. Diabetes Educator",
-#'         Location = list(c("Jemena", "Lakeside")),
-#'         Attributes = list(c("UserAdmin", "ServerAdmin")))
 #' @export
 userconfig.update <- function(dMeasure_obj, description) {
   dMeasure_obj$userconfig.update(description)
 }
 
-.public(dMeasure, "userconfig.update", function (description) {
+.public(dMeasure, "userconfig.update", function(description) {
   # change (update) a user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(
-               w,
-               "'UserAdmin' permission required to change user configuration")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to change user configuration"
+      ))
+  )
 
   if (!is.null(description$password)) {
     description$password <- dMeasure::simple_encode(description$password)
@@ -586,8 +645,10 @@ userconfig.update <- function(dMeasure_obj, description) {
 
 
   # create empty entries for description, if necessary
-  for (x in c("AuthIdentity", "Location", "Attributes",
-              "License")) {
+  for (x in c(
+    "AuthIdentity", "Location", "Attributes",
+    "License"
+  )) {
     if (is.null(description[[x]])) {
       description[[x]] <- old_description[[x]]
     }
@@ -603,37 +664,53 @@ userconfig.update <- function(dMeasure_obj, description) {
     description$Attributes <- list(description$Attributes)
   }
 
-  tryCatch({private$validate.userconfig.description(description)},
-           # find invalid Location or Attribute descriptions
-           error = function(e) {
-             stop(paste("Error in description validation :", e[[1]],
-                        "- Unable to update this user description"))
-           })
+  tryCatch({
+    private$validate.userconfig.description(description)
+  },
+  # find invalid Location or Attribute descriptions
+  error = function(e) {
+    stop(paste(
+      "Error in description validation :", e[[1]],
+      "- Unable to update this user description"
+    ))
+  }
+  )
 
   proposed_UserConfig <- self$UserConfig %>>% dplyr::collect() %>>%
-    dplyr::select("id", "Fullname", "AuthIdentity", "Location", "Attributes",
-                  "License") %>>%
+    dplyr::select(
+      "id", "Fullname", "AuthIdentity", "Location", "Attributes",
+      "License"
+    ) %>>%
     dplyr::filter(Fullname != description$Fullname) %>>%
     rbind(tibble::as_tibble(description))
 
   # this is the proposed user configuration
 
-  tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
-           error = function(e) {
-             stop(paste("Error in change in attributes :", e[[1]],
-                        "Unable to update this user configuration."))
-           })
+  tryCatch({
+    private$validate.proposed.userconfig(proposed_UserConfig)
+  },
+  error = function(e) {
+    stop(paste(
+      "Error in change in attributes :", e[[1]],
+      "Unable to update this user configuration."
+    ))
+  }
+  )
   # if restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
 
   query <- paste("UPDATE Users SET Fullname = ?, AuthIdentity = ?, ",
-                 "Location = ?, Attributes = ?, License = ? ",
-                 "WHERE id = ?", sep = "")
-  data_for_sql <- as.list(c(description$Fullname, paste0(description$AuthIdentity, ""),
-                            paste0(unlist(description$Location[[1]]), "", collapse = ";"),
-                            paste0(unlist(description$Attributes[[1]]), "", collapse = ";"),
-                            description$License,
-                            description$id))
+    "Location = ?, Attributes = ?, License = ? ",
+    "WHERE id = ?",
+    sep = ""
+  )
+  data_for_sql <- as.list(c(
+    description$Fullname, paste0(description$AuthIdentity, ""),
+    paste0(unlist(description$Location[[1]]), "", collapse = ";"),
+    paste0(unlist(description$Attributes[[1]]), "", collapse = ";"),
+    description$License,
+    description$id
+  ))
   # note extra "" within paste0 is required in the case of empty data
 
   self$config_db$dbSendQuery(query, data_for_sql)
@@ -667,9 +744,12 @@ userconfig.delete <- function(dMeasure_obj, description) {
   # delete a user configuration
 
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required to change/delete user configuration.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required to change/delete user configuration."
+      ))
+  )
 
   if (is.null(description$Fullname)) {
     stop("Must include $Fullname in the description.")
@@ -688,11 +768,14 @@ userconfig.delete <- function(dMeasure_obj, description) {
 
   # this is the proposed user configuration
 
-  tryCatch({private$validate.proposed.userconfig(proposed_UserConfig)},
-           error = function(e) {
-             paste("Error in change in attributes :", e[[1]])
-             stop("Cannot delete this user configuration.")
-           })
+  tryCatch({
+    private$validate.proposed.userconfig(proposed_UserConfig)
+  },
+  error = function(e) {
+    paste("Error in change in attributes :", e[[1]])
+    stop("Cannot delete this user configuration.")
+  }
+  )
   # is restrictions have been placed on who can modify the server or user configuration
   # then at least one user must have the restricted attribute
 
@@ -723,10 +806,13 @@ userconfig.list <- function(dMeasure_obj) {
 
 .public(dMeasure, "userconfig.list", function() {
   tryCatch(permission <- self$useradmin.permission(),
-           warning = function(w)
-             stop(paste(w,
-                        "'UserAdmin' permission required",
-                        "to view user configurations.")))
+    warning = function(w)
+      stop(paste(
+        w,
+        "'UserAdmin' permission required",
+        "to view user configurations."
+      ))
+  )
 
   return(private$.UserConfig %>>% dplyr::collect())
 })
@@ -771,12 +857,13 @@ useradmin.permission <- function(dMeasure_obj) {
   if ("UserAdmin" %in% self$userrestriction.list()) {
     # only some users allowed to see/change server settings
     if ("UserAdmin" %in% (self$UserConfig %>>%
-                          dplyr::filter(Fullname ==
-                                        paste(self$.identified_user$Fullname,
-                                              collapse = "")) %>>%
-                          # paste with collapse = "" changes character(0) to ""
-                          dplyr::pull(Attributes) %>>% unlist()) &&
-        self$authenticated == TRUE) {
+      dplyr::filter(Fullname ==
+        paste(self$.identified_user$Fullname,
+          collapse = ""
+        )) %>>%
+      # paste with collapse = "" changes character(0) to ""
+      dplyr::pull(Attributes) %>>% unlist()) &&
+      self$authenticated == TRUE) {
       permission <- TRUE
     } else {
       # this user is not authorized to access the locations list

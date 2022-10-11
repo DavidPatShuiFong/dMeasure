@@ -32,5 +32,5 @@ returns the SQL filepath
 dMeasure_obj <- dMeasure$new()
 dMeasure_obj$configuration_file_path # read filepath
 dMeasure_obj$configuration_file_path <- "c:/config.sqlite"
- # sets filepath
+# sets filepath
 }
