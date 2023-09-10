@@ -143,27 +143,7 @@ dMeasure <-
       self$emr_db$close_log_db() # close logging database
     }
     self$emr_db$close()
-    self$db$practice <- NULL
-    self$db$users <- NULL
-    self$db$patients <- NULL
-    self$db$patientsRaw <- NULL
-    self$db$clinical <- NULL
-    self$db$reactions <- NULL
-    self$db$investigations <- NULL
-    self$db$papsmears <- NULL
-    self$db$appointments <- NULL
-    self$db$immunizations <- NULL
-    self$db$preventive_health <- NULL
-    self$db$correspondenceIn <- NULL
-    self$db$reportValues <- NULL
-    self$db$services <- NULL
-    self$db$servicesRaw <- NULL
-    self$db$history <- NULL
-    self$db$currentRx <- NULL
-    # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
-    self$db$familyhistory <- NULL
-    self$db$familyhistorydetail <- NULL
-    self$db$relationcode <- NULL
+    self$db <- list()
     self$clinician_choice_list <- NULL
   }
   self$authenticated <- FALSE
@@ -695,28 +675,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
       # either database not opened, or has just been closed, including set to 'None'
-      self$db$practice <- NULL
-      self$db$users <- NULL
-      self$db$patients <- NULL
-      self$db$patientsRaw <- NULL
-      self$db$clinical <- NULL
-      self$db$reactions <- NULL
-      self$db$investigations <- NULL
-      self$db$papsmears <- NULL
-      self$db$appointments <- NULL
-      self$db$immunizations <- NULL
-      self$db$preventive_health <- NULL
-      self$db$correspondenceIn <- NULL
-      self$db$reportValues <- NULL
-      self$db$services <- NULL
-      self$db$servicesRaw <- NULL
-      self$db$invoices <- NULL
-      self$db$history <- NULL
-      self$db$currentRx <- NULL
-      # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
-      self$db$familyhistory <- NULL
-      self$db$familyhistorydetail <- NULL
-      self$db$relationcode <- NULL
+      self$db <- list()
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
@@ -1910,9 +1869,12 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 ## fields
 .public_init(dMeasure, "emr_db", quote(dbConnection::dbConnection$new()))
 # R6 object containing database object
-.public(dMeasure, "db", list(dbversion = 0)) # later will be the EMR databases.
-# $db$dbversion is number of EMR database openings
-# there is also a 'reactive' version if shiny is available
+.public(dMeasure, "db", list()) # later will be the EMR databases.
+.public(dMeasure, "dbversionN", 0)
+# $dbversionN is number of EMR database openings.
+# $dbversionN replaces $db$dbversion, as $db will be completely emptied
+# when the database connection is closed.
+# There is also a 'reactive' version if shiny is available
 .reactive(dMeasure, "dbversion", 0)
 
 ## methods
@@ -2291,6 +2253,8 @@ initialize_emr_tables <- function(dMeasure_obj,
   # VisitType : 'Surgery', 'Home', "Non Visit', 'Hospital', 'RACF', 'Telephone'
   # ... 'SMS', 'Email', 'Locum Service', 'Out of Office', 'Other', 'Hostel'
   # ... 'Telehealth'
+  # for the 'raw' Visits table the VISITCODE appears to correspond to VisitType
+  # ... '1'=Surgery, '12'='Non Visit'
 
   self$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
@@ -2502,7 +2466,8 @@ initialize_emr_tables <- function(dMeasure_obj,
   #     "DRUGNAME", "RXSTATUS"
   #   )
   # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
-  # no longer present in Best Practice Saffron version
+  #
+  # self$db$currentRx_raw no longer present in Best Practice Saffron version
 
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
@@ -2639,9 +2604,61 @@ initialize_emr_tables <- function(dMeasure_obj,
       Updated = UPDATED, UpdatedBy = UPDATEDBY
     )
 
-  self$db$dbversion <- self$db$dbversion + 1
-  print(paste("dbversion:", self$db$dbversion))
-  private$set_reactive(self$dbversion, self$db$dbversion)
+  self$db$drugclasses <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "DRUGCLASSES")) %>>%
+    dplyr::select(DrugClassID = DRUGCLASSID, Description = DESCRIPTION) %>>%
+    dplyr::mutate(Description = trimws(Description))
+
+  self$db$ingredient_drugclass <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "INGREDIENT_DRUGCLASS")) %>>%
+    dplyr::select(IngredientID = INGREDIENTID, DrugClassID = DRUGCLASSID, RecordStatus = RECORDSTATUS)
+
+  self$db$ingredients <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "INGREDIENTS")) %>>%
+    dplyr::select(IngredientID = INGREDIENTID, IngredientName = INGREDIENTNAME) %>>%
+    dplyr::mutate(IngredientName = trimws(IngredientName))
+
+  self$db$product_ingredient <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCT_INGREDIENT")) %>>%
+    dplyr::select(ProductID = PRODUCTID, IngredientID = INGREDIENTID)
+
+  self$db$products <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCTS")) %>>%
+    dplyr::select(ProductID = PRODUCTID, ProductNameID = PRODUCTNAMEID)
+
+  self$db$productnames <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCTNAMES")) %>>%
+    dplyr::select(ProductNameID = PRODUCTNAMEID, ProductName = PRODUCTNAME) %>>%
+    dplyr::mutate(ProductName = trimws(ProductName))
+
+  self$db$reactions <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "REACTIONS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      RecordStatus = RECORDSTATUS,
+      # 1 = active, 0 = inactive
+      ItemType = ITEMTYPE,
+      # 1 = specific product
+      # 2 = ingredient
+      # 3 = drug class
+      ItemCode = ITEMCODE,
+      # ItemCode contains DrugClassID, IngredientID or ProductNameID (NOT ProductID)
+      # depending on value of Itemtype,
+      ItemName = ITEMNAME,
+      ReactionCode = REACTIONCODE,
+      Reaction = REACTION,
+      Severity = SEVERITY,
+      Comment = COMMENT
+    ) %>>%
+    dplyr::mutate(
+      ItemName = trimws(ItemName),
+      Reaction = trimws(Reaction),
+      Comment = trimws(Comment)
+    )
+
+  self$dbversionN <- self$dbversionN + 1
+  print(paste("dbversion:", self$dbversionN))
+  private$set_reactive(self$dbversion, self$dbversionN)
 })
 
 ##### other variables and methods #################

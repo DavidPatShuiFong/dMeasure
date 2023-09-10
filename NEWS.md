@@ -1,5 +1,16 @@
 Changelog
 
+# 0.10.1
+10th September 2023
+
+## New
+
+* add `$db$reactions`, `$db$drugclasses`, `$db$ingredients`, `$db$ingredient_drugClass`, `$db$Product_ingredient`, `$db$products`, `$db$productnames`
+
+## Change
+
+* replace `$db$dbversion` with `$dbversionN`
+
 # 0.10.0
 16th October 2021
 
