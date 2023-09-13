@@ -2176,7 +2176,7 @@ initialize_emr_tables <- function(dMeasure_obj,
       # NonDrinker - 'Yes' or 'No'
       PastAlcoholLevel, YearStarted, YearStopped, Comment
     ) %>>%
-    dplyr::mutate(NonDrinker = trimws(Nondrinker)) %>>%
+    dplyr::mutate(NonDrinker = trimws(NonDrinker)) %>>%
     dplyr::left_join(self$db$clinical %>>%
                        dplyr::select(InternalID, Updated),
                      by = c("InternalID" = "InternalID")
@@ -2275,15 +2275,13 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$vaccines <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINES")) %>>%
     # there is also ACIRCODE, CHILDHOOD, GENERIC
-    dplyr::select("VACCINEID", "VACCINENAME") %>>%
-    dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
-    dplyr::mutate(VaccineName = trimws(VACCINENAME))
+    dplyr::select(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
+    dplyr::mutate(VaccineName = trimws(VaccineName))
 
   self$db$vaxdiseases <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VAXDISEASES")) %>>%
-    dplyr::select("DISEASECODE", "DISEASENAME") %>>%
-    dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
-    dplyr::mutate(DiseaseName = trimws(DISEASENAME))
+    dplyr::select(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
+    dplyr::mutate(DiseaseName = trimws(DiseaseName))
 
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
