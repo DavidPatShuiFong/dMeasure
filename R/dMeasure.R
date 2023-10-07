@@ -821,7 +821,12 @@ formatdate <- function(dMeasure_obj) {
 .public(dMeasure, "formatdate", function() {
   # `dateformat` is a function to convert dates into desired date format
   if (requireNamespace("lubridate", quietly = TRUE)) {
-    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    dateformat_function <- lubridate::stamp(
+      # lubridate::stamp_date does not have a 'quiet' option!
+      self$dateformat_choice, orders = c("dBY", "Ymd", "dmY"), quiet = TRUE
+      # adding 'dbY' to the orders not required for '17 Jan 2021' interpretation to '%d %b %Y'!
+      # but adding 'dbY' results in '17 January 2021' being interpreted as '%d %b %Y' instead of '%d %B %Y'!
+    )
     # formats date into desired format
   } else {
     # if no lubridate library is available then, just return the date in default format

@@ -1,7 +1,7 @@
 Changelog
 
 # 0.10.1
-10th September 2023
+7th October 2023
 
 ## New
 
@@ -10,6 +10,7 @@ Changelog
 ## Change
 
 * replace `$db$dbversion` with `$dbversionN`
+* suppress warnings regarding selection of date format
 
 # 0.10.0
 16th October 2021
