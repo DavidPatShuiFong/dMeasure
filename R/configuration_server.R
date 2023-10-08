@@ -17,7 +17,7 @@ NULL
 #' insert a new server description
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description list object : $Name, $Driver, $Address, $Database, $UserID, $dbPassword
+#' @param description list object : $Name, $Driver, $Address, $Database, $UserID, $dbPassword, $dbPasswordExtraEncryption
 #'
 #'  'Driver' will be the MSSQL driver to use. If left blank or not defined,
 #'   then 'SQL Server' will be used.
@@ -35,7 +35,17 @@ NULL
 #'
 #'  'UserID' will always be 'bpsrawdata'
 #'
-#'  dbPassword will be immediately encrypted
+#'  'dbPassword' will be immediately encrypted, using the default encryption and, if
+#'  provided, an extra user-selected encryption key 'dbPasswordExtraEncryption'.
+#'
+#'  'dbPasswordExtraEncryption' will be stored as the hashed (with salt::password_store)
+#'  version of the user-selected encryption key for 'dbPassword'.
+#'
+#'  Setting 'dbPasswordEncryption' to an empty string "" or NULL will result in
+#'  no optional user-selected encryption key being used.
+#'
+#'  As 'dbPasswordExtraEncryption' is hashed, it cannot be used to decrypt 'dbPassword',
+#'  but can be used to check key validity
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
@@ -47,7 +57,7 @@ NULL
 #' a$server.insert(list(
 #'   Name = "MyServer", Address = "127.0.0.1\\BPSINSTANCE",
 #'   Database = "BPSSAMPLES", UserID = "bpsrawdata",
-#'   dbPassword = "mypassword"
+#'   dbPassword = "mypassword", dbPasswordExtraEncryption = ""
 #' ))
 #' }
 #' @export
@@ -84,7 +94,9 @@ server.insert <- function(dMeasure_obj, description) {
     stringi::stri_length(description$dbPassword) == 0) {
     stop(paste(
       "Entries ($id, $Name, $Address, $Database, $UserID, $dbPassword)",
-      "must be described"
+      "must be described.",
+      "Only $dbPasswordExtraEncryption can be an empty, zero-length string,",
+      "(in which case it won't be used)."
     ))
   } else {
     if (is.null(description$Driver)) {
@@ -109,17 +121,33 @@ server.insert <- function(dMeasure_obj, description) {
     description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
+    if (is.null(description$dbPasswordExtraEncryption)) {
+      # We need to clarify the 'lack of definition' of $dbPasswordExtraEncryption before
+      # we deal with $dbPassword
+      description$dbPasswordExtraEncryption <- ""
+    }
+    if (description$dbPasswordExtraEncryption != "") {
+      # if dbPasswordExtraEncryption is 'defined' then
+      # firstly encode the database password a second time
+      description$dbPassword <- dMeasure::simple_encode(
+        description$dbPassword,
+        key = description$dbPasswordExtraEncryption
+      )
+      # immediately 'hash' the password extra encryption, if defined
+      description$dbPasswordExtraEncryption <-
+        sodium::password_store(description$dbPasswordExtraEncryption)
+    }
 
     query <- paste(
       "INSERT INTO Server",
-      "(id, Name, Driver, Address, Database, UserID, dbPassword)",
-      "VALUES (?, ?, ?, ?, ?, ?, ?)"
+      "(id, Name, Driver, Address, Database, UserID, dbPassword, dbPasswordExtraEncryption)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     )
     data_for_sql <- as.list.data.frame(c(
       newid, description$Name, description$Driver,
       description$Address,
       description$Database, description$UserID,
-      description$dbPassword
+      description$dbPassword, description$dbPasswordExtraEncryption
     ))
     self$config_db$dbSendQuery(query, data_for_sql)
     # if the connection is a pool, can't send write query (a statement) directly
@@ -142,10 +170,10 @@ server.insert <- function(dMeasure_obj, description) {
 #' the server to change is specified by $id
 #'
 #' @param dMeasure_obj dMeasure R6 object
-#' @param description list $id, $Name, $Driver, $Address, $Database, $UserID, $dbPassword
+#' @param description list $id, $Name, $Driver, $Address, $Database, $UserID, $dbPassword, $dbPasswordExtraEncryption
 #'
-#'  any of $Name, $Driver, $Address, $Database, $UserID and/or $dbPassword can
-#'  be defined
+#'  any of $Name, $Driver, $Address, $Database, $UserID, $dbPassword, $dbPasswordExtraEncryption
+#'  can be defined
 #'
 #' @return dataframe - full list of database descriptions
 #'  can also return error (stop) if description is invalid
@@ -227,7 +255,25 @@ server.update <- function(dMeasure_obj, description) {
       dplyr::filter(id == description$id) %>>%
       dplyr::pull(UserID)
   }
-  if (is.null(description$dbPassword)) {
+  if (is.null(description$dbPasswordExtraEncryption)) {
+    # We need to clarify the 'lack of definition' of $dbPasswordExtraEncryption before
+    # we deal with $dbPassword
+    description$dbPasswordExtraEncryption <- ""
+    # note that the state of $dbPasswordExtraEncryption is *not* read from
+    # the current database configuration. If extra encryption of the database password is required
+    # then $dbPasswordExtraEncryption needs to be explicitly set each time the database password
+    # is changed.
+  } else {
+    if (is.null(description[["dbPassword"]])) {
+      stop(
+        "If `dbpasswordExtraEncryption` is defined as something other than NULL or \"\",",
+        "then `dbPassword` must also be defined."
+      )
+    }
+  }
+  if (is.null(description[["dbPassword"]])) {
+    # cannot use description$dbPassword because $ allows inexact matching
+    # i.e. will match 'dbPasswordExtraEncryption'!!!
     description$dbPassword <- private$.BPdatabase %>>%
       dplyr::filter(id == description$id) %>>%
       dplyr::pull(dbPassword)
@@ -235,17 +281,29 @@ server.update <- function(dMeasure_obj, description) {
     description$dbPassword <- dMeasure::simple_encode(description$dbPassword)
     # immediately encode password.
     # stored encrypted both in memory and in configuration file
+    if (description$dbPasswordExtraEncryption != "") {
+      # if dbPasswordExtraEncryption is 'defined' then
+      # firstly encode the database password a second time
+      description$dbPassword <- dMeasure::simple_encode(
+        description$dbPassword,
+        key = description$dbPasswordExtraEncryption
+      )
+      # immediately 'hash' the password extra encryption, if defined
+      description$dbPasswordExtraEncryption <-
+        sodium::password_store(description$dbPasswordExtraEncryption)
+    }
   }
 
   query <- paste(
     "UPDATE Server SET Name = ?, Driver = ?, Address = ?, Database = ?,",
-    "UserID = ?, dbPassword = ? WHERE id = ?"
+    "UserID = ?, dbPassword = ?, dbPasswordExtraEncryption = ? WHERE id = ?"
   )
   data_for_sql <- as.list.data.frame(c(
     description$Name, description$Driver,
     description$Address,
     description$Database, description$UserID,
-    description$dbPassword, description$id
+    description$dbPassword, description$dbPasswordExtraEncryption,
+    description$id
   ))
 
   self$config_db$dbSendQuery(query, data_for_sql)
@@ -340,7 +398,7 @@ server.list <- function(dMeasure_obj) {
 
   if (permission) {
     description <- private$.BPdatabase %>>%
-      dplyr::select(-dbPassword)
+      dplyr::select(-dbPassword, -dbPasswordExtraEncryption)
   }
   else {
     description <- c("")

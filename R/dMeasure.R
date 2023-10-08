@@ -625,11 +625,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     # safe to call $close() if no database is open
 
     if (choice == private$.BPdatabaseChoice) {
-      # do nothing
+      # no change in chosen database, so do nothing
       return(private$.BPdatabaseChoice)
     }
     # the chosen database is not the current database,
-    # so close the current database
+    # first, close the current database
     self$emr_db$close()
 
     if (choice == "None") {
@@ -646,11 +646,39 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         server_driver <- server$Driver
       }
 
-      self$emr_db$connect(odbc::odbc(),
-                          driver = server_driver,
-                          server = server$Address, database = server$Database,
-                          uid = server$UserID,
-                          pwd = dMeasure::simple_decode(server$dbPassword)
+      pwd <- server$dbPassword
+      # server$dbPassword contains the encrypted version of the database password
+      # the password is always encrypted with at least the 'default' encryption
+      # but can additionally be encrypted with a user-defined key/password
+
+      if (server$dbPasswordExtraEncryption != "") {
+        # server$dbPasswordExtraEncryption only includes the hashed version of the key,
+        # not the key itself
+
+        if (self$dbPasswordExtraEncryption == "") {
+          warning(
+            "self$dbPasswordEncryption is not set. ",
+            "However, the database definition was stored with user-selected ",
+            "additional encryption for the database password."
+          )
+        }
+
+        pwd <- dMeasure::simple_decode(pwd, key = self$dbPasswordExtraEncryption)
+        # the key is stored (by the user) in self$dbPasswordExtraEncryption,
+        # and needs to be set before attempting to open the database with $BPdatabaseChoice
+
+        self$dbPasswordExtraEncryption <- ""
+        # immediately sets the key to an empty string, to avoid keeping the key
+        # longer in memory than is necessary
+      }
+      pwd <- dMeasure::simple_decode(pwd) # decrypt, using the 'default' encryption
+
+      self$emr_db$connect(
+        odbc::odbc(),
+        driver = server_driver,
+        server = server$Address, database = server$Database,
+        uid = server$UserID,
+        pwd = pwd
       )
       # the open firewall ports required at the Best Practice database server are:
       #  TCP - 139    : File & Print Sharing - Subnet
@@ -697,8 +725,12 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
     invisible(self$BPdatabase) # will also set $BPdatabaseR
 
-    if (nrow(self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-             dplyr::filter(id == 1) %>>% dplyr::collect()) == 0) {
+    if (nrow(
+      self$config_db$conn() %>>%
+      dplyr::tbl("ServerChoice") %>>%
+      dplyr::filter(id == 1) %>>%
+      dplyr::collect()
+      ) == 0) {
       # create a new entry
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
@@ -706,9 +738,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # write to SQLite configuration database
     }
 
-    if ((self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+    if ((self$config_db$conn() %>>%
+         dplyr::tbl("ServerChoice") %>>%
          dplyr::filter(id == 1) %>>%
-         dplyr::pull(Name)) != private$.BPdatabaseChoice) {
+         dplyr::pull(Name)
+    ) != private$.BPdatabaseChoice) {
       # if new choice is not recorded in current configuration database
       # already an entry in the ServerChoice table
       query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
@@ -726,6 +760,16 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
   }
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
+.public(dMeasure, "dbPasswordExtraEncryption", "")
+# dbPasswordExtraEncryption is used by 'BPdatabaseChoice' to decrypt
+# the database password (the database password is always encrypted, but
+# can optionally be additionally encrypted with a user-selected password)
+#
+# dbPasswordExtraEncryption needs to be set *before* BPdatabaseChoice attempts
+# to open a new database.
+#
+# as soon as dbPasswordExtraEncryption is used by BPdatabaseChoice, it will
+# be set to an empty string, so as to avoid keeping the password in memory
 
 .reactive(dMeasure, "dateformat", "2021-01-17") # date format
 # only used for GPstat! shiny GUI interfacec
@@ -1100,14 +1144,16 @@ open_configuration_db <-
 
     if (file.exists(configuration_file_path)) {
       # open config database file
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
     } else {
       # if the config database doesn't exist,
       # then create it (note create = TRUE option)
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
       # create = TRUE not a valid option?
       # always tries to create file if it doesn't exist
@@ -1122,8 +1168,9 @@ open_configuration_db <-
         self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
       }
       # try to create the default configuration file
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
     }
 
@@ -1139,7 +1186,10 @@ open_configuration_db <-
           c("Address", "character"),
           c("Database", "character"),
           c("UserID", "character"),
-          c("dbPassword", "character")
+          c("dbPassword", "character"),
+          c("dbPasswordExtraEncryption", "character")
+          # the database password is always encrypted
+          # can be encrypted a *second* time with user chosen password
         )
       )
       # initialize_data_table will create table and/or
@@ -1344,8 +1394,10 @@ read_configuration_db <- function(dMeasure_obj,
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
-    new <- self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-      dplyr::filter(id == 1) %>>% dplyr::pull(Name)
+    new <- self$config_db$conn() %>>%
+      dplyr::tbl("ServerChoice") %>>%
+      dplyr::filter(id == 1) %>>%
+      dplyr::pull(Name)
   } else {
     # config database is not open
     new <- self$BPdatabaseChoice # the current choice
@@ -1369,13 +1421,15 @@ read_configuration_db <- function(dMeasure_obj,
 #' @examples
 #' dMeasure_obj$read_subscription_db()
 #' @export
-read_subscription_db <- function(dMeasure_obj,
-                                 forcecheck = FALSE,
-                                 users = NULL) {
+read_subscription_db <- function(
+    dMeasure_obj,
+    forcecheck = FALSE,
+    users = NULL) {
   dMeasure_obj$read_subscription_db(forcecheck)
 }
-.public(dMeasure, "read_subscription_db", function(forcecheck = FALSE,
-                                                   users = NULL) {
+.public(dMeasure, "read_subscription_db", function(
+    forcecheck = FALSE,
+    users = NULL) {
   # read subscription information
 
   Sys.setenv("AIRTABLE_API_KEY" = "keyKqBa9WxbM63qqu")
@@ -1394,7 +1448,7 @@ read_subscription_db <- function(dMeasure_obj,
   if (subscription_is_open &&
       self$emr_db$is_open() && self$config_db$is_open()) {
     # successfully opened subscription database
-    # neees the configuration and EMR databases to also be open
+    # needs the configuration and EMR databases to also be open
     print("Subscription database opened")
 
     a <- self$UserFullConfig
@@ -1895,8 +1949,9 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 #' if no arguments passed, the defaults are what is stored in
 #' the  object
 #' @export
-open_emr_db <- function(dMeasure_obj,
-                        BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
+open_emr_db <- function(
+    dMeasure_obj,
+    BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
   dMeasure_obj$open_emr_db(BPdatabaseChoice)
 }
 
@@ -1934,8 +1989,9 @@ open_emr_db <- function(dMeasure_obj,
 #' @return none
 #'
 #' @export
-initialize_emr_tables <- function(dMeasure_obj,
-                                  emr_db = dMeasure_obj$emr_db) {
+initialize_emr_tables <- function(
+    dMeasure_obj,
+    emr_db = dMeasure_obj$emr_db) {
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
@@ -2833,8 +2889,9 @@ location_list <- function(dMeasure_obj) {
 #'
 #' returns an error, and does not update the location, if trying to
 #' set to an unavailable location
-choose_location <- function(dMeasure_obj,
-                            location = dMeasure_obj$location) {
+choose_location <- function(
+    dMeasure_obj,
+    location = dMeasure_obj$location) {
   dMeasure_obj$choose_location(location)
 }
 
@@ -2871,9 +2928,10 @@ choose_location <- function(dMeasure_obj,
 #' if date_a is later than date_b, a warning is returned,
 #' and the dates are NOT changed
 #' @export
-choose_date <- function(dMeasure_obj,
-                        date_from = dMeasure_obj$date_a,
-                        date_to = dMeasure_obj$date_b) {
+choose_date <- function(
+    dMeasure_obj,
+    date_from = dMeasure_obj$date_a,
+    date_to = dMeasure_obj$date_b) {
   dMeasure_obj$choose_date(date_from, date_to)
 }
 

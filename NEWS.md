@@ -1,5 +1,18 @@
 Changelog
 
+# 0.11.0
+8th October 2023
+
+## New
+
+* add `$dbPasswordExtraEncryption` to allow additional encryption of database password
+  + `$dbPasswordExtraEncryption` public member allows definition of an additional user-selectable key to encrypt the database password. `$dbPasswordExtraEncryption` must be set before opening the database (i.e. before setting `$BPdatabaseChoice` to the desired server). `$dbPasswordExtraEncryption` will be immediately set to an empty string after being used by `$BPdatabaseChoice`
+  + note that the database password is *always* encrypted. `$dbPasswordExtraEncryption` allows a second layer of encryption to be added by the user
+  + `$server.insert` and `$server.modify` changed to allow additional, optional, setting of `dbPasswordExtraEncryption`
+  + if defining `dbPassWordExtraEncryption` with `$server.modify`, then `dbPassword` must be defined during the same call to `$server.modify`
+  + if `dbPasswordExtraEncryption` is set to NULL or an empty string (""), then `dbPasswordExtraEncryption` will not be used.
+  + an extra column in Server table of the configuration database stores the 'hash' of the `dbPasswordExtraEncryption` key, but *not* the key itself.
+
 # 0.10.1
 7th October 2023
 
