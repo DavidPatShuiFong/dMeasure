@@ -11,6 +11,7 @@ Changelog
   + `$server.insert` and `$server.modify` changed to allow additional, optional, setting of `dbPasswordExtraEncryption`
   + if defining `dbPassWordExtraEncryption` with `$server.modify`, then `dbPassword` must be defined during the same call to `$server.modify`
   + if `dbPasswordExtraEncryption` is set to NULL or an empty string (""), then `dbPasswordExtraEncryption` will not be used.
+  + the extra encryption key/password can be verified with `$dbPasswordExtraVerify`
   + an extra column in Server table of the configuration database stores the 'hash' of the `dbPasswordExtraEncryption` key, but *not* the key itself.
 
 # 0.10.1

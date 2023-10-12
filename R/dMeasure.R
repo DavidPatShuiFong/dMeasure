@@ -771,6 +771,57 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
 # as soon as dbPasswordExtraEncryption is used by BPdatabaseChoice, it will
 # be set to an empty string, so as to avoid keeping the password in memory
 
+#' dbPasswordExtraVerify
+#'
+#' verify the extra encryption key/password used to encrypt a database password
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param description list, $id, $key
+#'
+#'  '$id' the server to be verified
+#'  '$key' the encryption key/password
+#'
+#' @return logical TRUE or FALSE. TRUE if password/key verified
+#' @export
+dbPasswordExtraVerify <- function(dMeasure_obj, description) {
+  dMeasure_obj$dbPasswordExtraVerify(description)
+}
+.public(dMeasure, "dbPasswordExtraVerify", function(description) {
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(
+               w,
+               "'ServerAdmin' permission required to modify server list."
+             ))
+  )
+
+  if (is.null(description$id)) {
+    stop("Server to change is to be identified by $id")
+  }
+  if (!description$id %in% (private$.BPdatabase %>>% dplyr::pull(id))) {
+    stop(paste("No server definition with id = ", description$id), "!", sep = "")
+  }
+  if (is.null(description$key)) {
+    stop("Extra encryption key/password to be verified is to be stored in $key")
+  }
+
+  hash <- private$.BPdatabase %>>%
+    dplyr::filter(id == description$id) %>>%
+    dplyr::pull(dbPasswordExtraEncryption)
+
+  if (hash == "") {
+    # there is no extra encryption key, so it doesn't matter what key is used
+    return(TRUE)
+  }
+
+  if (sodium::password_verify(hash, description$key)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+
+})
+
 .reactive(dMeasure, "dateformat", "2021-01-17") # date format
 # only used for GPstat! shiny GUI interfacec
 .public(dMeasure, "dateformat_choices", c("2021-01-17", "17-01-2021", "17 Jan 2021", "17 January 2021"))

@@ -38,7 +38,7 @@ NULL
 #'  'dbPassword' will be immediately encrypted, using the default encryption and, if
 #'  provided, an extra user-selected encryption key 'dbPasswordExtraEncryption'.
 #'
-#'  'dbPasswordExtraEncryption' will be stored as the hashed (with salt::password_store)
+#'  'dbPasswordExtraEncryption' will be stored as the hashed (with sodium::password_store)
 #'  version of the user-selected encryption key for 'dbPassword'.
 #'
 #'  Setting 'dbPasswordEncryption' to an empty string "" or NULL will result in
