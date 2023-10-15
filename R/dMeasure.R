@@ -2357,7 +2357,7 @@ initialize_emr_tables <- function(
 
   self$db$visits <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Visits")) %>>%
-    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName) %>>%
+    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName, VisitID, VisitNotes) %>>%
     dplyr::mutate(
       VisitType = trimws(VisitType),
       DrName = trimws(DrName)
@@ -2367,6 +2367,15 @@ initialize_emr_tables <- function(
   # ... 'Telehealth'
   # for the 'raw' Visits table the VISITCODE appears to correspond to VisitType
   # ... '1'=Surgery, '12'='Non Visit'
+  # visit notes are in RTF
+
+  self$db$visit_reason <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_VisitReason")) %>>%
+    dplyr::select(InternalID, VisitID, VisitDate, Provider, Reason) %>>%
+    dplyr::mutate(
+      Provider = trimws(Provider),
+      Reason = trimws(Reason)
+    )
 
   self$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere

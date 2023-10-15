@@ -1,7 +1,7 @@
 Changelog
 
 # 0.11.0
-8th October 2023
+15th October 2023
 
 ## New
 
@@ -13,6 +13,11 @@ Changelog
   + if `dbPasswordExtraEncryption` is set to NULL or an empty string (""), then `dbPasswordExtraEncryption` will not be used.
   + the extra encryption key/password can be verified with `$dbPasswordExtraVerify`
   + an extra column in Server table of the configuration database stores the 'hash' of the `dbPasswordExtraEncryption` key, but *not* the key itself.
+
+## Change
+
+* add `VisitID` and `VisitNotes` to `$db$visits`
+* add `$db$visit_reason`
 
 # 0.10.1
 7th October 2023
