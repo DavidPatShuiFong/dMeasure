@@ -1,6 +1,6 @@
 ## dMeasure
 
-v0.9.16 (3rd July 2021)
+v0.11.0 (25th October 2023)
 
 Mozilla Public License 2.0
 
@@ -24,6 +24,7 @@ Mozilla Public License 2.0
 * [dMeasureCustom](https://github.com/DavidPatShuiFong/dMeasureCustom) - Custom patient lists
 * [dMeasureBillings](https://github.com/DavidPatShuiFong/dMeasureBillings) - Billing information
 * [dMeasureCDM](https://github.com/DavidPatShuiFong/dMeasureCDM) - Chronic Disease Management opportunities
+* [dMeasureAppointments](https://github.com/DavidPatShuiFong/dMeasureAppointments) - Appointments module
 
 ### Components developed, modified or archived for DailyMeasure/dMeasure
 
