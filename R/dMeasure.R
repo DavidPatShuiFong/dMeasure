@@ -143,27 +143,7 @@ dMeasure <-
       self$emr_db$close_log_db() # close logging database
     }
     self$emr_db$close()
-    self$db$practice <- NULL
-    self$db$users <- NULL
-    self$db$patients <- NULL
-    self$db$patientsRaw <- NULL
-    self$db$clinical <- NULL
-    self$db$reactions <- NULL
-    self$db$investigations <- NULL
-    self$db$papsmears <- NULL
-    self$db$appointments <- NULL
-    self$db$immunizations <- NULL
-    self$db$preventive_health <- NULL
-    self$db$correspondenceIn <- NULL
-    self$db$reportValues <- NULL
-    self$db$services <- NULL
-    self$db$servicesRaw <- NULL
-    self$db$history <- NULL
-    self$db$currentRx <- NULL
-    # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
-    self$db$familyhistory <- NULL
-    self$db$familyhistorydetail <- NULL
-    self$db$relationcode <- NULL
+    self$db <- list()
     self$clinician_choice_list <- NULL
   }
   self$authenticated <- FALSE
@@ -645,11 +625,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     # safe to call $close() if no database is open
 
     if (choice == private$.BPdatabaseChoice) {
-      # do nothing
+      # no change in chosen database, so do nothing
       return(private$.BPdatabaseChoice)
     }
     # the chosen database is not the current database,
-    # so close the current database
+    # first, close the current database
     self$emr_db$close()
 
     if (choice == "None") {
@@ -666,11 +646,39 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
         server_driver <- server$Driver
       }
 
-      self$emr_db$connect(odbc::odbc(),
-                          driver = server_driver,
-                          server = server$Address, database = server$Database,
-                          uid = server$UserID,
-                          pwd = dMeasure::simple_decode(server$dbPassword)
+      pwd <- server$dbPassword
+      # server$dbPassword contains the encrypted version of the database password
+      # the password is always encrypted with at least the 'default' encryption
+      # but can additionally be encrypted with a user-defined key/password
+
+      if (server$dbPasswordExtraEncryption != "") {
+        # server$dbPasswordExtraEncryption only includes the hashed version of the key,
+        # not the key itself
+
+        if (self$dbPasswordExtraEncryption == "") {
+          warning(
+            "self$dbPasswordEncryption is not set. ",
+            "However, the database definition was stored with user-selected ",
+            "additional encryption for the database password."
+          )
+        }
+
+        pwd <- dMeasure::simple_decode(pwd, key = self$dbPasswordExtraEncryption)
+        # the key is stored (by the user) in self$dbPasswordExtraEncryption,
+        # and needs to be set before attempting to open the database with $BPdatabaseChoice
+
+        self$dbPasswordExtraEncryption <- ""
+        # immediately sets the key to an empty string, to avoid keeping the key
+        # longer in memory than is necessary
+      }
+      pwd <- dMeasure::simple_decode(pwd) # decrypt, using the 'default' encryption
+
+      self$emr_db$connect(
+        odbc::odbc(),
+        driver = server_driver,
+        server = server$Address, database = server$Database,
+        uid = server$UserID,
+        pwd = pwd
       )
       # the open firewall ports required at the Best Practice database server are:
       #  TCP - 139    : File & Print Sharing - Subnet
@@ -695,28 +703,7 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # then dbIsValid() is not evaluated (will return an error if emr_db$conn() is NULL)
 
       # either database not opened, or has just been closed, including set to 'None'
-      self$db$practice <- NULL
-      self$db$users <- NULL
-      self$db$patients <- NULL
-      self$db$patientsRaw <- NULL
-      self$db$clinical <- NULL
-      self$db$reactions <- NULL
-      self$db$investigations <- NULL
-      self$db$papsmears <- NULL
-      self$db$appointments <- NULL
-      self$db$immunizations <- NULL
-      self$db$preventive_health <- NULL
-      self$db$correspondenceIn <- NULL
-      self$db$reportValues <- NULL
-      self$db$services <- NULL
-      self$db$servicesRaw <- NULL
-      self$db$invoices <- NULL
-      self$db$history <- NULL
-      self$db$currentRx <- NULL
-      # self$db$currentRx_raw <- NULL # not accessible in BP version Saffron
-      self$db$familyhistory <- NULL
-      self$db$familyhistorydetail <- NULL
-      self$db$relationcode <- NULL
+      self$db <- list()
       self$clinician_choice_list <- NULL
       choice <- "None" # set choice of database to 'None'
     } else {
@@ -738,8 +725,12 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
     # otherwise will be 'None'. (also returns 'None' if tried to open 'None')
     invisible(self$BPdatabase) # will also set $BPdatabaseR
 
-    if (nrow(self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-             dplyr::filter(id == 1) %>>% dplyr::collect()) == 0) {
+    if (nrow(
+      self$config_db$conn() %>>%
+      dplyr::tbl("ServerChoice") %>>%
+      dplyr::filter(id == 1) %>>%
+      dplyr::collect()
+      ) == 0) {
       # create a new entry
       query <- "INSERT INTO ServerChoice (id, Name) VALUES (?, ?)"
       data_for_sql <- as.list.data.frame(c(1, private$.BPdatabaseChoice))
@@ -747,9 +738,11 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
       # write to SQLite configuration database
     }
 
-    if ((self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
+    if ((self$config_db$conn() %>>%
+         dplyr::tbl("ServerChoice") %>>%
          dplyr::filter(id == 1) %>>%
-         dplyr::pull(Name)) != private$.BPdatabaseChoice) {
+         dplyr::pull(Name)
+    ) != private$.BPdatabaseChoice) {
       # if new choice is not recorded in current configuration database
       # already an entry in the ServerChoice table
       query <- "UPDATE ServerChoice SET Name = ? WHERE id = ?"
@@ -767,6 +760,67 @@ BPdatabaseChoice <- function(dMeasure_obj, choice) {
   }
 })
 .reactive(dMeasure, "BPdatabaseChoiceR", NULL) # reactive version
+.public(dMeasure, "dbPasswordExtraEncryption", "")
+# dbPasswordExtraEncryption is used by 'BPdatabaseChoice' to decrypt
+# the database password (the database password is always encrypted, but
+# can optionally be additionally encrypted with a user-selected password)
+#
+# dbPasswordExtraEncryption needs to be set *before* BPdatabaseChoice attempts
+# to open a new database.
+#
+# as soon as dbPasswordExtraEncryption is used by BPdatabaseChoice, it will
+# be set to an empty string, so as to avoid keeping the password in memory
+
+#' dbPasswordExtraVerify
+#'
+#' verify the extra encryption key/password used to encrypt a database password
+#'
+#' @param dMeasure_obj dMeasure R6 object
+#' @param description list, $id, $key
+#'
+#'  '$id' the server to be verified
+#'  '$key' the encryption key/password
+#'
+#' @return logical TRUE or FALSE. TRUE if password/key verified
+#' @export
+dbPasswordExtraVerify <- function(dMeasure_obj, description) {
+  dMeasure_obj$dbPasswordExtraVerify(description)
+}
+.public(dMeasure, "dbPasswordExtraVerify", function(description) {
+  tryCatch(permission <- self$server.permission(),
+           warning = function(w)
+             stop(paste(
+               w,
+               "'ServerAdmin' permission required to modify server list."
+             ))
+  )
+
+  if (is.null(description$id)) {
+    stop("Server to change is to be identified by $id")
+  }
+  if (!description$id %in% (private$.BPdatabase %>>% dplyr::pull(id))) {
+    stop(paste("No server definition with id = ", description$id), "!", sep = "")
+  }
+  if (is.null(description$key)) {
+    stop("Extra encryption key/password to be verified is to be stored in $key")
+  }
+
+  hash <- private$.BPdatabase %>>%
+    dplyr::filter(id == description$id) %>>%
+    dplyr::pull(dbPasswordExtraEncryption)
+
+  if (hash == "") {
+    # there is no extra encryption key, so it doesn't matter what key is used
+    return(TRUE)
+  }
+
+  if (sodium::password_verify(hash, description$key)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+
+})
 
 .reactive(dMeasure, "dateformat", "2021-01-17") # date format
 # only used for GPstat! shiny GUI interfacec
@@ -862,7 +916,12 @@ formatdate <- function(dMeasure_obj) {
 .public(dMeasure, "formatdate", function() {
   # `dateformat` is a function to convert dates into desired date format
   if (requireNamespace("lubridate", quietly = TRUE)) {
-    dateformat_function <- lubridate::stamp_date(self$dateformat_choice)
+    dateformat_function <- lubridate::stamp(
+      # lubridate::stamp_date does not have a 'quiet' option!
+      self$dateformat_choice, orders = c("dBY", "Ymd", "dmY"), quiet = TRUE
+      # adding 'dbY' to the orders not required for '17 Jan 2021' interpretation to '%d %b %Y'!
+      # but adding 'dbY' results in '17 January 2021' being interpreted as '%d %b %Y' instead of '%d %B %Y'!
+    )
     # formats date into desired format
   } else {
     # if no lubridate library is available then, just return the date in default format
@@ -1136,14 +1195,16 @@ open_configuration_db <-
 
     if (file.exists(configuration_file_path)) {
       # open config database file
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
     } else {
       # if the config database doesn't exist,
       # then create it (note create = TRUE option)
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
       # create = TRUE not a valid option?
       # always tries to create file if it doesn't exist
@@ -1158,8 +1219,9 @@ open_configuration_db <-
         self$configuration_file_path <- "~/.DailyMeasure_cfg.sqlite"
       }
       # try to create the default configuration file
-      config_db$connect(RSQLite::SQLite(),
-                        dbname = self$configuration_file_path
+      config_db$connect(
+        RSQLite::SQLite(),
+        dbname = self$configuration_file_path
       )
     }
 
@@ -1175,7 +1237,10 @@ open_configuration_db <-
           c("Address", "character"),
           c("Database", "character"),
           c("UserID", "character"),
-          c("dbPassword", "character")
+          c("dbPassword", "character"),
+          c("dbPasswordExtraEncryption", "character")
+          # the database password is always encrypted
+          # can be encrypted a *second* time with user chosen password
         )
       )
       # initialize_data_table will create table and/or
@@ -1380,8 +1445,10 @@ read_configuration_db <- function(dMeasure_obj,
 .public(dMeasure, "BPdatabaseChoice_new", function() {
   if (self$config_db$is_open()) {
     # config database is open
-    new <- self$config_db$conn() %>>% dplyr::tbl("ServerChoice") %>>%
-      dplyr::filter(id == 1) %>>% dplyr::pull(Name)
+    new <- self$config_db$conn() %>>%
+      dplyr::tbl("ServerChoice") %>>%
+      dplyr::filter(id == 1) %>>%
+      dplyr::pull(Name)
   } else {
     # config database is not open
     new <- self$BPdatabaseChoice # the current choice
@@ -1405,13 +1472,15 @@ read_configuration_db <- function(dMeasure_obj,
 #' @examples
 #' dMeasure_obj$read_subscription_db()
 #' @export
-read_subscription_db <- function(dMeasure_obj,
-                                 forcecheck = FALSE,
-                                 users = NULL) {
+read_subscription_db <- function(
+    dMeasure_obj,
+    forcecheck = FALSE,
+    users = NULL) {
   dMeasure_obj$read_subscription_db(forcecheck)
 }
-.public(dMeasure, "read_subscription_db", function(forcecheck = FALSE,
-                                                   users = NULL) {
+.public(dMeasure, "read_subscription_db", function(
+    forcecheck = FALSE,
+    users = NULL) {
   # read subscription information
 
   Sys.setenv("AIRTABLE_API_KEY" = "keyKqBa9WxbM63qqu")
@@ -1430,7 +1499,7 @@ read_subscription_db <- function(dMeasure_obj,
   if (subscription_is_open &&
       self$emr_db$is_open() && self$config_db$is_open()) {
     # successfully opened subscription database
-    # neees the configuration and EMR databases to also be open
+    # needs the configuration and EMR databases to also be open
     print("Subscription database opened")
 
     a <- self$UserFullConfig
@@ -1910,9 +1979,12 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 ## fields
 .public_init(dMeasure, "emr_db", quote(dbConnection::dbConnection$new()))
 # R6 object containing database object
-.public(dMeasure, "db", list(dbversion = 0)) # later will be the EMR databases.
-# $db$dbversion is number of EMR database openings
-# there is also a 'reactive' version if shiny is available
+.public(dMeasure, "db", list()) # later will be the EMR databases.
+.public(dMeasure, "dbversionN", 0)
+# $dbversionN is number of EMR database openings.
+# $dbversionN replaces $db$dbversion, as $db will be completely emptied
+# when the database connection is closed.
+# There is also a 'reactive' version if shiny is available
 .reactive(dMeasure, "dbversion", 0)
 
 ## methods
@@ -1928,8 +2000,9 @@ choose_clinicians <- function(dMeasure_obj, choices = "", view_name = "All") {
 #' if no arguments passed, the defaults are what is stored in
 #' the  object
 #' @export
-open_emr_db <- function(dMeasure_obj,
-                        BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
+open_emr_db <- function(
+    dMeasure_obj,
+    BPdatabaseChoice = dMeasure_obj$BPdatabaseChoice) {
   dMeasure_obj$open_emr_db(BPdatabaseChoice)
 }
 
@@ -1967,8 +2040,9 @@ open_emr_db <- function(dMeasure_obj,
 #' @return none
 #'
 #' @export
-initialize_emr_tables <- function(dMeasure_obj,
-                                  emr_db = dMeasure_obj$emr_db) {
+initialize_emr_tables <- function(
+    dMeasure_obj,
+    emr_db = dMeasure_obj$emr_db) {
   dMeasure_obj$initialize_emr_tables(emr_db)
 }
 
@@ -2214,7 +2288,7 @@ initialize_emr_tables <- function(dMeasure_obj,
       # NonDrinker - 'Yes' or 'No'
       PastAlcoholLevel, YearStarted, YearStopped, Comment
     ) %>>%
-    dplyr::mutate(NonDrinker = trimws(Nondrinker)) %>>%
+    dplyr::mutate(NonDrinker = trimws(NonDrinker)) %>>%
     dplyr::left_join(self$db$clinical %>>%
                        dplyr::select(InternalID, Updated),
                      by = c("InternalID" = "InternalID")
@@ -2283,7 +2357,7 @@ initialize_emr_tables <- function(dMeasure_obj,
 
   self$db$visits <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Visits")) %>>%
-    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName) %>>%
+    dplyr::select(InternalID, VisitType, VisitDate, UserID, DrName, VisitID, VisitNotes) %>>%
     dplyr::mutate(
       VisitType = trimws(VisitType),
       DrName = trimws(DrName)
@@ -2291,6 +2365,17 @@ initialize_emr_tables <- function(dMeasure_obj,
   # VisitType : 'Surgery', 'Home', "Non Visit', 'Hospital', 'RACF', 'Telephone'
   # ... 'SMS', 'Email', 'Locum Service', 'Out of Office', 'Other', 'Hostel'
   # ... 'Telehealth'
+  # for the 'raw' Visits table the VISITCODE appears to correspond to VisitType
+  # ... '1'=Surgery, '12'='Non Visit'
+  # visit notes are in RTF
+
+  self$db$visit_reason <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "BPS_VisitReason")) %>>%
+    dplyr::select(InternalID, VisitID, VisitDate, Provider, Reason) %>>%
+    dplyr::mutate(
+      Provider = trimws(Provider),
+      Reason = trimws(Reason)
+    )
 
   self$db$immunizations <- emr_db$conn() %>>%
     # InternalID, GivenDate, VaccineName, VaccineID, NotGivenHere
@@ -2311,15 +2396,13 @@ initialize_emr_tables <- function(dMeasure_obj,
   self$db$vaccines <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VACCINES")) %>>%
     # there is also ACIRCODE, CHILDHOOD, GENERIC
-    dplyr::select("VACCINEID", "VACCINENAME") %>>%
-    dplyr::rename(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
-    dplyr::mutate(VaccineName = trimws(VACCINENAME))
+    dplyr::select(VaccineID = VACCINEID, VaccineName = VACCINENAME) %>>%
+    dplyr::mutate(VaccineName = trimws(VaccineName))
 
   self$db$vaxdiseases <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "VAXDISEASES")) %>>%
-    dplyr::select("DISEASECODE", "DISEASENAME") %>>%
-    dplyr::rename(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
-    dplyr::mutate(DiseaseName = trimws(DISEASENAME))
+    dplyr::select(DiseaseCode = DISEASECODE, DiseaseName = DISEASENAME) %>>%
+    dplyr::mutate(DiseaseName = trimws(DiseaseName))
 
   self$db$preventive_health <- emr_db$conn() %>>%
     # INTERNALID, ITEMID (e.g. not for Zostavax reminders)
@@ -2502,7 +2585,8 @@ initialize_emr_tables <- function(dMeasure_obj,
   #     "DRUGNAME", "RXSTATUS"
   #   )
   # RXSTATUS appears to be 1 if 'long-term' and 2 if 'short-term'
-  # no longer present in Best Practice Saffron version
+  #
+  # self$db$currentRx_raw no longer present in Best Practice Saffron version
 
   self$db$relationcode <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "RELATIONS")) %>>%
@@ -2639,9 +2723,61 @@ initialize_emr_tables <- function(dMeasure_obj,
       Updated = UPDATED, UpdatedBy = UPDATEDBY
     )
 
-  self$db$dbversion <- self$db$dbversion + 1
-  print(paste("dbversion:", self$db$dbversion))
-  private$set_reactive(self$dbversion, self$db$dbversion)
+  self$db$drugclasses <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "DRUGCLASSES")) %>>%
+    dplyr::select(DrugClassID = DRUGCLASSID, Description = DESCRIPTION) %>>%
+    dplyr::mutate(Description = trimws(Description))
+
+  self$db$ingredient_drugclass <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "INGREDIENT_DRUGCLASS")) %>>%
+    dplyr::select(IngredientID = INGREDIENTID, DrugClassID = DRUGCLASSID, RecordStatus = RECORDSTATUS)
+
+  self$db$ingredients <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "INGREDIENTS")) %>>%
+    dplyr::select(IngredientID = INGREDIENTID, IngredientName = INGREDIENTNAME) %>>%
+    dplyr::mutate(IngredientName = trimws(IngredientName))
+
+  self$db$product_ingredient <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCT_INGREDIENT")) %>>%
+    dplyr::select(ProductID = PRODUCTID, IngredientID = INGREDIENTID)
+
+  self$db$products <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCTS")) %>>%
+    dplyr::select(ProductID = PRODUCTID, ProductNameID = PRODUCTNAMEID)
+
+  self$db$productnames <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema(dbplyr::sql("BPSDrugs.dbo"), "PRODUCTNAMES")) %>>%
+    dplyr::select(ProductNameID = PRODUCTNAMEID, ProductName = PRODUCTNAME) %>>%
+    dplyr::mutate(ProductName = trimws(ProductName))
+
+  self$db$reactions <- emr_db$conn() %>>%
+    dplyr::tbl(dbplyr::in_schema("dbo", "REACTIONS")) %>>%
+    dplyr::select(
+      InternalID = INTERNALID,
+      RecordStatus = RECORDSTATUS,
+      # 1 = active, 0 = inactive
+      ItemType = ITEMTYPE,
+      # 1 = specific product
+      # 2 = ingredient
+      # 3 = drug class
+      ItemCode = ITEMCODE,
+      # ItemCode contains DrugClassID, IngredientID or ProductNameID (NOT ProductID)
+      # depending on value of Itemtype,
+      ItemName = ITEMNAME,
+      ReactionCode = REACTIONCODE,
+      Reaction = REACTION,
+      Severity = SEVERITY,
+      Comment = COMMENT
+    ) %>>%
+    dplyr::mutate(
+      ItemName = trimws(ItemName),
+      Reaction = trimws(Reaction),
+      Comment = trimws(Comment)
+    )
+
+  self$dbversionN <- self$dbversionN + 1
+  print(paste("dbversion:", self$dbversionN))
+  private$set_reactive(self$dbversion, self$dbversionN)
 })
 
 ##### other variables and methods #################
@@ -2813,8 +2949,9 @@ location_list <- function(dMeasure_obj) {
 #'
 #' returns an error, and does not update the location, if trying to
 #' set to an unavailable location
-choose_location <- function(dMeasure_obj,
-                            location = dMeasure_obj$location) {
+choose_location <- function(
+    dMeasure_obj,
+    location = dMeasure_obj$location) {
   dMeasure_obj$choose_location(location)
 }
 
@@ -2851,9 +2988,10 @@ choose_location <- function(dMeasure_obj,
 #' if date_a is later than date_b, a warning is returned,
 #' and the dates are NOT changed
 #' @export
-choose_date <- function(dMeasure_obj,
-                        date_from = dMeasure_obj$date_a,
-                        date_to = dMeasure_obj$date_b) {
+choose_date <- function(
+    dMeasure_obj,
+    date_from = dMeasure_obj$date_a,
+    date_to = dMeasure_obj$date_b) {
   dMeasure_obj$choose_date(date_from, date_to)
 }
 

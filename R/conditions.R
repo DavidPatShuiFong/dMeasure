@@ -914,7 +914,7 @@ chroniclungdisease_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-### neurologic diseaes sub-code
+### neurologic disease sub-code
 #' list of patients with neurologic disease
 #'
 #' multiple sclerosis, epilepsy, spinal cord injury, paraplegia, quadriplegia
@@ -1007,7 +1007,7 @@ chronicliverdisease_list <- function(dMeasure_obj, appointments = NULL) {
     unique()
 })
 
-### chronic renal diseaes sub-code
+### chronic renal disease sub-code
 #' list of patients with chronic lung disease
 #'
 #' chronic renal failure, renal impairment, dialysis
@@ -1039,7 +1039,7 @@ chronicrenaldisease_list <- function(dMeasure_obj, appointments = NULL) {
   intID <- c(dplyr::pull(appointments, InternalID), -1)
   # internalID in appointments. add a -1 in case this is an empty list
 
-  # Best Practice codes for chronic liver disease
+  # Best Practice codes for chronic renal disease
   crf_codes <- c(
     662, 258, 3132, 662, 2486, 2487, 6379, 2489, 7469, 1274,
     7502, 7503, 7504, 7505, 7506, 2882
