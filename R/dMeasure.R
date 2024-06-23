@@ -2125,6 +2125,16 @@ initialize_emr_tables <- function(
       DOB
     ) %>>%
     dplyr::mutate(DOB = as.Date(DOB))
+  # fields include RECORDSTATUS and PATIENTSTATUS
+  # the meaning of PATIENTSTATUS can be found in table dbo.PATIENTSTATUS
+  #  1 = Active, 2 = Inactive, 3 = Deceased
+  #  0 = meaningless?
+  #      in the sample database, all these patients are unsearchable
+  #      and also have RECORDSTATUS = 0
+  # RECORDSTATUS
+  #  5 = appears to mean file has been merged.
+  #      in the sample database, the files still have PATIENTSTATUS = 1
+  #      but are unsearchable and do not appear in BPS_Patients
 
   # fields include InternalID, ExternalID, RecordNo, StatusText
   # Title, Firstname, Middlename, Surname, Preferredname
