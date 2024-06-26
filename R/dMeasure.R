@@ -2364,6 +2364,18 @@ initialize_emr_tables <- function(
       Status = trimws(Status), AppointmentType = trimws(AppointmentType)
     )
   # Status : 'Booked', 'Completed', 'At billing', 'Waiting', 'With doctor'
+  #
+  # in the 'APPOINTMENTS" table (as opposed to BPS_Appointments) there is a RECORDSTATUS field
+  # indicating whether an appointment has been deleted, cut or pasted
+  # 1 = active
+  # 2 = deleted
+  # 3 = cut, not pasted anywhere else
+  # 4 = cut, pasted somewhere
+  #     (it could have been pasted into the same slot or a different slot)
+  #     note, that the 'cut' appointment, if pasted, co-exists with the pasted
+  #     appointment which will have recordstatus '1' (unless that appointment
+  #     itself has been cut/paste, in which case it will have recordstatus
+  #     2,3 or 4)
 
   self$db$visits <- emr_db$conn() %>>%
     dplyr::tbl(dbplyr::in_schema("dbo", "BPS_Visits")) %>>%
