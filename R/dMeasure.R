@@ -461,7 +461,8 @@ UserConfig <- function(dMeasure_obj) {
     ifelse(as.character(x) != "", x, NA)
   }
   if (self$config_db$is_open()) {
-    userconfig <- private$.UserConfig %>>% dplyr::collect() %>>%
+    userconfig <-
+      private$.UserConfig %>>% dplyr::collect() %>>%
       dplyr::mutate(
         Location = stringi::stri_split(Location, regex = ";"),
         Attributes = stringi::stri_split(Attributes, regex = ";")
@@ -525,10 +526,12 @@ UserConfigLicense <- function(dMeasure_obj) {
   }
 
   if (self$emr_db$is_open() && self$config_db$is_open()) {
-    userconfiglicense <- self$UserConfig %>>%
-      dplyr::left_join(self$UserFullConfig %>>%
-                         dplyr::select(Fullname, Identifier, LicenseDate),
-                       by = "Fullname"
+    userconfiglicense <-
+      self$UserConfig %>>%
+      dplyr::left_join(
+        self$UserFullConfig %>>%
+          dplyr::select(Fullname, Identifier, LicenseDate),
+        by = "Fullname"
       )
   } else {
     userconfiglicense <-
@@ -539,8 +542,9 @@ UserConfigLicense <- function(dMeasure_obj) {
         Attributes = character(),
         License = character(),
         Identifier = character(),
-        LicenseDate = as.Date(numeric(0),
-                              origin = "1970-01-01"
+        LicenseDate = as.Date(
+          numeric(0),
+          origin = "1970-01-01"
         ),
         stringsAsFactors = FALSE
       )
@@ -1478,22 +1482,27 @@ read_subscription_db <- function(
     users = NULL) {
   dMeasure_obj$read_subscription_db(forcecheck)
 }
-.public(dMeasure, "read_subscription_db", function(
+.public(
+  dMeasure,
+  "read_subscription_db",
+  function(
     forcecheck = FALSE,
-    users = NULL) {
+    users = NULL
+  ) {
   # read subscription information
 
-  Sys.setenv("AIRTABLE_API_KEY" = "keyKqBa9WxbM63qqu")
+  Sys.setenv("AIRTABLE_API_KEY" = "patA8mX5QN9ziUlLU.735bf85e0357f885205099160316cb4f33e4aa8766cb63b35965dcb1a65eaab3")
 
   airtable <- airtabler::airtable("appLa2AH6S1SUCxE3", "Subscriptions")
   # the actual table is 'DailyMeasureUsers'
 
   subscription_is_open <-
-    is.list(tryCatch(airtable$Subscriptions$select(filterByFormula = "Key = 'dummy'"),
-                     error = function(e) {
-                       NA
-                     }
-    ))
+    is.list(
+      tryCatch(
+        airtable$Subscriptions$select(filterByFormula = "Key = 'dummy'"),
+        error = function(e) {NA}
+      )
+    )
   #
 
   if (subscription_is_open &&
@@ -1520,8 +1529,10 @@ read_subscription_db <- function(
         IdentifierUpper = toupper(Identifier)
       ) # convert identifier to upper-case
 
-    b <- a %>>% dplyr::filter(LicenseCheck == TRUE) %>>%
-      dplyr::pull(IdentifierUpper) %>>% simple_encode(key = "karibuni")
+    b <- a %>>%
+      dplyr::filter(LicenseCheck == TRUE) %>>%
+      dplyr::pull(IdentifierUpper) %>>%
+      simple_encode(key = "karibuni")
     # vector of Identifier to check in subscription database
     # these are 'encoded'
     #
@@ -2837,7 +2848,8 @@ initialize_emr_tables <- function(
     PracticeName <- self$db$practice %>>%
       dplyr::pull(PracticeName)
     PracticeName <- PracticeName[[1]] # just pull out the first entry
-    UserFullConfig <- self$db$users %>>% dplyr::collect() %>>%
+    UserFullConfig <-
+      self$db$users %>>% dplyr::collect() %>>%
       # forces database to be read
       # (instead of subsequent 'lazy' read)
       # collect() required for mutation and left_join
@@ -2852,28 +2864,37 @@ initialize_emr_tables <- function(
       # the Identifier is used in $read_subscription_db to interrogate the
       # license database
       # and is also used to help 'decode' the LicenseDate
-      dplyr::mutate(Identifier = paste0(
-        vapply(ProviderNo,
-               # create verification string
-               function(n) if (is.na(n) || nchar(n) == 0) {
-                 # practice name if no provider number
-                 PracticeName
-               }
-               else {
-                 n # the provider number
-               },
-               FUN.VALUE = character(1),
-               USE.NAMES = FALSE
-        ), "::",
-        Fullname, "::"
-      )) %>>%
+      dplyr::mutate(
+        Identifier =
+          paste0(
+            vapply(
+              ProviderNo,
+              # create verification string
+              function(n) if (is.na(n) || nchar(n) == 0) {
+               # practice name if no provider number
+               PracticeName
+              }
+              else {
+               n # the provider number
+              },
+              FUN.VALUE = character(1),
+              USE.NAMES = FALSE
+            ),
+            "::", Fullname, "::"
+          )
+        ) %>>%
       dplyr::mutate(
         LicenseDate =
           # decrypt License
-          as.Date(mapply(function(y, z) {
-            dMeasure::verify_license(y, z)
-          }, License, Identifier, USE.NAMES = FALSE),
-          origin = "1970-01-01"
+          as.Date(
+            mapply(
+              function(y, z) {
+                dMeasure::verify_license(y, z)
+              },
+              License, Identifier,
+              USE.NAMES = FALSE
+            ),
+            origin = "1970-01-01"
           )
       )
   }
