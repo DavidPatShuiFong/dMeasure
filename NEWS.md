@@ -1,5 +1,12 @@
 Changelog
 
+# 0.11.1
+30th July 2024
+
+## Change
+
+* use personal access token instead of API key when accessing subscription database. Required as API keys were deprecated
+
 # 0.11.0
 15th October 2023
 
